@@ -1,8 +1,24 @@
 const BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 
+function getToken(): string | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = localStorage.getItem('kinderspark-store')
+    if (!raw) return null
+    const state = JSON.parse(raw)
+    return state?.state?.token || null
+  } catch {
+    return null
+  }
+}
+
 async function req(path: string, options?: RequestInit) {
+  const token = getToken()
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+
   const res = await fetch(`${BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     ...options,
   })
   if (!res.ok) {
@@ -168,4 +184,12 @@ export async function getTutorFeedback(data: { correct: number; total: number; t
     method: 'POST',
     body: JSON.stringify(data),
   })
+}
+
+export async function getAdminStats() {
+  return req('/admin/stats')
+}
+
+export async function getAdminLeaderboard() {
+  return req('/admin/leaderboard')
 }
