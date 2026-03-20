@@ -1,0 +1,174 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model School {
+  id        String   @id @default(cuid())
+  name      String
+  classes   Class[]
+  createdAt DateTime @default(now())
+}
+
+model Class {
+  id         String          @id @default(cuid())
+  name       String
+  grade      String          @default("KG 1")
+  schoolId   String?
+  school     School?         @relation(fields: [schoolId], references: [id])
+  students   Student[]
+  homework   Homework[]
+  messages   Message[]
+  syllabuses ClassSyllabus[]
+  createdAt  DateTime        @default(now())
+}
+
+model Student {
+  id            String               @id @default(cuid())
+  name          String
+  age           Int                  @default(5)
+  avatar        String               @default("👧")
+  pin           String               @unique
+  stars         Int                  @default(0)
+  streak        Int                  @default(0)
+  grade         String?
+  aiStars       Int                  @default(0)
+  aiSessions    Int                  @default(0)
+  aiBestLevel   Int                  @default(1)
+  ownedItems    String[]             @default(["av_def", "th_def"])
+  selectedTheme String               @default("th_def")
+  classId       String
+  class         Class                @relation(fields: [classId], references: [id])
+  progress      Progress[]
+  completions   HomeworkCompletion[]
+  aiSessionLogs AISession[]
+  feedback      Feedback?
+  createdAt     DateTime             @default(now())
+}
+
+model Syllabus {
+  id          String          @id @default(cuid())
+  title       String
+  icon        String          @default("📖")
+  color       String          @default("#5E5CE6")
+  grade       String          @default("all")
+  type        String          @default("custom")
+  description String?
+  published   Boolean         @default(false)
+  assignedTo  String?
+  items       SyllabusItem[]
+  homework    Homework[]
+  classes     ClassSyllabus[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model ClassSyllabus {
+  classId    String
+  syllabusId String
+  class      Class    @relation(fields: [classId], references: [id])
+  syllabus   Syllabus @relation(fields: [syllabusId], references: [id])
+
+  @@id([classId, syllabusId])
+}
+
+model SyllabusItem {
+  id         String   @id @default(cuid())
+  word       String
+  emoji      String   @default("⭐")
+  hint       String?
+  order      Int      @default(0)
+  syllabusId String
+  syllabus   Syllabus @relation(fields: [syllabusId], references: [id], onDelete: Cascade)
+}
+
+model Homework {
+  id          String               @id @default(cuid())
+  title       String
+  moduleId    String?
+  syllabusId  String?
+  syllabus    Syllabus?            @relation(fields: [syllabusId], references: [id])
+  dueDate     String
+  assignedTo  String               @default("all")
+  classId     String
+  class       Class                @relation(fields: [classId], references: [id])
+  completions HomeworkCompletion[]
+  createdAt   DateTime             @default(now())
+}
+
+model HomeworkCompletion {
+  id          String   @id @default(cuid())
+  homeworkId  String
+  homework    Homework @relation(fields: [homeworkId], references: [id], onDelete: Cascade)
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  done        Boolean  @default(false)
+  completedAt DateTime @default(now())
+
+  @@unique([homeworkId, studentId])
+}
+
+model Progress {
+  id        String   @id @default(cuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  moduleId  String
+  cards     Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@unique([studentId, moduleId])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  from      String
+  fromId    String?
+  to        String
+  subject   String
+  body      String
+  classId   String?
+  class     Class?   @relation(fields: [classId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Feedback {
+  id        String   @id @default(cuid())
+  studentId String   @unique
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  grade     String?
+  note      String?
+  updatedAt DateTime @updatedAt
+}
+
+model AISession {
+  id        String   @id @default(cuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  topic     String
+  correct   Int      @default(0)
+  total     Int      @default(0)
+  stars     Int      @default(0)
+  maxLevel  Int      @default(1)
+  accuracy  Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model Teacher {
+  id        String   @id @default(cuid())
+  name      String
+  pin       String   @unique
+  schoolId  String?
+  createdAt DateTime @default(now())
+}
+
+model Admin {
+  id        String   @id @default(cuid())
+  name      String
+  pin       String   @unique
+  schoolId  String?
+  createdAt DateTime @default(now())
+}
