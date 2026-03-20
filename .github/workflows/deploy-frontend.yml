@@ -1,4 +1,4 @@
-name: Deploy Frontend → Vercel
+name: Deploy Frontend → Railway
 
 on:
   push:
@@ -22,15 +22,17 @@ jobs:
         run: npm ci
         working-directory: frontend
 
-      - name: Build
+      - name: Build check
         run: npm run build
         working-directory: frontend
         env:
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
 
-      - name: Deploy to Vercel
-        run: npx vercel --prod --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy Frontend to Railway
+        run: railway up --service kinderspark-frontend --detach
         working-directory: frontend
         env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
