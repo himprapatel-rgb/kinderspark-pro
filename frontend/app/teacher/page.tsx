@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { useStore } from '@/lib/store'
+import { useAppStore as useStore } from '@/store/appStore'
 import {
   getStudents, getClasses, getHomework, getSyllabuses, getMessages,
   createStudent, createClass, createHomework, sendMessage,

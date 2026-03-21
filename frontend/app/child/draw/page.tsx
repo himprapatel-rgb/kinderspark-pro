@@ -1,7 +1,7 @@
 'use client'
 import { useRef, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useStore } from '@/lib/store'
+import { useAppStore as useStore } from '@/store/appStore'
 import { updateStudent } from '@/lib/api'
 
 const COLORS = [

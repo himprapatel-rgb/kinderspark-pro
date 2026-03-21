@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useStore } from '@/lib/store'
+import { useAppStore as useStore } from '@/store/appStore'
 import { getStudents, getHomework, getMessages, sendMessage } from '@/lib/api'
 
 export default function ParentPage() {

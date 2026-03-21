@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useStore } from '@/lib/store'
+import { useAppStore as useStore } from '@/store/appStore'
 import { getHomework, getSyllabuses, getProgress, completeHomework, updateStudent } from '@/lib/api'
 import { MODS } from '@/lib/modules'
 

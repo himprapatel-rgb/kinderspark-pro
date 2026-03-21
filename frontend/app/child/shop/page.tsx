@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useStore } from '@/lib/store'
+import { useAppStore as useStore } from '@/store/appStore'
 import { updateStudent } from '@/lib/api'
 import { SHOP_AVS, SHOP_THS } from '@/lib/modules'
 
