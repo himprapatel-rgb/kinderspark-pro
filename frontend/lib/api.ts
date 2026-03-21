@@ -197,3 +197,11 @@ export async function getAdminStats() {
 export async function getAdminLeaderboard() {
   return req('/admin/leaderboard')
 }
+
+export async function getClassStats(classId: string) {
+  return req(`/teacher/class/${classId}/stats`)
+}
+
+export async function getTeacherMe() {
+  return req('/teacher/me')
+}
