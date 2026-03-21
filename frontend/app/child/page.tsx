@@ -76,6 +76,10 @@ export default function ChildPage() {
                 className="bg-white/20 rounded-full px-3 py-1 text-white text-xs font-bold">
                 🛍️ Shop
               </button>
+              <button onClick={() => router.push('/child/settings')}
+                className="bg-white/20 rounded-full px-3 py-1 text-white text-xs font-bold">
+                ⚙️ Settings
+              </button>
               <button onClick={() => { logout(); router.push('/') }}
                 className="text-white/50 text-xs font-bold">
                 Logout

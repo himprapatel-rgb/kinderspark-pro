@@ -357,12 +357,15 @@ export const MODS: Module[] = [
 ]
 
 export const TUTOR_TOPICS = [
-  { id: 'numbers', label: 'Numbers', emoji: '🔢', color: '#5E5CE6' },
-  { id: 'letters', label: 'Letters', emoji: '🔤', color: '#BF5AF2' },
-  { id: 'animals', label: 'Animals', emoji: '🐾', color: '#30D158' },
-  { id: 'colors', label: 'Colors', emoji: '🎨', color: '#FF453A' },
-  { id: 'shapes', label: 'Shapes', emoji: '🔷', color: '#FF9F0A' },
-  { id: 'fruits', label: 'Fruits', emoji: '🍎', color: '#FF453A' },
+  { id: 'numbers',  label: 'Numbers',  emoji: '🔢', color: '#5E5CE6' },
+  { id: 'letters',  label: 'Letters',  emoji: '🔤', color: '#BF5AF2' },
+  { id: 'animals',  label: 'Animals',  emoji: '🐾', color: '#30D158' },
+  { id: 'colors',   label: 'Colors',   emoji: '🎨', color: '#FF453A' },
+  { id: 'shapes',   label: 'Shapes',   emoji: '🔷', color: '#FF9F0A' },
+  { id: 'fruits',   label: 'Fruits',   emoji: '🍎', color: '#FF6B6B' },
+  { id: 'feelings', label: 'Feelings', emoji: '😊', color: '#FF453A' },
+  { id: 'habits',   label: 'Habits',   emoji: '🌟', color: '#30D158' },
+  { id: 'manners',  label: 'Manners',  emoji: '💝', color: '#FF9F0A' },
 ]
 
 export const QB: Record<string, any[]> = {
@@ -437,6 +440,38 @@ export const QB: Record<string, any[]> = {
     { q: 'Which fruit is very sour?', a: 'Lemon', choices: ['Mango', 'Grape', 'Lemon', 'Strawberry'], e: '🍋' },
     { q: 'Which fruit comes in bunches?', a: 'Grapes', choices: ['Cherry', 'Grapes', 'Plum', 'Blueberry'], e: '🍇' },
     { q: 'Which fruit is red with seeds outside?', a: 'Strawberry', choices: ['Cherry', 'Raspberry', 'Strawberry', 'Tomato'], e: '🍓' },
+  ],
+  feelings: [
+    { q: 'How do you feel when you get a gift?', a: 'Happy', choices: ['Sad', 'Happy', 'Angry', 'Scared'], e: '🎁' },
+    { q: 'How do you feel when you lose your toy?', a: 'Sad', choices: ['Happy', 'Sad', 'Excited', 'Loved'], e: '😢' },
+    { q: 'How do you feel on your birthday?', a: 'Excited', choices: ['Scared', 'Sad', 'Tired', 'Excited'], e: '🎂' },
+    { q: 'How do you feel when someone is mean to you?', a: 'Sad', choices: ['Happy', 'Excited', 'Sad', 'Surprised'], e: '😔' },
+    { q: 'How do you feel when you hear a loud thunder?', a: 'Scared', choices: ['Happy', 'Angry', 'Scared', 'Loved'], e: '⛈️' },
+    { q: 'How do you feel when you get a hug?', a: 'Loved', choices: ['Scared', 'Angry', 'Tired', 'Loved'], e: '🤗' },
+    { q: 'How do you feel when you can\'t sleep?', a: 'Tired', choices: ['Happy', 'Tired', 'Excited', 'Scared'], e: '😴' },
+    { q: 'How do you feel when you see something unexpected?', a: 'Surprised', choices: ['Sad', 'Angry', 'Surprised', 'Tired'], e: '😲' },
+    { q: 'What face do you make when you are happy?', a: 'Smile', choices: ['Cry', 'Frown', 'Smile', 'Scream'], e: '😊' },
+    { q: 'How do you feel when you share with a friend?', a: 'Happy', choices: ['Sad', 'Happy', 'Scared', 'Angry'], e: '🤝' },
+  ],
+  habits: [
+    { q: 'How many times should you brush your teeth each day?', a: '2', choices: ['1', '2', '3', '5'], e: '🪥' },
+    { q: 'When should you wash your hands?', a: 'Before eating', choices: ['After waking', 'Before eating', 'When bored', 'At night only'], e: '🧼' },
+    { q: 'What should you do before going to sleep?', a: 'Sleep early', choices: ['Watch TV late', 'Sleep early', 'Eat candy', 'Run around'], e: '🌙' },
+    { q: 'Which food is a good habit to eat?', a: 'Vegetables', choices: ['Candy', 'Chips', 'Vegetables', 'Soda'], e: '🥦' },
+    { q: 'What is a good habit to help your body stay healthy?', a: 'Exercise', choices: ['Sleep all day', 'Never move', 'Exercise', 'Eat junk food'], e: '🏃' },
+    { q: 'What should you do every day to learn new things?', a: 'Read books', choices: ['Play games only', 'Read books', 'Watch only TV', 'Skip school'], e: '📚' },
+    { q: 'What do you say when you want something?', a: 'Please', choices: ['Give me!', 'Now!', 'Please', 'Hurry!'], e: '🙏' },
+    { q: 'Sharing your toys is a good habit. True or False?', a: 'True', choices: ['False', 'True', 'Maybe', 'Never'], e: '🤝' },
+  ],
+  manners: [
+    { q: 'What do you say after someone helps you?', a: 'Thank you', choices: ['OK bye', 'Thank you', 'Whatever', 'More please'], e: '🙏' },
+    { q: 'What do you say when you make a mistake?', a: 'Sorry', choices: ['Not me!', 'Sorry', 'Run away', 'Laugh'], e: '😔' },
+    { q: 'What do you say when you want something?', a: 'Please', choices: ['Give me!', 'I want!', 'Please', 'Mine!'], e: '🌸' },
+    { q: 'How do you greet someone you see for the first time today?', a: 'Hello', choices: ['Ignore them', 'Hello', 'Push them', 'Walk away'], e: '👋' },
+    { q: 'What do you say before interrupting someone talking?', a: 'Excuse me', choices: ['Hey!', 'Stop!', 'Excuse me', 'Listen!'], e: '🤫' },
+    { q: 'What do you say when someone thanks you?', a: 'You\'re welcome', choices: ['No problem boss', 'Whatever', 'You\'re welcome', 'Sure thing'], e: '😊' },
+    { q: 'What do you say when leaving a place?', a: 'Goodbye', choices: ['See ya loser', 'Goodbye', 'Nothing', 'I\'m out'], e: '🫶' },
+    { q: 'Is it good manners to share food with others?', a: 'Yes', choices: ['Never', 'Yes', 'Only sometimes', 'No'], e: '🍎' },
   ],
 }
 

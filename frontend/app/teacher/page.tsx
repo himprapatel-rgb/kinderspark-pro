@@ -6,7 +6,7 @@ import {
   getStudents, getClasses, getHomework, getSyllabuses, getMessages,
   createStudent, createClass, createHomework, sendMessage,
   saveFeedback, deleteHomework, deleteSyllabus, publishSyllabus,
-  assignSyllabus, generateReport, deleteStudent
+  assignSyllabus, generateReport, deleteStudent, deleteClass
 } from '@/lib/api'
 import { MODS } from '@/lib/modules'
 
@@ -41,7 +41,7 @@ export default function TeacherPage() {
   // Forms
   const [studentForm, setStudentForm] = useState({ name: '', age: '5', avatar: '👧', pin: '' })
   const [classForm, setClassForm] = useState({ name: '', grade: 'KG 1' })
-  const [hwForm, setHwForm] = useState({ title: '', moduleId: '', dueDate: '', assignedTo: 'all' })
+  const [hwForm, setHwForm] = useState({ title: '', moduleId: '', dueDate: '', assignedTo: 'all', starsReward: 5 })
   const [msgForm, setMsgForm] = useState({ to: 'all', subject: '', body: '' })
   const [gradeForm, setGradeForm] = useState({ grade: '', note: '' })
 
@@ -100,12 +100,21 @@ export default function TeacherPage() {
     } catch (e: any) { alert(e.message) }
   }
 
+  const handleDeleteClass = async () => {
+    if (!selectedClass) return
+    if (!confirm(`Delete class "${selectedClass.name}"? This only works if it has no students.`)) return
+    try {
+      await deleteClass(selectedClass.id)
+      loadData()
+    } catch (e: any) { alert(e.message) }
+  }
+
   const handleAddHW = async () => {
     if (!hwForm.title || !hwForm.dueDate || !selectedClass) return
     try {
       await createHomework({ ...hwForm, classId: selectedClass.id })
       setShowAddHW(false)
-      setHwForm({ title: '', moduleId: '', dueDate: '', assignedTo: 'all' })
+      setHwForm({ title: '', moduleId: '', dueDate: '', assignedTo: 'all', starsReward: 5 })
       loadData(selectedClass)
     } catch (e: any) { alert(e.message) }
   }
@@ -220,6 +229,12 @@ export default function TeacherPage() {
                 className="flex-1 py-2 rounded-xl text-white text-xs font-black"
                 style={{ background: '#5E5CE6' }}>
                 + Class
+              </button>
+              <button onClick={handleDeleteClass}
+                className="py-2 px-2 rounded-xl text-white text-xs font-black"
+                style={{ background: '#FF453A' }}
+                title="Delete selected class (only if empty)">
+                🗑️
               </button>
               <button onClick={() => setShowAddStudent(true)}
                 className="flex-1 py-2 rounded-xl text-white text-xs font-black"
@@ -488,6 +503,12 @@ export default function TeacherPage() {
               <option value="all">All students</option>
               {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
+            <div className="flex items-center gap-3">
+              <span className="text-white/70 text-sm font-bold whitespace-nowrap">⭐ Stars reward:</span>
+              <input type="number" min={1} max={50} value={hwForm.starsReward}
+                onChange={e => setHwForm(f => ({...f, starsReward: parseInt(e.target.value) || 5}))}
+                className="input-field flex-1" />
+            </div>
             <button onClick={handleAddHW}
               className="w-full py-3 rounded-xl text-white font-black"
               style={{ background: '#5E5CE6' }}>
