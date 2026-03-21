@@ -67,6 +67,7 @@ export interface Homework {
   syllabus?: Syllabus | null
   dueDate: string
   assignedTo: string
+  starsReward: number
   classId: string
   completions: HomeworkCompletion[]
   createdAt: string
@@ -86,6 +87,7 @@ export interface Student {
   aiBestLevel: number
   ownedItems: string[]
   selectedTheme: string
+  lastLoginAt?: string | null
   classId: string
   class?: Class
   progress?: Progress[]
