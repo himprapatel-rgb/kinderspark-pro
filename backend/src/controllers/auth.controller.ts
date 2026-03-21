@@ -29,8 +29,10 @@ export async function verifyPin(req: Request, res: Response) {
       include: { class: true, progress: true, feedback: true }
     })
     if (!student) return res.status(401).json({ error: 'Wrong PIN' })
+    // Track last login time
+    await prisma.student.update({ where: { id: student.id }, data: { lastLoginAt: new Date() } })
     const token = jwt.sign({ id: student.id, role, name: student.name }, JWT_SECRET, { expiresIn: '7d' })
-    return res.json({ success: true, role, token, user: student })
+    return res.json({ success: true, role, token, user: { ...student, lastLoginAt: new Date() } })
   } catch (err) {
     return res.status(500).json({ error: 'Server error' })
   }

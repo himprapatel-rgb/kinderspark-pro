@@ -1,9 +1,10 @@
+import prisma from '../prisma/client'
 import { Router, Request, Response } from 'express'
-import { PrismaClient } from '@prisma/client'
+
 import Anthropic from 'anthropic'
 
 const router = Router()
-const prisma = new PrismaClient()
+
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 // POST /api/ai/generate-lesson

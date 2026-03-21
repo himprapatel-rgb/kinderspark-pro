@@ -1,8 +1,7 @@
 import { Router, Request, Response } from 'express'
-import { PrismaClient } from '@prisma/client'
+import prisma from '../prisma/client'
 
 const router = Router()
-const prisma = new PrismaClient()
 
 // GET /api/classes
 router.get('/', async (_req: Request, res: Response) => {
@@ -110,6 +109,22 @@ router.put('/:id', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Update class error:', error)
     res.status(500).json({ error: 'Failed to update class' })
+  }
+})
+
+// DELETE /api/classes/:id — only allowed if class has no students
+router.delete('/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params
+    const studentCount = await prisma.student.count({ where: { classId: id } })
+    if (studentCount > 0) {
+      return res.status(400).json({ error: 'Cannot delete a class that still has students' })
+    }
+    await prisma.class.delete({ where: { id } })
+    res.json({ success: true })
+  } catch (error) {
+    console.error('Delete class error:', error)
+    res.status(500).json({ error: 'Failed to delete class' })
   }
 })
 

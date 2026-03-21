@@ -76,7 +76,8 @@ export default function LessonPage() {
       if (student) {
         await updateProgress(student.id, moduleId, total).catch(() => {})
         const newStars = (student.stars || 0) + 10
-        await updateStudent(student.id, { stars: newStars }).catch(() => {})
+        const newStreak = (student.streak || 0) + 1
+        await updateStudent(student.id, { stars: newStars, streak: newStreak }).catch(() => {})
       }
     }
   }

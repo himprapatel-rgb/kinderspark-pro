@@ -2,17 +2,18 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore as useStore } from '@/store/appStore'
-import { getClasses, getStudents, getSyllabuses } from '@/lib/api'
+import { getAdminStats, getAdminLeaderboard, getClasses } from '@/lib/api'
 
 export default function AdminPage() {
   const router = useRouter()
   const user = useStore(s => s.user)
   const logout = useStore(s => s.logout)
 
+  const [stats, setStats] = useState<any>(null)
+  const [leaderboard, setLeaderboard] = useState<any[]>([])
   const [classes, setClasses] = useState<any[]>([])
-  const [students, setStudents] = useState<any[]>([])
-  const [syllabuses, setSyllabuses] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     if (!user) { router.push('/'); return }
@@ -21,23 +22,20 @@ export default function AdminPage() {
 
   const loadData = async () => {
     try {
-      const [cls, sts, syls] = await Promise.all([
+      const [statsData, lbData, clsData] = await Promise.all([
+        getAdminStats(),
+        getAdminLeaderboard(),
         getClasses(),
-        getStudents(),
-        getSyllabuses(),
       ])
-      setClasses(cls)
-      setStudents(sts)
-      setSyllabuses(syls)
-    } catch (e) {
-      console.error(e)
+      setStats(statsData)
+      setLeaderboard(lbData)
+      setClasses(clsData)
+    } catch (e: any) {
+      setError(e.message || 'Failed to load data')
     } finally {
       setLoading(false)
     }
   }
-
-  const totalStars = students.reduce((a, s) => a + (s.stars || 0), 0)
-  const top5 = [...students].sort((a, b) => (b.stars || 0) - (a.stars || 0)).slice(0, 5)
 
   if (loading) {
     return (
@@ -63,22 +61,28 @@ export default function AdminPage() {
           </button>
         </div>
 
+        {error && (
+          <div className="bg-red-500/20 border border-red-500/40 rounded-xl p-3 mb-3">
+            <div className="text-red-400 text-xs font-bold">{error}</div>
+          </div>
+        )}
+
         {/* Stats grid */}
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-white/10 rounded-2xl p-4 text-center">
-            <div className="text-white text-3xl font-black">{classes.length}</div>
+            <div className="text-white text-3xl font-black">{stats?.totalClasses ?? classes.length}</div>
             <div className="text-white/60 text-xs font-bold">Classes</div>
           </div>
           <div className="bg-white/10 rounded-2xl p-4 text-center">
-            <div className="text-white text-3xl font-black">{students.length}</div>
+            <div className="text-white text-3xl font-black">{stats?.totalStudents ?? '—'}</div>
             <div className="text-white/60 text-xs font-bold">Students</div>
           </div>
           <div className="bg-white/10 rounded-2xl p-4 text-center">
-            <div className="text-white text-3xl font-black">{syllabuses.length}</div>
+            <div className="text-white text-3xl font-black">{stats?.totalSyllabuses ?? '—'}</div>
             <div className="text-white/60 text-xs font-bold">Syllabuses</div>
           </div>
           <div className="bg-white/10 rounded-2xl p-4 text-center">
-            <div className="text-yellow-400 text-3xl font-black">⭐{totalStars}</div>
+            <div className="text-yellow-400 text-3xl font-black">⭐{stats?.totalStars ?? '—'}</div>
             <div className="text-white/60 text-xs font-bold">Total Stars</div>
           </div>
         </div>
@@ -113,7 +117,7 @@ export default function AdminPage() {
         <div>
           <div className="text-white font-black text-base mb-3">🏆 Top Students</div>
           <div className="space-y-2">
-            {top5.map((s, i) => (
+            {leaderboard.map((s, i) => (
               <div key={s.id} className="rounded-2xl p-4 flex items-center gap-3"
                 style={{ background: i === 0 ? '#FFD60A20' : '#1a1a2e', border: i === 0 ? '1px solid #FFD60A40' : 'none' }}>
                 <div className="text-2xl font-black" style={{ color: i === 0 ? '#FFD60A' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : 'rgba(255,255,255,0.3)' }}>
@@ -122,34 +126,42 @@ export default function AdminPage() {
                 <div className="text-3xl">{s.avatar}</div>
                 <div className="flex-1">
                   <div className="text-white font-black text-sm">{s.name}</div>
-                  <div className="text-white/50 text-xs font-bold">{s.class?.name}</div>
+                  <div className="text-white/50 text-xs font-bold">{s.className}</div>
                 </div>
                 <div className="star-badge">⭐ {s.stars}</div>
               </div>
             ))}
-            {students.length === 0 && (
+            {leaderboard.length === 0 && (
               <div className="text-white/30 font-bold text-center py-6">No students yet.</div>
             )}
           </div>
         </div>
 
-        {/* Quick stats */}
+        {/* Platform stats */}
         <div className="rounded-2xl p-4" style={{ background: '#1a1a2e' }}>
           <div className="text-white font-black mb-3">📊 Platform Stats</div>
           <div className="space-y-2">
             <div className="flex justify-between">
-              <span className="text-white/60 font-bold text-sm">Total AI Sessions</span>
-              <span className="text-white font-black">{students.reduce((a, s) => a + (s.aiSessions || 0), 0)}</span>
+              <span className="text-white/60 font-bold text-sm">Total Classes</span>
+              <span className="text-white font-black">{stats?.totalClasses ?? '—'}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-white/60 font-bold text-sm">Avg Stars/Student</span>
+              <span className="text-white/60 font-bold text-sm">Total Students</span>
+              <span className="text-white font-black">{stats?.totalStudents ?? '—'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-white/60 font-bold text-sm">Total Stars Earned</span>
+              <span className="text-white font-black">{stats?.totalStars ?? '—'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-white/60 font-bold text-sm">Syllabuses Created</span>
+              <span className="text-white font-black">{stats?.totalSyllabuses ?? '—'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-white/60 font-bold text-sm">Avg Stars / Student</span>
               <span className="text-white font-black">
-                {students.length > 0 ? Math.round(totalStars / students.length) : 0}
+                {stats?.totalStudents > 0 ? Math.round(stats.totalStars / stats.totalStudents) : '—'}
               </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-white/60 font-bold text-sm">Published Syllabuses</span>
-              <span className="text-white font-black">{syllabuses.filter(s => s.published).length}</span>
             </div>
           </div>
         </div>

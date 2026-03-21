@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { ToastProvider } from '@/components/ui/Toast'
 
 export const metadata: Metadata = {
   title: 'KinderSpark Pro',
@@ -18,9 +19,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="theme-color" content="#5E5CE6" />
       </head>
       <body className="font-nunito bg-black min-h-screen">
-        <div className="max-w-[430px] mx-auto min-h-screen relative overflow-x-hidden">
-          {children}
-        </div>
+        <ToastProvider>
+          <div className="max-w-[430px] mx-auto min-h-screen relative overflow-x-hidden">
+            {children}
+          </div>
+        </ToastProvider>
       </body>
     </html>
   )

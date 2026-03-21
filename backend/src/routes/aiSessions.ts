@@ -1,8 +1,7 @@
 import { Router, Request, Response } from 'express'
-import { PrismaClient } from '@prisma/client'
+import prisma from '../prisma/client'
 
 const router = Router()
-const prisma = new PrismaClient()
 
 // GET /api/ai-sessions/:studentId
 router.get('/:studentId', async (req: Request, res: Response) => {

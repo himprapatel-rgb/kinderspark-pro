@@ -1,13 +1,15 @@
 'use client'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
 import { generateReport } from '@/lib/api'
 
 export default function ReportsPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const user = useAppStore((s) => s.user)
-  const [classId, setClassId] = useState('')
+  // Pre-fill classId from URL param (e.g. /teacher/reports?classId=xxx)
+  const [classId, setClassId] = useState(searchParams?.get('classId') || '')
   const [report, setReport] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')

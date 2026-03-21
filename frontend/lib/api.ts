@@ -72,6 +72,10 @@ export async function updateClass(id: string, data: any) {
   return req(`/classes/${id}`, { method: 'PUT', body: JSON.stringify(data) })
 }
 
+export async function deleteClass(id: string) {
+  return req(`/classes/${id}`, { method: 'DELETE' })
+}
+
 export async function getHomework(classId: string) {
   return req(`/homework?classId=${classId}`)
 }

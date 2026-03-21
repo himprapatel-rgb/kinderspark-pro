@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-const MODEL = 'claude-sonnet-4-20250514'
+const MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6'
 
 export async function generateLesson(topic: string, count: number): Promise<Array<{w: string, e: string, hint: string}>> {
   const msg = await anthropic.messages.create({

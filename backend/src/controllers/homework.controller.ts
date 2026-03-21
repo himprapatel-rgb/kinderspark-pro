@@ -23,7 +23,7 @@ export async function listHomework(req: Request, res: Response) {
 
 export async function createHomework(req: Request, res: Response) {
   try {
-    const { title, moduleId, syllabusId, dueDate, assignedTo, classId } = req.body
+    const { title, moduleId, syllabusId, dueDate, assignedTo, starsReward, classId } = req.body
     if (!title || !dueDate || !classId) {
       return res.status(400).json({ error: 'title, dueDate, and classId are required' })
     }
@@ -34,6 +34,7 @@ export async function createHomework(req: Request, res: Response) {
         syllabusId: syllabusId || null,
         dueDate,
         assignedTo: assignedTo || 'all',
+        starsReward: starsReward ?? 5,
         classId,
       },
     })
@@ -70,8 +71,7 @@ export async function completeHomework(req: Request, res: Response) {
       create: { homeworkId: id, studentId, done: true },
     })
 
-    // Award stars based on homework title length as proxy
-    const stars = Math.max(1, Math.min(5, Math.floor(hw.title.length / 5)))
+    const stars = hw.starsReward ?? 5
     const student = await prisma.student.findUnique({ where: { id: studentId } })
     if (student) {
       await prisma.student.update({
