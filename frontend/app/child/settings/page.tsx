@@ -74,7 +74,7 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between">
             <div>
               <div className={`text-white font-bold ${acc}`}>Dyslexia-Friendly Font</div>
-              <div className="text-white/50 text-xs font-bold">Uses OpenDyslexic typeface</div>
+              <div className="text-white/50 text-xs font-bold">Uses Comic Sans for easier letter recognition</div>
             </div>
             <button
               onClick={() => updateSettings({ dys: !settings.dys })}
@@ -140,7 +140,7 @@ export default function SettingsPage() {
             style={{
               background: settings.hc ? '#000' : '#0a0a0a',
               border: settings.hc ? '2px solid #fff' : '2px solid #333',
-              fontFamily: settings.dys ? 'monospace' : 'inherit',
+              fontFamily: settings.dys ? "'Comic Sans MS', 'Comic Sans', cursive" : 'inherit',
             }}>
             <div className="text-5xl mb-2">🌟</div>
             <div

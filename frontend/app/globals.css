@@ -10,3 +10,13 @@
 body {
   color: rgb(var(--foreground-rgb));
 }
+
+/* High contrast mode */
+html.high-contrast {
+  filter: contrast(1.6) brightness(0.95);
+}
+
+html.high-contrast * {
+  border-color: #fff !important;
+  outline-color: #fff !important;
+}
