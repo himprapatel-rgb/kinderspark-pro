@@ -1,24 +1,19 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
 import { generateReport } from '@/lib/api'
 
-export default function ReportsPage() {
+function ReportsInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const user = useAppStore((s) => s.user)
-  // Pre-fill classId from URL param (e.g. /teacher/reports?classId=xxx)
   const [classId, setClassId] = useState(searchParams?.get('classId') || '')
   const [report, setReport] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
   const handleGenerate = async () => {
-    if (!classId.trim()) {
-      setError('Please enter a class ID')
-      return
-    }
+    if (!classId.trim()) { setError('Please enter a class ID'); return }
     setLoading(true)
     setError('')
     try {
@@ -31,109 +26,61 @@ export default function ReportsPage() {
     }
   }
 
-  const handlePrint = () => {
-    window.print()
-  }
-
   return (
-    <div
-      className="min-h-screen pb-8"
-      style={{ background: 'linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%)' }}
-    >
-      {/* Header */}
-      <div
-        className="p-5 pt-10"
-        style={{ background: 'linear-gradient(135deg, #5E5CE6, #BF5AF2)' }}
-      >
-        <button
-          onClick={() => router.back()}
-          className="text-white/70 text-sm font-bold mb-4 flex items-center gap-1"
-        >
-          ← Back
-        </button>
+    <div className="min-h-screen pb-8" style={{ background: 'linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%)' }}>
+      <div className="p-5 pt-10" style={{ background: 'linear-gradient(135deg, #5E5CE6, #BF5AF2)' }}>
+        <button onClick={() => router.back()} className="text-white/70 text-sm font-bold mb-4 flex items-center gap-1">← Back</button>
         <h1 className="text-white font-black text-2xl">Weekly Report 📊</h1>
         <p className="text-white/70 text-sm font-bold mt-1">AI-generated class summary</p>
       </div>
 
       <div className="p-5 space-y-4">
-        {/* Class ID input */}
-        <div
-          className="rounded-2xl p-4"
-          style={{ background: 'rgba(255,255,255,0.07)' }}
-        >
+        <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.07)' }}>
           <div className="text-white/60 text-xs font-bold mb-2">Class ID</div>
-          <input
-            value={classId}
-            onChange={(e) => setClassId(e.target.value)}
-            placeholder="Enter class ID..."
+          <input value={classId} onChange={e => setClassId(e.target.value)} placeholder="Enter class ID..."
             className="w-full px-3 py-2 rounded-xl font-bold text-sm text-white outline-none"
-            style={{ background: 'rgba(255,255,255,0.1)' }}
-          />
-          <p className="text-white/40 text-xs font-bold mt-2">
-            Find class IDs in the Teacher Dashboard
-          </p>
+            style={{ background: 'rgba(255,255,255,0.1)' }} />
+          <p className="text-white/40 text-xs font-bold mt-2">Find class IDs in the Teacher Dashboard</p>
         </div>
 
-        <button
-          onClick={handleGenerate}
-          disabled={loading}
+        <button onClick={handleGenerate} disabled={loading}
           className="w-full py-4 rounded-2xl font-black text-white text-base transition-all active:scale-95 disabled:opacity-50"
-          style={{ background: 'linear-gradient(135deg, #5E5CE6, #BF5AF2)' }}
-        >
-          {loading ? (
-            <span className="flex items-center justify-center gap-2">
-              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              Generating with AI...
-            </span>
-          ) : '✨ Generate Report'}
+          style={{ background: 'linear-gradient(135deg, #5E5CE6, #BF5AF2)' }}>
+          {loading ? <span className="flex items-center justify-center gap-2"><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Generating with AI...</span> : '✨ Generate Report'}
         </button>
 
-        {error && (
-          <div className="text-red-400 text-sm font-bold text-center">{error}</div>
-        )}
+        {error && <div className="text-red-400 text-sm font-bold text-center">{error}</div>}
 
-        {/* Report */}
         {report && (
           <div className="rounded-2xl p-5 space-y-4" style={{ background: 'rgba(255,255,255,0.07)' }}>
             <div className="flex items-center justify-between">
               <div className="text-white font-black text-base">📋 Weekly Report</div>
-              <button
-                onClick={handlePrint}
-                className="px-3 py-1 rounded-xl font-bold text-xs text-white"
-                style={{ background: 'rgba(255,255,255,0.15)' }}
-              >
-                🖨️ Print
-              </button>
+              <button onClick={() => window.print()} className="px-3 py-1 rounded-xl font-bold text-xs text-white" style={{ background: 'rgba(255,255,255,0.15)' }}>🖨️ Print</button>
             </div>
-            <div className="text-white/80 font-bold text-sm leading-relaxed">
-              {report}
-            </div>
-            <div className="text-white/40 text-xs font-bold">
-              Generated by Claude AI • {new Date().toLocaleDateString()}
-            </div>
+            <div className="text-white/80 font-bold text-sm leading-relaxed">{report}</div>
+            <div className="text-white/40 text-xs font-bold">Generated by Claude AI • {new Date().toLocaleDateString()}</div>
           </div>
         )}
 
-        {/* Tips */}
         {!report && !loading && (
           <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.05)' }}>
             <div className="text-white/60 font-black text-sm mb-2">How it works</div>
             <ul className="space-y-1">
-              {[
-                'Enter your class ID from the dashboard',
-                'Claude AI analyzes student progress',
-                'Receive a warm, parent-friendly report',
-                'Print and share with families',
-              ].map((tip, i) => (
-                <li key={i} className="text-white/40 text-xs font-bold flex gap-2">
-                  <span>{i + 1}.</span>
-                  <span>{tip}</span>
-                </li>
+              {['Enter your class ID from the dashboard', 'Claude AI analyzes student progress', 'Receive a warm, parent-friendly report', 'Print and share with families'].map((tip, i) => (
+                <li key={i} className="text-white/40 text-xs font-bold flex gap-2"><span>{i + 1}.</span><span>{tip}</span></li>
               ))}
             </ul>
           </div>
         )}
       </div>
     </div>
+  )
+}
+
+export default function ReportsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center" style={{ background: '#1a1a2e' }}><div className="text-white/50 font-bold">Loading...</div></div>}>
+      <ReportsInner />
+    </Suspense>
   )
 }

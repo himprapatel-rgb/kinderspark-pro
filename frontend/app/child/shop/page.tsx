@@ -33,7 +33,7 @@ export default function ShopPage() {
       if (type === 'theme') {
         try {
           const updated = await updateStudent(student.id, { selectedTheme: itemId })
-          setCurrentStudent({ ...student, selectedTheme: itemId })
+          setCurrentStudent({ ...student, selectedTheme: itemId } as any)
           setUser({ ...user, selectedTheme: itemId })
           showToast('Theme equipped!')
         } catch {}
@@ -51,7 +51,7 @@ export default function ShopPage() {
       const updateData: any = { stars: newStars, ownedItems: newOwned }
       if (type === 'theme') updateData.selectedTheme = itemId
       await updateStudent(student.id, updateData)
-      setCurrentStudent({ ...student, stars: newStars, ownedItems: newOwned, ...(type === 'theme' ? { selectedTheme: itemId } : {}) })
+      setCurrentStudent({ ...student, stars: newStars, ownedItems: newOwned, ...(type === 'theme' ? { selectedTheme: itemId } : {}) } as any)
       setUser({ ...user, stars: newStars, ownedItems: newOwned, ...(type === 'theme' ? { selectedTheme: itemId } : {}) })
       showToast('Purchased! 🎉')
     } catch (e: any) {

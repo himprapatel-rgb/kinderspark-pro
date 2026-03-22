@@ -112,7 +112,7 @@ export default function TracePage() {
   const handleComplete = async () => {
     if (completed.has(currentLetter) || awarded) return
     setAwarded(true)
-    setCompleted(prev => new Set([...prev, currentLetter]))
+    setCompleted(prev => { const s = new Set(Array.from(prev)); s.add(currentLetter); return s })
     speak(`Great job! You traced the letter ${currentLetter}!`)
 
     if (student) {

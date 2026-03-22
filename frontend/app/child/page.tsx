@@ -28,7 +28,7 @@ export default function ChildPage() {
     if (!student) return
     try {
       const [hw, syl, prog] = await Promise.all([
-        getHomework(student.classId),
+        getHomework(student.classId!),
         getSyllabuses(student.classId),
         getProgress(student.id),
       ])
@@ -239,11 +239,11 @@ export default function ChildPage() {
         </div>
       </div>
 
-      <style>{\`
+      <style>{`
         .star-badge { background: linear-gradient(135deg, #FFD60A, #FF9F0A); border-radius: 20px; padding: 2px 12px; font-weight: 800; font-size: 13px; color: #000; display: inline-block; box-shadow: 0 2px 8px rgba(255,159,10,0.4); }
         .glass-btn { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; padding: 4px 12px; font-weight: 800; font-size: 12px; color: white; }
         .glass-btn:active { transform: scale(0.95); }
-      \`}</style>
+      `}</style>
     </div>
   )
 }
