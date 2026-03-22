@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
     paths: ['backend/**']
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -19,14 +20,16 @@ jobs:
       - name: Install Railway CLI
         run: npm install -g @railway/cli
 
-      - name: Deploy to Railway
+      - name: Deploy Backend to Railway
         run: railway up --service kinderspark-backend --detach
         working-directory: backend
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
 
       - name: Run DB migrations
-        run: railway run --service kinderspark-backend npx prisma migrate deploy
+        run: railway run --service kinderspark-backend -- npx prisma migrate deploy
         working-directory: backend
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
