@@ -1,16 +1,12 @@
 FROM node:20-alpine
 WORKDIR /app
 
-# Install all deps (including dev) for build
 COPY package*.json ./
-RUN npm ci
+RUN npm install
 
-# Copy source and generate prisma + build
 COPY . .
 RUN npx prisma generate
 RUN npm run build
-
-# Remove dev deps after build
 RUN npm prune --production
 
 EXPOSE 4000
