@@ -135,6 +135,7 @@ model Message {
   to        String
   subject   String
   body      String
+  read      Boolean  @default(false)
   classId   String?
   class     Class?   @relation(fields: [classId], references: [id])
   createdAt DateTime @default(now())

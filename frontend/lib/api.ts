@@ -218,6 +218,24 @@ export async function sendMessage(data: any) {
   return req('/messages', { method: 'POST', body: JSON.stringify(data) })
 }
 
+export async function getUnreadCount(params: { classId?: string; studentId?: string }) {
+  const query = new URLSearchParams()
+  if (params.classId) query.set('classId', params.classId)
+  if (params.studentId) query.set('studentId', params.studentId)
+  return req(`/messages/unread-count?${query.toString()}`)
+}
+
+export async function markMessageRead(id: string) {
+  return req(`/messages/${id}/read`, { method: 'PUT' })
+}
+
+export async function markAllMessagesRead(classId?: string, studentId?: string) {
+  return req('/messages/read-all', {
+    method: 'PUT',
+    body: JSON.stringify({ classId, studentId }),
+  })
+}
+
 export async function getProgress(studentId: string) {
   return req(`/progress/${studentId}`)
 }
