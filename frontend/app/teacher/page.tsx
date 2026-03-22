@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
 import {
@@ -7,7 +7,7 @@ import {
   createClass, createStudent, deleteStudent, createHomework, deleteHomework,
   completeHomework, sendMessage, deleteClass, assignSyllabus,
   getAttendance, saveAttendance, generateReport, getClassStats,
-  getUnreadCount, markAllMessagesRead,
+  getUnreadCount, markAllMessagesRead, getFeedback, saveFeedback,
 } from '@/lib/api'
 
 // ─── tiny helpers ─────────────────────────────────────────────────────────────
@@ -49,6 +49,15 @@ export default function TeacherDashboard() {
   const [reportText, setReportText] = useState('')
   const [reportLoading, setReportLoading] = useState(false)
 
+  // Grading state
+  const [gradingStudentId, setGradingStudentId] = useState<string | null>(null)
+  const [feedbacks, setFeedbacks] = useState<Record<string, { grade: string; note: string }>>({})
+  const [gradeForm, setGradeForm] = useState({ grade: '', note: '' })
+  const [gradeBusy, setGradeBusy] = useState(false)
+
+  // Polling ref
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
   useEffect(() => {
     if (!user) { router.push('/'); return }
     load()
@@ -64,6 +73,24 @@ export default function TeacherDashboard() {
       markAllMessagesRead(selectedClass.id).then(() => setUnreadCount(0)).catch(() => {})
     }
   }, [tab, attendanceDate, selectedClass])
+
+  // Real-time message polling: refresh unread count every 30s, full messages when on tab
+  useEffect(() => {
+    if (!selectedClass) return
+    if (pollRef.current) clearInterval(pollRef.current)
+    pollRef.current = setInterval(() => {
+      if (tab === 'messages') {
+        getMessages({ classId: selectedClass.id })
+          .then(setMessages)
+          .catch(() => {})
+      } else {
+        getUnreadCount({ classId: selectedClass.id })
+          .then(res => setUnreadCount(res?.count || 0))
+          .catch(() => {})
+      }
+    }, 30_000)
+    return () => { if (pollRef.current) clearInterval(pollRef.current) }
+  }, [selectedClass, tab])
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 3000) }
 
@@ -229,6 +256,35 @@ export default function TeacherDashboard() {
       showToast('✅ Attendance saved!')
     } catch (e: any) { showToast('Error: ' + e.message) }
     setBusy(false)
+  }
+
+  const openGrading = async (studentId: string) => {
+    setGradingStudentId(studentId)
+    if (!feedbacks[studentId]) {
+      try {
+        const fb = await getFeedback(studentId)
+        const data = { grade: fb?.grade || '', note: fb?.note || '' }
+        setFeedbacks(prev => ({ ...prev, [studentId]: data }))
+        setGradeForm(data)
+      } catch {
+        setGradeForm({ grade: '', note: '' })
+      }
+    } else {
+      setGradeForm(feedbacks[studentId])
+    }
+  }
+
+  const handleSaveGrade = async (studentId: string) => {
+    setGradeBusy(true)
+    try {
+      await saveFeedback({ studentId, grade: gradeForm.grade, note: gradeForm.note })
+      setFeedbacks(prev => ({ ...prev, [studentId]: { ...gradeForm } }))
+      setGradingStudentId(null)
+      showToast('Grade saved!')
+      // refresh student list to reflect updated grade field
+      setStudents(prev => prev.map(s => s.id === studentId ? { ...s, grade: gradeForm.grade } : s))
+    } catch (e: any) { showToast('Error: ' + e.message) }
+    setGradeBusy(false)
   }
 
   const generateReportHandler = async () => {
@@ -506,21 +562,85 @@ export default function TeacherDashboard() {
             <div className="space-y-2">
               {students.map(s => {
                 const hwDone = homework.filter(hw => hw.completions?.some((c: any) => c.studentId === s.id && c.done)).length
+                const fb = feedbacks[s.id]
+                const grade = fb?.grade || s.grade || null
+                const isGrading = gradingStudentId === s.id
+                const GRADE_COLORS: Record<string, string> = { 'A+': '#30D158', A: '#30D158', B: '#FF9F0A', C: '#FF6B35', D: '#FF453A' }
                 return (
-                  <div key={s.id} className="rounded-2xl p-4 flex items-center gap-3" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                    <div className="text-3xl">{s.avatar || '🧒'}</div>
-                    <div className="flex-1">
-                      <div className="text-white font-black">{s.name}</div>
-                      <div className="text-white/40 text-xs font-bold">
-                        PIN: {s.pin} · ⭐{s.stars} · 📚{hwDone}/{homework.length} HW
+                  <div key={s.id} className="rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                    <div className="p-4 flex items-center gap-3">
+                      <div className="text-3xl">{s.avatar || '🧒'}</div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <div className="text-white font-black">{s.name}</div>
+                          {grade && (
+                            <span className="text-xs font-black px-2 py-0.5 rounded-full" style={{ background: (GRADE_COLORS[grade] || '#5E5CE6') + '30', color: GRADE_COLORS[grade] || '#5E5CE6' }}>
+                              {grade}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-white/40 text-xs font-bold">
+                          PIN: {s.pin} · ⭐{s.stars} · 📚{hwDone}/{homework.length} HW
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => isGrading ? setGradingStudentId(null) : openGrading(s.id)}
+                          className="text-xs font-black px-3 py-1.5 rounded-full transition-all"
+                          style={{ background: isGrading ? '#5E5CE6' : 'rgba(94,92,230,0.2)', color: isGrading ? '#fff' : '#5E5CE6' }}
+                        >
+                          📝 Grade
+                        </button>
+                        <button onClick={() => handleDeleteStudent(s.id)} className="text-red-400/60 text-xs font-bold">🗑️</button>
                       </div>
                     </div>
-                    <button
-                      onClick={() => handleDeleteStudent(s.id)}
-                      className="text-red-400/60 text-xs font-bold"
-                    >
-                      🗑️
-                    </button>
+
+                    {/* Inline grading panel */}
+                    {isGrading && (
+                      <div className="px-4 pb-4 border-t border-white/10 pt-3" style={{ background: 'rgba(94,92,230,0.08)' }}>
+                        <div className="text-white/60 text-xs font-bold mb-2">Grade for {s.name}</div>
+                        <div className="flex gap-2 mb-3">
+                          {['A+', 'A', 'B', 'C', 'D'].map(g => (
+                            <button
+                              key={g}
+                              onClick={() => setGradeForm(p => ({ ...p, grade: p.grade === g ? '' : g }))}
+                              className="flex-1 py-2 rounded-xl font-black text-sm transition-all"
+                              style={{
+                                background: gradeForm.grade === g ? (GRADE_COLORS[g] + 'cc') : 'rgba(255,255,255,0.08)',
+                                color: gradeForm.grade === g ? '#fff' : GRADE_COLORS[g] || '#fff',
+                                border: `1.5px solid ${gradeForm.grade === g ? GRADE_COLORS[g] : 'transparent'}`,
+                              }}
+                            >
+                              {g}
+                            </button>
+                          ))}
+                        </div>
+                        <textarea
+                          value={gradeForm.note}
+                          onChange={e => setGradeForm(p => ({ ...p, note: e.target.value }))}
+                          placeholder="Teacher note (optional)..."
+                          rows={2}
+                          className="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white font-bold text-xs outline-none resize-none placeholder:text-white/30 mb-2"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setGradingStudentId(null)}
+                            className="flex-1 py-2 rounded-xl text-white/50 font-bold text-xs"
+                            style={{ background: 'rgba(255,255,255,0.08)' }}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => handleSaveGrade(s.id)}
+                            disabled={gradeBusy}
+                            className="flex-1 py-2 rounded-xl text-white font-black text-xs"
+                            style={{ background: '#5E5CE6', opacity: gradeBusy ? 0.6 : 1 }}
+                          >
+                            {gradeBusy ? 'Saving...' : '✓ Save Grade'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )
               })}

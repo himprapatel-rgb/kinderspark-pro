@@ -58,7 +58,7 @@ export default function ChildPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4" style={{ background: 'linear-gradient(180deg, #1a0a2e 0%, #0f0f1a 100%)' }}>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4" style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #1a0a2e) 0%, #0f0f1a 100%)' }}>
         <div className="text-7xl animate-bounce">⭐</div>
         <div className="text-white/50 font-bold text-sm">Loading your world...</div>
       </div>
@@ -66,8 +66,8 @@ export default function ChildPage() {
   }
 
   return (
-    <div className="min-h-screen pb-24" style={{ background: 'linear-gradient(180deg, #1a0a2e 0%, #0d0d1a 100%)' }}>
-      <div className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #4c3aff, #8b1cf7)' }}>
+    <div className="min-h-screen pb-24" style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #1a0a2e) 0%, #0d0d1a 100%)' }}>
+      <div className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, var(--theme-color, #4c3aff), var(--theme-secondary, #8b1cf7))' }}>
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
         <div className="relative p-5 pt-10">
           <div className="flex justify-between items-start">
@@ -135,9 +135,9 @@ export default function ChildPage() {
 
         <button onClick={() => router.push('/child/tutor')}
           className="w-full rounded-3xl p-5 text-left active:scale-95 transition-all"
-          style={{ background: 'linear-gradient(135deg, #0d1f3c, #1a1f6e)', border: '1.5px solid #5E5CE660' }}>
+          style={{ background: 'linear-gradient(135deg, #0d1f3c, #1a1f6e)', border: '1.5px solid var(--theme-border, #5E5CE660)' }}>
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-3xl" style={{ background: 'rgba(94,92,230,0.3)' }}>🤖</div>
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-3xl" style={{ background: 'var(--theme-soft, rgba(94,92,230,0.3))' }}>🤖</div>
             <div>
               <div className="text-white font-black text-base">AI Tutor Sparkle</div>
               <div className="text-white/60 text-sm font-bold">Practice &amp; earn ⭐ stars!</div>
@@ -145,7 +145,7 @@ export default function ChildPage() {
                 <div className="text-purple-400 text-xs font-bold">{student?.aiSessions} sessions · Best Lv {student?.aiBestLevel}</div>
               )}
             </div>
-            <div className="ml-auto bg-gradient-to-r from-purple-500 to-indigo-500 rounded-xl px-4 py-2 text-white text-sm font-black">Play ▶</div>
+            <div className="ml-auto rounded-xl px-4 py-2 text-white text-sm font-black" style={{ background: 'linear-gradient(135deg, var(--theme-color, #BF5AF2), var(--theme-secondary, #5856D6))' }}>Play ▶</div>
           </div>
         </button>
 
