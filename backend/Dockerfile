@@ -8,7 +8,8 @@ RUN npm install
 COPY . .
 RUN npx prisma generate
 RUN npm run build
-RUN npm prune --production
+
+# NOTE: no npm prune — prisma CLI must be available at runtime for migrations
 
 EXPOSE 4000
 COPY entrypoint.sh ./entrypoint.sh
