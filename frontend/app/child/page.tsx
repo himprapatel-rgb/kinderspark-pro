@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore as useStore } from '@/store/appStore'
-import { getHomework, getSyllabuses, getProgress, getRecommendations, getStudentBadges } from '@/lib/api'
+import { getHomework, getSyllabuses, getProgress, getRecommendations, getStudentBadges, completeHomework } from '@/lib/api'
 import { MODS } from '@/lib/modules'
 
 export default function ChildPage() {
@@ -17,6 +17,8 @@ export default function ChildPage() {
   const [recommendations, setRecommendations] = useState<any[]>([])
   const [badges, setBadges] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [markingDone, setMarkingDone] = useState<string | null>(null)
+  const [celebrationBadges, setCelebrationBadges] = useState<any[]>([])
 
   const student = currentStudent || user
 
@@ -59,6 +61,17 @@ export default function ChildPage() {
   const totalCards = MODS.reduce((a, m) => a + m.items.length, 0)
   const doneCards = MODS.reduce((a, m) => a + Math.min(m.items.length, progressMap[m.id] || 0), 0)
   const overallPct = totalCards ? Math.round((doneCards / totalCards) * 100) : 0
+
+  const handleMarkDone = async (hwId: string) => {
+    if (!student || markingDone) return
+    setMarkingDone(hwId)
+    try {
+      const res = await completeHomework(hwId, student.id)
+      if (res?.newBadges?.length) setCelebrationBadges(res.newBadges)
+      await loadData()
+    } catch { /* ignore */ }
+    setMarkingDone(null)
+  }
 
   if (loading) {
     return (
@@ -148,22 +161,32 @@ export default function ChildPage() {
                 <div className="ml-auto bg-white/30 rounded-full px-2 py-0.5 text-white text-xs font-black">{pendingHW.length}</div>
               </div>
               {pendingHW.slice(0, 2).map(hw => (
-                <button key={hw.id}
-                  onClick={() => hw.moduleId && router.push(hw.aiGenerated ? `/child/tutor?topic=${encodeURIComponent(hw.moduleId)}` : `/child/lesson/${hw.moduleId}`)}
-                  className="w-full rounded-2xl p-3 flex items-center gap-3 active:scale-95 transition-all text-left mb-2"
-                  style={{ background: hw.aiGenerated ? 'rgba(94,92,230,0.3)' : 'rgba(255,255,255,0.2)', border: hw.aiGenerated ? '1px solid rgba(94,92,230,0.5)' : 'none' }}
-                >
-                  <span className="text-2xl">{hw.aiGenerated ? '✨' : '📝'}</span>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <div className="text-white font-black text-sm">{hw.title}</div>
-                      {hw.aiGenerated && <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(94,92,230,0.5)', color: '#E0D7FF' }}>✨ AI</span>}
+                <div key={hw.id} className="mb-2">
+                  <button
+                    onClick={() => hw.moduleId && router.push(hw.aiGenerated ? `/child/tutor?topic=${encodeURIComponent(hw.moduleId)}` : `/child/lesson/${hw.moduleId}`)}
+                    className="w-full rounded-2xl p-3 flex items-center gap-3 active:scale-95 transition-all text-left"
+                    style={{ background: hw.aiGenerated ? 'rgba(94,92,230,0.3)' : 'rgba(255,255,255,0.2)', border: hw.aiGenerated ? '1px solid rgba(94,92,230,0.5)' : 'none' }}
+                  >
+                    <span className="text-2xl">{hw.aiGenerated ? '✨' : '📝'}</span>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <div className="text-white font-black text-sm">{hw.title}</div>
+                        {hw.aiGenerated && <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(94,92,230,0.5)', color: '#E0D7FF' }}>✨ AI</span>}
+                      </div>
+                      {hw.description && <div className="text-white/70 text-xs font-bold mt-0.5 leading-tight">{hw.description}</div>}
+                      <div className="text-white/80 text-xs font-bold mt-0.5">Due: {hw.dueDate} · ⭐ {hw.starsReward}</div>
                     </div>
-                    {hw.description && <div className="text-white/70 text-xs font-bold mt-0.5 leading-tight">{hw.description}</div>}
-                    <div className="text-white/80 text-xs font-bold mt-0.5">Due: {hw.dueDate} · ⭐ {hw.starsReward}</div>
-                  </div>
-                  <span className="text-white/70">{hw.aiGenerated ? '🤖' : '→'}</span>
-                </button>
+                    <span className="text-white/70">{hw.aiGenerated ? '🤖' : '→'}</span>
+                  </button>
+                  <button
+                    onClick={() => handleMarkDone(hw.id)}
+                    disabled={markingDone === hw.id}
+                    className="mt-1 w-full py-1.5 rounded-xl text-xs font-black active:scale-95 transition-all disabled:opacity-50"
+                    style={{ background: 'rgba(48,209,88,0.2)', color: '#30D158' }}
+                  >
+                    {markingDone === hw.id ? '…' : '✅ Mark Done'}
+                  </button>
+                </div>
               ))}
             </div>
           </div>
@@ -278,6 +301,32 @@ export default function ChildPage() {
           </div>
         </div>
       </div>
+
+      {/* Badge celebration modal */}
+      {celebrationBadges.length > 0 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-6" style={{ background: 'rgba(0,0,0,0.8)' }}>
+          <div className="w-full max-w-[340px] rounded-3xl p-6 text-center" style={{ background: 'linear-gradient(135deg, #1a0a3a, #2d1b69)' }}>
+            <div className="text-5xl mb-3 animate-bounce">🎉</div>
+            <div className="text-white font-black text-xl mb-1">New Badge{celebrationBadges.length > 1 ? 's' : ''}!</div>
+            <div className="text-white/60 text-sm font-bold mb-5">You earned something special!</div>
+            <div className="flex flex-wrap justify-center gap-4 mb-6">
+              {celebrationBadges.map((b: any) => (
+                <div key={b.type} className="flex flex-col items-center gap-1">
+                  <div className="text-5xl animate-bounce">{b.emoji}</div>
+                  <div className="text-yellow-300 text-xs font-black">{b.label}</div>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => setCelebrationBadges([])}
+              className="w-full py-3 rounded-2xl text-white font-black text-base"
+              style={{ background: 'linear-gradient(135deg, #FFD60A, #FF9F0A)', color: '#000' }}
+            >
+              Awesome! ⭐
+            </button>
+          </div>
+        </div>
+      )}
 
       <style>{`
         .star-badge { background: linear-gradient(135deg, #FFD60A, #FF9F0A); border-radius: 20px; padding: 2px 12px; font-weight: 800; font-size: 13px; color: #000; display: inline-block; box-shadow: 0 2px 8px rgba(255,159,10,0.4); }

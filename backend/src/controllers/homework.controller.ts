@@ -102,11 +102,12 @@ export async function completeHomework(req: Request, res: Response) {
       const hwCount = await prisma.homeworkCompletion.count({
         where: { studentId, done: true },
       })
-      // Award badges (fire-and-forget)
-      checkAndAwardBadges(studentId, { hwCount }).catch(() => {})
+      // Award badges and include in response
+      const newBadges = await checkAndAwardBadges(studentId, { hwCount }).catch(() => [])
+      return res.json({ ...completion, starsAwarded: stars, newBadges })
     }
 
-    return res.json({ ...completion, starsAwarded: stars })
+    return res.json({ ...completion, starsAwarded: stars, newBadges: [] })
   } catch (err) {
     console.error('completeHomework error:', err)
     return res.status(500).json({ error: 'Failed to complete homework' })
