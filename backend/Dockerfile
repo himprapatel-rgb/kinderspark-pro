@@ -10,4 +10,4 @@ RUN npm run build
 RUN npm prune --production
 
 EXPOSE 4000
-CMD npx prisma migrate deploy && node dist/app.js
+CMD sh -c "npx prisma migrate deploy 2>/dev/null || true; node dist/app.js"
