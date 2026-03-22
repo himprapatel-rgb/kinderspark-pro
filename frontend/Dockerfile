@@ -6,6 +6,7 @@ RUN npm install
 
 COPY . .
 RUN npm run build
+RUN mkdir -p public
 
 FROM node:20-alpine AS runner
 WORKDIR /app
