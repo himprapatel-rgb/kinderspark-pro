@@ -151,7 +151,7 @@ Browser
 ### AI / External
 | Service | Purpose |
 |---------|---------|
-| Anthropic Claude (`claude-sonnet-4-20250514`) | AI lesson generation, weekly reports, tutor feedback |
+| Anthropic Claude (`claude-sonnet-4-6`) | AI lesson generation, weekly reports, tutor feedback |
 
 ### DevOps
 | Tool | Purpose |

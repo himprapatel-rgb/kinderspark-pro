@@ -1,6 +1,7 @@
 import './globals.css';
 import type { ReactNode } from 'react';
 import type { Metadata } from 'next';
+import AccessibilityProvider from '@/components/AccessibilityProvider';
 
 export const metadata: Metadata = {
   title: 'KinderSpark Pro',
@@ -11,7 +12,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body className="font-kid bg-gradient-to-b from-spark-yellow/10 to-white min-h-screen">
-        {children}
+        <AccessibilityProvider>
+          {children}
+        </AccessibilityProvider>
       </body>
     </html>
   );
