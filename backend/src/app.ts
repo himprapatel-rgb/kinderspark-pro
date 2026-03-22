@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
+import cookieParser from 'cookie-parser'
 import { rateLimiter } from './middleware/rateLimit.middleware'
 import { cache } from './middleware/cache.middleware'
 import { authenticate } from './middleware/auth.middleware'
@@ -27,6 +28,7 @@ app.use(cors({
   credentials: true
 }))
 app.use(express.json())
+app.use(cookieParser())
 app.use(rateLimiter)
 app.use(authenticate)
 
