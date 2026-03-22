@@ -39,3 +39,27 @@ export async function generateTutorFeedback(correct: number, total: number, topi
   })
   return msg.content.map((b: any) => b.text || '').join('').trim()
 }
+
+export async function generateRecommendations(
+  name: string,
+  stars: number,
+  progressSummary: string,
+  sessionSummary: string
+): Promise<Array<{ title: string; reason: string; moduleId: string }>> {
+  const msg = await anthropic.messages.create({
+    model: MODEL,
+    max_tokens: 400,
+    messages: [{
+      role: 'user',
+      content: `You are a kindergarten learning advisor. Based on this student data:
+Name: ${name}, Stars: ${stars}
+Progress: ${progressSummary || 'none yet'}
+Recent AI sessions: ${sessionSummary || 'none yet'}
+
+Recommend exactly 3 learning activities. Choose from these moduleIds: numbers, numbers2, alphabet, sightwords, colors, shapes, animals.
+Respond ONLY with valid JSON array: [{"title":"Learn Colors","reason":"Short encouraging reason (max 10 words)","moduleId":"colors"}]`
+    }]
+  })
+  const text = msg.content.map((b: any) => b.text || '').join('').replace(/```json|```/g, '').trim()
+  return JSON.parse(text)
+}

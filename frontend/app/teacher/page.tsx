@@ -6,6 +6,7 @@ import {
   getClasses, getStudents, getHomework, getSyllabuses, getMessages,
   createClass, createStudent, deleteStudent, createHomework, deleteHomework,
   completeHomework, sendMessage, deleteClass, assignSyllabus,
+  getAttendance, saveAttendance, generateReport,
 } from '@/lib/api'
 
 // ─── tiny helpers ─────────────────────────────────────────────────────────────
@@ -13,7 +14,7 @@ const fmt = (d: string) => new Date(d).toLocaleDateString('en-US', { month: 'sho
 
 const AVATARS = ['🦁', '🐼', '🐨', '🦊', '🐸', '🦋', '🐙', '🦄', '🐳', '🦉']
 
-type Tab = 'home' | 'students' | 'homework' | 'syllabus' | 'messages'
+type Tab = 'home' | 'students' | 'homework' | 'syllabus' | 'messages' | 'attendance'
 
 export default function TeacherDashboard() {
   const router = useRouter()
@@ -39,6 +40,11 @@ export default function TeacherDashboard() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [toast, setToast] = useState('')
+  const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().slice(0, 10))
+  const [attendanceRecords, setAttendanceRecords] = useState<Record<string, boolean>>({})
+  const [attendanceLoading, setAttendanceLoading] = useState(false)
+  const [reportText, setReportText] = useState('')
+  const [reportLoading, setReportLoading] = useState(false)
 
   useEffect(() => {
     if (!user) { router.push('/'); return }
@@ -48,6 +54,10 @@ export default function TeacherDashboard() {
   useEffect(() => {
     if (selectedClass) loadClassData(selectedClass.id)
   }, [selectedClass])
+
+  useEffect(() => {
+    if (tab === 'attendance' && selectedClass) loadAttendance()
+  }, [tab, attendanceDate, selectedClass])
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 3000) }
 
@@ -180,12 +190,46 @@ export default function TeacherDashboard() {
   }
 
   const TABS: { id: Tab; emoji: string; label: string }[] = [
-    { id: 'home',     emoji: '🏠', label: 'Home' },
-    { id: 'students', emoji: '👥', label: 'Students' },
-    { id: 'homework', emoji: '📚', label: 'Homework' },
-    { id: 'syllabus', emoji: '📖', label: 'Syllabus' },
-    { id: 'messages', emoji: '💬', label: 'Messages' },
+    { id: 'home',       emoji: '🏠', label: 'Home' },
+    { id: 'students',   emoji: '👥', label: 'Students' },
+    { id: 'homework',   emoji: '📚', label: 'Homework' },
+    { id: 'attendance', emoji: '✅', label: 'Attend' },
+    { id: 'syllabus',   emoji: '📖', label: 'Syllabus' },
+    { id: 'messages',   emoji: '💬', label: 'Messages' },
   ]
+
+  const loadAttendance = async () => {
+    if (!selectedClass) return
+    setAttendanceLoading(true)
+    try {
+      const records = await getAttendance(selectedClass.id, attendanceDate)
+      const map: Record<string, boolean> = {}
+      records.forEach((r: any) => { if (r.present !== null) map[r.studentId] = r.present })
+      setAttendanceRecords(map)
+    } catch {}
+    setAttendanceLoading(false)
+  }
+
+  const saveAttendanceHandler = async () => {
+    if (!selectedClass) return
+    setBusy(true)
+    try {
+      const records = students.map(s => ({ studentId: s.id, present: attendanceRecords[s.id] ?? true }))
+      await saveAttendance(selectedClass.id, attendanceDate, records)
+      showToast('✅ Attendance saved!')
+    } catch (e: any) { showToast('Error: ' + e.message) }
+    setBusy(false)
+  }
+
+  const generateReportHandler = async () => {
+    if (!selectedClass) return
+    setReportLoading(true)
+    try {
+      const res = await generateReport(selectedClass.id)
+      setReportText(res.report)
+    } catch { setReportText('Could not generate report. Try again.') }
+    setReportLoading(false)
+  }
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%)' }}>
@@ -622,6 +666,89 @@ export default function TeacherDashboard() {
                 <div className="text-center text-white/30 font-bold py-8">No messages yet</div>
               )}
             </div>
+          </div>
+        )}
+
+        {/* ── ATTENDANCE TAB ─────────────────────────────────────── */}
+        {tab === 'attendance' && (
+          <div className="p-4 space-y-4">
+            {!selectedClass ? (
+              <div className="text-center text-white/30 font-bold py-10">Select a class first</div>
+            ) : (
+              <>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="date"
+                    value={attendanceDate}
+                    onChange={e => setAttendanceDate(e.target.value)}
+                    className="flex-1 bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white font-bold text-sm outline-none"
+                  />
+                  <button onClick={saveAttendanceHandler} disabled={busy}
+                    className="px-4 py-2.5 rounded-xl text-white font-black text-sm"
+                    style={{ background: '#30D158', opacity: busy ? 0.6 : 1 }}>
+                    Save
+                  </button>
+                </div>
+
+                {attendanceLoading ? (
+                  <div className="text-center text-white/40 font-bold py-8">Loading...</div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center mb-3">
+                      <div className="text-white/60 text-xs font-bold">
+                        {students.filter(s => attendanceRecords[s.id] !== false).length}/{students.length} Present
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={() => {
+                          const all: Record<string, boolean> = {}
+                          students.forEach(s => { all[s.id] = true })
+                          setAttendanceRecords(all)
+                        }} className="text-green-400 text-xs font-bold bg-green-400/10 rounded-full px-3 py-1">All Present</button>
+                        <button onClick={() => {
+                          const all: Record<string, boolean> = {}
+                          students.forEach(s => { all[s.id] = false })
+                          setAttendanceRecords(all)
+                        }} className="text-red-400 text-xs font-bold bg-red-400/10 rounded-full px-3 py-1">All Absent</button>
+                      </div>
+                    </div>
+                    {students.map(s => {
+                      const present = attendanceRecords[s.id] !== false
+                      return (
+                        <button key={s.id}
+                          onClick={() => setAttendanceRecords(prev => ({ ...prev, [s.id]: !present }))}
+                          className="w-full flex items-center gap-3 rounded-2xl p-3 transition-all active:scale-95"
+                          style={{ background: present ? 'rgba(48,209,88,0.15)' : 'rgba(255,69,58,0.15)', border: `1.5px solid ${present ? '#30D15840' : '#FF453A40'}` }}>
+                          <div className="text-2xl">{s.avatar}</div>
+                          <div className="flex-1 text-left">
+                            <div className="text-white font-black text-sm">{s.name}</div>
+                          </div>
+                          <div className={`font-black text-sm ${present ? 'text-green-400' : 'text-red-400'}`}>
+                            {present ? '✓ Present' : '✗ Absent'}
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+
+                {/* AI Weekly Report */}
+                <div className="rounded-2xl p-4 mt-4" style={{ background: 'rgba(94,92,230,0.1)', border: '1px solid #5E5CE630' }}>
+                  <div className="flex justify-between items-center mb-3">
+                    <div className="text-white font-black text-sm">🤖 AI Weekly Report</div>
+                    <button onClick={generateReportHandler} disabled={reportLoading}
+                      className="px-3 py-1.5 rounded-xl text-white font-black text-xs"
+                      style={{ background: '#5E5CE6', opacity: reportLoading ? 0.6 : 1 }}>
+                      {reportLoading ? 'Generating...' : 'Generate'}
+                    </button>
+                  </div>
+                  {reportText ? (
+                    <div className="text-white/70 text-sm leading-relaxed">{reportText}</div>
+                  ) : (
+                    <div className="text-white/30 text-xs font-bold">Generate an AI summary of this class's weekly progress.</div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>

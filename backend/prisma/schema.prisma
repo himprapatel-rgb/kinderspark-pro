@@ -24,8 +24,9 @@ model Class {
   students   Student[]
   homework   Homework[]
   messages   Message[]
-  syllabuses ClassSyllabus[]
-  createdAt  DateTime        @default(now())
+  syllabuses  ClassSyllabus[]
+  attendance  Attendance[]
+  createdAt   DateTime        @default(now())
 }
 
 model Student {
@@ -49,6 +50,7 @@ model Student {
   completions   HomeworkCompletion[]
   aiSessionLogs AISession[]
   feedback      Feedback?
+  attendance    Attendance[]
   createdAt     DateTime             @default(now())
 }
 
@@ -173,5 +175,28 @@ model Admin {
   name      String
   pin       String   @unique
   schoolId  String?
+  createdAt DateTime @default(now())
+}
+
+model Attendance {
+  id        String   @id @default(cuid())
+  classId   String
+  studentId String
+  date      String
+  present   Boolean  @default(true)
+  note      String?
+  class     Class    @relation(fields: [classId], references: [id])
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([classId, studentId, date])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  role      String
+  expiresAt DateTime
   createdAt DateTime @default(now())
 }
