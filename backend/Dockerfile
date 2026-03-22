@@ -9,9 +9,8 @@ COPY . .
 RUN npx prisma generate
 RUN npm run build
 
-# NOTE: no npm prune — prisma CLI must be available at runtime for migrations
+# NOTE: no npm prune -- prisma CLI must be available at runtime for migrations
 
 EXPOSE 4000
-COPY entrypoint.sh ./entrypoint.sh
-RUN chmod +x entrypoint.sh
-CMD ["./entrypoint.sh"]
+
+CMD sh -c "npx prisma migrate deploy && node dist/app.js"
