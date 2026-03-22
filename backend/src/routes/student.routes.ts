@@ -31,6 +31,7 @@ router.get('/:id', async (req: Request, res: Response) => {
         feedback: true,
         aiSessionLogs: { orderBy: { createdAt: 'desc' }, take: 10 },
         class: true,
+        badges: { orderBy: { earnedAt: 'desc' } },
       },
     })
     if (!student) return res.status(404).json({ error: 'Student not found' })
