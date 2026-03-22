@@ -13,6 +13,15 @@ try {
   console.error('==> Migration failed:', e.message);
 }
 
+// Run seed (uses upsert so safe to run multiple times)
+try {
+  console.log('==> Running prisma db seed...');
+  execSync('npx prisma db seed', { stdio: 'inherit' });
+  console.log('==> Seed complete');
+} catch (e) {
+  console.error('==> Seed failed:', e.message);
+}
+
 // Start the server
 console.log('==> Starting app...');
 try {
