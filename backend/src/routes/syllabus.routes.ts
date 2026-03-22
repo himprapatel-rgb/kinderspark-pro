@@ -1,11 +1,15 @@
 import { Router } from 'express'
 import { listSyllabuses, getSyllabus, createSyllabus, updateSyllabus, deleteSyllabus, publishSyllabus, assignSyllabus } from '../controllers/syllabus.controller'
+import { requireAuth, requireRole } from '../middleware/auth.middleware'
+
 const router = Router()
-router.get('/', listSyllabuses)
-router.get('/:id', getSyllabus)
-router.post('/', createSyllabus)
-router.put('/:id', updateSyllabus)
-router.delete('/:id', deleteSyllabus)
-router.post('/:id/publish', publishSyllabus)
-router.post('/:id/assign', assignSyllabus)
+
+router.get('/', requireAuth, listSyllabuses)
+router.get('/:id', requireAuth, getSyllabus)
+router.post('/', requireRole('teacher', 'admin'), createSyllabus)
+router.put('/:id', requireRole('teacher', 'admin'), updateSyllabus)
+router.delete('/:id', requireRole('teacher', 'admin'), deleteSyllabus)
+router.post('/:id/publish', requireRole('teacher', 'admin'), publishSyllabus)
+router.post('/:id/assign', requireRole('teacher', 'admin'), assignSyllabus)
+
 export default router

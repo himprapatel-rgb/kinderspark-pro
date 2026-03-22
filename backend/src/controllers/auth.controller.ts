@@ -1,5 +1,6 @@
 import { Request, Response } from 'express'
 import jwt from 'jsonwebtoken'
+import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
 import prisma from '../prisma/client'
 import { checkAndAwardBadges } from '../services/badge.service'
@@ -37,7 +38,8 @@ export async function verifyPin(req: Request, res: Response) {
 
   try {
     if (role === 'teacher') {
-      const teacher = await prisma.teacher.findUnique({ where: { pin } })
+      const teachers = await prisma.teacher.findMany()
+      const teacher = (await Promise.all(teachers.map(async t => (await bcrypt.compare(pin, t.pin)) ? t : null))).find(Boolean) ?? null
       if (!teacher) return res.status(401).json({ error: 'Wrong PIN' })
       const token = jwt.sign({ id: teacher.id, role: 'teacher', name: teacher.name }, JWT_SECRET, { expiresIn: ACCESS_TOKEN_TTL })
       const refreshToken = await issueRefreshToken(teacher.id, 'teacher')
@@ -46,7 +48,8 @@ export async function verifyPin(req: Request, res: Response) {
     }
 
     if (role === 'admin') {
-      const admin = await prisma.admin.findUnique({ where: { pin } })
+      const admins = await prisma.admin.findMany()
+      const admin = (await Promise.all(admins.map(async a => (await bcrypt.compare(pin, a.pin)) ? a : null))).find(Boolean) ?? null
       if (!admin) return res.status(401).json({ error: 'Wrong PIN' })
       const token = jwt.sign({ id: admin.id, role: 'admin', name: admin.name }, JWT_SECRET, { expiresIn: ACCESS_TOKEN_TTL })
       const refreshToken = await issueRefreshToken(admin.id, 'admin')
@@ -55,10 +58,10 @@ export async function verifyPin(req: Request, res: Response) {
     }
 
     // child or parent
-    const student = await prisma.student.findUnique({
-      where: { pin },
+    const students = await prisma.student.findMany({
       include: { class: true, progress: true, feedback: true }
     })
+    const student = (await Promise.all(students.map(async s => (await bcrypt.compare(pin, s.pin)) ? s : null))).find(Boolean) ?? null
     if (!student) return res.status(401).json({ error: 'Wrong PIN' })
 
     // Compute streak: +1 if last login was yesterday, reset to 1 if gap > 1 day, keep if same day

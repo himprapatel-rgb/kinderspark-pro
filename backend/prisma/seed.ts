@@ -1,4 +1,7 @@
 import prisma from '../src/prisma/client'
+import bcrypt from 'bcryptjs'
+
+const SALT_ROUNDS = 10
 
 async function main() {
   console.log('🌱 Seeding database...')
@@ -12,18 +15,20 @@ async function main() {
   console.log('✅ School:', school.name)
 
   // Create teacher
+  const teacherPinHash = await bcrypt.hash('1234', SALT_ROUNDS)
   const teacher = await prisma.teacher.upsert({
-    where: { pin: '1234' },
-    update: { name: 'Ms. Sarah Johnson', schoolId: school.id },
-    create: { id: 'teacher-001', name: 'Ms. Sarah Johnson', pin: '1234', schoolId: school.id },
+    where: { id: 'teacher-001' },
+    update: { name: 'Ms. Sarah Johnson', pin: teacherPinHash, schoolId: school.id },
+    create: { id: 'teacher-001', name: 'Ms. Sarah Johnson', pin: teacherPinHash, schoolId: school.id },
   })
   console.log('✅ Teacher:', teacher.name)
 
   // Create admin
+  const adminPinHash = await bcrypt.hash('9999', SALT_ROUNDS)
   await prisma.admin.upsert({
-    where: { pin: '9999' },
-    update: { name: 'Admin', schoolId: school.id },
-    create: { id: 'admin-001', name: 'Admin', pin: '9999', schoolId: school.id },
+    where: { id: 'admin-001' },
+    update: { name: 'Admin', pin: adminPinHash, schoolId: school.id },
+    create: { id: 'admin-001', name: 'Admin', pin: adminPinHash, schoolId: school.id },
   })
   console.log('✅ Admin created')
 
@@ -45,11 +50,12 @@ async function main() {
   ]
 
   for (const s of studentsData) {
+    const pinHash = await bcrypt.hash(s.pin, SALT_ROUNDS)
     const student = await prisma.student.upsert({
-      where: { pin: s.pin },
-      update: { name: s.name, age: s.age, avatar: s.avatar, stars: s.stars, streak: s.streak, classId: cls.id, aiSessions: s.aiSessions, aiStars: s.aiStars, aiBestLevel: s.aiBestLevel },
+      where: { id: s.id },
+      update: { name: s.name, age: s.age, avatar: s.avatar, pin: pinHash, stars: s.stars, streak: s.streak, classId: cls.id, aiSessions: s.aiSessions, aiStars: s.aiStars, aiBestLevel: s.aiBestLevel },
       create: {
-        id: s.id, name: s.name, age: s.age, avatar: s.avatar, pin: s.pin,
+        id: s.id, name: s.name, age: s.age, avatar: s.avatar, pin: pinHash,
         stars: s.stars, streak: s.streak, classId: cls.id,
         aiSessions: s.aiSessions, aiStars: s.aiStars, aiBestLevel: s.aiBestLevel,
         ownedItems: ['av_def', 'th_def'],

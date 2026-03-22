@@ -1,7 +1,9 @@
 import { Router, Request, Response } from 'express'
 import prisma from '../prisma/client'
+import { requireRole } from '../middleware/auth.middleware'
 
 const router = Router()
+router.use(requireRole('admin'))
 
 // GET /api/admin/stats — school-wide stats
 router.get('/stats', async (_req: Request, res: Response) => {

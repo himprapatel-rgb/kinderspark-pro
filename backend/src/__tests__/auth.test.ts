@@ -5,9 +5,9 @@ import express from 'express'
 // Note: jest.mock is hoisted so we must not reference outer vars in the factory.
 // We expose `__mockPrisma` via the factory itself.
 
-const mockPrismaTeacher = { findUnique: jest.fn() }
-const mockPrismaAdmin = { findUnique: jest.fn() }
-const mockPrismaStudent = { findUnique: jest.fn(), update: jest.fn() }
+const mockPrismaTeacher = { findMany: jest.fn() }
+const mockPrismaAdmin = { findMany: jest.fn() }
+const mockPrismaStudent = { findMany: jest.fn(), update: jest.fn() }
 const mockPrismaRefreshToken = {
   create: jest.fn(),
   findUnique: jest.fn(),
@@ -23,6 +23,11 @@ jest.mock('../prisma/client', () => ({
     student: mockPrismaStudent,
     refreshToken: mockPrismaRefreshToken,
   },
+}))
+
+// Mock bcryptjs: compare succeeds when plain === hash (tests use plaintext pins as "hashes")
+jest.mock('bcryptjs', () => ({
+  compare: jest.fn((plain: string, hash: string) => Promise.resolve(plain === hash)),
 }))
 
 // ── JWT mock ──────────────────────────────────────────────────────────────────
@@ -65,7 +70,7 @@ describe('Auth Controller – POST /api/auth/pin', () => {
 
   it('returns 200 with accessToken for valid teacher PIN', async () => {
     const fakeTeacher = { id: 'teacher-1', name: 'Ms Smith', pin: '1234' }
-    mockPrismaTeacher.findUnique.mockResolvedValue(fakeTeacher)
+    mockPrismaTeacher.findMany.mockResolvedValue([fakeTeacher])
     mockPrismaRefreshToken.create.mockResolvedValue({})
     mockJwtSign.mockReturnValue('fake.access.token')
 
@@ -81,7 +86,8 @@ describe('Auth Controller – POST /api/auth/pin', () => {
   })
 
   it('returns 401 for invalid teacher PIN', async () => {
-    mockPrismaTeacher.findUnique.mockResolvedValue(null)
+    const fakeTeacher = { id: 'teacher-1', name: 'Ms Smith', pin: '1234' }
+    mockPrismaTeacher.findMany.mockResolvedValue([fakeTeacher])
 
     const res = await request(app)
       .post('/api/auth/pin')
@@ -110,7 +116,7 @@ describe('Auth Controller – POST /api/auth/pin', () => {
 
   it('returns 200 with accessToken for valid admin PIN', async () => {
     const fakeAdmin = { id: 'admin-1', name: 'Admin User', pin: '9999' }
-    mockPrismaAdmin.findUnique.mockResolvedValue(fakeAdmin)
+    mockPrismaAdmin.findMany.mockResolvedValue([fakeAdmin])
     mockPrismaRefreshToken.create.mockResolvedValue({})
     mockJwtSign.mockReturnValue('fake.admin.token')
 
@@ -129,11 +135,13 @@ describe('Auth Controller – POST /api/auth/pin', () => {
       name: 'Ali',
       pin: '5678',
       stars: 10,
+      streak: 0,
+      lastLoginAt: null,
       class: { id: 'class-1' },
       progress: [],
       feedback: null,
     }
-    mockPrismaStudent.findUnique.mockResolvedValue(fakeStudent)
+    mockPrismaStudent.findMany.mockResolvedValue([fakeStudent])
     mockPrismaStudent.update.mockResolvedValue(fakeStudent)
     mockPrismaRefreshToken.create.mockResolvedValue({})
     mockJwtSign.mockReturnValue('fake.child.token')
@@ -148,7 +156,8 @@ describe('Auth Controller – POST /api/auth/pin', () => {
   })
 
   it('returns 401 for invalid child PIN', async () => {
-    mockPrismaStudent.findUnique.mockResolvedValue(null)
+    const fakeStudent = { id: 'student-1', name: 'Ali', pin: '5678', streak: 0, lastLoginAt: null, class: {}, progress: [], feedback: null }
+    mockPrismaStudent.findMany.mockResolvedValue([fakeStudent])
 
     const res = await request(app)
       .post('/api/auth/pin')
