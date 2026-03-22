@@ -3,7 +3,7 @@ name: Deploy Backend → Railway
 on:
   push:
     branches: [main]
-    paths: ['backend/**']
+    paths: ['backend/**', '.github/workflows/deploy-backend.yml']
   workflow_dispatch:
 
 jobs:
