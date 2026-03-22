@@ -34,7 +34,7 @@ model Student {
   name          String
   age           Int                  @default(5)
   avatar        String               @default("👧")
-  pin           String               @unique
+  pin           String
   stars         Int                  @default(0)
   streak        Int                  @default(0)
   grade         String?
@@ -180,7 +180,7 @@ model AISession {
 model Teacher {
   id        String   @id @default(cuid())
   name      String
-  pin       String   @unique
+  pin       String
   schoolId  String?
   createdAt DateTime @default(now())
 }
@@ -188,7 +188,7 @@ model Teacher {
 model Admin {
   id        String   @id @default(cuid())
   name      String
-  pin       String   @unique
+  pin       String
   schoolId  String?
   createdAt DateTime @default(now())
 }

@@ -1,13 +1,16 @@
 import { Request, Response } from 'express'
 import { generateLesson, generateTutorFeedback, generateRecommendations, generateHomeworkIdea, generateStudentReport, generateSyllabusAI } from '../services/claude.service'
 import { buildClassReport } from '../services/report.service'
+import { sanitizePromptInput } from '../utils/sanitize'
 import prisma from '../prisma/client'
 
 export async function aiGenerateLesson(req: Request, res: Response) {
   const { topic, count = 10 } = req.body
   if (!topic) return res.status(400).json({ error: 'topic required' })
+  const safeTopic = sanitizePromptInput(topic)
+  if (!safeTopic) return res.status(400).json({ error: 'topic required' })
   try {
-    const items = await generateLesson(topic, count)
+    const items = await generateLesson(safeTopic, count)
     return res.json({ items })
   } catch (err) {
     return res.status(500).json({ error: 'AI generation failed', items: [] })
@@ -28,7 +31,8 @@ export async function aiWeeklyReport(req: Request, res: Response) {
 export async function aiTutorFeedback(req: Request, res: Response) {
   const { correct, total, topic, maxLevel } = req.body
   try {
-    const feedback = await generateTutorFeedback(correct, total, topic, maxLevel)
+    const safeTopic = sanitizePromptInput(topic)
+    const feedback = await generateTutorFeedback(correct, total, safeTopic, maxLevel)
     return res.json({ feedback })
   } catch {
     return res.json({ feedback: 'Amazing effort today! Keep practicing every day and you will be a superstar! 🌟' })
@@ -38,8 +42,11 @@ export async function aiTutorFeedback(req: Request, res: Response) {
 export async function aiAutoSyllabus(req: Request, res: Response) {
   const { topic, grade = 'KG 1', count = 10, classId } = req.body
   if (!topic) return res.status(400).json({ error: 'topic required' })
+  const safeTopic = sanitizePromptInput(topic)
+  const safeGrade = sanitizePromptInput(grade, 20)
+  if (!safeTopic) return res.status(400).json({ error: 'topic required' })
   try {
-    const generated = await generateSyllabusAI(topic, grade, Number(count))
+    const generated = await generateSyllabusAI(safeTopic, safeGrade, Number(count))
     const syllabus = await prisma.syllabus.create({
       data: {
         title: generated.title,
@@ -112,13 +119,16 @@ export async function aiSendParentReports(req: Request, res: Response) {
 export async function aiGenerateHomework(req: Request, res: Response) {
   const { topic, grade = 'KG 1', classId } = req.body
   if (!topic) return res.status(400).json({ error: 'topic required' })
+  const safeTopic = sanitizePromptInput(topic)
+  const safeGrade = sanitizePromptInput(grade, 20)
+  if (!safeTopic) return res.status(400).json({ error: 'topic required' })
   try {
     // Get student count for context if classId is provided
     let studentCount = 10
     if (classId) {
       studentCount = await prisma.student.count({ where: { classId } })
     }
-    const idea = await generateHomeworkIdea(topic, grade, studentCount)
+    const idea = await generateHomeworkIdea(safeTopic, safeGrade, studentCount)
     return res.json(idea)
   } catch (err) {
     console.error('AI homework generation failed:', err)

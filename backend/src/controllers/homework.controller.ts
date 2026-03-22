@@ -73,7 +73,10 @@ export async function deleteHomework(req: Request, res: Response) {
 export async function completeHomework(req: Request, res: Response) {
   try {
     const { id } = req.params
-    const { studentId } = req.body
+    // Child users can only complete homework for themselves; teachers/admins may supply studentId
+    const studentId = req.user?.role === 'child'
+      ? req.user.id
+      : (req.body.studentId || req.user?.id)
     if (!studentId) return res.status(400).json({ error: 'studentId required' })
 
     const hw = await prisma.homework.findUnique({ where: { id } })

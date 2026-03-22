@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
+import helmet from 'helmet'
 import cookieParser from 'cookie-parser'
 import { rateLimiter } from './middleware/rateLimit.middleware'
 import { cache } from './middleware/cache.middleware'
@@ -23,11 +24,23 @@ import feedbackRoutes from './routes/feedback'
 
 const app = express()
 
+app.use(helmet({
+  crossOriginEmbedderPolicy: false, // Allow SSE without COEP issues
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:'],
+      connectSrc: ["'self'", process.env.FRONTEND_URL || 'http://localhost:3000'],
+    },
+  },
+}))
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true
 }))
-app.use(express.json())
+app.use(express.json({ limit: '1mb' }))
 app.use(cookieParser())
 app.use(rateLimiter)
 app.use(authenticate)

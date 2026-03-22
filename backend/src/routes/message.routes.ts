@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express'
 import jwt from 'jsonwebtoken'
 import prisma from '../prisma/client'
 import type { AuthUser } from '../middleware/auth.middleware'
+import { requireAuth } from '../middleware/auth.middleware'
 
 const router = Router()
 
@@ -149,16 +150,17 @@ router.get('/unread-count', async (req: Request, res: Response) => {
 })
 
 // ── POST /api/messages ────────────────────────────────────────────────────────
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', requireAuth, async (req: Request, res: Response) => {
   try {
-    const { from, fromId, to, subject, body, classId } = req.body
+    const { from, to, subject, body, classId } = req.body
     if (!from || !to || !subject || !body) {
       return res.status(400).json({ error: 'from, to, subject, and body are required' })
     }
+    // Always use the authenticated user's id — never trust client-supplied fromId
     const message = await prisma.message.create({
       data: {
         from,
-        fromId: fromId || null,
+        fromId: req.user!.id,
         to,
         subject,
         body,
