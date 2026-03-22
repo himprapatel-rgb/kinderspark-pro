@@ -19,11 +19,17 @@ declare global {
 
 export function authenticate(req: Request, _res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  const bearerToken = authHeader && authHeader.startsWith('Bearer ')
+    ? authHeader.slice(7)
+    : null
+
+  const tokenFromCookie = req.cookies?.kinderspark_token
+  const token = bearerToken || tokenFromCookie
+
+  if (!token) {
     return next()
   }
 
-  const token = authHeader.slice(7)
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as AuthUser
     req.user = decoded

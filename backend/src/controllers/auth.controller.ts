@@ -14,6 +14,22 @@ async function issueRefreshToken(userId: string, role: string): Promise<string> 
   return token
 }
 
+function setAuthCookies(res: Response, accessToken: string, refreshToken: string) {
+  res.cookie('kinderspark_token', accessToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 2 * 60 * 60 * 1000 // 2 hours
+  })
+  res.cookie('kinderspark_refresh', refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/api/auth/refresh',
+    maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+  })
+}
+
 export async function verifyPin(req: Request, res: Response) {
   const { pin, role } = req.body
   if (!pin || !role) return res.status(400).json({ error: 'pin and role required' })
@@ -24,6 +40,7 @@ export async function verifyPin(req: Request, res: Response) {
       if (!teacher) return res.status(401).json({ error: 'Wrong PIN' })
       const token = jwt.sign({ id: teacher.id, role: 'teacher', name: teacher.name }, JWT_SECRET, { expiresIn: ACCESS_TOKEN_TTL })
       const refreshToken = await issueRefreshToken(teacher.id, 'teacher')
+      setAuthCookies(res, token, refreshToken)
       return res.json({ success: true, role: 'teacher', token, refreshToken, user: { id: teacher.id, name: teacher.name } })
     }
 
@@ -32,6 +49,7 @@ export async function verifyPin(req: Request, res: Response) {
       if (!admin) return res.status(401).json({ error: 'Wrong PIN' })
       const token = jwt.sign({ id: admin.id, role: 'admin', name: admin.name }, JWT_SECRET, { expiresIn: ACCESS_TOKEN_TTL })
       const refreshToken = await issueRefreshToken(admin.id, 'admin')
+      setAuthCookies(res, token, refreshToken)
       return res.json({ success: true, role: 'admin', token, refreshToken, user: { id: admin.id, name: admin.name } })
     }
 
@@ -44,6 +62,7 @@ export async function verifyPin(req: Request, res: Response) {
     await prisma.student.update({ where: { id: student.id }, data: { lastLoginAt: new Date() } })
     const token = jwt.sign({ id: student.id, role, name: student.name }, JWT_SECRET, { expiresIn: ACCESS_TOKEN_TTL })
     const refreshToken = await issueRefreshToken(student.id, role)
+    setAuthCookies(res, token, refreshToken)
     return res.json({ success: true, role, token, refreshToken, user: { ...student, lastLoginAt: new Date() } })
   } catch (err) {
     return res.status(500).json({ error: 'Server error' })
@@ -68,6 +87,7 @@ export async function refreshAccessToken(req: Request, res: Response) {
     await prisma.refreshToken.delete({ where: { id: record.id } })
     const newRefreshToken = await issueRefreshToken(record.userId, record.role)
 
+    setAuthCookies(res, token, newRefreshToken)
     return res.json({ token, refreshToken: newRefreshToken })
   } catch (err) {
     return res.status(500).json({ error: 'Server error' })
@@ -79,8 +99,12 @@ export async function revokeRefreshToken(req: Request, res: Response) {
   if (!refreshToken) return res.status(400).json({ error: 'refreshToken required' })
   try {
     await prisma.refreshToken.deleteMany({ where: { token: refreshToken } })
+    res.clearCookie('kinderspark_token')
+    res.clearCookie('kinderspark_refresh')
     return res.json({ success: true })
   } catch {
+    res.clearCookie('kinderspark_token')
+    res.clearCookie('kinderspark_refresh')
     return res.json({ success: true })
   }
 }
