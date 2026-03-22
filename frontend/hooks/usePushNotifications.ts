@@ -32,7 +32,7 @@ export function usePushNotifications(studentId?: string) {
       await fetch(`${process.env.NEXT_PUBLIC_API_URL}/students/${studentId}/push-token`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ pushToken: JSON.stringify(sub) })
+        body: JSON.stringify({ token: JSON.stringify(sub) })
       });
     }
   }
