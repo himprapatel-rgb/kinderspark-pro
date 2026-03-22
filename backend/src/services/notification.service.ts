@@ -1,53 +1,59 @@
-import prisma from '../prisma/client'
+import webpush from 'web-push';
 
-const ONESIGNAL_APP_ID  = process.env.ONESIGNAL_APP_ID
-const ONESIGNAL_API_KEY = process.env.ONESIGNAL_REST_API_KEY
+// VAPID keys - generate once, store in env
+const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || '';
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || '';
+
+if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(
+    'mailto:admin@kinderspark.app',
+    VAPID_PUBLIC_KEY,
+    VAPID_PRIVATE_KEY
+  );
+}
+
+interface PushPayload {
+  title: string;
+  body: string;
+  url?: string;
+}
 
 export async function sendPushNotification(
-  title: string,
-  body: string,
-  studentId?: string
+  subscription: string,
+  payload: PushPayload
 ): Promise<void> {
-  // Always log locally (useful in dev / when OneSignal not configured)
-  console.log(`[Push] ${title}: ${body}${studentId ? ` → ${studentId}` : ''}`)
-
-  if (!ONESIGNAL_APP_ID || !ONESIGNAL_API_KEY) return
-
-  // Resolve optional push token stored on the student record
-  let externalId = studentId // default: use studentId as external_user_id
-  if (studentId) {
-    try {
-      const s = await prisma.student.findUnique({
-        where: { id: studentId },
-        select: { pushToken: true },
-      })
-      if (s?.pushToken) externalId = s.pushToken
-    } catch { /* non-fatal */ }
+  if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+    console.warn('[Push] VAPID keys not configured, skipping push notification');
+    return;
   }
-
-  const payload: Record<string, any> = {
-    app_id:   ONESIGNAL_APP_ID,
-    headings: { en: title },
-    contents: { en: body },
-  }
-
-  if (externalId) {
-    payload.include_external_user_ids = [externalId]
-  } else {
-    payload.included_segments = ['All']
-  }
-
   try {
-    const res = await fetch('https://onesignal.com/api/v1/notifications', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Basic ${ONESIGNAL_API_KEY}`,
-      },
-      body: JSON.stringify(payload),
-    })
-    if (!res.ok) console.error('[OneSignal]', await res.text())
+    const sub = JSON.parse(subscription);
+    await webpush.sendNotification(sub, JSON.stringify(payload));
   } catch (err) {
-    console.error('[OneSignal] network error:', err)
+    console.error('[Push] Failed to send notification:', err);
   }
+}
+
+export async function sendHomeworkReminder(
+  pushToken: string,
+  studentName: string,
+  homeworkTitle: string
+): Promise<void> {
+  await sendPushNotification(pushToken, {
+    title: `📚 Homework reminder for ${studentName}`,
+    body: `"${homeworkTitle}" is due soon!`,
+    url: '/child'
+  });
+}
+
+export async function sendGradeNotification(
+  pushToken: string,
+  studentName: string,
+  grade: string
+): Promise<void> {
+  await sendPushNotification(pushToken, {
+    title: `⭐ New grade for ${studentName}`,
+    body: `Your teacher gave a grade of ${grade}`,
+    url: '/parent'
+  });
 }

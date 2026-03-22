@@ -14,6 +14,7 @@ import progressRoutes from './routes/progress.routes'
 import aiRoutes from './routes/ai.routes'
 import adminRoutes from './routes/admin.routes'
 import attendanceRoutes from './routes/attendance'
+import pushRoutes from './routes/push.routes'
 // keep backward-compat routes
 import classRoutes from './routes/classes'
 import aiSessionRoutes from './routes/aiSessions'
@@ -41,6 +42,7 @@ app.use('/api/progress', progressRoutes)
 app.use('/api/ai', aiRoutes)
 app.use('/api/admin', cache(30), adminRoutes)
 app.use('/api/attendance', attendanceRoutes)
+app.use('/api/push', pushRoutes)
 app.use('/api/classes', cache(30), classRoutes)
 app.use('/api/ai-sessions', aiSessionRoutes)
 app.use('/api/feedback', feedbackRoutes)

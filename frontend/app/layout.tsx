@@ -2,6 +2,7 @@ import './globals.css';
 import type { ReactNode } from 'react';
 import type { Metadata } from 'next';
 import AccessibilityProvider from '@/components/AccessibilityProvider';
+import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
 
 export const metadata: Metadata = {
   title: 'KinderSpark Pro',
@@ -11,10 +12,17 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#5E5CE6" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+      </head>
       <body className="font-kid bg-gradient-to-b from-spark-yellow/10 to-white min-h-screen">
         <AccessibilityProvider>
           {children}
         </AccessibilityProvider>
+        <ServiceWorkerRegistration />
       </body>
     </html>
   );
