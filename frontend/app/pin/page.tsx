@@ -4,11 +4,11 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { verifyPin } from '@/lib/api'
 import { useAppStore } from '@/store/appStore'
 
-const ROLE_META: Record<string, { emoji: string; label: string; bg: string }> = {
-  child:   { emoji: '🧒', label: "Kid",     bg: 'linear-gradient(135deg,#FF9F0A,#FF6B35)' },
-  teacher: { emoji: '👩‍🏫', label: "Teacher", bg: 'linear-gradient(135deg,#5E5CE6,#BF5AF2)' },
-  parent:  { emoji: '👨‍👩‍👧', label: "Parent",  bg: 'linear-gradient(135deg,#30D158,#43C6AC)' },
-  admin:   { emoji: '⚙️', label: "Admin",   bg: 'linear-gradient(135deg,#BF5AF2,#5E5CE6)' },
+const ROLE_META: Record<string, { emoji: string; label: string; grad: string; color: string; glow: string }> = {
+  child:   { emoji: '🧒', label: 'Kid',     grad: 'linear-gradient(135deg,#FF9F0A,#FF6B35)', color: '#FF9F0A', glow: 'rgba(255,159,10,0.45)' },
+  teacher: { emoji: '👩‍🏫', label: 'Teacher', grad: 'linear-gradient(135deg,#5E5CE6,#BF5AF2)', color: '#5E5CE6', glow: 'rgba(94,92,230,0.45)' },
+  parent:  { emoji: '👨‍👩‍👧', label: 'Parent',  grad: 'linear-gradient(135deg,#30D158,#43C6AC)', color: '#30D158', glow: 'rgba(48,209,88,0.45)' },
+  admin:   { emoji: '⚙️', label: 'Admin',   grad: 'linear-gradient(135deg,#BF5AF2,#5E5CE6)', color: '#BF5AF2', glow: 'rgba(191,90,242,0.45)' },
 }
 
 function PinContent() {
@@ -20,7 +20,14 @@ function PinContent() {
   const [pin, setPin] = useState(['', '', '', ''])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const refs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)]
+  const [success, setSuccess] = useState(false)
+  const [shake, setShake] = useState(false)
+  const refs = [
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+  ]
 
   const setAuth = useAppStore(s => s.setAuth)
 
@@ -47,78 +54,170 @@ function PinContent() {
     setError('')
     try {
       const data = await verifyPin(pinValue, role)
+      setSuccess(true)
       setAuth(data.user, role, data.accessToken || data.token)
-      if (role === 'teacher') router.replace('/teacher')
-      else if (role === 'admin') router.replace('/admin')
-      else if (role === 'parent') router.replace('/parent')
-      else router.replace('/child')
+      setTimeout(() => {
+        if (role === 'teacher') router.replace('/teacher')
+        else if (role === 'admin') router.replace('/admin')
+        else if (role === 'parent') router.replace('/parent')
+        else router.replace('/child')
+      }, 600)
     } catch {
       setError('Wrong PIN — try again')
       setPin(['', '', '', ''])
-      setTimeout(() => refs[0].current?.focus(), 50)
+      setShake(true)
+      setTimeout(() => { setShake(false); refs[0].current?.focus() }, 500)
     } finally {
-      setLoading(false)
+      if (!success) setLoading(false)
     }
   }
 
   const pinStr = pin.join('')
+  const filled = pin.filter(d => d).length
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center px-5"
-      style={{ background: 'linear-gradient(180deg, #0f0f1a 0%, #1a1a2e 100%)' }}
+      className="min-h-screen flex flex-col items-center justify-center px-5 relative overflow-hidden"
+      style={{ background: 'linear-gradient(160deg, #0a0a18 0%, #12102a 60%, #0f0f1a 100%)' }}
     >
+      {/* Background orb matching role color */}
+      <div
+        className="orb w-96 h-96 top-[-100px] left-[50%] -translate-x-1/2 opacity-20"
+        style={{ background: meta.color, filter: 'blur(80px)' }}
+      />
+
       {/* Back */}
       <button
         onClick={() => router.back()}
-        className="absolute top-6 left-5 text-white/40 hover:text-white text-2xl transition-colors"
+        className="absolute top-6 left-5 w-10 h-10 rounded-2xl flex items-center justify-center text-white/50 hover:text-white transition-all hover:bg-white/10 text-xl font-bold z-10"
       >
         ←
       </button>
 
-      {/* Avatar */}
-      <div
-        className="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl mb-4"
-        style={{ background: meta.bg, boxShadow: `0 8px 32px rgba(0,0,0,0.4)` }}
-      >
-        {meta.emoji}
+      {/* Avatar + role */}
+      <div className="flex flex-col items-center mb-10 relative z-10 animate-slide-up">
+        <div className="relative mb-5">
+          {/* Glow ring */}
+          <div
+            className="absolute inset-[-6px] rounded-[28px] opacity-50"
+            style={{ background: meta.grad, filter: 'blur(16px)' }}
+          />
+          <div
+            className="relative w-24 h-24 rounded-3xl flex items-center justify-center text-5xl"
+            style={{
+              background: meta.grad,
+              boxShadow: `0 12px 40px ${meta.glow}, inset 0 1px 0 rgba(255,255,255,0.3)`,
+            }}
+          >
+            {success ? '✓' : meta.emoji}
+          </div>
+        </div>
+        <h2
+          className="text-3xl font-black mb-1"
+          style={{ color: 'white' }}
+        >
+          {meta.label} Login
+        </h2>
+        <p className="text-white/40 text-sm font-semibold">Enter your 4-digit PIN</p>
       </div>
-      <h2 className="text-white text-2xl font-black mb-1">{meta.label} Login</h2>
-      <p className="text-white/40 text-sm font-bold mb-10">Enter your PIN</p>
 
       {/* PIN boxes */}
-      <div className="flex gap-3 mb-6">
+      <div className={`flex gap-4 mb-8 relative z-10 ${shake ? 'animate-shake' : ''}`}>
         {pin.map((d, i) => (
-          <input
+          <div key={i} className="relative">
+            {/* Active glow */}
+            {!d && i === filled && (
+              <div
+                className="absolute inset-0 rounded-2xl pointer-events-none"
+                style={{
+                  boxShadow: `0 0 0 2px ${meta.color}`,
+                  animation: 'glow-pulse 1.5s ease-in-out infinite',
+                }}
+              />
+            )}
+            <input
+              ref={refs[i]}
+              type="password"
+              inputMode="numeric"
+              maxLength={1}
+              value={d}
+              onChange={e => handleDigit(i, e.target.value)}
+              onKeyDown={e => handleKey(i, e)}
+              className="w-16 h-16 rounded-2xl text-center text-2xl font-black text-white transition-all outline-none"
+              style={{
+                background: d
+                  ? `linear-gradient(135deg, ${meta.color}22, ${meta.color}44)`
+                  : 'rgba(255,255,255,0.07)',
+                border: `2px solid ${d ? meta.color : 'rgba(255,255,255,0.12)'}`,
+                boxShadow: d ? `0 4px 20px ${meta.glow}` : 'none',
+                transform: d ? 'scale(1.05)' : 'scale(1)',
+              }}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* Error */}
+      {error && (
+        <div
+          className="mb-6 px-5 py-2.5 rounded-2xl text-sm font-bold relative z-10 animate-pop"
+          style={{ background: 'rgba(255,69,58,0.15)', border: '1px solid rgba(255,69,58,0.3)', color: '#FF453A' }}
+        >
+          ⚠️ {error}
+        </div>
+      )}
+
+      {/* Submit */}
+      <button
+        onClick={() => submit(pinStr)}
+        disabled={pinStr.length < 4 || loading || success}
+        className="w-full max-w-[280px] py-4 rounded-2xl text-white font-black text-base transition-all active:scale-95 disabled:opacity-40 relative z-10 overflow-hidden"
+        style={{
+          background: meta.grad,
+          boxShadow: pinStr.length >= 4 ? `0 6px 28px ${meta.glow}` : 'none',
+        }}
+      >
+        {/* Shimmer on ready */}
+        {pinStr.length >= 4 && !loading && !success && (
+          <div className="absolute inset-0 shimmer" />
+        )}
+        <span className="relative z-10">
+          {success ? '✓ Welcome!' : loading ? (
+            <span className="flex items-center justify-center gap-2">
+              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              Checking…
+            </span>
+          ) : 'Enter →'}
+        </span>
+      </button>
+
+      {/* Dot progress indicator */}
+      <div className="flex gap-2 mt-6 relative z-10">
+        {[0,1,2,3].map(i => (
+          <div
             key={i}
-            ref={refs[i]}
-            type="password"
-            inputMode="numeric"
-            maxLength={1}
-            value={d}
-            onChange={e => handleDigit(i, e.target.value)}
-            onKeyDown={e => handleKey(i, e)}
-            className="w-14 h-14 rounded-2xl text-center text-2xl font-black text-white border-2 transition-all outline-none"
+            className="w-2 h-2 rounded-full transition-all duration-200"
             style={{
-              background: 'rgba(255,255,255,0.08)',
-              borderColor: d ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.12)',
+              background: i < filled ? meta.color : 'rgba(255,255,255,0.15)',
+              transform: i < filled ? 'scale(1.2)' : 'scale(1)',
             }}
           />
         ))}
       </div>
 
-      {error && (
-        <p className="text-red-400 text-sm font-bold mb-4">{error}</p>
-      )}
-
-      <button
-        onClick={() => submit(pinStr)}
-        disabled={pinStr.length < 4 || loading}
-        className="w-full max-w-[240px] py-4 rounded-2xl text-white font-black text-lg transition-all active:scale-95 disabled:opacity-40"
-        style={{ background: meta.bg }}
-      >
-        {loading ? 'Checking…' : 'Enter →'}
-      </button>
+      <style>{`
+        @keyframes glow-pulse {
+          0%, 100% { opacity: 0.5; }
+          50%       { opacity: 1; }
+        }
+        @keyframes animate-shake {
+          0%, 100% { transform: translateX(0); }
+          20%       { transform: translateX(-8px); }
+          40%       { transform: translateX(8px); }
+          60%       { transform: translateX(-6px); }
+          80%       { transform: translateX(6px); }
+        }
+      `}</style>
     </div>
   )
 }
@@ -127,7 +226,7 @@ export default function PinPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(180deg, #0f0f1a 0%, #1a1a2e 100%)' }}>
-        <div className="text-white/40 font-bold">Loading...</div>
+        <div className="w-8 h-8 border-2 border-white/20 border-t-white/70 rounded-full animate-spin" />
       </div>
     }>
       <PinContent />

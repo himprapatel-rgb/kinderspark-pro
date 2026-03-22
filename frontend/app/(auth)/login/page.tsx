@@ -4,10 +4,62 @@ import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
 
 const ROLES = [
-  { id: 'child',   emoji: '🧒', label: "I'm a Kid",      sub: 'Learn & play!',       color: '#FF9F0A', bg: 'linear-gradient(135deg,#FF9F0A,#FF6B35)' },
-  { id: 'teacher', emoji: '👩‍🏫', label: "I'm a Teacher",  sub: 'Manage your class',   color: '#5E5CE6', bg: 'linear-gradient(135deg,#5E5CE6,#BF5AF2)' },
-  { id: 'parent',  emoji: '👨‍👩‍👧', label: "I'm a Parent",   sub: "Track your child",   color: '#30D158', bg: 'linear-gradient(135deg,#30D158,#43C6AC)' },
-  { id: 'admin',   emoji: '⚙️', label: 'Admin',           sub: 'School overview',     color: '#BF5AF2', bg: 'linear-gradient(135deg,#BF5AF2,#5E5CE6)' },
+  {
+    id: 'child',
+    emoji: '🧒',
+    label: "I'm a Kid",
+    sub: 'Learn, play & earn stars!',
+    color: '#FF9F0A',
+    grad: 'linear-gradient(135deg,#FF9F0A 0%,#FF6B35 100%)',
+    glow: 'rgba(255,159,10,0.4)',
+    icon: '⭐',
+  },
+  {
+    id: 'teacher',
+    emoji: '👩‍🏫',
+    label: "I'm a Teacher",
+    sub: 'Manage your class & lessons',
+    color: '#5E5CE6',
+    grad: 'linear-gradient(135deg,#5E5CE6 0%,#BF5AF2 100%)',
+    glow: 'rgba(94,92,230,0.4)',
+    icon: '📚',
+  },
+  {
+    id: 'parent',
+    emoji: '👨‍👩‍👧',
+    label: "I'm a Parent",
+    sub: "Track your child's progress",
+    color: '#30D158',
+    grad: 'linear-gradient(135deg,#30D158 0%,#43C6AC 100%)',
+    glow: 'rgba(48,209,88,0.4)',
+    icon: '💚',
+  },
+  {
+    id: 'admin',
+    emoji: '⚙️',
+    label: 'Admin',
+    sub: 'School overview & settings',
+    color: '#BF5AF2',
+    grad: 'linear-gradient(135deg,#BF5AF2 0%,#5E5CE6 100%)',
+    glow: 'rgba(191,90,242,0.4)',
+    icon: '🏫',
+  },
+]
+
+// Scattered star positions (deterministic so no hydration mismatch)
+const STARS = [
+  { top: '8%',  left: '12%', size: 6,  delay: 0 },
+  { top: '15%', left: '85%', size: 4,  delay: 0.8 },
+  { top: '25%', left: '5%',  size: 5,  delay: 1.6 },
+  { top: '35%', left: '92%', size: 3,  delay: 0.4 },
+  { top: '55%', left: '3%',  size: 7,  delay: 1.2 },
+  { top: '65%', left: '88%', size: 4,  delay: 2.0 },
+  { top: '75%', left: '8%',  size: 5,  delay: 0.6 },
+  { top: '85%', left: '80%', size: 6,  delay: 1.4 },
+  { top: '90%', left: '20%', size: 3,  delay: 0.2 },
+  { top: '48%', left: '95%', size: 4,  delay: 1.8 },
+  { top: '5%',  left: '50%', size: 5,  delay: 0.9 },
+  { top: '95%', left: '55%', size: 3,  delay: 1.1 },
 ]
 
 export default function LoginPage() {
@@ -15,7 +67,6 @@ export default function LoginPage() {
   const user = useAppStore((s) => s.user)
   const role = useAppStore((s) => s.role)
 
-  // Already logged in? redirect immediately
   useEffect(() => {
     if (!user || !role) return
     if (role === 'teacher') router.replace('/teacher')
@@ -26,47 +77,167 @@ export default function LoginPage() {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center px-5 py-10"
-      style={{ background: 'linear-gradient(180deg, #0f0f1a 0%, #1a1a2e 100%)' }}
+      className="min-h-screen flex flex-col items-center justify-center px-5 py-12 relative overflow-hidden"
+      style={{ background: 'linear-gradient(160deg, #0a0a18 0%, #12102a 40%, #0f1a10 100%)' }}
     >
-      {/* Logo */}
-      <div className="text-center mb-10">
-        <div className="text-7xl mb-3" style={{ animation: 'bounce 2s infinite' }}>⭐</div>
-        <h1 className="text-3xl font-black text-white tracking-tight">KinderSpark Pro</h1>
-        <p className="text-white/50 font-bold mt-1 text-sm">AI-powered kindergarten learning</p>
+      {/* ── Background orbs ── */}
+      <div className="orb w-80 h-80 top-[-80px] left-[-80px] opacity-30"
+        style={{ background: '#5E5CE6', animationDelay: '0s' }} />
+      <div className="orb w-72 h-72 bottom-[-60px] right-[-60px] opacity-25"
+        style={{ background: '#30D158', animationDelay: '2s', filter: 'blur(70px)' }} />
+      <div className="orb w-48 h-48 top-[40%] right-[5%] opacity-20"
+        style={{ background: '#BF5AF2', filter: 'blur(50px)' }} />
+
+      {/* ── Twinkling stars ── */}
+      {STARS.map((s, i) => (
+        <div
+          key={i}
+          className="absolute text-yellow-300 pointer-events-none select-none"
+          style={{
+            top: s.top, left: s.left,
+            fontSize: s.size + 10,
+            animation: `star-twinkle ${2.5 + s.delay}s ease-in-out infinite`,
+            animationDelay: `${s.delay}s`,
+          }}
+        >
+          ✦
+        </div>
+      ))}
+
+      {/* ── Logo ── */}
+      <div className="text-center mb-10 animate-slide-up relative z-10">
+        <div
+          className="mx-auto mb-4 flex items-center justify-center relative"
+          style={{ width: 88, height: 88 }}
+        >
+          {/* Glow ring */}
+          <div
+            className="absolute inset-0 rounded-3xl opacity-60"
+            style={{
+              background: 'linear-gradient(135deg, #5E5CE6, #BF5AF2)',
+              filter: 'blur(14px)',
+              animation: 'glow-pulse 2.5s ease-in-out infinite',
+            }}
+          />
+          <div
+            className="relative z-10 w-full h-full rounded-3xl flex items-center justify-center text-5xl"
+            style={{
+              background: 'linear-gradient(135deg, #5E5CE6, #BF5AF2)',
+              boxShadow: '0 8px 32px rgba(94,92,230,0.5), inset 0 1px 0 rgba(255,255,255,0.25)',
+            }}
+          >
+            ⭐
+          </div>
+        </div>
+        <h1
+          className="text-4xl font-black tracking-tight"
+          style={{
+            background: 'linear-gradient(135deg, #fff 30%, rgba(255,255,255,0.6))',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}
+        >
+          KinderSpark
+          <span
+            style={{
+              display: 'block',
+              fontSize: '1rem',
+              background: 'linear-gradient(135deg, #BF5AF2, #5E5CE6)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              fontWeight: 900,
+              letterSpacing: '0.3em',
+              marginTop: 2,
+            }}
+          >
+            PRO
+          </span>
+        </h1>
+        <p className="text-white/40 text-sm font-bold mt-1 tracking-wide">
+          AI-powered kindergarten learning
+        </p>
       </div>
 
-      <p className="text-white/40 text-xs font-black uppercase tracking-widest mb-5">Choose your role</p>
+      {/* ── Divider ── */}
+      <div className="flex items-center gap-3 mb-6 w-full max-w-[360px] animate-slide-up delay-100">
+        <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.12))' }} />
+        <span className="text-white/30 text-xs font-black uppercase tracking-widest px-1">Who are you?</span>
+        <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.12), transparent)' }} />
+      </div>
 
-      {/* Role cards */}
-      <div className="w-full max-w-[360px] space-y-3">
-        {ROLES.map((r) => (
+      {/* ── Role cards ── */}
+      <div className="w-full max-w-[360px] space-y-3 relative z-10">
+        {ROLES.map((r, i) => (
           <button
             key={r.id}
             onClick={() => router.push(`/pin?role=${r.id}`)}
-            className="w-full rounded-2xl p-4 flex items-center gap-4 text-left active:scale-95 transition-transform"
-            style={{ background: r.bg, boxShadow: `0 4px 24px ${r.color}50` }}
+            className="w-full rounded-2xl p-4 flex items-center gap-4 text-left relative overflow-hidden group transition-all duration-200 active:scale-[0.97]"
+            style={{
+              animationDelay: `${(i + 2) * 100}ms`,
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              boxShadow: `0 4px 24px rgba(0,0,0,0.3)`,
+            }}
           >
+            {/* Hover gradient fill */}
             <div
-              className="w-14 h-14 rounded-xl flex items-center justify-center text-3xl flex-shrink-0"
-              style={{ background: 'rgba(255,255,255,0.2)' }}
+              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              style={{ background: r.grad }}
+            />
+            {/* Left color accent bar */}
+            <div
+              className="absolute left-0 top-3 bottom-3 w-1 rounded-r-full"
+              style={{ background: r.grad }}
+            />
+
+            {/* Icon circle */}
+            <div
+              className="relative z-10 w-14 h-14 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0 transition-transform duration-200 group-hover:scale-110"
+              style={{
+                background: r.grad,
+                boxShadow: `0 4px 16px ${r.glow}`,
+              }}
             >
               {r.emoji}
             </div>
-            <div className="flex-1">
-              <div className="text-white text-lg font-black leading-tight">{r.label}</div>
-              <div className="text-white/70 text-sm font-bold">{r.sub}</div>
+
+            {/* Text */}
+            <div className="flex-1 relative z-10">
+              <div className="text-white text-base font-black leading-tight">{r.label}</div>
+              <div className="text-white/55 text-xs font-semibold mt-0.5">{r.sub}</div>
             </div>
-            <div className="text-white/60 text-2xl font-bold">›</div>
+
+            {/* Arrow */}
+            <div
+              className="relative z-10 w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black transition-all duration-200 group-hover:translate-x-1"
+              style={{ background: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.7)' }}
+            >
+              ›
+            </div>
           </button>
         ))}
       </div>
 
-      <p className="text-white/15 text-xs font-bold mt-10">© 2025 KinderSpark Pro</p>
+      {/* ── Footer ── */}
+      <div className="mt-12 text-center relative z-10 animate-fade-in">
+        <div className="flex items-center justify-center gap-1.5 mb-1">
+          {['🔒', '🤖', '⭐'].map((icon, i) => (
+            <span key={i} className="text-sm opacity-40">{icon}</span>
+          ))}
+        </div>
+        <p className="text-white/20 text-xs font-semibold">Safe & AI-powered learning · © 2025 KinderSpark Pro</p>
+      </div>
 
       <style>{`
-        @keyframes bounce {
-          0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)}
+        @keyframes star-twinkle {
+          0%, 100% { opacity: 0.15; transform: scale(0.8) rotate(0deg); }
+          50%       { opacity: 0.9; transform: scale(1.3) rotate(15deg); }
+        }
+        @keyframes glow-pulse {
+          0%, 100% { opacity: 0.4; transform: scale(0.95); }
+          50%       { opacity: 0.8; transform: scale(1.05); }
         }
       `}</style>
     </div>
