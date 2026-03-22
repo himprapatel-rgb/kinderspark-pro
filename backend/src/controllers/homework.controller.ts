@@ -40,6 +40,18 @@ export async function createHomework(req: Request, res: Response) {
         classId,
       },
     })
+
+    // Notify all students in the class (fire-and-forget)
+    prisma.student.findMany({ where: { classId } }).then(students =>
+      Promise.all(students.map(s =>
+        sendPushNotification(
+          `📚 New Homework${aiGenerated ? ' ✨' : ''}!`,
+          `"${title}" is due ${dueDate} — earn ⭐${starsReward ?? 5} stars!`,
+          s.id
+        )
+      ))
+    ).catch(() => {})
+
     return res.status(201).json(hw)
   } catch (err) {
     console.error('createHomework error:', err)

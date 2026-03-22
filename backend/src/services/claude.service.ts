@@ -50,6 +50,27 @@ export interface HomeworkIdea {
   activities: Array<{ instruction: string; emoji: string }>
 }
 
+export async function generateStudentReport(
+  studentName: string,
+  stars: number,
+  hwDone: number,
+  hwTotal: number,
+  aiSessions: number,
+  aiBestLevel: number
+): Promise<string> {
+  const msg = await anthropic.messages.create({
+    model: MODEL,
+    max_tokens: 150,
+    messages: [{
+      role: 'user',
+      content: `Write a warm, 2-sentence weekly progress report for parents of ${studentName}.
+Stats: ${stars} stars earned, ${hwDone}/${hwTotal} homework completed, ${aiSessions} AI tutor sessions, reached AI level ${aiBestLevel}/5.
+Be encouraging, specific, and positive. Start with "Dear Parents,".`
+    }]
+  })
+  return msg.content.map((b: any) => b.text || '').join('').trim()
+}
+
 export async function generateHomeworkIdea(
   topic: string,
   grade: string,

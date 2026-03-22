@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore as useStore } from '@/store/appStore'
-import { getAdminStats, getAdminLeaderboard, getClasses } from '@/lib/api'
+import { getAdminStats, getAdminLeaderboard, getClasses, getClassAnalytics } from '@/lib/api'
 
 export default function AdminPage() {
   const router = useRouter()
@@ -13,6 +13,7 @@ export default function AdminPage() {
   const [stats, setStats] = useState<any>(null)
   const [leaderboard, setLeaderboard] = useState<any[]>([])
   const [classes, setClasses] = useState<any[]>([])
+  const [classAnalytics, setClassAnalytics] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState(0)
 
@@ -23,14 +24,16 @@ export default function AdminPage() {
 
   const loadData = async () => {
     try {
-      const [s, lb, cls] = await Promise.all([
+      const [s, lb, cls, analytics] = await Promise.all([
         getAdminStats(),
         getAdminLeaderboard(),
         getClasses(),
+        getClassAnalytics(),
       ])
       setStats(s)
       setLeaderboard(lb)
       setClasses(cls)
+      setClassAnalytics(Array.isArray(analytics) ? analytics : [])
     } catch (e) {
       console.error(e)
     } finally {
@@ -46,7 +49,7 @@ export default function AdminPage() {
     )
   }
 
-  const TABS = ['📊 Overview', '🏆 Leaderboard', '🏫 Classes']
+  const TABS = ['📊 Overview', '🏆 Leaderboard', '🏫 Classes', '📈 AI Stats']
   const medals = ['🥇', '🥈', '🥉']
 
   return (
@@ -192,35 +195,120 @@ export default function AdminPage() {
 
         {tab === 2 && (
           <div className="space-y-3">
-            {classes.map(cls => (
-              <div key={cls.id} className="rounded-2xl p-4" style={{ background: '#1a1a2e' }}>
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <div className="text-white font-black">{cls.name}</div>
-                    <div className="text-white/50 text-xs font-bold">{cls.grade}</div>
+            {classes.map(cls => {
+              const ca = classAnalytics.find((a: any) => a.id === cls.id)
+              return (
+                <div key={cls.id} className="rounded-2xl p-4" style={{ background: '#1a1a2e' }}>
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <div className="text-white font-black">{cls.name}</div>
+                      <div className="text-white/50 text-xs font-bold">{cls.grade}</div>
+                    </div>
+                    <div className="bg-purple-500/20 rounded-full px-3 py-1 text-purple-400 text-xs font-black">
+                      {cls._count?.students || 0} students
+                    </div>
                   </div>
-                  <div className="bg-purple-500/20 rounded-full px-3 py-1 text-purple-400 text-xs font-black">
-                    {cls._count?.students || 0} students
+                  <div className="grid grid-cols-3 gap-2 text-center mb-2">
+                    <div className="rounded-xl p-2" style={{ background: 'rgba(94,92,230,0.1)' }}>
+                      <div className="text-white font-black text-sm">{cls._count?.homework || 0}</div>
+                      <div className="text-white/40 text-xs font-bold">Homework</div>
+                    </div>
+                    <div className="rounded-xl p-2" style={{ background: 'rgba(48,209,88,0.1)' }}>
+                      <div className="text-white font-black text-sm">{cls._count?.syllabuses || 0}</div>
+                      <div className="text-white/40 text-xs font-bold">Syllabuses</div>
+                    </div>
+                    <div className="rounded-xl p-2" style={{ background: 'rgba(255,159,10,0.1)' }}>
+                      <div className="text-white font-black text-sm">{ca?.totalAISessions ?? '—'}</div>
+                      <div className="text-white/40 text-xs font-bold">AI Sessions</div>
+                    </div>
+                  </div>
+                  {ca && (
+                    <div className="mt-2">
+                      <div className="flex justify-between text-xs font-bold text-white/40 mb-1">
+                        <span>HW completion</span><span>{ca.hwCompletionRate}%</span>
+                      </div>
+                      <div className="bg-white/10 rounded-full h-1.5">
+                        <div className="h-1.5 rounded-full" style={{ width: `${ca.hwCompletionRate}%`, background: ca.hwCompletionRate >= 70 ? '#30D158' : '#FF9F0A' }} />
+                      </div>
+                      {ca.aiHomeworkCount > 0 && (
+                        <div className="text-[10px] text-purple-400 font-bold mt-1">✨ {ca.aiHomeworkCount} AI-generated homework</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+            {classes.length === 0 && (
+              <div className="text-center text-white/30 font-bold py-10">No classes yet.</div>
+            )}
+          </div>
+        )}
+
+        {tab === 3 && (
+          <div className="space-y-4">
+            {/* School-wide AI summary */}
+            <div className="rounded-2xl p-5" style={{ background: 'linear-gradient(135deg, #1a0a3a, #2d1b69)' }}>
+              <div className="text-white font-black mb-3">🤖 School-Wide AI Usage</div>
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div>
+                  <div className="text-white font-black text-2xl">
+                    {classAnalytics.reduce((a, c) => a + c.totalAISessions, 0)}
+                  </div>
+                  <div className="text-white/50 text-xs font-bold">Total AI Sessions</div>
+                </div>
+                <div>
+                  <div className="text-white font-black text-2xl">
+                    {classAnalytics.reduce((a, c) => a + c.aiHomeworkCount, 0)}
+                  </div>
+                  <div className="text-white/50 text-xs font-bold">✨ AI Homework</div>
+                </div>
+                <div>
+                  <div className="text-white font-black text-2xl">
+                    {classAnalytics.length ? +(classAnalytics.reduce((a, c) => a + c.avgAILevel, 0) / classAnalytics.length).toFixed(1) : 0}
+                  </div>
+                  <div className="text-white/50 text-xs font-bold">Avg AI Level</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Per-class AI breakdown */}
+            <div className="text-white/60 text-xs font-bold">PER-CLASS BREAKDOWN</div>
+            {classAnalytics.map(ca => (
+              <div key={ca.id} className="rounded-2xl p-4" style={{ background: '#1a1a2e' }}>
+                <div className="flex justify-between items-center mb-3">
+                  <div>
+                    <div className="text-white font-black text-sm">{ca.name}</div>
+                    <div className="text-white/40 text-xs font-bold">{ca.grade} · {ca.totalStudents} students</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-purple-400 font-black">{ca.totalAISessions} sessions</div>
+                    <div className="text-white/40 text-xs font-bold">Lv {ca.avgAILevel} avg</div>
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-center">
-                  <div className="rounded-xl p-2" style={{ background: 'rgba(94,92,230,0.1)' }}>
-                    <div className="text-white font-black text-sm">{cls._count?.homework || 0}</div>
-                    <div className="text-white/40 text-xs font-bold">Homework</div>
+                  <div className="rounded-xl p-2" style={{ background: 'rgba(255,159,10,0.1)' }}>
+                    <div className="text-yellow-400 font-black text-sm">⭐{ca.avgStars}</div>
+                    <div className="text-white/40 text-xs font-bold">Avg Stars</div>
                   </div>
                   <div className="rounded-xl p-2" style={{ background: 'rgba(48,209,88,0.1)' }}>
-                    <div className="text-white font-black text-sm">{cls._count?.syllabuses || 0}</div>
-                    <div className="text-white/40 text-xs font-bold">Syllabuses</div>
+                    <div className="text-green-400 font-black text-sm">{ca.hwCompletionRate}%</div>
+                    <div className="text-white/40 text-xs font-bold">HW Done</div>
                   </div>
-                  <div className="rounded-xl p-2" style={{ background: 'rgba(255,159,10,0.1)' }}>
-                    <div className="text-white font-black text-sm">{cls._count?.students || 0}</div>
-                    <div className="text-white/40 text-xs font-bold">Students</div>
+                  <div className="rounded-xl p-2" style={{ background: 'rgba(94,92,230,0.1)' }}>
+                    <div className="text-purple-400 font-black text-sm">{ca.aiHomeworkCount}</div>
+                    <div className="text-white/40 text-xs font-bold">✨ AI HW</div>
+                  </div>
+                </div>
+                {/* HW completion bar */}
+                <div className="mt-3">
+                  <div className="bg-white/10 rounded-full h-2">
+                    <div className="h-2 rounded-full transition-all" style={{ width: `${ca.hwCompletionRate}%`, background: ca.hwCompletionRate >= 70 ? '#30D158' : '#FF9F0A' }} />
                   </div>
                 </div>
               </div>
             ))}
-            {classes.length === 0 && (
-              <div className="text-center text-white/30 font-bold py-10">No classes yet.</div>
+            {classAnalytics.length === 0 && (
+              <div className="text-center text-white/30 font-bold py-10">No analytics data yet.</div>
             )}
           </div>
         )}

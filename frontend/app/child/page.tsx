@@ -120,14 +120,21 @@ export default function ChildPage() {
                 <div className="ml-auto bg-white/30 rounded-full px-2 py-0.5 text-white text-xs font-black">{pendingHW.length}</div>
               </div>
               {pendingHW.slice(0, 2).map(hw => (
-                <button key={hw.id} onClick={() => hw.moduleId && router.push(`/child/lesson/${hw.moduleId}`)}
-                  className="w-full bg-white/20 rounded-2xl p-3 flex items-center gap-3 active:scale-95 transition-all text-left mb-2">
-                  <span className="text-2xl">📝</span>
+                <button key={hw.id}
+                  onClick={() => hw.moduleId && router.push(hw.aiGenerated ? `/child/tutor?topic=${encodeURIComponent(hw.moduleId)}` : `/child/lesson/${hw.moduleId}`)}
+                  className="w-full rounded-2xl p-3 flex items-center gap-3 active:scale-95 transition-all text-left mb-2"
+                  style={{ background: hw.aiGenerated ? 'rgba(94,92,230,0.3)' : 'rgba(255,255,255,0.2)', border: hw.aiGenerated ? '1px solid rgba(94,92,230,0.5)' : 'none' }}
+                >
+                  <span className="text-2xl">{hw.aiGenerated ? '✨' : '📝'}</span>
                   <div className="flex-1">
-                    <div className="text-white font-black text-sm">{hw.title}</div>
-                    <div className="text-white/80 text-xs font-bold">Due: {hw.dueDate} · ⭐ {hw.starsReward}</div>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <div className="text-white font-black text-sm">{hw.title}</div>
+                      {hw.aiGenerated && <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(94,92,230,0.5)', color: '#E0D7FF' }}>✨ AI</span>}
+                    </div>
+                    {hw.description && <div className="text-white/70 text-xs font-bold mt-0.5 leading-tight">{hw.description}</div>}
+                    <div className="text-white/80 text-xs font-bold mt-0.5">Due: {hw.dueDate} · ⭐ {hw.starsReward}</div>
                   </div>
-                  <span className="text-white/70">→</span>
+                  <span className="text-white/70">{hw.aiGenerated ? '🤖' : '→'}</span>
                 </button>
               ))}
             </div>

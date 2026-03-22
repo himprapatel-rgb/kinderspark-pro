@@ -227,11 +227,15 @@ export default function ParentPage() {
                 <div className="text-orange-400 font-black text-sm mb-2">⚠️ Pending ({pendingHW.length})</div>
                 <div className="space-y-2">
                   {pendingHW.map(hw => (
-                    <div key={hw.id} className="rounded-xl p-3 flex items-center gap-3" style={{ background: '#1a2a1a', border: '1px solid #FF9F0A30' }}>
-                      <div className="text-2xl">📝</div>
+                    <div key={hw.id} className="rounded-xl p-3 flex items-center gap-3" style={{ background: '#1a2a1a', border: hw.aiGenerated ? '1px solid rgba(94,92,230,0.35)' : '1px solid #FF9F0A30' }}>
+                      <div className="text-2xl">{hw.aiGenerated ? '✨' : '📝'}</div>
                       <div className="flex-1">
-                        <div className="text-white font-black text-sm">{hw.title}</div>
-                        <div className="text-red-400 text-xs font-bold">Due: {hw.dueDate}</div>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <div className="text-white font-black text-sm">{hw.title}</div>
+                          {hw.aiGenerated && <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(94,92,230,0.3)', color: '#A78BFA' }}>✨ AI</span>}
+                        </div>
+                        {hw.description && <div className="text-white/50 text-xs font-bold mt-0.5 leading-snug">{hw.description}</div>}
+                        <div className="text-red-400 text-xs font-bold mt-0.5">Due: {hw.dueDate}</div>
                       </div>
                       <div className="text-yellow-400 text-xs font-bold">⭐{hw.starsReward}</div>
                     </div>
@@ -311,12 +315,16 @@ export default function ParentPage() {
                     const done = hw.completions?.some((c: any) => c.studentId === student?.id && c.done)
                     return (
                       <div key={hw.id} className="rounded-2xl p-3 flex items-center gap-3"
-                        style={{ background: '#1a2a1a', border: `1px solid ${done ? '#30D15830' : '#FF9F0A30'}` }}>
+                        style={{ background: '#1a2a1a', border: `1px solid ${done ? '#30D15830' : hw.aiGenerated ? 'rgba(94,92,230,0.3)' : '#FF9F0A30'}` }}>
                         <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0 ${done ? 'bg-green-500/20' : 'bg-orange-500/20'}`}>
-                          {done ? '✅' : '⏰'}
+                          {done ? '✅' : hw.aiGenerated ? '✨' : '⏰'}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="text-white font-black text-sm truncate">{hw.title}</div>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <div className="text-white font-black text-sm truncate">{hw.title}</div>
+                            {hw.aiGenerated && <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0" style={{ background: 'rgba(94,92,230,0.3)', color: '#A78BFA' }}>✨ AI</span>}
+                          </div>
+                          {hw.description && <div className="text-white/40 text-xs font-bold mt-0.5 leading-snug">{hw.description}</div>}
                           <div className={`text-xs font-bold ${done ? 'text-green-400' : 'text-orange-400'}`}>
                             {done ? 'Completed!' : `Due: ${hw.dueDate}`}
                           </div>
