@@ -13,4 +13,4 @@ RUN npm run build
 
 EXPOSE 4000
 
-CMD sh -c "npx prisma migrate deploy; echo '==> dist contents:'; ls -la dist/; echo '==> Starting node...'; node dist/app.js 2>&1; echo '==> Node exited with code:' $?"
+CMD ["node", "start.js"]
