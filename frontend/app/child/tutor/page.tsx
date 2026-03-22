@@ -30,6 +30,7 @@ export default function TutorPage() {
   const [answered, setAnswered] = useState(false)
   const [aiFeedback, setAiFeedback] = useState('')
   const [loadingFeedback, setLoadingFeedback] = useState(false)
+  const [newBadges, setNewBadges] = useState<any[]>([])
 
   const startQuiz = (topicId: string) => {
     const pool = QB[topicId] || []
@@ -47,6 +48,7 @@ export default function TutorPage() {
     setSelected(null)
     setAnswered(false)
     setAiFeedback('')
+    setNewBadges([])
     setPhase('quiz')
   }
 
@@ -93,7 +95,7 @@ export default function TutorPage() {
     if (student) {
       setLoadingFeedback(true)
       try {
-        const [feedbackRes] = await Promise.all([
+        const [feedbackRes, sessionRes] = await Promise.all([
           getTutorFeedback({ correct, total: TOTAL_Q, topic, maxLevel }),
           saveAISession({ studentId: student.id, topic, correct, total: TOTAL_Q, stars, maxLevel, accuracy }),
           updateStudent(student.id, {
@@ -103,6 +105,7 @@ export default function TutorPage() {
           }),
         ])
         setAiFeedback(feedbackRes.feedback)
+        if (sessionRes?.newBadges?.length) setNewBadges(sessionRes.newBadges)
       } catch {
         setAiFeedback('Amazing job completing your quiz today! 🌟 You are a superstar learner!')
       } finally {
@@ -183,6 +186,20 @@ export default function TutorPage() {
             </div>
           )}
         </div>
+
+        {newBadges.length > 0 && (
+          <div className="w-full rounded-2xl p-4 mb-4" style={{ background: 'linear-gradient(135deg, rgba(255,214,10,0.15), rgba(255,159,10,0.15))', border: '1px solid rgba(255,214,10,0.3)' }}>
+            <div className="text-center text-white font-black text-sm mb-3">🎉 New Badge{newBadges.length > 1 ? 's' : ''} Unlocked!</div>
+            <div className="flex flex-wrap justify-center gap-3">
+              {newBadges.map((b: any) => (
+                <div key={b.type} className="flex flex-col items-center gap-1">
+                  <div className="text-4xl animate-bounce">{b.emoji}</div>
+                  <div className="text-yellow-300 text-xs font-black text-center">{b.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="flex gap-3 w-full">
           <button onClick={() => startQuiz(topic)}
