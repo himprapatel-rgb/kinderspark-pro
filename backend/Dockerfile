@@ -11,4 +11,6 @@ RUN npm run build
 RUN npm prune --production
 
 EXPOSE 4000
-CMD sh -c "npx prisma migrate reset --force --skip-seed 2>/dev/null || npx prisma migrate deploy 2>/dev/null || true; node dist/app.js"
+COPY entrypoint.sh ./entrypoint.sh
+RUN chmod +x entrypoint.sh
+CMD ["./entrypoint.sh"]
