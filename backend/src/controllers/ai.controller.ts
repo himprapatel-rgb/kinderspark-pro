@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
-import { generateLesson, generateTutorFeedback } from '../services/claude.service'
+import { generateLesson, generateTutorFeedback, generateRecommendations } from '../services/claude.service'
 import { buildClassReport } from '../services/report.service'
+import prisma from '../prisma/client'
 
 export async function aiGenerateLesson(req: Request, res: Response) {
   const { topic, count = 10 } = req.body
@@ -31,5 +32,33 @@ export async function aiTutorFeedback(req: Request, res: Response) {
     return res.json({ feedback })
   } catch {
     return res.json({ feedback: 'Amazing effort today! Keep practicing every day and you will be a superstar! 🌟' })
+  }
+}
+
+export async function aiRecommendations(req: Request, res: Response) {
+  const { studentId } = req.body
+  if (!studentId) return res.status(400).json({ error: 'studentId required' })
+  try {
+    const student = await prisma.student.findUnique({
+      where: { id: studentId },
+      include: {
+        progress: true,
+        aiSessionLogs: { orderBy: { createdAt: 'desc' }, take: 5 },
+      },
+    })
+    if (!student) return res.status(404).json({ error: 'Student not found' })
+
+    const progressSummary = student.progress.map(p => `moduleId=${p.moduleId}: ${p.cards} cards done`).join(', ')
+    const sessionSummary = student.aiSessionLogs.map(s => `${s.topic}: ${s.correct}/${s.total} (lv ${s.maxLevel})`).join(', ')
+
+    const recs = await generateRecommendations(student.name, student.stars, progressSummary, sessionSummary)
+    return res.json({ recommendations: recs })
+  } catch {
+    return res.json({
+      recommendations: [
+        { title: 'Practice Numbers', reason: 'Numbers are fun and build math skills!', moduleId: 'numbers' },
+        { title: 'Learn the Alphabet', reason: 'Letters are the building blocks of reading!', moduleId: 'alphabet' },
+      ]
+    })
   }
 }

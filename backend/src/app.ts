@@ -2,6 +2,7 @@ import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
 import { rateLimiter } from './middleware/rateLimit.middleware'
+import { cache } from './middleware/cache.middleware'
 import authRoutes from './routes/auth.routes'
 import studentRoutes from './routes/student.routes'
 import teacherRoutes from './routes/teacher.routes'
@@ -11,6 +12,7 @@ import messageRoutes from './routes/message.routes'
 import progressRoutes from './routes/progress.routes'
 import aiRoutes from './routes/ai.routes'
 import adminRoutes from './routes/admin.routes'
+import attendanceRoutes from './routes/attendance'
 // keep backward-compat routes
 import classRoutes from './routes/classes'
 import aiSessionRoutes from './routes/aiSessions'
@@ -25,18 +27,19 @@ app.use(cors({
 app.use(express.json())
 app.use(rateLimiter)
 
-app.get('/health', (_req, res) => res.json({ status: 'ok', version: '1.0.0' }))
+app.get('/health', (_req, res) => res.json({ status: 'ok', version: '2.0.0' }))
 
 app.use('/api/auth', authRoutes)
-app.use('/api/students', studentRoutes)
+app.use('/api/students', cache(20), studentRoutes)
 app.use('/api/teacher', teacherRoutes)
-app.use('/api/homework', homeworkRoutes)
-app.use('/api/syllabuses', syllabusRoutes)
+app.use('/api/homework', cache(15), homeworkRoutes)
+app.use('/api/syllabuses', cache(60), syllabusRoutes)
 app.use('/api/messages', messageRoutes)
 app.use('/api/progress', progressRoutes)
 app.use('/api/ai', aiRoutes)
-app.use('/api/admin', adminRoutes)
-app.use('/api/classes', classRoutes)
+app.use('/api/admin', cache(30), adminRoutes)
+app.use('/api/attendance', attendanceRoutes)
+app.use('/api/classes', cache(30), classRoutes)
 app.use('/api/ai-sessions', aiSessionRoutes)
 app.use('/api/feedback', feedbackRoutes)
 

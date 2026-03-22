@@ -12,15 +12,79 @@ function getToken(): string | null {
   }
 }
 
-async function req(path: string, options?: RequestInit) {
-  const token = getToken()
+function getRefreshToken(): string | null {
+  if (typeof window === 'undefined') return null
+  try {
+    return localStorage.getItem('kinderspark-refresh') || null
+  } catch {
+    return null
+  }
+}
+
+function setTokens(token: string, refreshToken: string) {
+  try {
+    const raw = localStorage.getItem('kinderspark-store')
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      parsed.state = { ...parsed.state, token }
+      localStorage.setItem('kinderspark-store', JSON.stringify(parsed))
+    }
+    localStorage.setItem('kinderspark-refresh', refreshToken)
+  } catch {}
+}
+
+let isRefreshing = false
+let refreshQueue: Array<(token: string) => void> = []
+
+async function tryRefresh(): Promise<string | null> {
+  const refreshToken = getRefreshToken()
+  if (!refreshToken) return null
+  if (isRefreshing) {
+    return new Promise(resolve => {
+      refreshQueue.push(resolve)
+    })
+  }
+  isRefreshing = true
+  try {
+    const res = await fetch(`${BASE}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    })
+    if (!res.ok) return null
+    const data = await res.json()
+    setTokens(data.token, data.refreshToken)
+    refreshQueue.forEach(cb => cb(data.token))
+    refreshQueue = []
+    return data.token
+  } catch {
+    return null
+  } finally {
+    isRefreshing = false
+  }
+}
+
+async function req(path: string, options?: RequestInit): Promise<any> {
+  let token = getToken()
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   if (token) headers['Authorization'] = `Bearer ${token}`
 
-  const res = await fetch(`${BASE}${path}`, {
-    headers,
-    ...options,
-  })
+  const res = await fetch(`${BASE}${path}`, { headers, ...options })
+
+  if (res.status === 401) {
+    const newToken = await tryRefresh()
+    if (newToken) {
+      const retryHeaders: Record<string, string> = { 'Content-Type': 'application/json', Authorization: `Bearer ${newToken}` }
+      const retry = await fetch(`${BASE}${path}`, { headers: retryHeaders, ...options })
+      if (!retry.ok) {
+        const error = await retry.json().catch(() => ({ error: 'Request failed' }))
+        throw new Error(error.error || `HTTP ${retry.status}`)
+      }
+      return retry.json()
+    }
+    throw new Error('Session expired. Please log in again.')
+  }
+
   if (!res.ok) {
     const error = await res.json().catch(() => ({ error: 'Request failed' }))
     throw new Error(error.error || `HTTP ${res.status}`)
@@ -29,10 +93,22 @@ async function req(path: string, options?: RequestInit) {
 }
 
 export async function verifyPin(pin: string, role: string) {
-  return req('/auth/pin', {
+  const data = await req('/auth/pin', {
     method: 'POST',
     body: JSON.stringify({ pin, role }),
   })
+  if (data.refreshToken) {
+    localStorage.setItem('kinderspark-refresh', data.refreshToken)
+  }
+  return data
+}
+
+export async function logoutApi() {
+  const refreshToken = getRefreshToken()
+  if (refreshToken) {
+    await req('/auth/logout', { method: 'POST', body: JSON.stringify({ refreshToken }) }).catch(() => {})
+    localStorage.removeItem('kinderspark-refresh')
+  }
 }
 
 export async function getStudents(classId?: string) {
@@ -190,6 +266,13 @@ export async function getTutorFeedback(data: { correct: number; total: number; t
   })
 }
 
+export async function getRecommendations(studentId: string) {
+  return req('/ai/recommendations', {
+    method: 'POST',
+    body: JSON.stringify({ studentId }),
+  })
+}
+
 export async function getAdminStats() {
   return req('/admin/stats')
 }
@@ -204,4 +287,20 @@ export async function getClassStats(classId: string) {
 
 export async function getTeacherMe() {
   return req('/teacher/me')
+}
+
+// Attendance
+export async function getAttendance(classId: string, date: string) {
+  return req(`/attendance?classId=${classId}&date=${date}`)
+}
+
+export async function saveAttendance(classId: string, date: string, records: Array<{ studentId: string; present: boolean; note?: string }>) {
+  return req('/attendance', {
+    method: 'POST',
+    body: JSON.stringify({ classId, date, records }),
+  })
+}
+
+export async function getAttendanceSummary(classId: string, days = 30) {
+  return req(`/attendance/summary?classId=${classId}&days=${days}`)
 }
