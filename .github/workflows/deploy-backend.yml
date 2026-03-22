@@ -12,43 +12,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
-
-      - name: Debug Railway CLI version
-        run: railway --version
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-
-      - name: List Railway projects
-        run: railway list || true
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-
-      - name: Deploy Backend to Railway
+      - name: Notify Railway deploy triggered
         run: |
-          railway up \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --environment ${{ secrets.RAILWAY_ENVIRONMENT_ID }} \
-            --service kinderspark-backend \
-            --detach \
-            --verbose
-        working-directory: backend
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-
-      - name: Run DB migrations
-        run: |
-          railway run \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --environment ${{ secrets.RAILWAY_ENVIRONMENT_ID }} \
-            --service kinderspark-backend \
-            -- npx prisma migrate deploy || true
-        working-directory: backend
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          echo "Railway deploys automatically from GitHub integration."
+          echo "Monitor at: https://railway.app/dashboard"
+          echo "Commit: ${{ github.sha }}"
+          echo "Branch: ${{ github.ref_name }}"
