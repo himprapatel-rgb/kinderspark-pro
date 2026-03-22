@@ -44,12 +44,11 @@ export async function createHomework(req: Request, res: Response) {
 
     // Notify all students in the class (fire-and-forget)
     prisma.student.findMany({ where: { classId } }).then(students =>
-      Promise.all(students.map(s =>
-        sendPushNotification(
-          `📚 New Homework${aiGenerated ? ' ✨' : ''}!`,
-          `"${title}" is due ${dueDate} — earn ⭐${starsReward ?? 5} stars!`,
-          s.id
-        )
+      Promise.all(students.filter(s => s.pushToken).map(s =>
+        sendPushNotification(s.pushToken!, {
+          title: `📚 New Homework${aiGenerated ? ' ✨' : ''}!`,
+          body: `"${title}" is due ${dueDate} — earn ⭐${starsReward ?? 5} stars!`,
+        })
       ))
     ).catch(() => {})
 
@@ -93,11 +92,12 @@ export async function completeHomework(req: Request, res: Response) {
         where: { id: studentId },
         data: { stars: student.stars + stars },
       })
-      await sendPushNotification(
-        'Homework Complete! 🎉',
-        `${student.name} completed "${hw.title}" and earned ${stars} stars!`,
-        studentId
-      )
+      if (student.pushToken) {
+        await sendPushNotification(student.pushToken, {
+          title: 'Homework Complete! 🎉',
+          body: `${student.name} completed "${hw.title}" and earned ${stars} stars!`,
+        })
+      }
       // Check how many homework this student has completed (for first_homework badge)
       const hwCount = await prisma.homeworkCompletion.count({
         where: { studentId, done: true },
@@ -136,13 +136,12 @@ export async function sendReminders(req: Request, res: Response) {
       })
       const completedSet = new Set(completedIds.map((c: any) => c.studentId))
       const pending = hw.class.students.filter((s: any) => !completedSet.has(s.id))
-      await Promise.all(pending.map((s: any) => {
+      await Promise.all(pending.filter((s: any) => s.pushToken).map((s: any) => {
         sent++
-        return sendPushNotification(
-          '⏰ Homework Due Tomorrow!',
-          `"${hw.title}" is due tomorrow — earn ⭐${hw.starsReward} stars!`,
-          s.id
-        )
+        return sendPushNotification(s.pushToken, {
+          title: '⏰ Homework Due Tomorrow!',
+          body: `"${hw.title}" is due tomorrow — earn ⭐${hw.starsReward} stars!`,
+        })
       }))
     }
     return res.json({ sent, homeworkCount: dueHomework.length })
