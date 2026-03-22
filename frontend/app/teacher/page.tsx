@@ -8,7 +8,7 @@ import {
   completeHomework, sendMessage, deleteClass, assignSyllabus,
   getAttendance, saveAttendance, generateReport, getClassStats,
   getUnreadCount, markAllMessagesRead, getFeedback, saveFeedback,
-  generateHomeworkAI,
+  generateHomeworkAI, sendParentReports,
 } from '@/lib/api'
 
 // ─── tiny helpers ─────────────────────────────────────────────────────────────
@@ -492,6 +492,23 @@ export default function TeacherDashboard() {
                     >
                       <div className="text-xl mb-1">📊</div>
                       <div className="text-white text-xs font-black">AI Report</div>
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (!selectedClass) return
+                        setBusy(true)
+                        try {
+                          const r = await sendParentReports(selectedClass.id)
+                          showToast(`📨 Sent ${r.sent}/${r.total} AI reports to parents!`)
+                        } catch { showToast('Failed to send reports') }
+                        setBusy(false)
+                      }}
+                      disabled={busy}
+                      className="rounded-xl p-3 text-left col-span-2" style={{ background: 'rgba(94,92,230,0.15)', border: '1px solid rgba(94,92,230,0.25)' }}
+                    >
+                      <div className="text-xl mb-1">📨</div>
+                      <div className="text-white text-xs font-black">Send AI Weekly Reports to Parents</div>
+                      <div className="text-white/40 text-[10px] font-bold">AI writes a personal report for each kid</div>
                     </button>
                   </div>
                 </div>

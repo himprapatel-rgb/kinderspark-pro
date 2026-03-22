@@ -270,6 +270,17 @@ export async function generateLesson(topic: string, count: number) {
   })
 }
 
+export async function sendParentReports(classId: string) {
+  return req('/ai/send-parent-reports', {
+    method: 'POST',
+    body: JSON.stringify({ classId }),
+  })
+}
+
+export async function getClassAnalytics() {
+  return req('/admin/class-analytics')
+}
+
 export async function generateHomeworkAI(data: { topic: string; grade?: string; classId?: string }) {
   return req('/ai/generate-homework', {
     method: 'POST',

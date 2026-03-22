@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import { generateLesson, generateTutorFeedback, generateRecommendations, generateHomeworkIdea } from '../services/claude.service'
+import { generateLesson, generateTutorFeedback, generateRecommendations, generateHomeworkIdea, generateStudentReport } from '../services/claude.service'
 import { buildClassReport } from '../services/report.service'
 import prisma from '../prisma/client'
 
@@ -32,6 +32,45 @@ export async function aiTutorFeedback(req: Request, res: Response) {
     return res.json({ feedback })
   } catch {
     return res.json({ feedback: 'Amazing effort today! Keep practicing every day and you will be a superstar! 🌟' })
+  }
+}
+
+export async function aiSendParentReports(req: Request, res: Response) {
+  const { classId } = req.body
+  if (!classId) return res.status(400).json({ error: 'classId required' })
+  try {
+    const [students, homework] = await Promise.all([
+      prisma.student.findMany({ where: { classId } }),
+      prisma.homework.findMany({ where: { classId } }),
+    ])
+    if (students.length === 0) return res.json({ sent: 0, total: 0 })
+
+    const results = await Promise.allSettled(
+      students.map(async (student) => {
+        const hwDone = await prisma.homeworkCompletion.count({
+          where: { studentId: student.id, done: true },
+        })
+        const report = await generateStudentReport(
+          student.name, student.stars, hwDone, homework.length,
+          student.aiSessions, student.aiBestLevel
+        )
+        await prisma.message.create({
+          data: {
+            from: '📊 AI Weekly Report',
+            fromId: 'system',
+            to: student.id,
+            subject: `📊 ${student.name}'s Weekly Progress Report`,
+            body: report,
+            classId,
+          },
+        })
+      })
+    )
+    const sent = results.filter(r => r.status === 'fulfilled').length
+    return res.json({ sent, total: students.length })
+  } catch (err) {
+    console.error('aiSendParentReports error:', err)
+    return res.status(500).json({ error: 'Failed to send reports' })
   }
 }
 
