@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
 import prisma from '../prisma/client'
 import { sendPushNotification } from '../services/notification.service'
+import { checkAndAwardBadges } from '../services/badge.service'
 
 export async function listHomework(req: Request, res: Response) {
   try {
@@ -88,7 +89,7 @@ export async function completeHomework(req: Request, res: Response) {
     const stars = hw.starsReward ?? 5
     const student = await prisma.student.findUnique({ where: { id: studentId } })
     if (student) {
-      await prisma.student.update({
+      const updatedStudent = await prisma.student.update({
         where: { id: studentId },
         data: { stars: student.stars + stars },
       })
@@ -97,12 +98,57 @@ export async function completeHomework(req: Request, res: Response) {
         `${student.name} completed "${hw.title}" and earned ${stars} stars!`,
         studentId
       )
+      // Check how many homework this student has completed (for first_homework badge)
+      const hwCount = await prisma.homeworkCompletion.count({
+        where: { studentId, done: true },
+      })
+      // Award badges (fire-and-forget)
+      checkAndAwardBadges(studentId, { hwCount }).catch(() => {})
     }
 
     return res.json({ ...completion, starsAwarded: stars })
   } catch (err) {
     console.error('completeHomework error:', err)
     return res.status(500).json({ error: 'Failed to complete homework' })
+  }
+}
+
+export async function sendReminders(req: Request, res: Response) {
+  try {
+    const { classId } = req.body
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    const tomorrowStr = tomorrow.toISOString().slice(0, 10)
+
+    const where: any = { dueDate: tomorrowStr }
+    if (classId) where.classId = classId
+
+    const dueHomework = await prisma.homework.findMany({
+      where,
+      include: { class: { include: { students: true } } },
+    })
+
+    let sent = 0
+    for (const hw of dueHomework) {
+      const completedIds = await prisma.homeworkCompletion.findMany({
+        where: { homeworkId: hw.id, done: true },
+        select: { studentId: true },
+      })
+      const completedSet = new Set(completedIds.map((c: any) => c.studentId))
+      const pending = hw.class.students.filter((s: any) => !completedSet.has(s.id))
+      await Promise.all(pending.map((s: any) => {
+        sent++
+        return sendPushNotification(
+          '⏰ Homework Due Tomorrow!',
+          `"${hw.title}" is due tomorrow — earn ⭐${hw.starsReward} stars!`,
+          s.id
+        )
+      }))
+    }
+    return res.json({ sent, homeworkCount: dueHomework.length })
+  } catch (err) {
+    console.error('sendReminders error:', err)
+    return res.status(500).json({ error: 'Failed to send reminders' })
   }
 }
 

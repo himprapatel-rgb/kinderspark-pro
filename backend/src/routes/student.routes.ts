@@ -113,4 +113,29 @@ router.delete('/:id', async (req: Request, res: Response) => {
   }
 })
 
+// PATCH /api/students/:id/push-token
+router.patch('/:id/push-token', async (req: Request, res: Response) => {
+  try {
+    const { token } = req.body
+    if (!token) return res.status(400).json({ error: 'token required' })
+    await prisma.student.update({ where: { id: req.params.id }, data: { pushToken: token } })
+    return res.json({ success: true })
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to save push token' })
+  }
+})
+
+// GET /api/students/:id/badges
+router.get('/:id/badges', async (req: Request, res: Response) => {
+  try {
+    const badges = await prisma.badge.findMany({
+      where: { studentId: req.params.id },
+      orderBy: { earnedAt: 'desc' },
+    })
+    return res.json(badges)
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to get badges' })
+  }
+})
+
 export default router

@@ -44,14 +44,26 @@ model Student {
   ownedItems    String[]             @default(["av_def", "th_def"])
   selectedTheme String               @default("th_def")
   lastLoginAt   DateTime?
+  pushToken     String?
   classId       String
   class         Class                @relation(fields: [classId], references: [id])
   progress      Progress[]
   completions   HomeworkCompletion[]
   aiSessionLogs AISession[]
+  badges        Badge[]
   feedback      Feedback?
   attendance    Attendance[]
   createdAt     DateTime             @default(now())
+}
+
+model Badge {
+  id        String   @id @default(cuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  type      String
+  earnedAt  DateTime @default(now())
+
+  @@unique([studentId, type])
 }
 
 model Syllabus {

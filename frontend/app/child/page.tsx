@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore as useStore } from '@/store/appStore'
-import { getHomework, getSyllabuses, getProgress, getRecommendations } from '@/lib/api'
+import { getHomework, getSyllabuses, getProgress, getRecommendations, getStudentBadges, savePushToken } from '@/lib/api'
 import { MODS } from '@/lib/modules'
 
 export default function ChildPage() {
@@ -15,6 +15,7 @@ export default function ChildPage() {
   const [syllabuses, setSyllabuses] = useState<any[]>([])
   const [progressMap, setProgressMap] = useState<Record<string, number>>({})
   const [recommendations, setRecommendations] = useState<any[]>([])
+  const [badges, setBadges] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   const student = currentStudent || user
@@ -28,19 +29,25 @@ export default function ChildPage() {
     if (!student) return
         if (!student.classId || !student.id) return
     try {
-      const [hw, syl, prog] = await Promise.all([
+      const [hw, syl, prog, bdgs] = await Promise.all([
         getHomework(student.classId!),
         getSyllabuses(student.classId),
         getProgress(student.id),
+        getStudentBadges(student.id).catch(() => []),
       ])
       setHomework(hw)
       setSyllabuses(syl.filter((s: any) => s.published))
       const pm: Record<string, number> = {}
       prog.forEach((p: any) => { pm[p.moduleId] = p.cards })
       setProgressMap(pm)
+      setBadges(bdgs)
       getRecommendations(student.id).then(res => {
         if (res?.recommendations) setRecommendations(res.recommendations)
       }).catch(() => {})
+      // Register push token (use studentId as external_user_id for OneSignal)
+      if ('serviceWorker' in navigator && student.id) {
+        savePushToken(student.id, student.id).catch(() => {})
+      }
     } catch (e) {
       console.error(e)
     } finally {
@@ -107,6 +114,31 @@ export default function ChildPage() {
             </div>
           </div>
         </div>
+        {badges.length > 0 && (
+          <div className="mt-3 flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+            {badges.map((b: any) => {
+              const INFO: Record<string, { emoji: string; label: string }> = {
+                first_homework: { emoji: '🏅', label: 'First HW' },
+                first_ai:       { emoji: '🤖', label: 'AI Debut' },
+                stars_50:       { emoji: '⭐', label: '50 Stars' },
+                stars_100:      { emoji: '🌟', label: '100 Stars' },
+                stars_500:      { emoji: '💫', label: '500 Stars' },
+                ai_level_3:     { emoji: '🧠', label: 'Lv 3 AI' },
+                ai_level_5:     { emoji: '🏆', label: 'Lv 5 AI' },
+                perfect_score:  { emoji: '🎯', label: 'Perfect!' },
+                streak_3:       { emoji: '🔥', label: '3-Day Streak' },
+                streak_7:       { emoji: '🌈', label: '7-Day Streak' },
+              }
+              const info = INFO[b.type] || { emoji: '🏅', label: b.type }
+              return (
+                <div key={b.id} className="flex-shrink-0 flex flex-col items-center gap-0.5 rounded-xl px-3 py-1.5" style={{ background: 'rgba(255,255,255,0.15)' }}>
+                  <span className="text-lg">{info.emoji}</span>
+                  <span className="text-white/80 text-[10px] font-black whitespace-nowrap">{info.label}</span>
+                </div>
+              )
+            })}
+          </div>
+        )}
         <div className="absolute -right-8 -top-8 w-36 h-36 rounded-full bg-white/5" />
       </div>
 
