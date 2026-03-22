@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import { generateLesson, generateTutorFeedback, generateRecommendations, generateHomeworkIdea, generateStudentReport } from '../services/claude.service'
+import { generateLesson, generateTutorFeedback, generateRecommendations, generateHomeworkIdea, generateStudentReport, generateSyllabusAI } from '../services/claude.service'
 import { buildClassReport } from '../services/report.service'
 import prisma from '../prisma/client'
 
@@ -32,6 +32,41 @@ export async function aiTutorFeedback(req: Request, res: Response) {
     return res.json({ feedback })
   } catch {
     return res.json({ feedback: 'Amazing effort today! Keep practicing every day and you will be a superstar! 🌟' })
+  }
+}
+
+export async function aiAutoSyllabus(req: Request, res: Response) {
+  const { topic, grade = 'KG 1', count = 10, classId } = req.body
+  if (!topic) return res.status(400).json({ error: 'topic required' })
+  try {
+    const generated = await generateSyllabusAI(topic, grade, Number(count))
+    const syllabus = await prisma.syllabus.create({
+      data: {
+        title: generated.title,
+        icon: generated.icon,
+        color: generated.color,
+        description: generated.description,
+        grade,
+        published: true,
+        items: {
+          create: generated.items.map((item, i) => ({
+            word: item.word,
+            emoji: item.emoji,
+            hint: item.hint,
+            order: i,
+          })),
+        },
+      },
+      include: { items: { orderBy: { order: 'asc' } } },
+    })
+    // Auto-assign to class if provided
+    if (classId) {
+      await prisma.classSyllabus.create({ data: { classId, syllabusId: syllabus.id } }).catch(() => {})
+    }
+    return res.json(syllabus)
+  } catch (err) {
+    console.error('aiAutoSyllabus error:', err)
+    return res.status(500).json({ error: 'Failed to generate syllabus' })
   }
 }
 

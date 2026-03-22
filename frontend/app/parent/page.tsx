@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore as useStore } from '@/store/appStore'
-import { getHomework, getMessages, sendMessage, getAISessions, getAttendanceSummary, markAllMessagesRead } from '@/lib/api'
+import { getHomework, getMessages, sendMessage, getAISessions, getAttendanceSummary, markAllMessagesRead, completeHomework } from '@/lib/api'
 
 // SVG ring component for circular progress
 function Ring({ pct, color, size = 80, stroke = 8 }: { pct: number; color: string; size?: number; stroke?: number }) {
@@ -32,6 +32,7 @@ export default function ParentPage() {
   const [loading, setLoading] = useState(true)
   const [showReply, setShowReply] = useState<any>(null)
   const [replyBody, setReplyBody] = useState('')
+  const [markingDone, setMarkingDone] = useState<string | null>(null)
   const [unreadMsgs, setUnreadMsgs] = useState(0)
 
   useEffect(() => {
@@ -83,6 +84,16 @@ export default function ParentPage() {
     ? Math.round(aiSessions.reduce((a: number, s: any) => a + (s.accuracy || 0), 0) / aiSessions.length)
     : 0
   const totalAIStars = aiSessions.reduce((a: number, s: any) => a + (s.stars || 0), 0)
+
+  const handleMarkDone = async (hwId: string) => {
+    if (!student || markingDone) return
+    setMarkingDone(hwId)
+    try {
+      await completeHomework(hwId, student.id)
+      await loadData(user)
+    } catch (e: any) { alert(e.message) }
+    finally { setMarkingDone(null) }
+  }
 
   const handleReply = async () => {
     if (!showReply || !replyBody) return
@@ -237,7 +248,17 @@ export default function ParentPage() {
                         {hw.description && <div className="text-white/50 text-xs font-bold mt-0.5 leading-snug">{hw.description}</div>}
                         <div className="text-red-400 text-xs font-bold mt-0.5">Due: {hw.dueDate}</div>
                       </div>
-                      <div className="text-yellow-400 text-xs font-bold">⭐{hw.starsReward}</div>
+                      <div className="flex flex-col items-end gap-1.5">
+                        <div className="text-yellow-400 text-xs font-bold">⭐{hw.starsReward}</div>
+                        <button
+                          onClick={() => handleMarkDone(hw.id)}
+                          disabled={markingDone === hw.id}
+                          className="text-[10px] font-black px-2 py-1 rounded-lg active:scale-95 transition-all"
+                          style={{ background: '#30D15820', color: '#30D158', opacity: markingDone === hw.id ? 0.5 : 1 }}
+                        >
+                          {markingDone === hw.id ? '…' : 'Mark Done ✅'}
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>

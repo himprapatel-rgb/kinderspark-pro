@@ -340,3 +340,35 @@ export async function saveAttendance(classId: string, date: string, records: Arr
 export async function getAttendanceSummary(classId: string, days = 30) {
   return req(`/attendance/summary?classId=${classId}&days=${days}`)
 }
+
+// ── New Feature APIs ──────────────────────────────────────────────────────────
+
+export async function savePushToken(studentId: string, token: string) {
+  return req(`/students/${studentId}/push-token`, {
+    method: 'PATCH',
+    body: JSON.stringify({ token }),
+  })
+}
+
+export async function getStudentBadges(studentId: string) {
+  return req(`/students/${studentId}/badges`)
+}
+
+export async function getClassActivity(classId: string) {
+  return req(`/classes/${classId}/activity`)
+}
+
+export async function sendHomeworkReminders(classId?: string) {
+  return req('/homework/send-reminders', {
+    method: 'POST',
+    body: JSON.stringify({ classId }),
+  })
+}
+
+export async function autoSyllabus(data: { topic: string; grade?: string; count?: number; classId?: string }) {
+  return req('/ai/build-syllabus', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+

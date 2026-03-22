@@ -50,6 +50,38 @@ export interface HomeworkIdea {
   activities: Array<{ instruction: string; emoji: string }>
 }
 
+export interface GeneratedSyllabus {
+  title: string
+  icon: string
+  color: string
+  description: string
+  items: Array<{ word: string; emoji: string; hint: string }>
+}
+
+export async function generateSyllabusAI(topic: string, grade: string, count: number): Promise<GeneratedSyllabus> {
+  const msg = await anthropic.messages.create({
+    model: MODEL,
+    max_tokens: 1200,
+    messages: [{
+      role: 'user',
+      content: `You are a kindergarten curriculum designer. Create a complete learning syllabus for ${grade} on topic: "${topic}".
+Respond ONLY with valid JSON (no markdown):
+{
+  "title": "short catchy title (max 5 words)",
+  "icon": "single most relevant emoji",
+  "color": "a bright hex color e.g. #FF9F0A or #5E5CE6 or #30D158 or #BF5AF2 or #FF6B35",
+  "description": "one sentence description for teachers",
+  "items": [
+    {"word": "item name", "emoji": "relevant emoji", "hint": "child-friendly hint max 8 words"},
+    ... exactly ${count} items
+  ]
+}`
+    }]
+  })
+  const text = msg.content.map((b: any) => b.text || '').join('').replace(/```json|```/g, '').trim()
+  return JSON.parse(text)
+}
+
 export async function generateStudentReport(
   studentName: string,
   stars: number,

@@ -128,4 +128,54 @@ router.delete('/:id', async (req: Request, res: Response) => {
   }
 })
 
+// GET /api/classes/:id/activity — live feed of completions + AI sessions
+router.get('/:id/activity', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params
+    const [completions, sessions] = await Promise.all([
+      prisma.homeworkCompletion.findMany({
+        where: { homework: { classId: id }, done: true },
+        include: {
+          student: { select: { name: true, avatar: true } },
+          homework: { select: { title: true } },
+        },
+        orderBy: { completedAt: 'desc' },
+        take: 20,
+      }),
+      prisma.aISession.findMany({
+        where: { student: { classId: id } },
+        include: { student: { select: { name: true, avatar: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: 20,
+      }),
+    ])
+
+    const feed = [
+      ...completions.map((c: any) => ({
+        type: 'homework',
+        emoji: '📚',
+        text: `completed "${c.homework.title}"`,
+        studentName: c.student.name,
+        studentAvatar: c.student.avatar,
+        time: c.completedAt,
+      })),
+      ...sessions.map((s: any) => ({
+        type: 'ai',
+        emoji: '🤖',
+        text: `got ${s.correct}/${s.total} on ${s.topic} · Lv ${s.maxLevel}`,
+        studentName: s.student.name,
+        studentAvatar: s.student.avatar,
+        time: s.createdAt,
+      })),
+    ]
+      .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+      .slice(0, 20)
+
+    return res.json(feed)
+  } catch (err) {
+    console.error('activity error:', err)
+    return res.status(500).json({ error: 'Failed to get activity' })
+  }
+})
+
 export default router

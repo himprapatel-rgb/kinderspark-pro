@@ -9,6 +9,7 @@ import {
   getAttendance, saveAttendance, generateReport, getClassStats,
   getUnreadCount, markAllMessagesRead, getFeedback, saveFeedback,
   generateHomeworkAI, sendParentReports,
+  getClassActivity, sendHomeworkReminders, autoSyllabus,
 } from '@/lib/api'
 
 // ─── tiny helpers ─────────────────────────────────────────────────────────────
@@ -58,6 +59,15 @@ export default function TeacherDashboard() {
   const [wizardDueDate, setWizardDueDate] = useState('')
   const [wizardStars, setWizardStars] = useState(10)
   const [wizardTitle, setWizardTitle] = useState('')
+
+  // Activity feed
+  const [activityFeed, setActivityFeed] = useState<any[]>([])
+  // Student deep-dive modal
+  const [deepDiveStudent, setDeepDiveStudent] = useState<any>(null)
+  // AI Syllabus builder
+  const [showAISyl, setShowAISyl] = useState(false)
+  const [aiSylTopic, setAiSylTopic] = useState('')
+  const [aiSylLoading, setAiSylLoading] = useState(false)
 
   // Grading state
   const [gradingStudentId, setGradingStudentId] = useState<string | null>(null)
@@ -129,6 +139,7 @@ export default function TeacherDashboard() {
       setMessages(msg)
       setClassStats(stats)
       setUnreadCount(unread?.count || 0)
+      getClassActivity(classId).then(setActivityFeed).catch(() => {})
     } catch (e) { console.error(e) }
   }
 
@@ -535,6 +546,25 @@ export default function TeacherDashboard() {
                   </div>
                 )}
 
+                {/* Live Activity Feed */}
+                {activityFeed.length > 0 && (
+                  <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                    <div className="text-white font-black mb-3">⚡ Live Activity</div>
+                    <div className="space-y-2">
+                      {activityFeed.slice(0, 8).map((item: any, i: number) => (
+                        <div key={i} className="flex items-center gap-3">
+                          <span className="text-lg">{item.studentAvatar || '🧒'}</span>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-white font-bold text-xs">{item.studentName} </span>
+                            <span className="text-white/50 text-xs">{item.text}</span>
+                          </div>
+                          <span className="text-lg shrink-0">{item.emoji}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Delete class */}
                 <div className="text-center pt-4">
                   {showDeleteConfirm === selectedClass.id ? (
@@ -643,7 +673,7 @@ export default function TeacherDashboard() {
                       <div className="text-3xl">{s.avatar || '🧒'}</div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <div className="text-white font-black">{s.name}</div>
+                          <button className="text-white font-black hover:text-purple-300 transition-colors" onClick={() => setDeepDiveStudent(s)}>{s.name}</button>
                           {grade && (
                             <span className="text-xs font-black px-2 py-0.5 rounded-full" style={{ background: (GRADE_COLORS[grade] || '#5E5CE6') + '30', color: GRADE_COLORS[grade] || '#5E5CE6' }}>
                               {grade}
@@ -963,12 +993,78 @@ export default function TeacherDashboard() {
                 <div className="text-center text-white/30 font-bold py-8">No homework assigned yet</div>
               )}
             </div>
+
+            {/* Due-tomorrow reminders */}
+            <button
+              onClick={async () => {
+                if (!selectedClass) return
+                setBusy(true)
+                try {
+                  const r = await sendHomeworkReminders(selectedClass.id)
+                  showToast(`⏰ Sent reminders to ${r.sent} student${r.sent !== 1 ? 's' : ''} for ${r.homeworkCount} assignment${r.homeworkCount !== 1 ? 's' : ''}!`)
+                } catch { showToast('Failed to send reminders') }
+                setBusy(false)
+              }}
+              disabled={busy}
+              className="w-full rounded-2xl p-4 flex items-center gap-3 active:scale-95 transition-all"
+              style={{ background: 'rgba(255,159,10,0.12)', border: '1px solid rgba(255,159,10,0.25)' }}
+            >
+              <span className="text-2xl">⏰</span>
+              <div className="text-left">
+                <div className="text-white font-black text-sm">Send Due-Tomorrow Reminders</div>
+                <div className="text-white/40 text-xs font-bold">Push notifications to students with HW due tomorrow</div>
+              </div>
+            </button>
           </div>
         )}
 
         {/* ── SYLLABUS TAB ─────────────────────────────────────────────────── */}
         {tab === 'syllabus' && (
           <div className="space-y-4">
+            {/* ✨ AI Lesson Auto-Builder */}
+            <div className="rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg,rgba(191,90,242,0.15),rgba(94,92,230,0.15))', border: '1px solid rgba(191,90,242,0.3)' }}>
+              <button
+                onClick={() => setShowAISyl(v => !v)}
+                className="w-full p-4 flex items-center gap-3"
+              >
+                <span className="text-3xl">✨</span>
+                <div className="text-left flex-1">
+                  <div className="text-white font-black">AI Lesson Auto-Builder</div>
+                  <div className="text-white/50 text-xs font-bold">Type a topic → Claude builds a full syllabus</div>
+                </div>
+                <span className="text-white/50 text-lg">{showAISyl ? '▲' : '▼'}</span>
+              </button>
+              {showAISyl && (
+                <div className="px-4 pb-4 space-y-3">
+                  <input
+                    value={aiSylTopic}
+                    onChange={e => setAiSylTopic(e.target.value)}
+                    placeholder="e.g. Animals, Colors, Numbers 1-20, Shapes..."
+                    className="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white font-bold text-sm outline-none placeholder:text-white/30"
+                  />
+                  <button
+                    onClick={async () => {
+                      if (!aiSylTopic.trim() || !selectedClass) return
+                      setAiSylLoading(true)
+                      try {
+                        const syl = await autoSyllabus({ topic: aiSylTopic.trim(), grade: selectedClass.grade || 'KG 1', count: 10, classId: selectedClass.id })
+                        await loadClassData(selectedClass.id)
+                        setAiSylTopic('')
+                        setShowAISyl(false)
+                        showToast(`✨ "${syl.title}" syllabus created & assigned!`)
+                      } catch (e: any) { showToast(e.message) }
+                      finally { setAiSylLoading(false) }
+                    }}
+                    disabled={aiSylLoading || !aiSylTopic.trim()}
+                    className="w-full py-3 rounded-xl text-white font-black text-sm active:scale-95 transition-all"
+                    style={{ background: 'linear-gradient(135deg,#BF5AF2,#5E5CE6)', opacity: (!aiSylTopic.trim() || aiSylLoading) ? 0.5 : 1 }}
+                  >
+                    {aiSylLoading ? '✨ Building…' : '✨ Auto-Build Syllabus'}
+                  </button>
+                </div>
+              )}
+            </div>
+
             <button
               onClick={() => router.push('/teacher/syllabus/builder')}
               className="w-full rounded-2xl p-5 flex items-center gap-4 active:scale-95 transition-all"
@@ -1149,6 +1245,71 @@ export default function TeacherDashboard() {
           </div>
         )}
       </div>
+
+      {/* ── Student Deep-Dive Modal ─────────────────────────────────── */}
+      {deepDiveStudent && (() => {
+        const s = deepDiveStudent
+        const hwDone = homework.filter(hw => hw.completions?.some((c: any) => c.studentId === s.id && c.done)).length
+        const fb = feedbacks[s.id]
+        const grade = fb?.grade || s.grade || null
+        return (
+          <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: 'rgba(0,0,0,0.75)' }} onClick={() => setDeepDiveStudent(null)}>
+            <div className="w-full max-w-[430px] rounded-t-3xl pb-10 overflow-hidden" style={{ background: '#131316' }} onClick={e => e.stopPropagation()}>
+              {/* Header */}
+              <div className="p-5 flex items-center gap-4" style={{ background: 'linear-gradient(135deg,#1a1a3a,#2a1a4a)' }}>
+                <div className="text-4xl">{s.avatar || '🧒'}</div>
+                <div className="flex-1">
+                  <div className="text-white font-black text-lg">{s.name}</div>
+                  <div className="flex gap-2 mt-1 flex-wrap">
+                    {grade && <span className="text-xs font-black px-2 py-0.5 rounded-full bg-purple-500/30 text-purple-300">{grade}</span>}
+                    <span className="text-xs font-black px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-300">⭐ {s.stars}</span>
+                    {s.streak > 0 && <span className="text-xs font-black px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-300">🔥 {s.streak}d</span>}
+                  </div>
+                </div>
+                <button onClick={() => setDeepDiveStudent(null)} className="text-white/40 text-3xl leading-none">×</button>
+              </div>
+              {/* Stats grid */}
+              <div className="p-4 grid grid-cols-3 gap-3">
+                {[
+                  { label: 'AI Lv', value: s.aiBestLevel, emoji: '🤖' },
+                  { label: 'AI Sessions', value: s.aiSessions, emoji: '🧠' },
+                  { label: 'HW Done', value: `${hwDone}/${homework.length}`, emoji: '📚' },
+                ].map(stat => (
+                  <div key={stat.label} className="rounded-2xl p-3 text-center" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                    <div className="text-xl mb-1">{stat.emoji}</div>
+                    <div className="text-white font-black text-base">{stat.value}</div>
+                    <div className="text-white/40 text-xs font-bold">{stat.label}</div>
+                  </div>
+                ))}
+              </div>
+              {/* Recent AI sessions */}
+              {(s.aiSessionLogs || []).length > 0 && (
+                <div className="px-4 pb-3">
+                  <div className="text-white/40 text-xs font-bold mb-2">RECENT AI SESSIONS</div>
+                  <div className="space-y-2">
+                    {(s.aiSessionLogs || []).slice(0, 3).map((sess: any) => (
+                      <div key={sess.id} className="flex items-center gap-3 rounded-xl p-2.5" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                        <span className="text-lg">🧠</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-white font-bold text-xs truncate">{sess.topic}</div>
+                          <div className="text-white/40 text-xs font-bold">{sess.correct}/{sess.total} · Lv {sess.maxLevel}</div>
+                        </div>
+                        <div className="text-yellow-400 font-black text-xs">⭐{sess.stars}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {fb?.note && (
+                <div className="px-4 pb-4">
+                  <div className="text-white/40 text-xs font-bold mb-1">TEACHER NOTE</div>
+                  <div className="rounded-xl p-3 text-white/70 text-xs leading-relaxed" style={{ background: 'rgba(255,255,255,0.05)' }}>{fb.note}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }
