@@ -13,9 +13,8 @@
     "seed": "ts-node prisma/seed.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.21.0",
+    "@anthropic-ai/sdk": "^0.39.0",
     "@prisma/client": "^5.10.0",
-    "anthropic": "^0.21.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.0",
     "express": "^4.18.0",
