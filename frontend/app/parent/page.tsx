@@ -1,8 +1,8 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore as useStore } from '@/store/appStore'
-import { getHomework, getMessages, sendMessage, getAISessions, getAttendanceSummary, markAllMessagesRead, completeHomework } from '@/lib/api'
+import { getHomework, getMessages, sendMessage, getAISessions, getAttendanceSummary, markAllMessagesRead, completeHomework, createMessageStream } from '@/lib/api'
 
 // SVG ring component for circular progress
 function Ring({ pct, color, size = 80, stroke = 8 }: { pct: number; color: string; size?: number; stroke?: number }) {
@@ -35,6 +35,10 @@ export default function ParentPage() {
   const [markingDone, setMarkingDone] = useState<string | null>(null)
   const [unreadMsgs, setUnreadMsgs] = useState(0)
 
+  // SSE / fallback polling refs
+  const sseRef = useRef<EventSource | null>(null)
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
   useEffect(() => {
     if (!user) { router.push('/'); return }
     setStudent(user)
@@ -46,6 +50,83 @@ export default function ParentPage() {
       markAllMessagesRead(student.classId, student.id).then(() => setUnreadMsgs(0)).catch(() => {})
     }
   }, [tab])
+
+  // Real-time messages via SSE (falls back to 10s polling if not supported)
+  useEffect(() => {
+    if (!student?.classId) return
+
+    // Close any prior connection
+    if (sseRef.current) { sseRef.current.close(); sseRef.current = null }
+    if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null }
+
+    const classId: string = student.classId
+    const studentId: string = student.id
+
+    const es = createMessageStream(classId)
+
+    if (es) {
+      sseRef.current = es
+
+      es.onmessage = (event: MessageEvent) => {
+        try {
+          const data: Record<string, unknown> = JSON.parse(event.data as string)
+          if (data.type === 'heartbeat') return
+          // Upsert into messages state
+          setMessages(prev => {
+            const exists = prev.some(m => m.id === data.id)
+            const updated = exists
+              ? prev.map(m => (m.id === data.id ? data : m))
+              : [data, ...prev]
+            return updated.sort(
+              (a, b) =>
+                new Date(b.createdAt as string).getTime() -
+                new Date(a.createdAt as string).getTime()
+            )
+          })
+          // Bump unread badge for messages not sent by this student and not yet on messages tab
+          if (tab !== 2 && data.fromId !== studentId && !data.read) {
+            setUnreadMsgs(prev => prev + 1)
+          }
+        } catch {
+          // ignore malformed frames
+        }
+      }
+
+      es.onerror = () => {
+        es.close()
+        sseRef.current = null
+        // Reload messages after 5s
+        const t = setTimeout(() => {
+          getMessages({ classId })
+            .then(msgs => {
+              setMessages(msgs)
+              const unread = msgs.filter((m: Record<string, unknown>) => !m.read && m.fromId !== studentId).length
+              setUnreadMsgs(unread)
+            })
+            .catch(() => {})
+        }, 5_000)
+        return () => clearTimeout(t)
+      }
+    } else {
+      // Fall back to 10s polling
+      pollRef.current = setInterval(() => {
+        getMessages({ classId })
+          .then(msgs => {
+            setMessages(msgs)
+            if (tab !== 2) {
+              const unread = msgs.filter((m: Record<string, unknown>) => !m.read && m.fromId !== studentId).length
+              setUnreadMsgs(unread)
+            }
+          })
+          .catch(() => {})
+      }, 10_000)
+    }
+
+    return () => {
+      if (sseRef.current) { sseRef.current.close(); sseRef.current = null }
+      if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null }
+    }
+  }, [student])
 
   const loadData = async (u: any) => {
     try {

@@ -1,4 +1,7 @@
-const BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
+export const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
+
+// Keep internal alias so nothing below breaks
+const BASE = API_BASE
 
 function getToken(): string | null {
   if (typeof window === 'undefined') return null
@@ -370,5 +373,30 @@ export async function autoSyllabus(data: { topic: string; grade?: string; count?
     method: 'POST',
     body: JSON.stringify(data),
   })
+}
+
+// ── SSE helpers ───────────────────────────────────────────────────────────────
+
+/**
+ * Returns the raw JWT token stored by the app, or null if unavailable.
+ * Used when we need to pass the token as a query param (e.g. EventSource).
+ */
+export function getRawToken(): string | null {
+  return getToken()
+}
+
+/**
+ * Opens an SSE connection to /api/messages/stream for a given classId.
+ * Returns the EventSource so the caller can close it on cleanup.
+ *
+ * Falls back to null if EventSource is not supported in this environment
+ * (the caller should detect this and fall back to polling).
+ */
+export function createMessageStream(classId: string): EventSource | null {
+  if (typeof window === 'undefined' || !('EventSource' in window)) return null
+  const token = getToken()
+  if (!token) return null
+  const url = `${API_BASE}/messages/stream?classId=${encodeURIComponent(classId)}&token=${encodeURIComponent(token)}`
+  return new EventSource(url)
 }
 

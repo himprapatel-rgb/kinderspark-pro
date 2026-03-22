@@ -10,6 +10,7 @@ import {
   getUnreadCount, markAllMessagesRead, getFeedback, saveFeedback,
   generateHomeworkAI, sendParentReports,
   getClassActivity, sendHomeworkReminders, autoSyllabus,
+  createMessageStream,
 } from '@/lib/api'
 
 // ─── tiny helpers ─────────────────────────────────────────────────────────────
@@ -75,7 +76,8 @@ export default function TeacherDashboard() {
   const [gradeForm, setGradeForm] = useState({ grade: '', note: '' })
   const [gradeBusy, setGradeBusy] = useState(false)
 
-  // Polling ref
+  // SSE / fallback polling ref
+  const sseRef = useRef<EventSource | null>(null)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
@@ -94,23 +96,83 @@ export default function TeacherDashboard() {
     }
   }, [tab, attendanceDate, selectedClass])
 
-  // Real-time message polling: refresh unread count every 30s, full messages when on tab
+  // Real-time messages via SSE (falls back to 10s polling if not supported)
   useEffect(() => {
     if (!selectedClass) return
-    if (pollRef.current) clearInterval(pollRef.current)
-    pollRef.current = setInterval(() => {
-      if (tab === 'messages') {
-        getMessages({ classId: selectedClass.id })
-          .then(setMessages)
-          .catch(() => {})
-      } else {
-        getUnreadCount({ classId: selectedClass.id })
-          .then(res => setUnreadCount(res?.count || 0))
-          .catch(() => {})
+
+    // Close any existing SSE / poll
+    if (sseRef.current) { sseRef.current.close(); sseRef.current = null }
+    if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null }
+
+    const classId: string = selectedClass.id
+
+    const es = createMessageStream(classId)
+
+    if (es) {
+      // SSE is supported — wire up handlers
+      sseRef.current = es
+
+      es.onmessage = (event: MessageEvent) => {
+        try {
+          const data: Record<string, unknown> = JSON.parse(event.data as string)
+          if (data.type === 'heartbeat') return
+          // Upsert message into local state (handles both initial batch and new arrivals)
+          setMessages(prev => {
+            const exists = prev.some(m => m.id === data.id)
+            const updated = exists
+              ? prev.map(m => (m.id === data.id ? data : m))
+              : [data, ...prev]
+            // Keep sorted newest-first
+            return updated.sort(
+              (a, b) =>
+                new Date(b.createdAt as string).getTime() -
+                new Date(a.createdAt as string).getTime()
+            )
+          })
+          // Update unread badge when not on the messages tab
+          if (tab !== 'messages') {
+            setUnreadCount(prev => prev + 1)
+          }
+        } catch {
+          // ignore malformed frames
+        }
       }
-    }, 30_000)
-    return () => { if (pollRef.current) clearInterval(pollRef.current) }
-  }, [selectedClass, tab])
+
+      es.onerror = () => {
+        // On error, close and reconnect after 5s
+        es.close()
+        sseRef.current = null
+        const t = setTimeout(() => {
+          // Re-trigger by clearing and resetting — handled on next render via deps
+          getMessages({ classId })
+            .then(setMessages)
+            .catch(() => {})
+          getUnreadCount({ classId })
+            .then(res => setUnreadCount(res?.count || 0))
+            .catch(() => {})
+        }, 5_000)
+        return () => clearTimeout(t)
+      }
+    } else {
+      // SSE not supported — fall back to 10s polling
+      pollRef.current = setInterval(() => {
+        if (tab === 'messages') {
+          getMessages({ classId })
+            .then(setMessages)
+            .catch(() => {})
+        } else {
+          getUnreadCount({ classId })
+            .then(res => setUnreadCount(res?.count || 0))
+            .catch(() => {})
+        }
+      }, 10_000)
+    }
+
+    return () => {
+      if (sseRef.current) { sseRef.current.close(); sseRef.current = null }
+      if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null }
+    }
+  }, [selectedClass])
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 3000) }
 
