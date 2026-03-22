@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express'
 import prisma from '../prisma/client'
+import { checkAndAwardBadges } from '../services/badge.service'
 
 const router = Router()
 
@@ -55,7 +56,10 @@ router.post('/', async (req: Request, res: Response) => {
       })
     }
 
-    res.status(201).json(session)
+    // Check and award badges (first_ai, ai_level_3/5, perfect_score, stars milestones)
+    const newBadges = await checkAndAwardBadges(studentId, { accuracy: accuracy || 0 }).catch(() => [])
+
+    res.status(201).json({ ...session, newBadges })
   } catch (error) {
     console.error('Create AI session error:', error)
     res.status(500).json({ error: 'Failed to create AI session' })

@@ -2,6 +2,7 @@ import { Request, Response } from 'express'
 import jwt from 'jsonwebtoken'
 import crypto from 'crypto'
 import prisma from '../prisma/client'
+import { checkAndAwardBadges } from '../services/badge.service'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'kinderspark-secret'
 const ACCESS_TOKEN_TTL = '2h'
@@ -59,11 +60,29 @@ export async function verifyPin(req: Request, res: Response) {
       include: { class: true, progress: true, feedback: true }
     })
     if (!student) return res.status(401).json({ error: 'Wrong PIN' })
-    await prisma.student.update({ where: { id: student.id }, data: { lastLoginAt: new Date() } })
+
+    // Compute streak: +1 if last login was yesterday, reset to 1 if gap > 1 day, keep if same day
+    const now = new Date()
+    const today = now.toISOString().slice(0, 10)
+    const lastDay = student.lastLoginAt ? student.lastLoginAt.toISOString().slice(0, 10) : null
+    let newStreak = student.streak
+    if (!lastDay || lastDay < today) {
+      const yesterday = new Date(now)
+      yesterday.setDate(yesterday.getDate() - 1)
+      const yesterdayStr = yesterday.toISOString().slice(0, 10)
+      newStreak = lastDay === yesterdayStr ? student.streak + 1 : 1
+    }
+
+    await prisma.student.update({ where: { id: student.id }, data: { lastLoginAt: now, streak: newStreak } })
+
+    // Check streak badges asynchronously (don't block login)
+    checkAndAwardBadges(student.id).catch(() => {})
+
+    const updatedStudent = { ...student, lastLoginAt: now, streak: newStreak }
     const token = jwt.sign({ id: student.id, role, name: student.name }, JWT_SECRET, { expiresIn: ACCESS_TOKEN_TTL })
     const refreshToken = await issueRefreshToken(student.id, role)
     setAuthCookies(res, token, refreshToken)
-    return res.json({ success: true, role, token, refreshToken, user: { ...student, lastLoginAt: new Date() } })
+    return res.json({ success: true, role, token, refreshToken, user: updatedStudent })
   } catch (err) {
     return res.status(500).json({ error: 'Server error' })
   }
