@@ -1,10 +1,10 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
 import { generateReport } from '@/lib/api'
 
-export default function ReportsPage() {
+function ReportsContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const user = useAppStore((s) => s.user)
@@ -135,5 +135,13 @@ export default function ReportsPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function ReportsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ReportsContent />
+    </Suspense>
   )
 }
