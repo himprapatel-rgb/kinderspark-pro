@@ -105,6 +105,7 @@ export default function TeacherDashboard() {
     if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null }
 
     const classId: string = selectedClass.id
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null
 
     const es = createMessageStream(classId)
 
@@ -139,11 +140,10 @@ export default function TeacherDashboard() {
       }
 
       es.onerror = () => {
-        // On error, close and reconnect after 5s
+        // On error, close and reload messages after 5s
         es.close()
         sseRef.current = null
-        const t = setTimeout(() => {
-          // Re-trigger by clearing and resetting — handled on next render via deps
+        reconnectTimer = setTimeout(() => {
           getMessages({ classId })
             .then(setMessages)
             .catch(() => {})
@@ -151,7 +151,6 @@ export default function TeacherDashboard() {
             .then(res => setUnreadCount(res?.count || 0))
             .catch(() => {})
         }, 5_000)
-        return () => clearTimeout(t)
       }
     } else {
       // SSE not supported — fall back to 10s polling
@@ -169,6 +168,7 @@ export default function TeacherDashboard() {
     }
 
     return () => {
+      if (reconnectTimer) clearTimeout(reconnectTimer)
       if (sseRef.current) { sseRef.current.close(); sseRef.current = null }
       if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null }
     }

@@ -1,10 +1,16 @@
 import Anthropic from '@anthropic-ai/sdk'
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 const MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6'
 
+function getClient(): Anthropic {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    throw new Error('ANTHROPIC_API_KEY environment variable is not set')
+  }
+  return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+}
+
 export async function generateLesson(topic: string, count: number): Promise<Array<{w: string, e: string, hint: string}>> {
-  const msg = await anthropic.messages.create({
+  const msg = await getClient().messages.create({
     model: MODEL,
     max_tokens: 1024,
     messages: [{
@@ -17,7 +23,7 @@ export async function generateLesson(topic: string, count: number): Promise<Arra
 }
 
 export async function generateWeeklyReport(classData: string): Promise<string> {
-  const msg = await anthropic.messages.create({
+  const msg = await getClient().messages.create({
     model: MODEL,
     max_tokens: 300,
     messages: [{
@@ -29,7 +35,7 @@ export async function generateWeeklyReport(classData: string): Promise<string> {
 }
 
 export async function generateTutorFeedback(correct: number, total: number, topic: string, maxLevel: number): Promise<string> {
-  const msg = await anthropic.messages.create({
+  const msg = await getClient().messages.create({
     model: MODEL,
     max_tokens: 100,
     messages: [{
@@ -59,7 +65,7 @@ export interface GeneratedSyllabus {
 }
 
 export async function generateSyllabusAI(topic: string, grade: string, count: number): Promise<GeneratedSyllabus> {
-  const msg = await anthropic.messages.create({
+  const msg = await getClient().messages.create({
     model: MODEL,
     max_tokens: 1200,
     messages: [{
@@ -90,7 +96,7 @@ export async function generateStudentReport(
   aiSessions: number,
   aiBestLevel: number
 ): Promise<string> {
-  const msg = await anthropic.messages.create({
+  const msg = await getClient().messages.create({
     model: MODEL,
     max_tokens: 150,
     messages: [{
@@ -108,7 +114,7 @@ export async function generateHomeworkIdea(
   grade: string,
   studentCount: number
 ): Promise<HomeworkIdea> {
-  const msg = await anthropic.messages.create({
+  const msg = await getClient().messages.create({
     model: MODEL,
     max_tokens: 600,
     messages: [{
@@ -142,7 +148,7 @@ export async function generateRecommendations(
   progressSummary: string,
   sessionSummary: string
 ): Promise<Array<{ title: string; reason: string; moduleId: string }>> {
-  const msg = await anthropic.messages.create({
+  const msg = await getClient().messages.create({
     model: MODEL,
     max_tokens: 400,
     messages: [{

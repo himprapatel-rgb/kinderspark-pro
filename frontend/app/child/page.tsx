@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore as useStore } from '@/store/appStore'
-import { getHomework, getSyllabuses, getProgress, getRecommendations, getStudentBadges, savePushToken } from '@/lib/api'
+import { getHomework, getSyllabuses, getProgress, getRecommendations, getStudentBadges } from '@/lib/api'
 import { MODS } from '@/lib/modules'
 
 export default function ChildPage() {
@@ -44,10 +44,6 @@ export default function ChildPage() {
       getRecommendations(student.id).then(res => {
         if (res?.recommendations) setRecommendations(res.recommendations)
       }).catch(() => {})
-      // Register push token (use studentId as external_user_id for OneSignal)
-      if ('serviceWorker' in navigator && student.id) {
-        savePushToken(student.id, student.id).catch(() => {})
-      }
     } catch (e) {
       console.error(e)
     } finally {
