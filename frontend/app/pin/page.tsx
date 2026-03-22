@@ -1,5 +1,5 @@
 'use client'
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { verifyPin } from '@/lib/api'
 import { useAppStore } from '@/store/appStore'
@@ -11,7 +11,7 @@ const ROLE_META: Record<string, { emoji: string; label: string; bg: string }> = 
   admin:   { emoji: '⚙️', label: "Admin",   bg: 'linear-gradient(135deg,#BF5AF2,#5E5CE6)' },
 }
 
-export default function PinPage() {
+function PinContent() {
   const router = useRouter()
   const params = useSearchParams()
   const role = params.get('role') || 'child'
@@ -120,5 +120,17 @@ export default function PinPage() {
         {loading ? 'Checking…' : 'Enter →'}
       </button>
     </div>
+  )
+}
+
+export default function PinPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(180deg, #0f0f1a 0%, #1a1a2e 100%)' }}>
+        <div className="text-white/40 font-bold">Loading...</div>
+      </div>
+    }>
+      <PinContent />
+    </Suspense>
   )
 }
