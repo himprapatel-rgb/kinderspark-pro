@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore as useStore } from '@/store/appStore'
 import { getHomework, getMessages, sendMessage, getAISessions, getAttendanceSummary, markAllMessagesRead, completeHomework, createMessageStream } from '@/lib/api'
+import { usePushNotifications } from '@/hooks/usePushNotifications'
 
 // SVG ring component for circular progress
 function Ring({ pct, color, size = 80, stroke = 8 }: { pct: number; color: string; size?: number; stroke?: number }) {
@@ -34,6 +35,7 @@ export default function ParentPage() {
   const [replyBody, setReplyBody] = useState('')
   const [markingDone, setMarkingDone] = useState<string | null>(null)
   const [unreadMsgs, setUnreadMsgs] = useState(0)
+  const { permission: notifPermission, subscribe: subscribeNotif } = usePushNotifications(student?.id ?? user?.id)
 
   // SSE / fallback polling refs
   const sseRef = useRef<EventSource | null>(null)
@@ -313,6 +315,24 @@ export default function ParentPage() {
                 {pendingHW.length > 0 && <div className="text-orange-400/60 text-xs font-bold">Needs attention!</div>}
               </div>
             </div>
+
+            {/* Push notification opt-in banner */}
+            {notifPermission !== 'granted' && notifPermission !== 'denied' && (
+              <div className="mx-3 mb-4 rounded-2xl p-4 flex items-center gap-3" style={{ background: 'linear-gradient(135deg, #1a2a1a, #2a4a2a)', border: '1px solid #30D15840' }}>
+                <div className="text-2xl shrink-0">🔔</div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-white font-black text-sm">Enable Homework Alerts</div>
+                  <div className="text-white/50 text-xs font-bold">Get notified when homework is due</div>
+                </div>
+                <button
+                  onClick={subscribeNotif}
+                  className="px-3 py-2 rounded-xl text-xs font-black shrink-0 active:scale-95 transition-all"
+                  style={{ background: '#30D158', color: '#fff' }}
+                >
+                  Enable
+                </button>
+              </div>
+            )}
 
             {/* Pending HW */}
             {pendingHW.length > 0 && (

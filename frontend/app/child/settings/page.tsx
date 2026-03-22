@@ -1,6 +1,7 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
+import { usePushNotifications } from '@/hooks/usePushNotifications'
 
 const LANGS = [
   { code: 'en', label: 'English', flag: '🇬🇧' },
@@ -21,6 +22,7 @@ export default function SettingsPage() {
   const student = currentStudent || user
 
   const acc = settings.large ? 'text-lg' : 'text-sm'
+  const { permission, subscribe } = usePushNotifications(student?.id)
 
   return (
     <div className="min-h-screen pb-10" style={{ background: 'linear-gradient(180deg, #1a0a2e 0%, #0f0f1a 100%)' }}>
@@ -158,6 +160,33 @@ export default function SettingsPage() {
               }}>
               This is how text will look ✨
             </div>
+          </div>
+        </div>
+
+        {/* Notifications */}
+        <div className="rounded-2xl p-4" style={{ background: '#1a1a2e' }}>
+          <div className="text-white font-black text-base mb-3">🔔 Notifications</div>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className={`text-white font-bold ${acc}`}>Homework Reminders</div>
+              <div className="text-white/50 text-xs font-bold">
+                {permission === 'granted' ? 'Notifications are on' : permission === 'denied' ? 'Blocked in browser settings' : 'Get alerts when homework is due'}
+              </div>
+            </div>
+            {permission === 'granted' ? (
+              <div className="w-12 h-6 rounded-full relative" style={{ background: '#30D158' }}>
+                <div className="absolute top-0.5 right-0.5 w-5 h-5 bg-white rounded-full shadow" />
+              </div>
+            ) : (
+              <button
+                onClick={subscribe}
+                disabled={permission === 'denied'}
+                className="px-3 py-1.5 rounded-xl text-xs font-black transition-all active:scale-95"
+                style={{ background: permission === 'denied' ? '#333' : '#5E5CE6', color: permission === 'denied' ? 'rgba(255,255,255,0.3)' : '#fff' }}
+              >
+                {permission === 'denied' ? 'Blocked' : 'Enable'}
+              </button>
+            )}
           </div>
         </div>
 
