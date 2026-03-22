@@ -4,11 +4,10 @@ import { useAppStore } from '@/store/appStore'
 
 const LANGS = [
   { code: 'en', label: 'English', flag: '🇬🇧' },
-  { code: 'ar', label: 'Arabic', flag: '🇸🇦' },
-  { code: 'fr', label: 'French', flag: '🇫🇷' },
-  { code: 'es', label: 'Spanish', flag: '🇪🇸' },
-  { code: 'hi', label: 'Hindi', flag: '🇮🇳' },
-  { code: 'zh', label: 'Chinese', flag: '🇨🇳' },
+  { code: 'fr', label: 'Français', flag: '🇫🇷' },
+  { code: 'es', label: 'Español', flag: '🇪🇸' },
+  { code: 'ar', label: 'العربية', flag: '🇸🇦' },
+  { code: 'ur', label: 'اردو', flag: '🇵🇰' },
 ]
 
 const SESSION_LIMITS = [10, 15, 20, 30, 45, 60]

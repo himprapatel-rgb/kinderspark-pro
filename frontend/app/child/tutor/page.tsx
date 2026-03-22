@@ -88,7 +88,7 @@ export default function TutorPage() {
   const finishQuiz = async () => {
     setPhase('results')
     const accuracy = Math.round((correct / TOTAL_Q) * 100)
-    const stars = Math.min(3, Math.floor(accuracy / 34))
+    const stars = Math.round((correct / TOTAL_Q) * 3)
 
     if (student) {
       setLoadingFeedback(true)
@@ -112,7 +112,7 @@ export default function TutorPage() {
   }
 
   const accuracy = TOTAL_Q > 0 ? Math.round((correct / TOTAL_Q) * 100) : 0
-  const stars = Math.min(3, Math.floor(accuracy / 34))
+  const stars = Math.round((correct / TOTAL_Q) * 3)
 
   if (phase === 'topics') {
     return (

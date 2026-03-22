@@ -63,6 +63,7 @@ export default function ParentPage() {
     const studentId: string = student.id
 
     const es = createMessageStream(classId)
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null
 
     if (es) {
       sseRef.current = es
@@ -96,7 +97,7 @@ export default function ParentPage() {
         es.close()
         sseRef.current = null
         // Reload messages after 5s
-        const t = setTimeout(() => {
+        reconnectTimer = setTimeout(() => {
           getMessages({ classId })
             .then(msgs => {
               setMessages(msgs)
@@ -105,7 +106,6 @@ export default function ParentPage() {
             })
             .catch(() => {})
         }, 5_000)
-        return () => clearTimeout(t)
       }
     } else {
       // Fall back to 10s polling
@@ -123,6 +123,7 @@ export default function ParentPage() {
     }
 
     return () => {
+      if (reconnectTimer) clearTimeout(reconnectTimer)
       if (sseRef.current) { sseRef.current.close(); sseRef.current = null }
       if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null }
     }

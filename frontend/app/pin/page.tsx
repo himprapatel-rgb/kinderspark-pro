@@ -17,10 +17,10 @@ export default function PinPage() {
   const role = params.get('role') || 'child'
   const meta = ROLE_META[role] || ROLE_META.child
 
-  const [pin, setPin] = useState(['', '', '', '', '', ''])
+  const [pin, setPin] = useState(['', '', '', ''])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const refs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)]
+  const refs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)]
 
   const setAuth = useAppStore(s => s.setAuth)
 
@@ -32,8 +32,8 @@ export default function PinPage() {
     next[idx] = val
     setPin(next)
     setError('')
-    if (val && idx < 5) refs[idx + 1].current?.focus()
-    if (next.every(d => d) && next.join('').length >= 4) submit(next.join(''))
+    if (val && idx < 3) refs[idx + 1].current?.focus()
+    if (next.every(d => d)) submit(next.join(''))
   }
 
   function handleKey(idx: number, e: React.KeyboardEvent) {
@@ -54,7 +54,7 @@ export default function PinPage() {
       else router.replace('/child')
     } catch {
       setError('Wrong PIN — try again')
-      setPin(['', '', '', '', '', ''])
+      setPin(['', '', '', ''])
       setTimeout(() => refs[0].current?.focus(), 50)
     } finally {
       setLoading(false)
@@ -88,7 +88,7 @@ export default function PinPage() {
 
       {/* PIN boxes */}
       <div className="flex gap-3 mb-6">
-        {pin.slice(0, 4).map((d, i) => (
+        {pin.map((d, i) => (
           <input
             key={i}
             ref={refs[i]}
