@@ -21,8 +21,12 @@ jobs:
         run: npm install -g @railway/cli
 
       - name: Deploy Frontend to Railway
-        run: railway up --service kinderspark-frontend --detach
+        run: |
+          railway up \
+            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
+            --environment ${{ secrets.RAILWAY_ENVIRONMENT_ID }} \
+            --service kinderspark-frontend \
+            --detach
         working-directory: frontend
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}

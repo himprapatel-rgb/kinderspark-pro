@@ -34,25 +34,21 @@ jobs:
         run: |
           railway up \
             --project ${{ secrets.RAILWAY_PROJECT_ID }} \
+            --environment ${{ secrets.RAILWAY_ENVIRONMENT_ID }} \
             --service kinderspark-backend \
-            --detach \
-            --verbose || \
-          railway up \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
             --detach \
             --verbose
         working-directory: backend
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
 
       - name: Run DB migrations
         run: |
           railway run \
             --project ${{ secrets.RAILWAY_PROJECT_ID }} \
+            --environment ${{ secrets.RAILWAY_ENVIRONMENT_ID }} \
             --service kinderspark-backend \
             -- npx prisma migrate deploy || true
         working-directory: backend
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
