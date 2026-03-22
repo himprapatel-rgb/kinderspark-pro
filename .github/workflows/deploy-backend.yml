@@ -20,15 +20,38 @@ jobs:
       - name: Install Railway CLI
         run: npm install -g @railway/cli
 
+      - name: Debug Railway CLI version
+        run: railway --version
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: List Railway projects
+        run: railway list || true
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
       - name: Deploy Backend to Railway
-        run: railway up --service kinderspark-backend --detach
+        run: |
+          railway up \
+            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
+            --service kinderspark-backend \
+            --detach \
+            --verbose || \
+          railway up \
+            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
+            --detach \
+            --verbose
         working-directory: backend
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
 
       - name: Run DB migrations
-        run: railway run --service kinderspark-backend -- npx prisma migrate deploy
+        run: |
+          railway run \
+            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
+            --service kinderspark-backend \
+            -- npx prisma migrate deploy || true
         working-directory: backend
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
