@@ -5,6 +5,19 @@ import { useAppStore as useStore } from '@/store/appStore'
 import { getHomework, getSyllabuses, getProgress, getRecommendations, getStudentBadges, completeHomework } from '@/lib/api'
 import { MODS } from '@/lib/modules'
 
+const BADGE_INFO: Record<string, { emoji: string; label: string; color: string }> = {
+  first_homework: { emoji: '🏅', label: 'First HW',    color: '#FF9F0A' },
+  first_ai:       { emoji: '🤖', label: 'AI Debut',    color: '#5E5CE6' },
+  stars_50:       { emoji: '⭐', label: '50 Stars',    color: '#FFD60A' },
+  stars_100:      { emoji: '🌟', label: '100 Stars',   color: '#FFD60A' },
+  stars_500:      { emoji: '💫', label: '500 Stars',   color: '#FFD60A' },
+  ai_level_3:     { emoji: '🧠', label: 'Lv 3 AI',    color: '#BF5AF2' },
+  ai_level_5:     { emoji: '🏆', label: 'Lv 5 AI',    color: '#BF5AF2' },
+  perfect_score:  { emoji: '🎯', label: 'Perfect!',   color: '#30D158' },
+  streak_3:       { emoji: '🔥', label: '3-Day',       color: '#FF6B35' },
+  streak_7:       { emoji: '🌈', label: '7-Day',       color: '#BF5AF2' },
+}
+
 export default function ChildPage() {
   const router = useRouter()
   const user = useStore(s => s.user)
@@ -28,8 +41,7 @@ export default function ChildPage() {
   }, [student])
 
   const loadData = async () => {
-    if (!student) return
-        if (!student.classId || !student.id) return
+    if (!student?.classId || !student?.id) return
     try {
       const [hw, syl, prog, bdgs] = await Promise.all([
         getHomework(student.classId!),
@@ -75,116 +87,228 @@ export default function ChildPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4" style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #1a0a2e) 0%, #0f0f1a 100%)' }}>
-        <div className="text-7xl animate-bounce">⭐</div>
-        <div className="text-white/50 font-bold text-sm">Loading your world...</div>
+      <div
+        className="min-h-screen flex flex-col items-center justify-center gap-5"
+        style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #1a0a2e) 0%, #0f0f1a 100%)' }}
+      >
+        <div
+          className="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl animate-bounce-subtle"
+          style={{
+            background: 'linear-gradient(135deg, var(--theme-color, #5E5CE6), var(--theme-secondary, #BF5AF2))',
+            boxShadow: '0 8px 32px rgba(94,92,230,0.4)',
+          }}
+        >
+          ⭐
+        </div>
+        <div className="space-y-2 w-48">
+          {[80, 60, 90].map((w, i) => (
+            <div key={i} className="h-2 rounded-full shimmer" style={{ width: `${w}%`, background: 'rgba(255,255,255,0.1)' }} />
+          ))}
+        </div>
+        <p className="text-white/40 text-sm font-bold">Loading your world…</p>
       </div>
     )
   }
 
+  const themeColor = 'var(--theme-color, #5E5CE6)'
+  const themeSecondary = 'var(--theme-secondary, #BF5AF2)'
+  const streak = student?.streak ?? 0
+
   return (
-    <div className="min-h-screen pb-24" style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #1a0a2e) 0%, #0d0d1a 100%)' }}>
-      <div className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, var(--theme-color, #4c3aff), var(--theme-secondary, #8b1cf7))' }}>
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
-        <div className="relative p-5 pt-10">
-          <div className="flex justify-between items-start">
-            <div>
-              <div className="text-5xl mb-2" style={{ filter: 'drop-shadow(0 0 12px rgba(255,215,0,0.5))' }}>{student?.avatar || '🧒'}</div>
-              <div className="text-white text-2xl font-black">Hi, {student?.name}!</div>
-              <div className="flex items-center gap-2 mt-1 flex-wrap">
-                <div className="star-badge">⭐ {(student?.stars ?? 0).toLocaleString()}</div>
-                {(student?.streak ?? 0) > 0 && (
-                  <div className="flex items-center gap-1 bg-white/20 rounded-full px-3 py-0.5">
-                    <span className="text-sm">🔥</span>
-                    <span className="text-white text-xs font-black">{student?.streak}d</span>
-                  </div>
-                )}
-                <div className="bg-white/20 rounded-full px-3 py-0.5 text-white text-xs font-black">
-                  Lv {student?.aiBestLevel ?? 1}
-                </div>
+    <div
+      className="min-h-screen pb-28"
+      style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #1a0a2e) 0%, #0d0d1a 100%)' }}
+    >
+      {/* ── HERO HEADER ── */}
+      <div
+        className="relative overflow-hidden"
+        style={{
+          background: `linear-gradient(145deg, var(--theme-color, #5E5CE6) 0%, var(--theme-secondary, #BF5AF2) 100%)`,
+          paddingBottom: 28,
+        }}
+      >
+        {/* Dot pattern */}
+        <div className="absolute inset-0 opacity-[0.07]"
+          style={{ backgroundImage: 'radial-gradient(circle, #fff 1.5px, transparent 1.5px)', backgroundSize: '22px 22px' }} />
+        {/* Decorative circles */}
+        <div className="absolute -right-12 -top-12 w-48 h-48 rounded-full bg-white/10" />
+        <div className="absolute -right-4 top-24 w-20 h-20 rounded-full bg-white/5" />
+
+        <div className="relative p-5 pt-12">
+          {/* Top row: avatar + actions */}
+          <div className="flex justify-between items-start mb-5">
+            <div className="flex items-center gap-3">
+              <div
+                className="w-16 h-16 rounded-3xl flex items-center justify-center text-4xl flex-shrink-0"
+                style={{
+                  background: 'rgba(255,255,255,0.2)',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.3)',
+                  filter: 'drop-shadow(0 0 12px rgba(255,215,0,0.3))',
+                }}
+              >
+                {student?.avatar || '🧒'}
+              </div>
+              <div>
+                <p className="text-white/70 text-xs font-bold uppercase tracking-widest">Welcome back</p>
+                <h1 className="text-white text-2xl font-black leading-tight">{student?.name}!</h1>
               </div>
             </div>
-            <div className="flex flex-col gap-2 items-end">
-              <button onClick={() => router.push('/child/shop')} className="glass-btn">🛑 Shop</button>
-              <button onClick={() => router.push('/child/settings')} className="glass-btn">⚙️ Settings</button>
-              <button onClick={() => { logout(); router.push('/') }} className="text-white/40 text-xs font-bold mt-1">Logout</button>
+            <div className="flex flex-col gap-1.5 items-end">
+              <button onClick={() => router.push('/child/shop')}
+                className="glass-btn">🛍️ Shop</button>
+              <button onClick={() => router.push('/child/settings')}
+                className="glass-btn">⚙️</button>
+              <button onClick={() => { logout(); router.push('/') }}
+                className="text-white/30 text-[10px] font-bold mt-0.5">Logout</button>
             </div>
           </div>
-          <div className="mt-4 flex items-center gap-4">
-            <div className="flex-1">
-              <div className="flex justify-between mb-1">
-                <span className="text-white/70 text-xs font-bold">Overall Progress</span>
-                <span className="text-white font-black text-xs">{doneCards}/{totalCards} cards</span>
+
+          {/* ── XP / Stats Row ── */}
+          <div className="flex gap-2.5 mb-5">
+            {/* Stars */}
+            <div
+              className="flex-1 rounded-2xl py-2.5 px-3 flex items-center gap-2"
+              style={{ background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.25)' }}
+            >
+              <span className="text-xl">⭐</span>
+              <div>
+                <p className="text-yellow-200 font-black text-base leading-none">{(student?.stars ?? 0).toLocaleString()}</p>
+                <p className="text-white/50 text-[10px] font-bold">Stars</p>
               </div>
-              <div className="bg-white/20 rounded-full h-3">
-                <div className="h-3 rounded-full transition-all duration-700" style={{ width: `${overallPct}%`, background: 'linear-gradient(90deg, #FFD60A, #FF9F0A, #FF6B35)' }} />
-              </div>
-              <div className="text-white/50 text-xs font-bold mt-1">{overallPct}% complete</div>
             </div>
+
+            {/* Streak */}
+            <div
+              className="flex-1 rounded-2xl py-2.5 px-3 flex items-center gap-2"
+              style={{
+                background: streak > 0 ? 'rgba(255,107,53,0.3)' : 'rgba(255,255,255,0.12)',
+                border: streak > 0 ? '1px solid rgba(255,107,53,0.4)' : '1px solid rgba(255,255,255,0.15)',
+              }}
+            >
+              <span className="text-xl">{streak > 0 ? '🔥' : '💤'}</span>
+              <div>
+                <p className="text-white font-black text-base leading-none">{streak}d</p>
+                <p className="text-white/50 text-[10px] font-bold">Streak</p>
+              </div>
+            </div>
+
+            {/* Level */}
+            <div
+              className="flex-1 rounded-2xl py-2.5 px-3 flex items-center gap-2"
+              style={{ background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.25)' }}
+            >
+              <span className="text-xl">🏆</span>
+              <div>
+                <p className="text-white font-black text-base leading-none">Lv {student?.aiBestLevel ?? 1}</p>
+                <p className="text-white/50 text-[10px] font-bold">Level</p>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Overall XP bar ── */}
+          <div>
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-white/80 text-xs font-black uppercase tracking-wide">Overall Progress</span>
+              <span className="text-white font-black text-xs">{overallPct}%</span>
+            </div>
+            <div className="h-4 rounded-full overflow-hidden" style={{ background: 'rgba(0,0,0,0.25)' }}>
+              <div
+                className="h-full rounded-full relative overflow-hidden transition-all duration-1000"
+                style={{
+                  width: `${Math.max(overallPct, 4)}%`,
+                  background: 'linear-gradient(90deg, #FFD60A, #FF9F0A)',
+                }}
+              >
+                <div className="absolute inset-0 shimmer" />
+              </div>
+            </div>
+            <p className="text-white/40 text-[10px] font-bold mt-1">{doneCards} of {totalCards} cards completed</p>
           </div>
         </div>
+
+        {/* ── Badge shelf ── */}
         {badges.length > 0 && (
-          <div className="mt-3 flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-            {badges.map((b: any) => {
-              const INFO: Record<string, { emoji: string; label: string }> = {
-                first_homework: { emoji: '🏅', label: 'First HW' },
-                first_ai:       { emoji: '🤖', label: 'AI Debut' },
-                stars_50:       { emoji: '⭐', label: '50 Stars' },
-                stars_100:      { emoji: '🌟', label: '100 Stars' },
-                stars_500:      { emoji: '💫', label: '500 Stars' },
-                ai_level_3:     { emoji: '🧠', label: 'Lv 3 AI' },
-                ai_level_5:     { emoji: '🏆', label: 'Lv 5 AI' },
-                perfect_score:  { emoji: '🎯', label: 'Perfect!' },
-                streak_3:       { emoji: '🔥', label: '3-Day Streak' },
-                streak_7:       { emoji: '🌈', label: '7-Day Streak' },
-              }
-              const info = INFO[b.type] || { emoji: '🏅', label: b.type }
-              return (
-                <div key={b.id} className="flex-shrink-0 flex flex-col items-center gap-0.5 rounded-xl px-3 py-1.5" style={{ background: 'rgba(255,255,255,0.15)' }}>
-                  <span className="text-lg">{info.emoji}</span>
-                  <span className="text-white/80 text-[10px] font-black whitespace-nowrap">{info.label}</span>
-                </div>
-              )
-            })}
+          <div className="px-5 pb-1">
+            <div className="flex gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+              {badges.map((b: any) => {
+                const info = BADGE_INFO[b.type] || { emoji: '🏅', label: b.type, color: '#FFD60A' }
+                return (
+                  <div
+                    key={b.id}
+                    className="flex-shrink-0 flex flex-col items-center gap-0.5 rounded-2xl px-3 py-2"
+                    style={{
+                      background: info.color + '22',
+                      border: `1px solid ${info.color}44`,
+                    }}
+                  >
+                    <span className="text-xl">{info.emoji}</span>
+                    <span className="text-[9px] font-black whitespace-nowrap" style={{ color: info.color }}>{info.label}</span>
+                  </div>
+                )
+              })}
+            </div>
           </div>
         )}
-        <div className="absolute -right-8 -top-8 w-36 h-36 rounded-full bg-white/5" />
       </div>
 
-      <div className="px-4 pt-5 space-y-5">
+      {/* ── CONTENT ── */}
+      <div className="px-4 pt-5 space-y-4">
+
+        {/* ── Homework Alert ── */}
         {pendingHW.length > 0 && (
-          <div className="rounded-3xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #ff6b35, #f7931e)', boxShadow: '0 8px 32px rgba(255,107,53,0.3)' }}>
+          <div
+            className="rounded-3xl overflow-hidden"
+            style={{
+              background: 'linear-gradient(135deg, #2d1200, #3d1a00)',
+              border: '1.5px solid rgba(255,159,10,0.35)',
+              boxShadow: '0 8px 32px rgba(255,107,53,0.2)',
+            }}
+          >
             <div className="p-4">
               <div className="flex items-center gap-2 mb-3">
-                <span className="text-2xl">📚</span>
-                <div className="text-white font-black">Homework Due!</div>
-                <div className="ml-auto bg-white/30 rounded-full px-2 py-0.5 text-white text-xs font-black">{pendingHW.length}</div>
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center text-lg"
+                  style={{ background: 'rgba(255,159,10,0.2)' }}>📚</div>
+                <div className="flex-1">
+                  <p className="text-white font-black text-sm">Homework Due!</p>
+                  <p className="text-white/50 text-xs font-bold">{pendingHW.length} assignment{pendingHW.length > 1 ? 's' : ''} waiting</p>
+                </div>
+                <div
+                  className="rounded-full px-2.5 py-1 text-xs font-black"
+                  style={{ background: 'rgba(255,159,10,0.25)', color: '#FF9F0A' }}
+                >
+                  {pendingHW.length}
+                </div>
               </div>
               {pendingHW.slice(0, 2).map(hw => (
-                <div key={hw.id} className="mb-2">
+                <div key={hw.id} className="mb-2 last:mb-0">
                   <button
                     onClick={() => hw.moduleId && router.push(hw.aiGenerated ? `/child/tutor?topic=${encodeURIComponent(hw.moduleId)}` : `/child/lesson/${hw.moduleId}`)}
-                    className="w-full rounded-2xl p-3 flex items-center gap-3 active:scale-95 transition-all text-left"
-                    style={{ background: hw.aiGenerated ? 'rgba(94,92,230,0.3)' : 'rgba(255,255,255,0.2)', border: hw.aiGenerated ? '1px solid rgba(94,92,230,0.5)' : 'none' }}
+                    className="w-full rounded-2xl p-3 flex items-center gap-3 active:scale-[0.98] transition-all text-left"
+                    style={{
+                      background: hw.aiGenerated ? 'rgba(94,92,230,0.25)' : 'rgba(255,255,255,0.08)',
+                      border: `1px solid ${hw.aiGenerated ? 'rgba(94,92,230,0.4)' : 'rgba(255,255,255,0.1)'}`,
+                    }}
                   >
-                    <span className="text-2xl">{hw.aiGenerated ? '✨' : '📝'}</span>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <div className="text-white font-black text-sm">{hw.title}</div>
-                        {hw.aiGenerated && <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(94,92,230,0.5)', color: '#E0D7FF' }}>✨ AI</span>}
-                      </div>
-                      {hw.description && <div className="text-white/70 text-xs font-bold mt-0.5 leading-tight">{hw.description}</div>}
-                      <div className="text-white/80 text-xs font-bold mt-0.5">Due: {hw.dueDate} · ⭐ {hw.starsReward}</div>
+                    <span className="text-2xl flex-shrink-0">{hw.aiGenerated ? '✨' : '📝'}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white font-black text-sm truncate">{hw.title}</p>
+                      <p className="text-white/50 text-xs font-bold">Due {hw.dueDate} · ⭐ {hw.starsReward} stars</p>
                     </div>
-                    <span className="text-white/70">{hw.aiGenerated ? '🤖' : '→'}</span>
+                    <span className="text-white/40 text-lg flex-shrink-0">›</span>
                   </button>
                   <button
                     onClick={() => handleMarkDone(hw.id)}
                     disabled={markingDone === hw.id}
-                    className="mt-1 w-full py-1.5 rounded-xl text-xs font-black active:scale-95 transition-all disabled:opacity-50"
-                    style={{ background: 'rgba(48,209,88,0.2)', color: '#30D158' }}
+                    className="mt-1.5 w-full py-2.5 rounded-2xl text-sm font-black active:scale-[0.97] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                    style={{
+                      background: 'linear-gradient(135deg, #30D158, #27AE7A)',
+                      boxShadow: '0 4px 16px rgba(48,209,88,0.3)',
+                    }}
                   >
-                    {markingDone === hw.id ? '…' : '✅ Mark Done'}
+                    {markingDone === hw.id
+                      ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Marking…</>
+                      : <>✅ Mark as Done</>
+                    }
                   </button>
                 </div>
               ))}
@@ -192,42 +316,85 @@ export default function ChildPage() {
           </div>
         )}
 
-        <button onClick={() => router.push('/child/tutor')}
-          className="w-full rounded-3xl p-5 text-left active:scale-95 transition-all"
-          style={{ background: 'linear-gradient(135deg, #0d1f3c, #1a1f6e)', border: '1.5px solid var(--theme-border, #5E5CE660)' }}>
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-3xl" style={{ background: 'var(--theme-soft, rgba(94,92,230,0.3))' }}>🤖</div>
-            <div>
-              <div className="text-white font-black text-base">AI Tutor Sparkle</div>
-              <div className="text-white/60 text-sm font-bold">Practice &amp; earn ⭐ stars!</div>
+        {/* ── AI Tutor CTA (Duolingo-style big button) ── */}
+        <button
+          onClick={() => router.push('/child/tutor')}
+          className="w-full rounded-3xl p-5 text-left active:scale-[0.97] transition-all relative overflow-hidden"
+          style={{
+            background: 'linear-gradient(135deg, #1a0a3a 0%, #2d1b69 100%)',
+            border: '1.5px solid rgba(94,92,230,0.4)',
+            boxShadow: '0 8px 32px rgba(94,92,230,0.25)',
+          }}
+        >
+          {/* Shimmer overlay */}
+          <div className="absolute inset-0 shimmer opacity-40" />
+          <div className="relative flex items-center gap-4">
+            <div
+              className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0"
+              style={{
+                background: 'linear-gradient(135deg, rgba(94,92,230,0.5), rgba(191,90,242,0.5))',
+                boxShadow: '0 4px 20px rgba(94,92,230,0.4)',
+                border: '1px solid rgba(94,92,230,0.4)',
+              }}
+            >
+              🤖
+            </div>
+            <div className="flex-1">
+              <p className="text-white font-black text-lg leading-tight">AI Tutor Sparkle</p>
+              <p className="text-white/60 text-sm font-bold">Practice topics &amp; earn stars!</p>
               {(student?.aiSessions ?? 0) > 0 && (
-                <div className="text-purple-400 text-xs font-bold">{student?.aiSessions} sessions · Best Lv {student?.aiBestLevel}</div>
+                <p className="text-purple-400 text-xs font-bold mt-0.5">
+                  {student?.aiSessions} sessions · Best Level {student?.aiBestLevel}
+                </p>
               )}
             </div>
-            <div className="ml-auto rounded-xl px-4 py-2 text-white text-sm font-black" style={{ background: 'linear-gradient(135deg, var(--theme-color, #BF5AF2), var(--theme-secondary, #5856D6))' }}>Play ▶</div>
+            <div
+              className="rounded-2xl px-4 py-3 text-white font-black text-sm flex-shrink-0"
+              style={{
+                background: 'linear-gradient(135deg, #5E5CE6, #BF5AF2)',
+                boxShadow: '0 4px 16px rgba(94,92,230,0.5)',
+              }}
+            >
+              Start ▶
+            </div>
           </div>
         </button>
 
+        {/* ── AI Recommendations ── */}
         {recommendations.length > 0 && (
           <div>
-            <div className="text-white font-black text-base mb-3 flex items-center gap-2">
-              ✨ Just For You
-              <span className="text-xs text-purple-400 font-bold bg-purple-500/20 rounded-full px-2 py-0.5 ml-1">AI Pick</span>
+            <div className="flex items-center gap-2 mb-3">
+              <h2 className="text-white font-black text-base">✨ Just For You</h2>
+              <span
+                className="text-xs font-black rounded-full px-2.5 py-0.5"
+                style={{ background: 'rgba(191,90,242,0.2)', color: '#BF5AF2', border: '1px solid rgba(191,90,242,0.3)' }}
+              >
+                AI Pick
+              </span>
             </div>
-            <div className="flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none' }}>
+            <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
               {recommendations.map((rec, i) => {
                 const mod = MODS.find(m => m.id === rec.moduleId)
                 const done = progressMap[rec.moduleId] || 0
                 const pct = Math.min(100, Math.round((done / (mod?.items.length || 1)) * 100))
+                const color = mod?.color || '#5E5CE6'
                 return (
-                  <button key={i} onClick={() => router.push(`/child/lesson/${rec.moduleId}`)}
-                    className="flex-shrink-0 w-36 rounded-2xl p-3 text-left active:scale-95 transition-all"
-                    style={{ background: (mod?.color || '#5E5CE6') + '22', border: `1.5px solid ${mod?.color || '#5E5CE6'}44` }}>
+                  <button
+                    key={i}
+                    onClick={() => router.push(`/child/lesson/${rec.moduleId}`)}
+                    className="flex-shrink-0 w-36 rounded-2xl p-3.5 text-left active:scale-[0.97] transition-all"
+                    style={{
+                      background: color + '18',
+                      border: `1.5px solid ${color}35`,
+                      boxShadow: `0 4px 16px ${color}15`,
+                    }}
+                  >
                     <div className="text-3xl mb-2">{mod?.icon || '📚'}</div>
-                    <div className="text-white font-black text-xs mb-0.5">{rec.title}</div>
-                    <div className="text-white/50 text-xs font-bold leading-tight">{rec.reason}</div>
-                    <div className="mt-2 bg-white/10 rounded-full h-1">
-                      <div className="h-1 rounded-full" style={{ width: `${pct}%`, background: mod?.color || '#5E5CE6' }} />
+                    <p className="text-white font-black text-xs mb-0.5 leading-tight">{rec.title}</p>
+                    <p className="text-white/45 text-[10px] font-bold leading-tight line-clamp-2">{rec.reason}</p>
+                    {/* Mini progress */}
+                    <div className="mt-2.5 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                      <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
                     </div>
                   </button>
                 )
@@ -236,41 +403,67 @@ export default function ChildPage() {
           </div>
         )}
 
+        {/* ── Activities ── */}
         <div>
-          <div className="text-white font-black text-base mb-3">🎮 Activities</div>
+          <h2 className="text-white font-black text-base mb-3">🎮 Activities</h2>
           <div className="grid grid-cols-3 gap-3">
             {[
-              { label: 'Draw', icon: '🎨', path: '/child/draw', bg: 'rgba(255,69,58,0.15)', border: '#FF9F0A40' },
-              { label: 'Trace', icon: '✍️', path: '/child/trace', bg: 'rgba(48,209,88,0.15)', border: '#30D15840' },
-              { label: 'Tutor', icon: '🤖', path: '/child/tutor', bg: 'rgba(191,90,242,0.15)', border: '#BF5AF240' },
+              { label: 'Draw', icon: '🎨', path: '/child/draw',
+                grad: 'linear-gradient(135deg, #FF453A22, #FF9F0A22)', border: '#FF9F0A40', glow: '#FF9F0A' },
+              { label: 'Trace', icon: '✍️', path: '/child/trace',
+                grad: 'linear-gradient(135deg, #30D15822, #43C6AC22)', border: '#30D15840', glow: '#30D158' },
+              { label: 'Tutor', icon: '🤖', path: '/child/tutor',
+                grad: 'linear-gradient(135deg, #5E5CE622, #BF5AF222)', border: '#BF5AF240', glow: '#5E5CE6' },
             ].map(a => (
-              <button key={a.label} onClick={() => router.push(a.path)}
-                className="rounded-2xl p-3 flex flex-col items-center gap-2 active:scale-95 transition-all"
-                style={{ background: a.bg, border: `1px solid ${a.border}` }}>
-                <div className="text-3xl">{a.icon}</div>
-                <div className="text-white font-black text-xs">{a.label}</div>
+              <button
+                key={a.label}
+                onClick={() => router.push(a.path)}
+                className="rounded-2xl p-4 flex flex-col items-center gap-2 active:scale-[0.94] transition-all"
+                style={{
+                  background: a.grad,
+                  border: `1.5px solid ${a.border}`,
+                }}
+              >
+                <span className="text-3xl">{a.icon}</span>
+                <span className="text-white font-black text-xs">{a.label}</span>
               </button>
             ))}
           </div>
         </div>
 
+        {/* ── My Lessons (syllabus) ── */}
         {syllabuses.length > 0 && (
           <div>
-            <div className="text-white font-black text-base mb-3">📖 My Lessons</div>
+            <h2 className="text-white font-black text-base mb-3">📖 My Lessons</h2>
             <div className="grid grid-cols-2 gap-3">
               {syllabuses.map(syl => {
                 const done = progressMap[`syl_${syl.id}`] || 0
-                const pct = Math.min(100, Math.round((done / (syl.items?.length || 1)) * 100))
+                const total = syl.items?.length || 1
+                const pct = Math.min(100, Math.round((done / total) * 100))
                 return (
-                  <button key={syl.id} onClick={() => router.push(`/child/lesson/syl_${syl.id}`)}
-                    className="rounded-2xl p-4 text-left active:scale-95 transition-all"
-                    style={{ background: syl.color + '22', border: `1.5px solid ${syl.color}44` }}>
+                  <button
+                    key={syl.id}
+                    onClick={() => router.push(`/child/lesson/syl_${syl.id}`)}
+                    className="rounded-2xl p-4 text-left active:scale-[0.97] transition-all relative overflow-hidden"
+                    style={{
+                      background: syl.color + '18',
+                      border: `1.5px solid ${syl.color}35`,
+                    }}
+                  >
                     <div className="text-3xl mb-2">{syl.icon}</div>
-                    <div className="text-white font-black text-xs">{syl.title}</div>
-                    <div className="text-white/50 text-xs font-bold">{syl.items?.length} cards</div>
-                    <div className="mt-2 bg-white/10 rounded-full h-1.5">
-                      <div className="h-1.5 rounded-full" style={{ width: `${pct}%`, background: syl.color }} />
+                    <p className="text-white font-black text-xs leading-tight">{syl.title}</p>
+                    <p className="text-white/45 text-[10px] font-bold mt-0.5">{total} cards</p>
+                    <div className="mt-2.5 h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                      <div
+                        className="h-full rounded-full transition-all duration-700 relative overflow-hidden"
+                        style={{ width: `${pct}%`, background: syl.color }}
+                      >
+                        {pct > 20 && <div className="absolute inset-0 shimmer" />}
+                      </div>
                     </div>
+                    {pct === 100 && (
+                      <div className="absolute top-2 right-2 text-sm">✅</div>
+                    )}
                   </button>
                 )
               })}
@@ -278,22 +471,40 @@ export default function ChildPage() {
           </div>
         )}
 
+        {/* ── All Lessons grid ── */}
         <div>
-          <div className="text-white font-black text-base mb-3">📚 All Lessons</div>
+          <h2 className="text-white font-black text-base mb-3">📚 All Lessons</h2>
           <div className="grid grid-cols-2 gap-3">
             {MODS.map(mod => {
               const done = progressMap[mod.id] || 0
               const pct = Math.min(100, Math.round((done / mod.items.length) * 100))
+              const complete = pct === 100
               return (
-                <button key={mod.id} onClick={() => router.push(`/child/lesson/${mod.id}`)}
-                  className="rounded-2xl p-4 text-left active:scale-95 transition-all relative"
-                  style={{ background: pct === 100 ? mod.color + '30' : mod.color + '18', border: `1.5px solid ${pct === 100 ? mod.color : mod.color + '40'}` }}>
-                  {pct === 100 && <div className="absolute top-2 right-2 text-sm">✅</div>}
+                <button
+                  key={mod.id}
+                  onClick={() => router.push(`/child/lesson/${mod.id}`)}
+                  className="rounded-2xl p-4 text-left active:scale-[0.97] transition-all relative"
+                  style={{
+                    background: complete ? mod.color + '28' : mod.color + '14',
+                    border: `1.5px solid ${complete ? mod.color + '60' : mod.color + '30'}`,
+                  }}
+                >
+                  {complete && (
+                    <div
+                      className="absolute top-2.5 right-2.5 w-6 h-6 rounded-full flex items-center justify-center text-[11px]"
+                      style={{ background: '#30D158', boxShadow: '0 2px 8px rgba(48,209,88,0.4)' }}
+                    >
+                      ✓
+                    </div>
+                  )}
                   <div className="text-3xl mb-2">{mod.icon}</div>
-                  <div className="text-white font-black text-xs">{mod.title}</div>
-                  <div className="text-white/50 text-xs font-bold">{done}/{mod.items.length}</div>
-                  <div className="mt-2 bg-white/10 rounded-full h-1.5">
-                    <div className="h-1.5 rounded-full" style={{ width: `${pct}%`, background: pct === 100 ? '#30D158' : mod.color }} />
+                  <p className="text-white font-black text-xs leading-tight">{mod.title}</p>
+                  <p className="text-white/40 text-[10px] font-bold mt-0.5">{done}/{mod.items.length}</p>
+                  <div className="mt-2.5 h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                    <div
+                      className="h-full rounded-full transition-all duration-700"
+                      style={{ width: `${pct}%`, background: complete ? '#30D158' : mod.color }}
+                    />
                   </div>
                 </button>
               )
@@ -302,37 +513,62 @@ export default function ChildPage() {
         </div>
       </div>
 
-      {/* Badge celebration modal */}
+      {/* ── Badge Celebration Modal ── */}
       {celebrationBadges.length > 0 && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-6" style={{ background: 'rgba(0,0,0,0.8)' }}>
-          <div className="w-full max-w-[340px] rounded-3xl p-6 text-center" style={{ background: 'linear-gradient(135deg, #1a0a3a, #2d1b69)' }}>
-            <div className="text-5xl mb-3 animate-bounce">🎉</div>
-            <div className="text-white font-black text-xl mb-1">New Badge{celebrationBadges.length > 1 ? 's' : ''}!</div>
-            <div className="text-white/60 text-sm font-bold mb-5">You earned something special!</div>
-            <div className="flex flex-wrap justify-center gap-4 mb-6">
-              {celebrationBadges.map((b: any) => (
-                <div key={b.type} className="flex flex-col items-center gap-1">
-                  <div className="text-5xl animate-bounce">{b.emoji}</div>
-                  <div className="text-yellow-300 text-xs font-black">{b.label}</div>
-                </div>
-              ))}
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center"
+          style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' }}
+        >
+          <div
+            className="w-full max-w-[430px] rounded-t-3xl p-7 text-center animate-slide-up"
+            style={{
+              background: 'linear-gradient(180deg, #1e0a40 0%, #140730 100%)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              borderBottom: 'none',
+              boxShadow: '0 -24px 80px rgba(94,92,230,0.3)',
+            }}
+          >
+            {/* Confetti-style header */}
+            <div className="text-5xl mb-2 animate-bounce">🎉</div>
+            <h2 className="text-white font-black text-2xl mb-1">
+              {celebrationBadges.length > 1 ? 'New Badges!' : 'New Badge!'}
+            </h2>
+            <p className="text-white/50 text-sm font-bold mb-6">You earned something special!</p>
+
+            <div className="flex flex-wrap justify-center gap-5 mb-7">
+              {celebrationBadges.map((b: any, i: number) => {
+                const info = BADGE_INFO[b.type] || { emoji: '🏅', label: b.type, color: '#FFD60A' }
+                return (
+                  <div key={b.type} className="flex flex-col items-center gap-2 animate-pop" style={{ animationDelay: `${i * 150}ms` }}>
+                    <div
+                      className="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl"
+                      style={{
+                        background: info.color + '22',
+                        border: `2px solid ${info.color}55`,
+                        boxShadow: `0 8px 32px ${info.color}40`,
+                      }}
+                    >
+                      {info.emoji}
+                    </div>
+                    <p className="font-black text-sm" style={{ color: info.color }}>{info.label}</p>
+                  </div>
+                )
+              })}
             </div>
+
             <button
               onClick={() => setCelebrationBadges([])}
-              className="w-full py-3 rounded-2xl text-white font-black text-base"
-              style={{ background: 'linear-gradient(135deg, #FFD60A, #FF9F0A)', color: '#000' }}
+              className="w-full py-4 rounded-2xl text-black font-black text-base"
+              style={{
+                background: 'linear-gradient(135deg, #FFD60A, #FF9F0A)',
+                boxShadow: '0 6px 24px rgba(255,159,10,0.5)',
+              }}
             >
               Awesome! ⭐
             </button>
           </div>
         </div>
       )}
-
-      <style>{`
-        .star-badge { background: linear-gradient(135deg, #FFD60A, #FF9F0A); border-radius: 20px; padding: 2px 12px; font-weight: 800; font-size: 13px; color: #000; display: inline-block; box-shadow: 0 2px 8px rgba(255,159,10,0.4); }
-        .glass-btn { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; padding: 4px 12px; font-weight: 800; font-size: 12px; color: white; }
-        .glass-btn:active { transform: scale(0.95); }
-      `}</style>
     </div>
   )
 }

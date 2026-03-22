@@ -5,7 +5,7 @@ import AccessibilityProvider from '@/components/AccessibilityProvider';
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
 
 export const metadata: Metadata = {
-  title: 'KinderSpark Pro',
+  title: 'KinderSpark Pro · v1.1',
   description: 'AI-powered kindergarten learning platform',
 };
 
