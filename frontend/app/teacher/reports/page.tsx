@@ -1,10 +1,10 @@
 'use client'
-import { Suspense, useState } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
 import { generateReport } from '@/lib/api'
 
-function ReportsInner() {
+function ReportsContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [classId, setClassId] = useState(searchParams?.get('classId') || '')
@@ -79,8 +79,8 @@ function ReportsInner() {
 
 export default function ReportsPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center" style={{ background: '#1a1a2e' }}><div className="text-white/50 font-bold">Loading...</div></div>}>
-      <ReportsInner />
+    <Suspense fallback={<div>Loading...</div>}>
+      <ReportsContent />
     </Suspense>
   )
 }
