@@ -1,0 +1,90 @@
+name: Setup Railway PostgreSQL
+
+on:
+  workflow_dispatch:
+
+jobs:
+  provision-db:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Add PostgreSQL plugin
+        run: |
+          railway add \
+            --plugin postgresql \
+            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
+            --yes || echo "Plugin may already exist, continuing..."
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Fetch DATABASE_URL from Railway
+        id: fetch_db
+        run: |
+          DB_URL=$(railway variables \
+            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
+            --service postgresql \
+            --json 2>/dev/null | python3 -c \
+            "import sys,json; d=json.load(sys.stdin); print(d.get('DATABASE_URL',''))" \
+            2>/dev/null || echo "")
+
+          if [ -z "$DB_URL" ]; then
+            # Fallback: try Postgres service name variants
+            for svc in postgresql postgres db; do
+              DB_URL=$(railway variables \
+                --project ${{ secrets.RAILWAY_PROJECT_ID }} \
+                --service "$svc" \
+                --json 2>/dev/null | python3 -c \
+                "import sys,json; d=json.load(sys.stdin); print(d.get('DATABASE_URL',''))" \
+                2>/dev/null || echo "")
+              [ -n "$DB_URL" ] && break
+            done
+          fi
+
+          if [ -z "$DB_URL" ]; then
+            echo "ERROR: Could not retrieve DATABASE_URL from Railway"
+            exit 1
+          fi
+
+          echo "::add-mask::$DB_URL"
+          echo "DATABASE_URL=$DB_URL" >> "$GITHUB_OUTPUT"
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Set DATABASE_URL on backend service
+        run: |
+          railway variables set \
+            DATABASE_URL="${{ steps.fetch_db.outputs.DATABASE_URL }}" \
+            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
+            --service kinderspark-backend
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Save DATABASE_URL as GitHub secret
+        run: |
+          gh secret set DATABASE_URL \
+            --body "${{ steps.fetch_db.outputs.DATABASE_URL }}" \
+            --repo ${{ github.repository }}
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+
+      - name: Deploy backend with database
+        run: |
+          railway up \
+            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
+            --service kinderspark-backend \
+            --detach
+        working-directory: backend
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Tail logs (30s)
+        run: |
+          timeout 30 railway logs \
+            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
+            --service kinderspark-backend || true
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
