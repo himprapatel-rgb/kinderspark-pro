@@ -3,6 +3,7 @@ import express from 'express'
 import cors from 'cors'
 import { rateLimiter } from './middleware/rateLimit.middleware'
 import { cache } from './middleware/cache.middleware'
+import { authenticate } from './middleware/auth.middleware'
 import authRoutes from './routes/auth.routes'
 import studentRoutes from './routes/student.routes'
 import teacherRoutes from './routes/teacher.routes'
@@ -26,6 +27,7 @@ app.use(cors({
 }))
 app.use(express.json())
 app.use(rateLimiter)
+app.use(authenticate)
 
 app.get('/health', (_req, res) => res.json({ status: 'ok', version: '2.0.0' }))
 

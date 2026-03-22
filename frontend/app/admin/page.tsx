@@ -99,41 +99,66 @@ export default function AdminPage() {
       </div>
 
       <div className="px-4 pt-4">
-        {tab === 0 && (
+        {tab === 0 && stats && (
           <div className="space-y-4">
-            <div className="text-white/60 text-xs font-bold">PLATFORM HEALTH</div>
-
-            {stats && (
-              <div className="space-y-3">
-                {[
-                  { label: 'Avg Stars / Student', value: stats.totalStudents ? Math.round(stats.totalStars / stats.totalStudents) : 0, icon: '⭐', max: 1000 },
-                  { label: 'Syllabuses Created', value: stats.totalSyllabuses, icon: '📚', max: 50 },
-                  { label: 'Total Students', value: stats.totalStudents, icon: '🧒', max: 200 },
-                ].map(m => (
-                  <div key={m.label} className="rounded-2xl p-4" style={{ background: '#1a1a2e' }}>
-                    <div className="flex justify-between items-center mb-2">
-                      <div className="text-white font-black text-sm">{m.icon} {m.label}</div>
-                      <div className="text-white font-black">{m.value}</div>
-                    </div>
-                    <div className="bg-white/10 rounded-full h-2">
-                      <div className="h-2 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500"
-                        style={{ width: Math.min(100, Math.round(m.value / m.max * 100)) + '%' }} />
+            {/* School health score */}
+            {(() => {
+              const avgStars = stats.totalStudents ? Math.round(stats.totalStars / stats.totalStudents) : 0
+              const healthScore = Math.min(100, Math.round((avgStars / 500) * 40 + (stats.totalSyllabuses / 20) * 30 + (Math.min(stats.totalStudents, 50) / 50) * 30))
+              return (
+                <div className="rounded-2xl p-5" style={{ background: 'linear-gradient(135deg, #1a0a3a, #2d1b69)' }}>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="text-white font-black">🏫 School Health Score</div>
+                    <div className="text-white/50 text-xs font-bold">{stats.totalClasses} classes</div>
+                  </div>
+                  <div className="flex items-end gap-4">
+                    <div className="text-white font-black" style={{ fontSize: '3rem', lineHeight: 1 }}>{healthScore}</div>
+                    <div className="flex-1 pb-2">
+                      <div className="bg-white/10 rounded-full h-4">
+                        <div className="h-4 rounded-full transition-all" style={{
+                          width: `${healthScore}%`,
+                          background: healthScore >= 70 ? '#30D158' : healthScore >= 40 ? '#FF9F0A' : '#FF453A'
+                        }} />
+                      </div>
+                      <div className="text-white/40 text-xs font-bold mt-1">out of 100</div>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
+                </div>
+              )
+            })()}
 
-            <div className="text-white/60 text-xs font-bold mt-4">TOP 3 PERFORMERS</div>
+            <div className="text-white/60 text-xs font-bold">PLATFORM METRICS</div>
+            <div className="space-y-3">
+              {[
+                { label: 'Avg Stars / Student', value: stats.totalStudents ? Math.round(stats.totalStars / stats.totalStudents) : 0, icon: '⭐', max: 500, color: '#FFD60A' },
+                { label: 'Syllabuses Created', value: stats.totalSyllabuses, icon: '📚', max: 30, color: '#BF5AF2' },
+                { label: 'Total Students Enrolled', value: stats.totalStudents, icon: '🧒', max: 100, color: '#30D158' },
+                { label: 'Total Classes', value: stats.totalClasses, icon: '🏫', max: 20, color: '#5E5CE6' },
+              ].map(m => (
+                <div key={m.label} className="rounded-2xl p-4" style={{ background: '#1a1a2e' }}>
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="text-white font-black text-sm">{m.icon} {m.label}</div>
+                    <div className="text-white font-black">{typeof m.value === 'number' ? m.value.toLocaleString() : m.value}</div>
+                  </div>
+                  <div className="bg-white/10 rounded-full h-2.5">
+                    <div className="h-2.5 rounded-full transition-all"
+                      style={{ width: Math.min(100, Math.round(m.value / m.max * 100)) + '%', background: m.color }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="text-white/60 text-xs font-bold mt-4">🏆 TOP 3 PERFORMERS</div>
             {leaderboard.slice(0, 3).map((s, i) => (
-              <div key={s.id} className="rounded-2xl p-4 flex items-center gap-3" style={{ background: '#1a1a2e', border: i === 0 ? '1px solid #FFD60A40' : 'none' }}>
+              <div key={s.id} className="rounded-2xl p-4 flex items-center gap-3"
+                style={{ background: i === 0 ? '#2a1f0a' : '#1a1a2e', border: i === 0 ? '1px solid #FFD60A50' : i === 1 ? '1px solid #C0C0C030' : i === 2 ? '1px solid #CD7F3230' : 'none' }}>
                 <div className="text-2xl">{medals[i] || `#${i+1}`}</div>
                 <div className="text-2xl">{s.avatar}</div>
-                <div className="flex-1">
-                  <div className="text-white font-black text-sm">{s.name}</div>
-                  <div className="text-white/50 text-xs font-bold">{s.class?.name} · {s.aiSessions} sessions</div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-white font-black text-sm truncate">{s.name}</div>
+                  <div className="text-white/50 text-xs font-bold">{s.class?.name} · {s.aiSessions} AI sessions</div>
                 </div>
-                <div className="text-right">
+                <div className="text-right shrink-0">
                   <div className="text-yellow-400 font-black">⭐ {s.stars}</div>
                   <div className="text-purple-400 text-xs font-bold">Lv {s.aiBestLevel}</div>
                 </div>

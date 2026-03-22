@@ -93,13 +93,16 @@ export default function ChildPage() {
               <button onClick={() => { logout(); router.push('/') }} className="text-white/40 text-xs font-bold mt-1">Logout</button>
             </div>
           </div>
-          <div className="mt-4">
-            <div className="flex justify-between mb-1">
-              <span className="text-white/70 text-xs font-bold">Overall Progress</span>
-              <span className="text-white font-black text-xs">{overallPct}%</span>
-            </div>
-            <div className="bg-white/20 rounded-full h-2">
-              <div className="h-2 rounded-full bg-gradient-to-r from-yellow-400 to-orange-400 transition-all duration-700" style={{ width: `${overallPct}%` }} />
+          <div className="mt-4 flex items-center gap-4">
+            <div className="flex-1">
+              <div className="flex justify-between mb-1">
+                <span className="text-white/70 text-xs font-bold">Overall Progress</span>
+                <span className="text-white font-black text-xs">{doneCards}/{totalCards} cards</span>
+              </div>
+              <div className="bg-white/20 rounded-full h-3">
+                <div className="h-3 rounded-full transition-all duration-700" style={{ width: `${overallPct}%`, background: 'linear-gradient(90deg, #FFD60A, #FF9F0A, #FF6B35)' }} />
+              </div>
+              <div className="text-white/50 text-xs font-bold mt-1">{overallPct}% complete</div>
             </div>
           </div>
         </div>
@@ -224,13 +227,14 @@ export default function ChildPage() {
               const pct = Math.min(100, Math.round((done / mod.items.length) * 100))
               return (
                 <button key={mod.id} onClick={() => router.push(`/child/lesson/${mod.id}`)}
-                  className="rounded-2xl p-4 text-left active:scale-95 transition-all"
-                  style={{ background: mod.color + '18', border: `1.5px solid ${mod.color}40` }}>
+                  className="rounded-2xl p-4 text-left active:scale-95 transition-all relative"
+                  style={{ background: pct === 100 ? mod.color + '30' : mod.color + '18', border: `1.5px solid ${pct === 100 ? mod.color : mod.color + '40'}` }}>
+                  {pct === 100 && <div className="absolute top-2 right-2 text-sm">✅</div>}
                   <div className="text-3xl mb-2">{mod.icon}</div>
                   <div className="text-white font-black text-xs">{mod.title}</div>
                   <div className="text-white/50 text-xs font-bold">{done}/{mod.items.length}</div>
                   <div className="mt-2 bg-white/10 rounded-full h-1.5">
-                    <div className="h-1.5 rounded-full" style={{ width: `${pct}%`, background: mod.color }} />
+                    <div className="h-1.5 rounded-full" style={{ width: `${pct}%`, background: pct === 100 ? '#30D158' : mod.color }} />
                   </div>
                 </button>
               )

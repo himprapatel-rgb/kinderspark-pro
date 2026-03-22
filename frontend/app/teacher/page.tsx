@@ -6,7 +6,8 @@ import {
   getClasses, getStudents, getHomework, getSyllabuses, getMessages,
   createClass, createStudent, deleteStudent, createHomework, deleteHomework,
   completeHomework, sendMessage, deleteClass, assignSyllabus,
-  getAttendance, saveAttendance, generateReport,
+  getAttendance, saveAttendance, generateReport, getClassStats,
+  getUnreadCount, markAllMessagesRead,
 } from '@/lib/api'
 
 // ─── tiny helpers ─────────────────────────────────────────────────────────────
@@ -31,6 +32,8 @@ export default function TeacherDashboard() {
   const [syllabuses, setSyllabuses] = useState<any[]>([])
   const [messages, setMessages] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [classStats, setClassStats] = useState<any>(null)
+  const [unreadCount, setUnreadCount] = useState(0)
 
   // Forms
   const [newClassName, setNewClassName] = useState('')
@@ -57,6 +60,9 @@ export default function TeacherDashboard() {
 
   useEffect(() => {
     if (tab === 'attendance' && selectedClass) loadAttendance()
+    if (tab === 'messages' && selectedClass && unreadCount > 0) {
+      markAllMessagesRead(selectedClass.id).then(() => setUnreadCount(0)).catch(() => {})
+    }
   }, [tab, attendanceDate, selectedClass])
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 3000) }
@@ -72,16 +78,20 @@ export default function TeacherDashboard() {
 
   const loadClassData = async (classId: string) => {
     try {
-      const [stu, hw, syl, msg] = await Promise.all([
+      const [stu, hw, syl, msg, stats, unread] = await Promise.all([
         getStudents(classId),
         getHomework(classId),
         getSyllabuses(classId),
         getMessages({ classId }),
+        getClassStats(classId).catch(() => null),
+        getUnreadCount({ classId }).catch(() => ({ count: 0 })),
       ])
       setStudents(stu)
       setHomework(hw)
       setSyllabuses(syl)
       setMessages(msg)
+      setClassStats(stats)
+      setUnreadCount(unread?.count || 0)
     } catch (e) { console.error(e) }
   }
 
@@ -294,10 +304,15 @@ export default function TeacherDashboard() {
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`flex-1 py-3 text-xs font-black transition-colors flex flex-col items-center gap-0.5 ${tab === t.id ? 'text-white border-t-2 border-indigo-400' : 'text-white/40'}`}
+            className={`flex-1 py-3 text-xs font-black transition-colors flex flex-col items-center gap-0.5 relative ${tab === t.id ? 'text-white border-t-2 border-indigo-400' : 'text-white/40'}`}
           >
             <span>{t.emoji}</span>
             <span>{t.label}</span>
+            {t.id === 'messages' && unreadCount > 0 && (
+              <span className="absolute top-1.5 right-1/4 bg-red-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -309,20 +324,41 @@ export default function TeacherDashboard() {
           <div className="space-y-4">
             {selectedClass ? (
               <>
-                {/* Stats */}
-                <div className="grid grid-cols-3 gap-3">
+                {/* Rich Stats Row */}
+                <div className="grid grid-cols-2 gap-3">
                   {[
-                    { label: 'Students', value: students.length, emoji: '👥', color: '#5E5CE6' },
-                    { label: 'Homework', value: homework.length, emoji: '📚', color: '#FF9F0A' },
-                    { label: 'Messages', value: messages.length, emoji: '💬', color: '#30D158' },
+                    { label: 'Students', value: classStats?.totalStudents ?? students.length, emoji: '👥', color: '#5E5CE6' },
+                    { label: 'HW Done', value: `${classStats?.avgHwCompletion ?? 0}%`, emoji: '📚', color: '#FF9F0A' },
+                    { label: 'Total Stars', value: classStats?.totalStars ?? students.reduce((a: number, s: any) => a + s.stars, 0), emoji: '⭐', color: '#FFD60A' },
+                    { label: 'AI Sessions', value: classStats?.totalAISessions ?? 0, emoji: '🤖', color: '#BF5AF2' },
                   ].map(s => (
-                    <div key={s.label} className="rounded-2xl p-4 text-center" style={{ background: s.color + '22', border: `1px solid ${s.color}44` }}>
-                      <div className="text-2xl">{s.emoji}</div>
-                      <div className="text-white font-black text-xl">{s.value}</div>
+                    <div key={s.label} className="rounded-2xl p-4" style={{ background: s.color + '18', border: `1px solid ${s.color}33` }}>
+                      <div className="text-2xl mb-1">{s.emoji}</div>
+                      <div className="text-white font-black text-2xl">{s.value}</div>
                       <div className="text-white/50 text-xs font-bold">{s.label}</div>
                     </div>
                   ))}
                 </div>
+
+                {/* HW Completion bar */}
+                {classStats && (
+                  <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="text-white font-black text-sm">📊 Homework Completion</div>
+                      <div className="text-white font-black">{classStats.avgHwCompletion}%</div>
+                    </div>
+                    <div className="bg-white/10 rounded-full h-3">
+                      <div
+                        className="h-3 rounded-full transition-all"
+                        style={{ width: `${classStats.avgHwCompletion}%`, background: classStats.avgHwCompletion >= 80 ? '#30D158' : classStats.avgHwCompletion >= 50 ? '#FF9F0A' : '#FF453A' }}
+                      />
+                    </div>
+                    <div className="flex justify-between mt-2 text-white/40 text-xs font-bold">
+                      <span>Avg streak: 🔥{classStats.avgStreak} days</span>
+                      <span>{classStats.totalSyllabuses} syllabuses</span>
+                    </div>
+                  </div>
+                )}
 
                 {/* Quick actions */}
                 <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.05)' }}>
@@ -350,14 +386,18 @@ export default function TeacherDashboard() {
                   </div>
                 </div>
 
-                {/* Top students */}
-                {students.length > 0 && (
+                {/* Top students leaderboard */}
+                {(classStats?.topStudents || students).length > 0 && (
                   <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                    <div className="text-white font-black mb-3">⭐ Leaderboard</div>
+                    <div className="text-white font-black mb-3">🏆 Leaderboard</div>
                     <div className="space-y-2">
-                      {[...students].sort((a, b) => b.stars - a.stars).slice(0, 5).map((s, i) => (
+                      {(classStats?.topStudents || [...students].sort((a: any, b: any) => b.stars - a.stars).slice(0, 5))
+                        .map((s: any, i: number) => (
                         <div key={s.id} className="flex items-center gap-3">
-                          <div className="text-white/40 font-black text-sm w-5">{i + 1}</div>
+                          <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-black"
+                            style={{ background: i === 0 ? '#FFD60A' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : 'rgba(255,255,255,0.1)', color: i < 3 ? '#000' : '#fff' }}>
+                            {i + 1}
+                          </div>
                           <div className="text-xl">{s.avatar || '🧒'}</div>
                           <div className="flex-1 text-white font-bold text-sm">{s.name}</div>
                           <div className="text-yellow-400 font-black text-sm">⭐ {s.stars}</div>
@@ -653,9 +693,12 @@ export default function TeacherDashboard() {
             {/* Message list */}
             <div className="space-y-2">
               {messages.map(msg => (
-                <div key={msg.id} className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                <div key={msg.id} className="rounded-2xl p-4" style={{ background: msg.read === false ? 'rgba(94,92,230,0.12)' : 'rgba(255,255,255,0.05)', border: msg.read === false ? '1px solid #5E5CE630' : '1px solid transparent' }}>
                   <div className="flex justify-between items-start mb-1">
-                    <div className="text-white font-black text-sm">{msg.subject}</div>
+                    <div className="flex items-center gap-2">
+                      {msg.read === false && <div className="w-2 h-2 rounded-full bg-indigo-400 flex-shrink-0" />}
+                      <div className="text-white font-black text-sm">{msg.subject}</div>
+                    </div>
                     <div className="text-white/30 text-xs font-bold">{fmt(msg.createdAt)}</div>
                   </div>
                   <div className="text-white/50 text-xs font-bold mb-1">From: {msg.from}</div>
