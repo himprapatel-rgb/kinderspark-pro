@@ -8,4 +8,4 @@ cmds = ["npm ci"]
 cmds = ["npx prisma generate", "npm run build"]
 
 [start]
-cmd = "npx prisma migrate deploy && node dist/app.js"
+cmd = "node scripts/fix-migrations.js && npx prisma migrate deploy && node dist/app.js"
