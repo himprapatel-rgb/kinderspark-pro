@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import { generateLesson, generateTutorFeedback, generateRecommendations } from '../services/claude.service'
+import { generateLesson, generateTutorFeedback, generateRecommendations, generateHomeworkIdea } from '../services/claude.service'
 import { buildClassReport } from '../services/report.service'
 import prisma from '../prisma/client'
 
@@ -32,6 +32,36 @@ export async function aiTutorFeedback(req: Request, res: Response) {
     return res.json({ feedback })
   } catch {
     return res.json({ feedback: 'Amazing effort today! Keep practicing every day and you will be a superstar! 🌟' })
+  }
+}
+
+export async function aiGenerateHomework(req: Request, res: Response) {
+  const { topic, grade = 'KG 1', classId } = req.body
+  if (!topic) return res.status(400).json({ error: 'topic required' })
+  try {
+    // Get student count for context if classId is provided
+    let studentCount = 10
+    if (classId) {
+      studentCount = await prisma.student.count({ where: { classId } })
+    }
+    const idea = await generateHomeworkIdea(topic, grade, studentCount)
+    return res.json(idea)
+  } catch (err) {
+    console.error('AI homework generation failed:', err)
+    // Fallback so the UI always gets something usable
+    return res.json({
+      title: `${topic} Practice ✨`,
+      description: 'A fun learning activity for your child!',
+      moduleId: 'numbers',
+      emoji: '📝',
+      starsReward: 10,
+      estimatedMinutes: 10,
+      activities: [
+        { instruction: 'Practice with your child together', emoji: '👨‍👩‍👧' },
+        { instruction: 'Say each answer out loud', emoji: '🗣️' },
+        { instruction: 'Give a high five when done!', emoji: '🙌' },
+      ],
+    })
   }
 }
 

@@ -8,6 +8,7 @@ import {
   completeHomework, sendMessage, deleteClass, assignSyllabus,
   getAttendance, saveAttendance, generateReport, getClassStats,
   getUnreadCount, markAllMessagesRead, getFeedback, saveFeedback,
+  generateHomeworkAI,
 } from '@/lib/api'
 
 // ─── tiny helpers ─────────────────────────────────────────────────────────────
@@ -48,6 +49,15 @@ export default function TeacherDashboard() {
   const [attendanceLoading, setAttendanceLoading] = useState(false)
   const [reportText, setReportText] = useState('')
   const [reportLoading, setReportLoading] = useState(false)
+
+  // AI Homework Wizard state
+  const [showWizard, setShowWizard] = useState(false)
+  const [wizardTopic, setWizardTopic] = useState('')
+  const [wizardLoading, setWizardLoading] = useState(false)
+  const [wizardResult, setWizardResult] = useState<any>(null)
+  const [wizardDueDate, setWizardDueDate] = useState('')
+  const [wizardStars, setWizardStars] = useState(10)
+  const [wizardTitle, setWizardTitle] = useState('')
 
   // Grading state
   const [gradingStudentId, setGradingStudentId] = useState<string | null>(null)
@@ -191,6 +201,50 @@ export default function TeacherDashboard() {
       showToast('Homework removed')
     } catch (e: any) { showToast(e.message) }
     finally { setBusy(false) }
+  }
+
+  const handleWizardGenerate = async () => {
+    if (!wizardTopic.trim() || !selectedClass) return
+    setWizardLoading(true)
+    setWizardResult(null)
+    try {
+      const idea = await generateHomeworkAI({
+        topic: wizardTopic.trim(),
+        grade: selectedClass.grade || 'KG 1',
+        classId: selectedClass.id,
+      })
+      setWizardResult(idea)
+      setWizardTitle(idea.title)
+      setWizardStars(idea.starsReward || 10)
+      // Default due date: 3 days from now
+      const d = new Date()
+      d.setDate(d.getDate() + 3)
+      setWizardDueDate(d.toISOString().slice(0, 10))
+    } catch (e: any) { showToast('AI generation failed. Try again.') }
+    setWizardLoading(false)
+  }
+
+  const handleWizardAssign = async () => {
+    if (!wizardResult || !selectedClass || !wizardDueDate) return
+    setBusy(true)
+    try {
+      const hw = await createHomework({
+        title: wizardTitle,
+        description: wizardResult.description,
+        moduleId: wizardResult.moduleId,
+        dueDate: wizardDueDate,
+        starsReward: wizardStars,
+        assignedTo: 'all',
+        classId: selectedClass.id,
+        aiGenerated: true,
+      })
+      setHomework(prev => [hw, ...prev])
+      setShowWizard(false)
+      setWizardResult(null)
+      setWizardTopic('')
+      showToast('✨ AI Homework pushed to all kids!')
+    } catch (e: any) { showToast(e.message) }
+    setBusy(false)
   }
 
   const handleSendMessage = async () => {
@@ -654,9 +708,164 @@ export default function TeacherDashboard() {
         {/* ── HOMEWORK TAB ─────────────────────────────────────────────────── */}
         {tab === 'homework' && (
           <div className="space-y-4">
-            {/* Create HW form */}
+
+            {/* ✨ AI Homework Wizard banner */}
+            <button
+              onClick={() => { setShowWizard(v => !v); setWizardResult(null); setWizardTopic('') }}
+              className="w-full rounded-2xl p-4 flex items-center gap-4 active:scale-95 transition-all"
+              style={{ background: 'linear-gradient(135deg, #5E5CE6, #BF5AF2)', boxShadow: '0 8px 24px rgba(94,92,230,0.35)' }}
+            >
+              <div className="text-4xl">✨</div>
+              <div className="flex-1 text-left">
+                <div className="text-white font-black text-base">AI Homework Wizard</div>
+                <div className="text-white/70 text-xs font-bold">Describe a topic → AI builds homework → push to all kids</div>
+              </div>
+              <div className="text-white/60 text-lg">{showWizard ? '▲' : '▼'}</div>
+            </button>
+
+            {/* Wizard panel */}
+            {showWizard && (
+              <div className="rounded-2xl overflow-hidden" style={{ background: 'rgba(94,92,230,0.08)', border: '1.5px solid rgba(94,92,230,0.3)' }}>
+                <div className="p-4">
+                  <div className="text-white/70 text-xs font-bold mb-3">Quick topic chips</div>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {['Counting 1–10', 'Animal Sounds', 'Colors & Shapes', 'Letters A–E', 'Sight Words', 'Feelings', 'Fruits & Veggies', 'Good Habits'].map(t => (
+                      <button
+                        key={t}
+                        onClick={() => setWizardTopic(t)}
+                        className="text-xs font-black px-3 py-1.5 rounded-full transition-all"
+                        style={{
+                          background: wizardTopic === t ? 'rgba(94,92,230,0.6)' : 'rgba(255,255,255,0.08)',
+                          color: wizardTopic === t ? '#fff' : 'rgba(255,255,255,0.6)',
+                          border: `1px solid ${wizardTopic === t ? '#5E5CE6' : 'transparent'}`,
+                        }}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      value={wizardTopic}
+                      onChange={e => setWizardTopic(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleWizardGenerate()}
+                      placeholder="Or type your own topic..."
+                      className="flex-1 bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white font-bold text-sm outline-none placeholder:text-white/30"
+                    />
+                    <button
+                      onClick={handleWizardGenerate}
+                      disabled={wizardLoading || !wizardTopic.trim()}
+                      className="px-4 py-2.5 rounded-xl text-white font-black text-sm flex items-center gap-1.5"
+                      style={{ background: '#5E5CE6', opacity: (!wizardTopic.trim() || wizardLoading) ? 0.5 : 1 }}
+                    >
+                      {wizardLoading ? (
+                        <>
+                          <span className="animate-spin inline-block">⟳</span>
+                          <span className="hidden sm:inline">Thinking…</span>
+                        </>
+                      ) : '✨ Generate'}
+                    </button>
+                  </div>
+
+                  {/* AI thinking animation */}
+                  {wizardLoading && (
+                    <div className="mt-4 rounded-xl p-4 text-center" style={{ background: 'rgba(94,92,230,0.15)' }}>
+                      <div className="text-3xl mb-2 animate-pulse">🤖</div>
+                      <div className="text-white/60 text-xs font-bold">Sparkle is crafting the perfect homework…</div>
+                    </div>
+                  )}
+
+                  {/* Generated preview card */}
+                  {wizardResult && !wizardLoading && (
+                    <div className="mt-4 space-y-3">
+                      <div className="rounded-xl p-4" style={{ background: 'linear-gradient(135deg, rgba(94,92,230,0.25), rgba(191,90,242,0.15))', border: '1px solid rgba(94,92,230,0.4)' }}>
+                        {/* Title row */}
+                        <div className="flex items-start gap-3 mb-3">
+                          <div className="text-4xl">{wizardResult.emoji || '📝'}</div>
+                          <div className="flex-1">
+                            <input
+                              value={wizardTitle}
+                              onChange={e => setWizardTitle(e.target.value)}
+                              className="w-full bg-transparent text-white font-black text-base outline-none border-b border-white/20 pb-0.5 mb-1"
+                            />
+                            <div className="text-white/50 text-xs font-bold">{wizardResult.description}</div>
+                          </div>
+                          <span className="text-xs font-black px-2 py-1 rounded-full flex-shrink-0" style={{ background: 'rgba(94,92,230,0.4)', color: '#A78BFA' }}>✨ AI</span>
+                        </div>
+
+                        {/* Activities */}
+                        <div className="space-y-1.5 mb-3">
+                          {wizardResult.activities?.map((act: any, i: number) => (
+                            <div key={i} className="flex items-center gap-2 text-xs text-white/70 font-bold">
+                              <span className="text-base">{act.emoji}</span>
+                              <span>{act.instruction}</span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Editable meta row */}
+                        <div className="flex gap-2 items-end border-t border-white/10 pt-3">
+                          <div className="flex-1">
+                            <div className="text-white/40 text-xs font-bold mb-1">Due Date</div>
+                            <input
+                              type="date"
+                              value={wizardDueDate}
+                              onChange={e => setWizardDueDate(e.target.value)}
+                              className="w-full bg-white/10 border border-white/20 rounded-lg px-2 py-1.5 text-white font-bold text-xs outline-none"
+                            />
+                          </div>
+                          <div>
+                            <div className="text-white/40 text-xs font-bold mb-1">⭐ Stars</div>
+                            <input
+                              type="number"
+                              min={1} max={20}
+                              value={wizardStars}
+                              onChange={e => setWizardStars(Number(e.target.value))}
+                              className="w-16 bg-white/10 border border-white/20 rounded-lg px-2 py-1.5 text-white font-bold text-xs outline-none text-center"
+                            />
+                          </div>
+                          <div className="text-white/40 text-xs font-bold text-center">
+                            <div>⏱️</div>
+                            <div>{wizardResult.estimatedMinutes}min</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Action buttons */}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => { setWizardResult(null); setWizardTopic('') }}
+                          className="flex-1 py-2.5 rounded-xl text-white/50 font-bold text-xs"
+                          style={{ background: 'rgba(255,255,255,0.08)' }}
+                        >
+                          ↩ Start Over
+                        </button>
+                        <button
+                          onClick={handleWizardGenerate}
+                          disabled={wizardLoading}
+                          className="flex-1 py-2.5 rounded-xl font-bold text-xs"
+                          style={{ background: 'rgba(94,92,230,0.3)', color: '#A78BFA' }}
+                        >
+                          🔄 Regenerate
+                        </button>
+                        <button
+                          onClick={handleWizardAssign}
+                          disabled={busy || !wizardDueDate}
+                          className="flex-1 py-2.5 rounded-xl text-white font-black text-xs"
+                          style={{ background: 'linear-gradient(135deg, #5E5CE6, #BF5AF2)', opacity: busy ? 0.6 : 1 }}
+                        >
+                          🚀 Push to All
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Manual Create HW form */}
             <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
-              <div className="text-white font-black mb-3">📝 New Assignment</div>
+              <div className="text-white font-black mb-3">📝 Manual Assignment</div>
               <div className="space-y-2">
                 <input
                   value={hwForm.title}
@@ -708,17 +917,25 @@ export default function TeacherDashboard() {
                 const { total, done } = pendingHW(hw)
                 const pct = total ? Math.round((done / total) * 100) : 0
                 return (
-                  <div key={hw.id} className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                  <div key={hw.id} className="rounded-2xl p-4" style={{ background: hw.aiGenerated ? 'rgba(94,92,230,0.1)' : 'rgba(255,255,255,0.05)', border: hw.aiGenerated ? '1px solid rgba(94,92,230,0.25)' : '1px solid transparent' }}>
                     <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <div className="text-white font-black">{hw.title}</div>
-                        <div className="text-white/40 text-xs font-bold">Due: {fmt(hw.dueDate)} · ⭐{hw.starsReward}</div>
+                      <div className="flex-1 pr-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <div className="text-white font-black text-sm">{hw.title}</div>
+                          {hw.aiGenerated && (
+                            <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(94,92,230,0.4)', color: '#A78BFA' }}>✨ AI</span>
+                          )}
+                        </div>
+                        {hw.description && (
+                          <div className="text-white/40 text-xs font-bold mt-0.5 leading-snug">{hw.description}</div>
+                        )}
+                        <div className="text-white/30 text-xs font-bold mt-0.5">Due: {fmt(hw.dueDate)} · ⭐{hw.starsReward}</div>
                       </div>
-                      <button onClick={() => handleDeleteHomework(hw.id)} className="text-red-400/60 text-xs font-bold">🗑️</button>
+                      <button onClick={() => handleDeleteHomework(hw.id)} className="text-red-400/60 text-xs font-bold flex-shrink-0">🗑️</button>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="flex-1 bg-white/10 rounded-full h-1.5">
-                        <div className="h-1.5 rounded-full" style={{ width: `${pct}%`, background: '#30D158' }} />
+                        <div className="h-1.5 rounded-full transition-all" style={{ width: `${pct}%`, background: pct >= 80 ? '#30D158' : '#FF9F0A' }} />
                       </div>
                       <div className="text-white/40 text-xs font-bold">{done}/{total}</div>
                     </div>
@@ -726,7 +943,7 @@ export default function TeacherDashboard() {
                 )
               })}
               {homework.length === 0 && (
-                <div className="text-center text-white/30 font-bold py-8">No homework assigned</div>
+                <div className="text-center text-white/30 font-bold py-8">No homework assigned yet</div>
               )}
             </div>
           </div>

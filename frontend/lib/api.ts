@@ -270,6 +270,13 @@ export async function generateLesson(topic: string, count: number) {
   })
 }
 
+export async function generateHomeworkAI(data: { topic: string; grade?: string; classId?: string }) {
+  return req('/ai/generate-homework', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
 export async function generateReport(classId: string) {
   return req('/ai/weekly-report', {
     method: 'POST',
