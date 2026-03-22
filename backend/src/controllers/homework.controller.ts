@@ -23,18 +23,20 @@ export async function listHomework(req: Request, res: Response) {
 
 export async function createHomework(req: Request, res: Response) {
   try {
-    const { title, moduleId, syllabusId, dueDate, assignedTo, starsReward, classId } = req.body
+    const { title, description, moduleId, syllabusId, dueDate, assignedTo, starsReward, classId, aiGenerated } = req.body
     if (!title || !dueDate || !classId) {
       return res.status(400).json({ error: 'title, dueDate, and classId are required' })
     }
     const hw = await prisma.homework.create({
       data: {
         title,
+        description: description || null,
         moduleId: moduleId || null,
         syllabusId: syllabusId || null,
         dueDate,
         assignedTo: assignedTo || 'all',
         starsReward: starsReward ?? 5,
+        aiGenerated: aiGenerated === true,
         classId,
       },
     })

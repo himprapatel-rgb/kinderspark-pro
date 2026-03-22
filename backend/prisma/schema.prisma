@@ -91,18 +91,20 @@ model SyllabusItem {
 }
 
 model Homework {
-  id          String               @id @default(cuid())
-  title       String
-  moduleId    String?
-  syllabusId  String?
-  syllabus    Syllabus?            @relation(fields: [syllabusId], references: [id])
-  dueDate     String
-  assignedTo  String               @default("all")
-  starsReward Int                  @default(5)
-  classId     String
-  class       Class                @relation(fields: [classId], references: [id])
-  completions HomeworkCompletion[]
-  createdAt   DateTime             @default(now())
+  id           String               @id @default(cuid())
+  title        String
+  description  String?
+  moduleId     String?
+  syllabusId   String?
+  syllabus     Syllabus?            @relation(fields: [syllabusId], references: [id])
+  dueDate      String
+  assignedTo   String               @default("all")
+  starsReward  Int                  @default(5)
+  aiGenerated  Boolean              @default(false)
+  classId      String
+  class        Class                @relation(fields: [classId], references: [id])
+  completions  HomeworkCompletion[]
+  createdAt    DateTime             @default(now())
 }
 
 model HomeworkCompletion {
