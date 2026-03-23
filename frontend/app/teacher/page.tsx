@@ -608,6 +608,53 @@ export default function TeacherDashboard() {
                   </div>
                 )}
 
+                {/* ⚠️ At Risk Students */}
+                {(() => {
+                  const atRisk = students.filter((s: any) =>
+                    !s.lastLoginAt || Date.now() - new Date(s.lastLoginAt).getTime() > 7 * 24 * 60 * 60 * 1000
+                  )
+                  if (atRisk.length === 0) return null
+                  return (
+                    <div className="rounded-2xl p-4" style={{ background: 'rgba(255,69,58,0.06)', border: '1px solid rgba(255,69,58,0.25)' }}>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="text-white font-black text-sm">⚠️ At Risk Students</div>
+                        <span className="text-xs font-black px-2 py-0.5 rounded-full" style={{ background: 'rgba(255,69,58,0.2)', color: '#FF453A' }}>{atRisk.length}</span>
+                      </div>
+                      <p className="text-white/40 text-xs font-bold mb-3">No activity in 7+ days</p>
+                      <div className="space-y-2">
+                        {atRisk.map((s: any) => {
+                          const daysAgo = s.lastLoginAt
+                            ? Math.floor((Date.now() - new Date(s.lastLoginAt).getTime()) / (1000 * 60 * 60 * 24))
+                            : null
+                          return (
+                            <div key={s.id} className="flex items-center gap-3 rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                              <span className="text-2xl">{s.avatar || '🧒'}</span>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-white font-black text-sm m-0 truncate">{s.name}</p>
+                                <p className="text-white/40 text-xs font-bold m-0">
+                                  {daysAgo !== null ? `${daysAgo} days inactive` : 'Never logged in'}
+                                </p>
+                              </div>
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    await sendHomeworkReminders(selectedClass?.id)
+                                    showToast(`🔔 Reminder sent for ${s.name}`)
+                                  } catch { showToast('Failed to send reminder') }
+                                }}
+                                className="text-xs font-black px-3 py-1.5 rounded-xl"
+                                style={{ background: 'rgba(255,159,10,0.15)', color: '#FF9F0A', border: '1px solid rgba(255,159,10,0.3)', cursor: 'pointer' }}
+                              >
+                                🔔 Remind
+                              </button>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })()}
+
                 {/* Live Activity Feed */}
                 {activityFeed.length > 0 && (
                   <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.05)' }}>
