@@ -22,6 +22,7 @@ import classRoutes from './routes/classes'
 import aiSessionRoutes from './routes/aiSessions'
 import feedbackRoutes from './routes/feedback'
 import agentRoutes from './routes/agents.routes'
+import { startAgentScheduler } from './services/agentScheduler.service'
 
 const app = express()
 
@@ -96,7 +97,6 @@ app.use((err: any, _req: any, res: any, _next: any) => {
 const PORT = process.env.PORT || 4000
 app.listen(PORT, () => {
   console.log(`KinderSpark API running on port ${PORT}`)
-  const { startAgentScheduler } = require('./services/agentScheduler.service')
   startAgentScheduler()
 })
 
