@@ -31,11 +31,23 @@ jobs:
           git config user.email "launch@kinderspark.ai"
           git checkout -b "claude/launch-$(date +%s)"
 
+
+      - name: 🧠 Load memory
+        id: memory
+        run: |
+          node monitoring/agent-memory.js read launch-agent >> $GITHUB_OUTPUT 2>/dev/null || true
+          node monitoring/agent-memory.js inbox launch-agent >> $GITHUB_OUTPUT 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
       - name: Run Launch Agent
         uses: anthropics/claude-code-action@beta
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           task: |
+            YOUR MEMORY (past runs context): ${{ steps.memory.outputs.memory_context }}
+            YOUR INBOX (messages from other agents): ${{ steps.memory.outputs.inbox_context }}
+
             You are the LAUNCH AGENT for KinderSpark Pro.
             When a major feature ships, you coordinate the announcement.
 
@@ -70,3 +82,12 @@ jobs:
           max_turns: "20"
 
       - run: git push -u origin HEAD 2>/dev/null || true
+
+      - name: 🧠 Save memory
+        if: always()
+        run: |
+          node monitoring/agent-memory.js write launch-agent \
+            "summary" 2 "Launch Agent run complete $(date +%Y-%m-%d)." 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}

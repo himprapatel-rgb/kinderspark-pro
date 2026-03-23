@@ -23,11 +23,23 @@ jobs:
           git config user.email "pwa@kinderspark.ai"
           git checkout -b "claude/pwa-$(date +%s)"
 
+
+      - name: 🧠 Load memory
+        id: memory
+        run: |
+          node monitoring/agent-memory.js read pwa-agent >> $GITHUB_OUTPUT 2>/dev/null || true
+          node monitoring/agent-memory.js inbox pwa-agent >> $GITHUB_OUTPUT 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
       - name: Run PWA Agent
         uses: anthropics/claude-code-action@beta
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           task: |
+            YOUR MEMORY (past runs context): ${{ steps.memory.outputs.memory_context }}
+            YOUR INBOX (messages from other agents): ${{ steps.memory.outputs.inbox_context }}
+
             You are the PWA AGENT for KinderSpark Pro.
             Children use this on tablets and phones — it must work offline and install like a native app.
 
@@ -64,3 +76,12 @@ jobs:
           max_turns: "20"
 
       - run: git push -u origin HEAD 2>/dev/null || true
+
+      - name: 🧠 Save memory
+        if: always()
+        run: |
+          node monitoring/agent-memory.js write pwa-agent \
+            "summary" 2 "PWA Agent run complete $(date +%Y-%m-%d)." 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}

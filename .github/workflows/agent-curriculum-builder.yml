@@ -39,11 +39,23 @@ jobs:
           git config user.email "curriculum@kinderspark.ai"
           git checkout -b "claude/curriculum-$(date +%s)"
 
+
+      - name: 🧠 Load memory
+        id: memory
+        run: |
+          node monitoring/agent-memory.js read curriculum-builder >> $GITHUB_OUTPUT 2>/dev/null || true
+          node monitoring/agent-memory.js inbox curriculum-builder >> $GITHUB_OUTPUT 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
       - name: Run Curriculum Agent
         uses: anthropics/claude-code-action@beta
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           task: |
+            YOUR MEMORY (past runs context): ${{ steps.memory.outputs.memory_context }}
+            YOUR INBOX (messages from other agents): ${{ steps.memory.outputs.inbox_context }}
+
             You are the CURRICULUM BUILDER AGENT for KinderSpark Pro.
             Your job is to keep the learning content fresh, culturally diverse, and educationally sound.
 
@@ -80,3 +92,12 @@ jobs:
           max_turns: "20"
 
       - run: git push -u origin HEAD 2>/dev/null || true
+
+      - name: 🧠 Save memory
+        if: always()
+        run: |
+          node monitoring/agent-memory.js write curriculum-builder \
+            "summary" 2 "Curriculum Builder run complete $(date +%Y-%m-%d)." 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}

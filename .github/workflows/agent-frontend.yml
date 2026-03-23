@@ -41,11 +41,23 @@ jobs:
           git config user.email "frontend-agent@kinderspark.ai"
           git checkout -b "claude/frontend-$(date +%s)"
 
+
+      - name: 🧠 Load memory
+        id: memory
+        run: |
+          node monitoring/agent-memory.js read frontend-designer >> $GITHUB_OUTPUT 2>/dev/null || true
+          node monitoring/agent-memory.js inbox frontend-designer >> $GITHUB_OUTPUT 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
       - name: Run Frontend Agent
         uses: anthropics/claude-code-action@beta
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           task: |
+            YOUR MEMORY (past runs context): ${{ steps.memory.outputs.memory_context }}
+            YOUR INBOX (messages from other agents): ${{ steps.memory.outputs.inbox_context }}
+
             You are the FRONTEND DESIGNER AGENT for KinderSpark Pro — a children's edtech app.
 
             YOUR ROLE: UI/UX designer + React developer. You own everything in frontend/.
@@ -75,3 +87,12 @@ jobs:
           max_turns: "25"
 
       - run: git push -u origin HEAD || echo "Nothing to push"
+
+      - name: 🧠 Save memory
+        if: always()
+        run: |
+          node monitoring/agent-memory.js write frontend-designer \
+            "summary" 2 "Frontend Designer run complete $(date +%Y-%m-%d)." 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}

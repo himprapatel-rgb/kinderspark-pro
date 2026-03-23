@@ -16,6 +16,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+
+      - name: 🧠 Load memory
+        id: memory
+        run: |
+          node monitoring/agent-memory.js read backup-verifier >> $GITHUB_OUTPUT 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
+
       - name: Verify DB connectivity
         id: db
         run: |
@@ -54,3 +63,12 @@ jobs:
       - name: Success log
         if: success()
         run: echo "✅ DB connected and healthy — $(date)"
+
+      - name: 🧠 Save memory
+        if: always()
+        run: |
+          node monitoring/agent-memory.js write backup-verifier \
+            "observation" 1 "Backup/DB check run $(date +%Y-%m-%d). Status written." 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}

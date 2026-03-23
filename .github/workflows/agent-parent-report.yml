@@ -23,11 +23,23 @@ jobs:
           git config user.email "reports@kinderspark.ai"
           git checkout -b "claude/parent-report-$(date +%s)"
 
+
+      - name: 🧠 Load memory
+        id: memory
+        run: |
+          node monitoring/agent-memory.js read parent-report >> $GITHUB_OUTPUT 2>/dev/null || true
+          node monitoring/agent-memory.js inbox parent-report >> $GITHUB_OUTPUT 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
       - name: Run Parent Report Agent
         uses: anthropics/claude-code-action@beta
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           task: |
+            YOUR MEMORY (past runs context): ${{ steps.memory.outputs.memory_context }}
+            YOUR INBOX (messages from other agents): ${{ steps.memory.outputs.inbox_context }}
+
             You are the PARENT REPORT GENERATOR AGENT for KinderSpark Pro.
             Every Sunday you ensure parents receive a beautiful progress report for their child.
 
@@ -60,3 +72,12 @@ jobs:
           max_turns: "30"
 
       - run: git push -u origin HEAD 2>/dev/null || true
+
+      - name: 🧠 Save memory
+        if: always()
+        run: |
+          node monitoring/agent-memory.js write parent-report \
+            "summary" 2 "Parent Report run complete $(date +%Y-%m-%d)." 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}

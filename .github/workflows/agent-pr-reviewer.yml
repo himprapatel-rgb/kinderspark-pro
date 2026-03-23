@@ -34,11 +34,23 @@ jobs:
           cat /tmp/diff_stat.txt >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
+
+      - name: 🧠 Load memory
+        id: memory
+        run: |
+          node monitoring/agent-memory.js read pr-reviewer >> $GITHUB_OUTPUT 2>/dev/null || true
+          node monitoring/agent-memory.js inbox pr-reviewer >> $GITHUB_OUTPUT 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
       - name: Run PR Review Agent
         uses: anthropics/claude-code-action@beta
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           task: |
+            YOUR MEMORY (past runs context): ${{ steps.memory.outputs.memory_context }}
+            YOUR INBOX (messages from other agents): ${{ steps.memory.outputs.inbox_context }}
+
             You are the PR CODE REVIEWER for KinderSpark Pro.
             Review the incoming pull request with the eyes of a senior full-stack engineer.
 
@@ -78,3 +90,13 @@ jobs:
           max_turns: "15"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
+      - name: 🧠 Save memory
+        if: always()
+        run: |
+          node monitoring/agent-memory.js write pr-reviewer \
+            "summary" 2 "PR Code Reviewer run complete $(date +%Y-%m-%d)." 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}

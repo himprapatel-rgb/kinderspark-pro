@@ -23,11 +23,23 @@ jobs:
           git config user.email "a11y@kinderspark.ai"
           git checkout -b "claude/a11y-$(date +%s)"
 
+
+      - name: 🧠 Load memory
+        id: memory
+        run: |
+          node monitoring/agent-memory.js read accessibility >> $GITHUB_OUTPUT 2>/dev/null || true
+          node monitoring/agent-memory.js inbox accessibility >> $GITHUB_OUTPUT 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
       - name: Run Accessibility Agent
         uses: anthropics/claude-code-action@beta
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           task: |
+            YOUR MEMORY (past runs context): ${{ steps.memory.outputs.memory_context }}
+            YOUR INBOX (messages from other agents): ${{ steps.memory.outputs.inbox_context }}
+
             You are the ACCESSIBILITY AUDITOR for KinderSpark Pro.
             Children aged 4-10 use this app — including children with disabilities.
             Target: WCAG 2.1 AA compliance + child-specific accessibility.
@@ -64,3 +76,12 @@ jobs:
           max_turns: "25"
 
       - run: git push -u origin HEAD 2>/dev/null || true
+
+      - name: 🧠 Save memory
+        if: always()
+        run: |
+          node monitoring/agent-memory.js write accessibility \
+            "summary" 2 "Accessibility Auditor run complete $(date +%Y-%m-%d)." 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}

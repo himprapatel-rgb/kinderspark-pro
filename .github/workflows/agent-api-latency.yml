@@ -16,6 +16,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: 🧠 Load memory
+        id: memory
+        run: |
+          node monitoring/agent-memory.js read api-latency >> $GITHUB_OUTPUT 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
+
       - name: Measure endpoint latencies
         id: latency
         run: |
@@ -63,3 +71,19 @@ jobs:
               labels: ['performance', 'backend', 'agent-auto'],
               body: `## 📡 High Latency Detected\n\nBackend health endpoint responded in **${healthMs}ms** (threshold: 2000ms)\n\n**Investigate:**\n1. Check Railway backend logs for slow queries\n2. DB connection pool exhausted?\n3. Memory usage high? (check /health endpoint memory stats)\n4. Recent deployment causing cold starts?\n\n*Auto-created by API Latency Monitor*`,
             })
+
+      - name: 🧠 Save memory
+        if: always()
+        run: |
+          SLOW="${{ steps.latency.outputs.slow }}"
+          MS="${{ steps.latency.outputs.health_ms }}"
+          if [ "$SLOW" = "true" ]; then
+            node monitoring/agent-memory.js write api-latency \
+              "finding" 3 "HIGH LATENCY: Backend responded ${MS}ms on $(date +%Y-%m-%d). Alert issued." 2>/dev/null || true
+          else
+            node monitoring/agent-memory.js write api-latency \
+              "observation" 1 "Latency check passed $(date +%Y-%m-%d). All endpoints healthy." 2>/dev/null || true
+          fi
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
