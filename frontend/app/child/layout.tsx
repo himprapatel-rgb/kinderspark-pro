@@ -2,6 +2,7 @@
 import { useAppStore } from '@/store/appStore'
 import { useRouter, usePathname } from 'next/navigation'
 import { SHOP_THS } from '@/lib/modules'
+import { useState, useEffect, useRef } from 'react'
 
 const THEME_SECONDARY: Record<string, string> = {
   th_def:    '#8b1cf7',
@@ -32,9 +33,42 @@ const NAV_TABS = [
 export default function ChildLayout({ children }: { children: React.ReactNode }) {
   const currentStudent = useAppStore(s => s.currentStudent)
   const user = useAppStore(s => s.user)
+  const settings = useAppStore(s => s.settings)
   const student = currentStudent || user
   const router = useRouter()
   const pathname = usePathname()
+
+  // ── Screen time enforcement ──────────────────────────────────────────────
+  const limitMin: number = (settings as any)?.screenTimeLimit || 0
+  const [elapsedSec, setElapsedSec] = useState(0)
+  const [timeUp, setTimeUp] = useState(false)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  useEffect(() => {
+    if (!limitMin || limitMin <= 0) return
+    const studentId = (student as any)?.id || 'guest'
+    const today = new Date().toISOString().slice(0, 10)
+    const key = `ks_session_${studentId}_${today}`
+    const stored = (() => { try { return JSON.parse(localStorage.getItem(key) || '{}') } catch { return {} } })()
+    const usedMs: number = stored?.usedMs || 0
+    const limitMs = limitMin * 60 * 1000
+    if (usedMs >= limitMs) { setElapsedSec(Math.floor(usedMs / 1000)); setTimeUp(true); return }
+
+    setElapsedSec(Math.floor(usedMs / 1000))
+    const startMs = Date.now()
+
+    intervalRef.current = setInterval(() => {
+      const newUsed = usedMs + (Date.now() - startMs)
+      setElapsedSec(Math.floor(newUsed / 1000))
+      localStorage.setItem(key, JSON.stringify({ usedMs: newUsed }))
+      if (newUsed >= limitMs) { setTimeUp(true); clearInterval(intervalRef.current!) }
+    }, 1000)
+
+    return () => { clearInterval(intervalRef.current!) }
+  }, [limitMin, (student as any)?.id])
+
+  const remainingSec = limitMin > 0 ? Math.max(0, limitMin * 60 - elapsedSec) : 0
+  const remainingMin = Math.ceil(remainingSec / 60)
 
   const themeId = (student as any)?.selectedTheme || 'th_def'
   const theme = SHOP_THS.find(t => t.id === themeId) || SHOP_THS[0]
@@ -57,9 +91,50 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
         '--theme-border': theme.color + '44',
       } as React.CSSProperties}
     >
+      {/* ── Time's up overlay ── */}
+      {timeUp && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 32,
+          background: 'linear-gradient(135deg, #0d0824, #080614)',
+          fontFamily: 'Nunito, sans-serif',
+        }}>
+          <div style={{ fontSize: 72, marginBottom: 16, animation: 'bounce 1s infinite' }}>🌟</div>
+          <h1 style={{ color: 'white', fontWeight: 900, fontSize: 28, margin: '0 0 12px' }}>Great learning today!</h1>
+          <p style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 700, fontSize: 16, margin: '0 0 8px' }}>
+            You've used your {limitMin} minutes for today.
+          </p>
+          <p style={{ color: 'rgba(255,255,255,0.4)', fontWeight: 700, fontSize: 14, margin: 0 }}>
+            Come back tomorrow for more fun! 🎉
+          </p>
+          <div style={{ marginTop: 40, display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+            {['⭐','🏆','🎯','🌈','🦄','🚀'].map((e, i) => (
+              <span key={i} style={{ fontSize: 32, animation: `bounce ${0.8 + i * 0.15}s infinite` }}>{e}</span>
+            ))}
+          </div>
+          <style>{`@keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }`}</style>
+        </div>
+      )}
+
       {children}
 
       {/* Bottom Tab Bar */}
+      <div
+        className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto flex items-center justify-around z-40"
+        style={{ position: 'relative' }}
+      >
+        {/* Timer badge */}
+        {limitMin > 0 && !timeUp && remainingSec <= 300 && (
+          <div style={{
+            position: 'absolute', top: -32, left: '50%', transform: 'translateX(-50%)',
+            background: remainingSec <= 60 ? 'rgba(255,69,58,0.9)' : 'rgba(255,159,10,0.9)',
+            borderRadius: 20, padding: '3px 10px', fontSize: 10, fontWeight: 900, color: 'white',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.4)', whiteSpace: 'nowrap',
+          }}>
+            ⏱ {remainingMin} min left
+          </div>
+        )}
+      </div>
       <div
         className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto flex items-center justify-around z-40"
         style={{
