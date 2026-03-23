@@ -6,6 +6,15 @@ on:
     - cron: '0 2 * * 0'
   workflow_dispatch:
     inputs:
+      triggered_by:
+        description: "Agent that assigned this task (leave blank for manual run)"
+        required: false
+        default: ""
+      agent_task:
+        description: "Task assigned by another agent"
+        required: false
+        default: ""
+
       focus:
         description: 'Focus area (performance/security/ux/all)'
         required: false
@@ -61,6 +70,9 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           task: |
+            # ── INBOX PRIORITY ──────────────────────────────────────
+            ${{ github.event.inputs.agent_task != '' && format('🚨 ASSIGNED TASK (from {0}):\n{1}\n\nComplete this FIRST. When done, resolve the conversation in agent-memory.', github.event.inputs.triggered_by, github.event.inputs.agent_task) || '' }}
+
             You are the weekly improvement agent for KinderSpark Pro.
             You coordinate ALL other agents — you are the team lead this week.
 
