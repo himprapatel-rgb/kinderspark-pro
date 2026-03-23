@@ -20,11 +20,11 @@ export interface AIProvider {
 // Claude = best for structured JSON generation, tutoring, curriculum
 // OpenAI = good general fallback
 export const TASK_PROVIDERS: Record<string, AIProviderName[]> = {
-  'generate-lesson':    ['claude', 'openai', 'perplexity'],
-  'generate-homework':  ['claude', 'openai', 'perplexity'],
-  'generate-syllabus':  ['claude', 'openai', 'perplexity'],
-  'tutor-feedback':     ['claude', 'openai', 'perplexity'],
-  'weekly-report':      ['claude', 'openai', 'perplexity'],
-  'student-report':     ['claude', 'openai', 'perplexity'],
-  'recommendations':    ['perplexity', 'claude', 'openai'], // Perplexity first for web awareness
+  'generate-lesson':    ['openai', 'claude', 'perplexity'],
+  'generate-homework':  ['openai', 'claude', 'perplexity'],
+  'generate-syllabus':  ['openai', 'claude', 'perplexity'],
+  'tutor-feedback':     ['openai', 'claude', 'perplexity'],
+  'weekly-report':      ['openai', 'claude', 'perplexity'],
+  'student-report':     ['openai', 'claude', 'perplexity'],
+  'recommendations':    ['openai', 'claude', 'perplexity'],
 }
