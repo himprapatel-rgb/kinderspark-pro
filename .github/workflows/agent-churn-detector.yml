@@ -23,12 +23,28 @@ jobs:
           git config user.email "churn@kinderspark.ai"
           git checkout -b "claude/churn-$(date +%s)"
 
+      - name: 🧠 Load memory
+        id: memory
+        run: |
+          node monitoring/agent-memory.js read churn-detector >> $GITHUB_OUTPUT 2>/dev/null || true
+          node monitoring/agent-memory.js inbox churn-detector >> $GITHUB_OUTPUT 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
+
       - name: Run Churn Detector Agent
         uses: anthropics/claude-code-action@beta
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           task: |
             You are the CHURN DETECTOR AGENT for KinderSpark Pro.
+
+            YOUR MEMORY: ${{ steps.memory.outputs.memory_context }}
+            YOUR INBOX:  ${{ steps.memory.outputs.inbox_context }}
+
+            COLLABORATION: When you detect churn, notify the Achievement Notifier agent by:
+            node monitoring/agent-memory.js message churn-detector achievement-notifier alert \
+              "X students inactive for 7+ days. Please trigger re-engagement push notifications."
             Your job is to identify at-risk students/classes and trigger re-engagement.
 
             YOUR TASKS:
@@ -55,3 +71,12 @@ jobs:
           max_turns: "25"
 
       - run: git push -u origin HEAD 2>/dev/null || true
+
+      - name: 🧠 Save memory
+        if: always()
+        run: |
+          node monitoring/agent-memory.js write churn-detector \
+            "summary" 2 "Churn detection run complete $(date +%Y-%m-%d). Re-engagement features reviewed." 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}

@@ -215,3 +215,42 @@ model RefreshToken {
   expiresAt DateTime
   createdAt DateTime @default(now())
 }
+
+// ── Agent Memory System ──────────────────────────────────────────────────────
+
+model AgentMemory {
+  id          String   @id @default(cuid())
+  agentId     String                          // e.g. "security-auditor"
+  agentName   String                          // e.g. "Security Auditor"
+  agentIcon   String   @default("🤖")
+  agentColor  String   @default("#5E5CE6")
+  type        String                          // observation|decision|finding|action|summary
+  content     String   @db.Text              // the memory content
+  metadata    Json?                           // extra: { files, issues, runId, severity }
+  runId       String?                         // GitHub Actions run ID
+  importance  Int      @default(1)           // 1=low 2=medium 3=high 4=critical
+  createdAt   DateTime @default(now())
+
+  @@index([agentId])
+  @@index([createdAt])
+  @@index([importance])
+}
+
+model AgentConversation {
+  id          String   @id @default(cuid())
+  fromAgentId String
+  fromName    String
+  fromIcon    String   @default("🤖")
+  fromColor   String   @default("#5E5CE6")
+  toAgentId   String                          // agent id or "all" for broadcast
+  toName      String   @default("All Agents")
+  message     String   @db.Text
+  msgType     String   @default("update")    // alert|handoff|question|update|broadcast|fix
+  resolved    Boolean  @default(false)
+  resolvedBy  String?
+  createdAt   DateTime @default(now())
+
+  @@index([toAgentId])
+  @@index([fromAgentId])
+  @@index([createdAt])
+}

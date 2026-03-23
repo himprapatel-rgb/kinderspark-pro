@@ -102,6 +102,15 @@ jobs:
         with:
           node-version: '20'
 
+      - name: 🧠 Load memory
+        id: memory
+        run: |
+          node monitoring/agent-memory.js read auto-dev >> $GITHUB_OUTPUT 2>/dev/null || true
+          node monitoring/agent-memory.js inbox auto-dev >> $GITHUB_OUTPUT 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
+
       - name: Create working branch
         id: branch
         run: |
@@ -120,7 +129,13 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           task: |
-            You are an autonomous developer for KinderSpark Pro — an educational app for young children.
+            You are an autonomous developer for KinderSpark Pro.
+
+            YOUR MEMORY FROM PREVIOUS RUNS (use this context — don't repeat work already done):
+            ${{ steps.memory.outputs.memory_context }}
+
+            MESSAGES FROM OTHER AGENTS (act on these):
+            ${{ steps.memory.outputs.inbox_context }} — an educational app for young children.
 
             STACK: Next.js 14 (frontend/), Express + TypeScript + Prisma (backend/), PostgreSQL, Railway deployment.
             BRANCH: You are on branch ${{ steps.branch.outputs.branch }}. Commit your changes here.
@@ -143,6 +158,19 @@ jobs:
       - name: Push branch
         run: |
           git push -u origin "${{ steps.branch.outputs.branch }}" || echo "Nothing to push"
+
+      - name: 🧠 Save memory + broadcast
+        if: always()
+        run: |
+          TASK="${{ needs.gate.outputs.task }}"
+          node monitoring/agent-memory.js write auto-dev \
+            "action" 2 \
+            "Worked on task: ${TASK:0:200}" 2>/dev/null || true
+          node monitoring/agent-memory.js broadcast auto-dev \
+            "Auto-Dev completed task on branch ${{ steps.branch.outputs.branch }}: ${TASK:0:150}" 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
 
       - name: Comment on issue with result
         if: github.event_name == 'issues' || github.event_name == 'issue_comment'

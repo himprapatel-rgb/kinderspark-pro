@@ -25,6 +25,15 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: '20' }
 
+      - name: 🧠 Load memory
+        id: memory
+        run: |
+          node monitoring/agent-memory.js read security-auditor >> $GITHUB_OUTPUT 2>/dev/null || true
+          node monitoring/agent-memory.js inbox security-auditor >> $GITHUB_OUTPUT 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
+
       - name: Install audit tools
         run: |
           npm install -g audit-ci retire
@@ -60,7 +69,13 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           task: |
-            You are the SECURITY AUDITOR AGENT for KinderSpark Pro — a children's educational app.
+            You are the SECURITY AUDITOR AGENT for KinderSpark Pro.
+
+            YOUR MEMORY FROM PREVIOUS RUNS:
+            ${{ steps.memory.outputs.memory_context }}
+
+            MESSAGES FROM OTHER AGENTS:
+            ${{ steps.memory.outputs.inbox_context }} — a children's educational app.
             This app handles data for children aged 4-10. Security is CRITICAL.
 
             FOCUS: ${{ github.event.inputs.focus || 'all' }}
@@ -98,3 +113,15 @@ jobs:
           max_turns: "30"
 
       - run: git config user.name "KinderSpark Security Agent" && git config user.email "security@kinderspark.ai" && git push origin HEAD 2>/dev/null || true
+
+      - name: 🧠 Save memory + notify
+        if: always()
+        run: |
+          node monitoring/agent-memory.js write security-auditor \
+            "summary" 2 \
+            "Security audit completed. Focus: ${{ github.event.inputs.focus || 'all' }}. NPM audit results reviewed." 2>/dev/null || true
+          node monitoring/agent-memory.js broadcast security-auditor \
+            "Security audit complete. Any critical findings have been fixed or issued. Check security-labeled issues." 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
