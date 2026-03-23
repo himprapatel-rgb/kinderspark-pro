@@ -5,6 +5,18 @@ import { useAppStore as useStore } from '@/store/appStore'
 import { getHomework, getSyllabuses, getProgress, getRecommendations, getStudentBadges, completeHomework } from '@/lib/api'
 import { MODS } from '@/lib/modules'
 
+// ── Daily Challenge helper ─────────────────────────────────────────────────────
+function getDailyChallenge() {
+  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000)
+  const mod = MODS[dayOfYear % MODS.length]
+  const todayKey = `dc_${new Date().toISOString().slice(0, 10)}`
+  const done = typeof window !== 'undefined' && localStorage.getItem(todayKey) === 'done'
+  return { mod, todayKey, done }
+}
+function markChallengeComplete(todayKey: string) {
+  if (typeof window !== 'undefined') localStorage.setItem(todayKey, 'done')
+}
+
 const BADGE_INFO: Record<string, { emoji: string; label: string; color: string }> = {
   first_homework: { emoji: '🏅', label: 'First HW',    color: '#FF9F0A' },
   first_ai:       { emoji: '🤖', label: 'AI Debut',    color: '#5E5CE6' },
@@ -32,12 +44,15 @@ export default function ChildPage() {
   const [loading, setLoading] = useState(true)
   const [markingDone, setMarkingDone] = useState<string | null>(null)
   const [celebrationBadges, setCelebrationBadges] = useState<any[]>([])
+  const [dailyDone, setDailyDone] = useState(false)
+  const { mod: dailyMod, todayKey } = getDailyChallenge()
 
   const student = currentStudent || user
 
   useEffect(() => {
     if (!student) { router.push('/'); return }
     loadData()
+    setDailyDone(getDailyChallenge().done)
   }, [student])
 
   const loadData = async () => {
@@ -316,6 +331,53 @@ export default function ChildPage() {
           </div>
         )}
 
+        {/* ── Daily Challenge ── */}
+        <button
+          onClick={() => {
+            markChallengeComplete(todayKey)
+            setDailyDone(true)
+            router.push(`/child/lesson/${dailyMod.id}`)
+          }}
+          className="w-full rounded-3xl p-4 text-left active:scale-[0.97] transition-all relative overflow-hidden"
+          style={{
+            background: dailyDone
+              ? 'linear-gradient(135deg, #0d2e0d, #0a200a)'
+              : `linear-gradient(135deg, ${dailyMod.color}18, ${dailyMod.color}30)`,
+            border: `1.5px solid ${dailyDone ? '#30D15840' : dailyMod.color + '55'}`,
+            boxShadow: dailyDone ? 'none' : `0 6px 24px ${dailyMod.color}20`,
+          }}
+        >
+          {!dailyDone && <div className="absolute inset-0 shimmer opacity-30" />}
+          <div className="relative flex items-center gap-3">
+            <div
+              className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
+              style={{
+                background: dailyDone ? 'rgba(48,209,88,0.2)' : dailyMod.color + '30',
+                border: `1px solid ${dailyDone ? '#30D15840' : dailyMod.color + '40'}`,
+              }}
+            >
+              {dailyDone ? '✅' : dailyMod.icon}
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full"
+                  style={{ background: dailyDone ? '#30D15820' : '#FFD60A22', color: dailyDone ? '#30D158' : '#FFD60A' }}>
+                  {dailyDone ? '✓ Done' : '⚡ Daily'}
+                </span>
+              </div>
+              <p className="text-white font-black text-sm leading-tight">
+                {dailyDone ? 'Challenge Complete!' : `Today: ${dailyMod.title}`}
+              </p>
+              <p className="text-white/45 text-xs font-bold mt-0.5">
+                {dailyDone ? 'Come back tomorrow for a new one' : `Earn bonus ⭐ · ${dailyMod.items.length} cards`}
+              </p>
+            </div>
+            {!dailyDone && (
+              <span className="text-white/40 text-lg flex-shrink-0">›</span>
+            )}
+          </div>
+        </button>
+
         {/* ── AI Tutor CTA (Duolingo-style big button) ── */}
         <button
           onClick={() => router.push('/child/tutor')}
@@ -408,21 +470,18 @@ export default function ChildPage() {
           <h2 className="text-white font-black text-base mb-3">🎮 Activities</h2>
           <div className="grid grid-cols-3 gap-3">
             {[
-              { label: 'Draw', icon: '🎨', path: '/child/draw',
-                grad: 'linear-gradient(135deg, #FF453A22, #FF9F0A22)', border: '#FF9F0A40', glow: '#FF9F0A' },
-              { label: 'Trace', icon: '✍️', path: '/child/trace',
-                grad: 'linear-gradient(135deg, #30D15822, #43C6AC22)', border: '#30D15840', glow: '#30D158' },
-              { label: 'Tutor', icon: '🤖', path: '/child/tutor',
-                grad: 'linear-gradient(135deg, #5E5CE622, #BF5AF222)', border: '#BF5AF240', glow: '#5E5CE6' },
+              { label: 'Draw',  icon: '🎨', path: '/child/draw',        grad: 'linear-gradient(135deg,#FF453A22,#FF9F0A22)', border: '#FF9F0A40' },
+              { label: 'Trace', icon: '✍️', path: '/child/trace',       grad: 'linear-gradient(135deg,#30D15822,#43C6AC22)', border: '#30D15840' },
+              { label: 'Match', icon: '🔤', path: '/child/match',       grad: 'linear-gradient(135deg,#FF9F0A22,#FF6B3522)', border: '#FF9F0A40' },
+              { label: 'Tutor', icon: '🤖', path: '/child/tutor',       grad: 'linear-gradient(135deg,#5E5CE622,#BF5AF222)', border: '#BF5AF240' },
+              { label: 'Rank',  icon: '🏆', path: '/child/leaderboard', grad: 'linear-gradient(135deg,#FFD60A22,#FF9F0A22)', border: '#FFD60A40' },
+              { label: 'Shop',  icon: '🛍️', path: '/child/shop',        grad: 'linear-gradient(135deg,#BF5AF222,#5E5CE622)', border: '#BF5AF240' },
             ].map(a => (
               <button
                 key={a.label}
                 onClick={() => router.push(a.path)}
                 className="rounded-2xl p-4 flex flex-col items-center gap-2 active:scale-[0.94] transition-all"
-                style={{
-                  background: a.grad,
-                  border: `1.5px solid ${a.border}`,
-                }}
+                style={{ background: a.grad, border: `1.5px solid ${a.border}` }}
               >
                 <span className="text-3xl">{a.icon}</span>
                 <span className="text-white font-black text-xs">{a.label}</span>
