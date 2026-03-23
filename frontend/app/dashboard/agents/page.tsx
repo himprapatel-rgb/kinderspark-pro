@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import agentsConfig from '@/public/agents-config.json'
+import { useAppStore } from '@/store/appStore'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 
@@ -135,6 +136,7 @@ function AgentCard({ agent, runs, isActive }: { agent: Agent; runs: Run[]; isAct
 }
 
 export default function AgentsDashboard() {
+  const storeToken = useAppStore(s => s.token)
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [memories, setMemories]           = useState<Memory[]>([])
   const [runs, setRuns]                   = useState<Run[]>([])
@@ -150,17 +152,11 @@ export default function AgentsDashboard() {
 
   // SSE feed
   useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-    if (!token) return
+    const token = storeToken
+    if (!token) { setConnected(false); return }
 
     const connect = () => {
-      const es = new EventSource(`${API}/agents/feed`, {})
-      esRef.current = es
-
-      // EventSource doesn't support headers natively — use fetch SSE instead
-      es.close()
-
-      // Fallback: poll every 10s
+      // Poll every 10s
       const poll = async () => {
         try {
           const headers = { Authorization: `Bearer ${token}` }
@@ -195,7 +191,7 @@ export default function AgentsDashboard() {
     if (!taskInput.trim()) return
     setSending(true)
     try {
-      const token = localStorage.getItem('token')
+      const token = storeToken
       const r = await fetch(`${API}/agents/issue`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -215,6 +211,19 @@ export default function AgentsDashboard() {
     setToast(msg)
     setTimeout(() => setToast(''), 3000)
   }
+
+  if (!storeToken) return (
+    <div style={{ minHeight: '100vh', background: '#080614', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Nunito, sans-serif' }}>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ fontSize: 48, marginBottom: 16 }}>🛸</div>
+        <div style={{ color: 'white', fontWeight: 900, fontSize: 20, marginBottom: 8 }}>Agent Command Center</div>
+        <div style={{ color: 'rgba(255,255,255,0.4)', marginBottom: 24 }}>Login first to access the dashboard</div>
+        <a href="/login" style={{ background: '#5E5CE6', color: 'white', fontWeight: 900, padding: '10px 24px', borderRadius: 10, textDecoration: 'none', fontSize: 14 }}>
+          Go to Login →
+        </a>
+      </div>
+    </div>
+  )
 
   const activeAgentIds = new Set(conversations.slice(0, 10).map(c => c.fromAgentId))
   const filteredAgents = catFilter === 'all'
@@ -274,7 +283,7 @@ export default function AgentsDashboard() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden', height: 'calc(100vh - 64px)' }}>
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
 
         {/* Left — Agent Grid */}
         <div style={{
