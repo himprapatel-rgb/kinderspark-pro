@@ -23,6 +23,12 @@ jobs:
       - run: npx prisma generate
       - run: npm run build
         name: TypeScript build check
+      - run: npm test -- --passWithNoTests --forceExit
+        name: Jest unit tests
+        env:
+          NODE_ENV: test
+          JWT_SECRET: test-secret
+          DATABASE_URL: postgresql://x:x@localhost/x
 
   check-frontend:
     name: Check Frontend
@@ -41,5 +47,9 @@ jobs:
       - run: npm ci
       - run: npm run build
         name: Next.js build check
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:4000/api
+      - run: npm test -- --run
+        name: Vitest unit tests
         env:
           NEXT_PUBLIC_API_URL: http://localhost:4000/api
