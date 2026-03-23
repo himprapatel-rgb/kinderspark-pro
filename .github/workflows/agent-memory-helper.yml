@@ -1,0 +1,39 @@
+name: 🧠 Agent Memory System (reusable)
+# This is NOT called directly — it documents the standard memory pattern.
+# Every agent workflow includes 3 steps:
+#
+# 1. BEFORE (read memory + inbox):
+#    - name: 🧠 Load memory
+#      id: memory
+#      run: |
+#        node monitoring/agent-memory.js read  <agentId>  >> $GITHUB_OUTPUT || true
+#        node monitoring/agent-memory.js inbox <agentId>  >> $GITHUB_OUTPUT || true
+#      env:
+#        BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+#        AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
+#
+# 2. AGENT TASK (Claude uses memory context):
+#    The task prompt includes:
+#      YOUR MEMORY (previous runs):
+#      ${{ steps.memory.outputs.memory_context }}
+#      YOUR INBOX (messages from other agents):
+#      ${{ steps.memory.outputs.inbox_context }}
+#
+# 3. AFTER (save summary + notify other agents):
+#    - name: 🧠 Save memory
+#      if: always()
+#      run: |
+#        node monitoring/agent-memory.js write <agentId> summary 2 "Completed run: <what was done>"
+#        node monitoring/agent-memory.js broadcast <agentId> "<what changed so other agents know>"
+#      env:
+#        BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+#        AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
+
+on:
+  workflow_dispatch:
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "This workflow documents the memory pattern. See comments above."

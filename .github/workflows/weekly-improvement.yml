@@ -46,12 +46,36 @@ jobs:
           git checkout -b "$BRANCH"
           echo "branch=$BRANCH" >> $GITHUB_OUTPUT
 
+      - name: 🧠 Load memory + all agent context
+        id: memory
+        run: |
+          node monitoring/agent-memory.js read weekly-improvement >> $GITHUB_OUTPUT 2>/dev/null || true
+          node monitoring/agent-memory.js inbox weekly-improvement >> $GITHUB_OUTPUT 2>/dev/null || true
+          node monitoring/agent-memory.js critical 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
+
       - name: Run Improvement Agent
         uses: anthropics/claude-code-action@beta
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           task: |
             You are the weekly improvement agent for KinderSpark Pro.
+            You coordinate ALL other agents — you are the team lead this week.
+
+            YOUR MEMORY (what you've done in previous weeks — don't repeat):
+            ${{ steps.memory.outputs.memory_context }}
+
+            MESSAGES FROM OTHER AGENTS (inbox — act on these first):
+            ${{ steps.memory.outputs.inbox_context }}
+
+            INTER-AGENT COLLABORATION RULES:
+            - If you find a security issue → create issue with label "security" so Security Auditor handles it
+            - If you find a DB optimisation → create issue with label "database" for Database Agent
+            - If you find a UI bug → create issue with label "frontend" for Frontend Designer
+            - If you find a performance issue → create issue with label "performance" for Performance Auditor
+            - After your work, send a broadcast to all agents summarising what you found
 
             FOCUS: ${{ github.event.inputs.focus || 'all' }}
 
@@ -78,6 +102,18 @@ jobs:
       - name: Push improvements
         run: |
           git push -u origin "${{ steps.branch.outputs.branch }}" || echo "Nothing to push"
+
+      - name: 🧠 Save memory + broadcast to all agents
+        if: always()
+        run: |
+          node monitoring/agent-memory.js write weekly-improvement \
+            "summary" 2 \
+            "Weekly review complete for $(date +%Y-%m-%d). Focus: ${{ github.event.inputs.focus || 'all' }}. Branch: ${{ steps.branch.outputs.branch }}" 2>/dev/null || true
+          node monitoring/agent-memory.js broadcast weekly-improvement \
+            "Weekly improvement run complete. New issues may have been opened for specialist agents. Check your inboxes and any new labels assigned to you." 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
 
       - name: Post weekly summary issue
         uses: actions/github-script@v7

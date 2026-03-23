@@ -22,6 +22,17 @@ jobs:
     timeout-minutes: 5
 
     steps:
+      - uses: actions/checkout@v4
+
+      - name: 🧠 Load memory
+        id: memory
+        run: |
+          node monitoring/agent-memory.js read health-monitor >> $GITHUB_OUTPUT 2>/dev/null || true
+          node monitoring/agent-memory.js inbox health-monitor >> $GITHUB_OUTPUT 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
+
       - name: Check Backend /health
         id: backend
         run: |
@@ -105,6 +116,24 @@ jobs:
 
 *Auto-created by Health Monitor workflow · Run: [#${{ github.run_number }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})*`,
             })
+
+      - name: 🧠 Save memory
+        if: always()
+        run: |
+          STATUS="${{ steps.backend.outputs.status }}"
+          DB="${{ steps.backend.outputs.db }}"
+          FRONT="${{ steps.frontend.outputs.http_code }}"
+          node monitoring/agent-memory.js write health-monitor \
+            "observation" \
+            "$( [ "$STATUS" = "ok" ] && echo 1 || echo 4 )" \
+            "Backend: $STATUS (DB: $DB) | Frontend: HTTP $FRONT" 2>/dev/null || true
+          if [ "$STATUS" != "ok" ]; then
+            node monitoring/agent-memory.js message health-monitor backend-engineer alert \
+              "SERVICE DOWN — Backend: $STATUS DB: $DB. Investigate immediately." 2>/dev/null || true
+          fi
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
 
       - name: Success Summary
         if: success()
