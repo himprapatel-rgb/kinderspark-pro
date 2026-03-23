@@ -58,8 +58,8 @@ jobs:
       - name: 🧠 Load memory + all agent context
         id: memory
         run: |
-          node monitoring/agent-memory.js read weekly-improvement >> $GITHUB_OUTPUT 2>/dev/null || true
-          node monitoring/agent-memory.js inbox weekly-improvement >> $GITHUB_OUTPUT 2>/dev/null || true
+          node monitoring/agent-memory.js read weekly-improvement 2>/dev/null || true
+          node monitoring/agent-memory.js inbox weekly-improvement 2>/dev/null || true
           node monitoring/agent-memory.js critical 2>/dev/null || true
         env:
           BACKEND_URL:  ${{ secrets.BACKEND_URL }}

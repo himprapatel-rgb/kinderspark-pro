@@ -40,8 +40,8 @@ jobs:
       - name: 🧠 Load memory
         id: memory
         run: |
-          node monitoring/agent-memory.js read analytics-reporter >> $GITHUB_OUTPUT 2>/dev/null || true
-          node monitoring/agent-memory.js inbox analytics-reporter >> $GITHUB_OUTPUT 2>/dev/null || true
+          node monitoring/agent-memory.js read analytics-reporter 2>/dev/null || true
+          node monitoring/agent-memory.js inbox analytics-reporter 2>/dev/null || true
         env:
           BACKEND_URL:  ${{ secrets.BACKEND_URL }}
           AGENT_SECRET: ${{ secrets.AGENT_SECRET }}

@@ -28,7 +28,7 @@ jobs:
       - name: 🧠 Load memory
         id: memory
         run: |
-          node monitoring/agent-memory.js read api-latency >> $GITHUB_OUTPUT 2>/dev/null || true
+          node monitoring/agent-memory.js read api-latency 2>/dev/null || true
         env:
           BACKEND_URL:  ${{ secrets.BACKEND_URL }}
           AGENT_SECRET: ${{ secrets.AGENT_SECRET }}

@@ -40,8 +40,8 @@ jobs:
       - name: 🧠 Load memory
         id: memory
         run: |
-          node monitoring/agent-memory.js read badge-designer >> $GITHUB_OUTPUT 2>/dev/null || true
-          node monitoring/agent-memory.js inbox badge-designer >> $GITHUB_OUTPUT 2>/dev/null || true
+          node monitoring/agent-memory.js read badge-designer 2>/dev/null || true
+          node monitoring/agent-memory.js inbox badge-designer 2>/dev/null || true
         env:
           BACKEND_URL:  ${{ secrets.BACKEND_URL }}
           AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
