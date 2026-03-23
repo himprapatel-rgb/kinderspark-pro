@@ -1,0 +1,213 @@
+{
+  "school": "Sunshine Kindergarten",
+  "personas": [
+    {
+      "id": "uat-admin-omar",   "name": "Omar Al-Rashid",        "role": "admin",   "pin": "9999",
+      "country": "UAE",         "flag": "🇦🇪", "title": "Principal",
+      "agentId": "uat-admin-omar",   "agentIcon": "🏫", "agentColor": "#FF9F0A",
+      "classId": null, "studentId": null,
+      "responsibility": "School-wide oversight: stats dashboard, class analytics, leaderboard accuracy",
+      "journey": ["admin-stats", "admin-leaderboard", "admin-class-analytics", "list-classes"]
+    },
+    {
+      "id": "uat-admin-priya",  "name": "Priya Sharma",          "role": "admin",   "pin": "8800",
+      "country": "India",       "flag": "🇮🇳", "title": "Vice-Principal",
+      "agentId": "uat-admin-priya",  "agentIcon": "📊", "agentColor": "#5E5CE6",
+      "classId": null, "studentId": null,
+      "responsibility": "Analytics depth: class comparisons accurate, syllabus published, AI session counts correct",
+      "journey": ["admin-stats", "admin-class-analytics", "list-syllabuses"]
+    },
+    {
+      "id": "uat-admin-lucas",  "name": "Lucas Martin",          "role": "admin",   "pin": "7700",
+      "country": "France",      "flag": "🇫🇷", "title": "IT Coordinator",
+      "agentId": "uat-admin-lucas",  "agentIcon": "🔧", "agentColor": "#30D158",
+      "classId": null, "studentId": null,
+      "responsibility": "System health: API response times, error rates, data consistency across endpoints",
+      "journey": ["admin-stats", "list-classes", "admin-leaderboard"]
+    },
+    {
+      "id": "uat-teacher-sarah",  "name": "Ms. Sarah Johnson",      "role": "teacher", "pin": "1234",
+      "country": "USA",           "flag": "🇺🇸", "title": "KG 1 Lead Teacher",
+      "agentId": "uat-teacher-sarah",  "agentIcon": "👩‍🏫", "agentColor": "#BF5AF2",
+      "classId": "class-001", "studentId": null,
+      "responsibility": "KG1 Sunflower: homework completions, at-risk students (Noah/Lucas), messaging parents",
+      "journey": ["teacher-me", "list-students", "list-homework", "homework-completions", "list-messages", "create-homework"]
+    },
+    {
+      "id": "uat-teacher-david",  "name": "Mr. David Chen",         "role": "teacher", "pin": "5678",
+      "country": "Singapore",     "flag": "🇸🇬", "title": "KG 2 Lead Teacher",
+      "agentId": "uat-teacher-david",  "agentIcon": "👨‍🏫", "agentColor": "#FF453A",
+      "classId": "class-002", "studentId": null,
+      "responsibility": "KG2 Rainbow: AI tutor results, advanced modules, leaderboard, at-risk Mia (9 days inactive)",
+      "journey": ["teacher-me", "list-students", "list-homework", "homework-completions", "list-messages"]
+    },
+    {
+      "id": "uat-teacher-fatima", "name": "Ms. Fatima Al-Mansoori", "role": "teacher", "pin": "4321",
+      "country": "UAE",           "flag": "🇦🇪", "title": "KG 1 Support Teacher",
+      "agentId": "uat-teacher-fatima", "agentIcon": "💬", "agentColor": "#FF9F0A",
+      "classId": "class-001", "studentId": null,
+      "responsibility": "Parent communication: send messages, check delivery, message history for individual students",
+      "journey": ["teacher-me", "list-students", "list-messages", "send-message", "list-syllabuses"]
+    },
+    {
+      "id": "uat-teacher-james",  "name": "Mr. James Okafor",       "role": "teacher", "pin": "8765",
+      "country": "Nigeria",       "flag": "🇳🇬", "title": "KG 3 Lead Teacher",
+      "agentId": "uat-teacher-james",  "agentIcon": "📋", "agentColor": "#32ADE6",
+      "classId": "class-003", "studentId": null,
+      "responsibility": "KG3 Butterfly new class: attendance recording, first homework, all students brand new",
+      "journey": ["teacher-me", "list-students", "list-homework", "save-attendance", "create-homework"]
+    },
+    {
+      "id": "uat-teacher-sofia",  "name": "Ms. Sofia Reyes",        "role": "teacher", "pin": "1357",
+      "country": "Mexico",        "flag": "🇲🇽", "title": "AI Learning Specialist",
+      "agentId": "uat-teacher-sofia",  "agentIcon": "🤖", "agentColor": "#FF2D55",
+      "classId": "class-002", "studentId": null,
+      "responsibility": "AI tools: syllabus builder, AI homework generation, weekly report, tutor session quality",
+      "journey": ["list-syllabuses", "create-homework", "list-students"]
+    },
+    {
+      "id": "uat-kid-emma",   "name": "Emma",   "role": "child", "pin": "1111",
+      "country": "UK",        "flag": "🇬🇧", "title": "KG 1 Student",
+      "agentId": "uat-kid-emma",   "agentIcon": "👧", "agentColor": "#30D158",
+      "classId": "class-001", "studentId": "stu-001", "stars": 85, "atRisk": false,
+      "responsibility": "Core learning: numbers & alphabet modules, AI tutor, homework completion, badges",
+      "journey": ["kid-profile", "kid-progress", "list-homework", "complete-homework", "kid-badges", "save-ai-session"]
+    },
+    {
+      "id": "uat-kid-liam",   "name": "Liam",   "role": "child", "pin": "2222",
+      "country": "Australia", "flag": "🇦🇺", "title": "KG 1 Student",
+      "agentId": "uat-kid-liam",   "agentIcon": "👦", "agentColor": "#5E5CE6",
+      "classId": "class-001", "studentId": "stu-002", "stars": 52, "atRisk": false,
+      "responsibility": "AI Tutor flow: start a session, answer questions, check star rewards and level progression",
+      "journey": ["kid-profile", "kid-progress", "save-ai-session", "list-homework", "kid-badges"]
+    },
+    {
+      "id": "uat-kid-sofia",  "name": "Sofia",  "role": "child", "pin": "3333",
+      "country": "Spain",     "flag": "🇪🇸", "title": "KG 1 Student",
+      "agentId": "uat-kid-sofia",  "agentIcon": "🧒", "agentColor": "#FF2D55",
+      "classId": "class-001", "studentId": "stu-003", "stars": 120, "atRisk": false,
+      "responsibility": "High performer: verify stars/streak display, perfect score badge, shop items unlocked, all modules",
+      "journey": ["kid-profile", "kid-progress", "kid-badges", "list-homework", "complete-homework"]
+    },
+    {
+      "id": "uat-kid-noah",   "name": "Noah",   "role": "child", "pin": "4444",
+      "country": "USA",       "flag": "🇺🇸", "title": "KG 1 Student",
+      "agentId": "uat-kid-noah",   "agentIcon": "🦸", "agentColor": "#FF9F0A",
+      "classId": "class-001", "studentId": "stu-004", "stars": 18, "atRisk": true,
+      "responsibility": "Re-engagement: 10 days inactive, check streak reset to 1 on login, homework reminder received",
+      "journey": ["kid-profile", "kid-progress", "list-homework", "save-ai-session"]
+    },
+    {
+      "id": "uat-kid-zara",   "name": "Zara",   "role": "child", "pin": "5555",
+      "country": "UAE",       "flag": "🇦🇪", "title": "KG 1 Student",
+      "agentId": "uat-kid-zara",   "agentIcon": "🧙", "agentColor": "#BF5AF2",
+      "classId": "class-001", "studentId": "stu-005", "stars": 67, "atRisk": false,
+      "responsibility": "Shop & customisation: buy theme with stars, change avatar, verify selectedTheme updates",
+      "journey": ["kid-profile", "kid-progress", "list-homework", "complete-homework", "update-theme"]
+    },
+    {
+      "id": "uat-kid-lucas",  "name": "Lucas",  "role": "child", "pin": "6666",
+      "country": "France",    "flag": "🇫🇷", "title": "KG 1 Student",
+      "agentId": "uat-kid-lucas",  "agentIcon": "🧑", "agentColor": "#32ADE6",
+      "classId": "class-001", "studentId": "stu-006", "stars": 9, "atRisk": true,
+      "responsibility": "First-time user: never logged in, onboarding flow, first star, streak starts at 1",
+      "journey": ["kid-profile", "kid-progress", "list-homework", "save-ai-session"]
+    },
+    {
+      "id": "uat-kid-aisha",  "name": "Aisha",  "role": "child", "pin": "7777",
+      "country": "Nigeria",   "flag": "🇳🇬", "title": "KG 2 Student",
+      "agentId": "uat-kid-aisha",  "agentIcon": "👩", "agentColor": "#FFD60A",
+      "classId": "class-002", "studentId": "stu-007", "stars": 143, "atRisk": false,
+      "responsibility": "Top performer: Level 5 AI tutor, all badges, sight words module, verify leaderboard rank is #1",
+      "journey": ["kid-profile", "kid-progress", "kid-badges", "save-ai-session", "complete-homework"]
+    },
+    {
+      "id": "uat-kid-oliver", "name": "Oliver", "role": "child", "pin": "8888",
+      "country": "UK",        "flag": "🇬🇧", "title": "KG 2 Student",
+      "agentId": "uat-kid-oliver", "agentIcon": "👨", "agentColor": "#FF6B35",
+      "classId": "class-002", "studentId": "stu-008", "stars": 76, "atRisk": false,
+      "responsibility": "Games & activities: matching game, shapes module, check records save correctly after session",
+      "journey": ["kid-profile", "kid-progress", "list-homework", "complete-homework", "save-ai-session"]
+    },
+    {
+      "id": "uat-kid-mia",    "name": "Mia",    "role": "child", "pin": "9090",
+      "country": "Brazil",    "flag": "🇧🇷", "title": "KG 2 Student",
+      "agentId": "uat-kid-mia",    "agentIcon": "🧝", "agentColor": "#5AC8FA",
+      "classId": "class-002", "studentId": "stu-009", "stars": 34, "atRisk": true,
+      "responsibility": "Re-engagement + PIN fix: was 9999 (collided with admin), now 9090. 9 days inactive. Verify login works.",
+      "journey": ["kid-profile", "kid-progress", "save-ai-session", "list-homework"]
+    },
+    {
+      "id": "uat-kid-ethan",  "name": "Ethan",  "role": "child", "pin": "0000",
+      "country": "USA",       "flag": "🇺🇸", "title": "KG 2 Student",
+      "agentId": "uat-kid-ethan",  "agentIcon": "🧔", "agentColor": "#64D2FF",
+      "classId": "class-002", "studentId": "stu-010", "stars": 99, "atRisk": false,
+      "responsibility": "Leaderboard & competition: verify rank, star count, streak, completed AI sessions display",
+      "journey": ["kid-profile", "kid-progress", "kid-badges", "save-ai-session", "complete-homework"]
+    },
+    {
+      "id": "uat-kid-yuki",   "name": "Yuki",   "role": "child", "pin": "1122",
+      "country": "Japan",     "flag": "🇯🇵", "title": "KG 2 Student",
+      "agentId": "uat-kid-yuki",   "agentIcon": "🌸", "agentColor": "#FF2D55",
+      "classId": "class-002", "studentId": "stu-011", "stars": 41, "atRisk": false,
+      "responsibility": "Module progress: numbers at 5/10, homework completion, check progress updates after session",
+      "journey": ["kid-profile", "kid-progress", "list-homework", "complete-homework", "save-ai-session"]
+    },
+    {
+      "id": "uat-kid-carlos", "name": "Carlos", "role": "child", "pin": "2233",
+      "country": "Mexico",    "flag": "🇲🇽", "title": "KG 3 Student",
+      "agentId": "uat-kid-carlos", "agentIcon": "🦋", "agentColor": "#30D158",
+      "classId": "class-003", "studentId": "stu-012", "stars": 5, "atRisk": true,
+      "responsibility": "Brand new student: first login, Space & Planets syllabus shows, homework appears, 0 progress is OK",
+      "journey": ["kid-profile", "kid-progress", "list-homework", "save-ai-session"]
+    },
+    {
+      "id": "uat-kid-priya",  "name": "Priya",  "role": "child", "pin": "3344",
+      "country": "India",     "flag": "🇮🇳", "title": "KG 3 Student",
+      "agentId": "uat-kid-priya",  "agentIcon": "🌺", "agentColor": "#FF9F0A",
+      "classId": "class-003", "studentId": "stu-013", "stars": 22, "atRisk": false,
+      "responsibility": "Progress tracking: 3 numbers cards done, verify updates after session, KG3 homework list",
+      "journey": ["kid-profile", "kid-progress", "list-homework", "complete-homework", "save-ai-session"]
+    },
+    {
+      "id": "uat-kid-hans",   "name": "Hans",   "role": "child", "pin": "4455",
+      "country": "Germany",   "flag": "🇩🇪", "title": "KG 3 Student",
+      "agentId": "uat-kid-hans",   "agentIcon": "🧩", "agentColor": "#BF5AF2",
+      "classId": "class-003", "studentId": "stu-014", "stars": 38, "atRisk": false,
+      "responsibility": "Edge cases: PIN 4455, streak increments correctly, numbers + alphabet both partially done",
+      "journey": ["kid-profile", "kid-progress", "save-ai-session", "complete-homework", "kid-badges"]
+    },
+    {
+      "id": "uat-kid-amara",  "name": "Amara",  "role": "child", "pin": "5566",
+      "country": "Ghana",     "flag": "🇬🇭", "title": "KG 3 Student",
+      "agentId": "uat-kid-amara",  "agentIcon": "🌟", "agentColor": "#FFD60A",
+      "classId": "class-003", "studentId": "stu-015", "stars": 60, "atRisk": false,
+      "responsibility": "Badges & rewards: first_star + streak_3 earned, shop theme unlocked, AI session saves with stars",
+      "journey": ["kid-profile", "kid-progress", "kid-badges", "save-ai-session", "complete-homework"]
+    },
+    {
+      "id": "uat-parent-fiona",  "name": "Fiona Clarke", "role": "parent", "pin": "1111",
+      "country": "UK",           "flag": "🇬🇧", "title": "Emma's Parent",
+      "agentId": "uat-parent-fiona",  "agentIcon": "👩‍👧", "agentColor": "#30D158",
+      "classId": "class-001", "studentId": "stu-001", "childName": "Emma",
+      "responsibility": "Parent dashboard: view Emma's homework, read teacher messages, verify star count, homework status",
+      "journey": ["kid-profile", "list-homework", "list-messages", "homework-completions"]
+    },
+    {
+      "id": "uat-parent-ahmed",  "name": "Ahmed Hassan", "role": "parent", "pin": "4444",
+      "country": "UAE",          "flag": "🇦🇪", "title": "Noah's Parent",
+      "agentId": "uat-parent-ahmed",  "agentIcon": "👨‍👦", "agentColor": "#FF9F0A",
+      "classId": "class-001", "studentId": "stu-004", "childName": "Noah",
+      "responsibility": "At-risk parent: check if Fatima's outreach message arrived, homework overdue status visible",
+      "journey": ["kid-profile", "list-homework", "list-messages"]
+    },
+    {
+      "id": "uat-parent-maria",  "name": "Maria Garcia", "role": "parent", "pin": "2233",
+      "country": "Mexico",       "flag": "🇲🇽", "title": "Carlos's Parent",
+      "agentId": "uat-parent-maria",  "agentIcon": "👩‍👦", "agentColor": "#FF2D55",
+      "classId": "class-003", "studentId": "stu-012", "childName": "Carlos",
+      "responsibility": "New family: KG3 first week, James's welcome message arrived, Carlos's profile complete",
+      "journey": ["kid-profile", "list-homework", "list-messages"]
+    }
+  ]
+}
