@@ -1,0 +1,78 @@
+name: 🆘 Support Agent
+
+on:
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: 'Support issue to handle'
+        required: true
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  support:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.label.name, 'support') ||
+      contains(github.event.label.name, 'bug-report') ||
+      contains(github.event.label.name, 'user-reported')
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0, token: '${{ secrets.GITHUB_TOKEN }}' }
+
+      - name: Configure git
+        run: |
+          git config user.name "KinderSpark Support Agent"
+          git config user.email "support@kinderspark.ai"
+          git checkout -b "claude/support-$(date +%s)"
+
+      - name: Run Support Agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          task: |
+            You are the SUPPORT AGENT for KinderSpark Pro.
+            You handle user-reported bugs and support requests.
+
+            ISSUE: ${{ github.event.inputs.issue || github.event.issue.title }}
+            DETAILS: ${{ github.event.issue.body || 'No details provided' }}
+
+            YOUR PROCESS:
+
+            1. **Diagnose the Issue**: Read the relevant code files to understand
+               what could cause this problem. Look for:
+               - Common failure modes
+               - Edge cases not handled
+               - Recent changes that might have introduced the bug
+
+            2. **Fix if Possible**: If you can reproduce the logic of the bug in code,
+               fix it directly. Prioritize fixes that affect children's experience.
+
+            3. **Draft Response**: Write a helpful, friendly response to post on the issue:
+               - Acknowledge the problem
+               - Explain what caused it (in simple terms)
+               - Confirm if it's fixed or when it will be fixed
+               - Provide a workaround if the fix takes time
+               Use: gh issue comment <number> --body "..."
+
+            4. **Escalation**: If the issue requires:
+               - DB changes → add label "database", tag Database Agent
+               - Security concern → add label "security", tag Security Auditor
+               - New feature request → add label "claude-build"
+
+            5. **FAQ Update**: If this is a common question, add it to a FAQ section
+               in README.md or create frontend/app/help/page.tsx if it doesn't exist.
+
+            Be empathetic and fast — users are teachers and parents of young children.
+          allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+          max_turns: "20"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - run: git push -u origin HEAD 2>/dev/null || true

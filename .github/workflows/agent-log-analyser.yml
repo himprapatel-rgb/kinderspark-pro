@@ -1,0 +1,72 @@
+name: 📊 Log Analyser Agent
+
+on:
+  schedule:
+    - cron: '0 6 * * *'  # Daily 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  log-analysis:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch recent workflow failures
+        id: failures
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const runs = await github.rest.actions.listWorkflowRunsForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              status: 'failure', per_page: 20,
+              created: `>=${new Date(Date.now() - 86400000).toISOString()}`,
+            })
+            const failures = runs.data.workflow_runs.map(r => ({
+              name: r.name, conclusion: r.conclusion,
+              created_at: r.created_at, html_url: r.html_url,
+            }))
+            core.setOutput('failures', JSON.stringify(failures))
+            console.log('Failed runs in last 24h:', failures.length)
+
+      - name: Run Log Analyser Agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          task: |
+            You are the LOG ANALYSER AGENT for KinderSpark Pro.
+
+            FAILED WORKFLOWS (last 24h):
+            ${{ steps.failures.outputs.failures }}
+
+            YOUR TASKS:
+
+            1. **Failure Pattern Analysis**: Look at the failed workflow names.
+               Are the same agents failing repeatedly? That indicates a systematic issue.
+               Group failures by type and identify root causes.
+
+            2. **Error Classification**: For each failure type, classify as:
+               - Flaky (intermittent network issue) — add retry logic
+               - Config error (missing secret/env var) — document what's needed
+               - Code bug — open a "claude-fix" issue for the Auto-Dev Agent
+               - Resource limit — open a "performance" issue
+
+            3. **Self-Healing Suggestions**: Review the failing workflow files in .github/workflows/
+               Suggest improvements to make them more resilient:
+               - Add `continue-on-error: true` where appropriate
+               - Add retry logic for network calls
+               - Add better error messages and debugging output
+
+            4. **Daily Health Issue**: Create a GitHub issue titled "📊 Daily Log Report — [date]"
+               only if there are 3+ failures, with label "ops" summarising what failed and why.
+
+            5. **Pattern Fix**: If you find a common bug in workflow files (e.g., missing env var),
+               fix it across all affected files. The workflow files are in .github/workflows/.
+          allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+          max_turns: "15"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,66 @@
+name: 📱 PWA Agent
+
+on:
+  schedule:
+    - cron: '0 5 * * 0'  # Every Sunday
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  pwa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0, token: '${{ secrets.GITHUB_TOKEN }}' }
+
+      - name: Configure git
+        run: |
+          git config user.name "KinderSpark PWA Agent"
+          git config user.email "pwa@kinderspark.ai"
+          git checkout -b "claude/pwa-$(date +%s)"
+
+      - name: Run PWA Agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          task: |
+            You are the PWA AGENT for KinderSpark Pro.
+            Children use this on tablets and phones — it must work offline and install like a native app.
+
+            YOUR TASKS:
+
+            1. **Manifest Audit**: Read frontend/public/manifest.json
+               - Are all icon sizes present? (72, 96, 128, 144, 152, 192, 384, 512)
+               - Is display: "standalone" set?
+               - Is background_color and theme_color set?
+               - Are shortcuts defined for quick actions?
+               - Is orientation set to "portrait"?
+
+            2. **Service Worker**: Read frontend/public/sw.js
+               - Is there a cache-first strategy for game assets?
+               - Are the word modules and emoji assets cached offline?
+               - Is there a background sync for saving scores when offline?
+               - Is the cache versioned? (update CACHE_VERSION when assets change)
+
+            3. **Install Prompt**: Is there an "Add to Home Screen" prompt?
+               Check frontend/app/layout.tsx or child pages.
+               If not, add a subtle banner that appears after 3rd visit:
+               "📱 Install KinderSpark for a better experience!"
+
+            4. **Offline Mode**: What happens when the child is offline?
+               - Word Match should work offline (words are in JS)
+               - Daily Challenge should work offline
+               - Show a "You're offline 📴" banner but let games still work
+
+            5. **App Icons**: Do placeholder icons exist? If only placeholder icons,
+               open a GitHub issue "design: create proper app icons (512x512 PNG)" with label "design"
+
+            Commit with "pwa: improve offline support and PWA compliance".
+          allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+          max_turns: "20"
+
+      - run: git push -u origin HEAD 2>/dev/null || true

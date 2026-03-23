@@ -1,0 +1,74 @@
+name: 🧪 A/B Testing Agent
+
+on:
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      experiment:
+        description: 'What to A/B test'
+        required: true
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  ab-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.label.name, 'ab-test') ||
+      contains(github.event.label.name, 'experiment')
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0, token: '${{ secrets.GITHUB_TOKEN }}' }
+
+      - name: Configure git
+        run: |
+          git config user.name "KinderSpark AB Agent"
+          git config user.email "ab@kinderspark.ai"
+          git checkout -b "claude/ab-$(date +%s)"
+
+      - name: Run A/B Testing Agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          task: |
+            You are the A/B TESTING AGENT for KinderSpark Pro.
+
+            EXPERIMENT: ${{ github.event.inputs.experiment || github.event.issue.title }}
+
+            YOUR TASK:
+            Implement a simple feature flag system and set up the requested experiment.
+
+            1. **Feature Flag System**: Check if frontend/lib/flags.ts exists.
+               If not, create it:
+               ```typescript
+               // Simple deterministic A/B split based on student ID
+               export function getVariant(studentId: string, experiment: string): 'A' | 'B' {
+                 const hash = [...(studentId + experiment)].reduce((a, c) => a + c.charCodeAt(0), 0)
+                 return hash % 2 === 0 ? 'A' : 'B'
+               }
+               export function trackExperiment(experiment: string, variant: string, outcome: string) {
+                 // Log to console for now — can pipe to analytics later
+                 console.log(JSON.stringify({ experiment, variant, outcome, ts: Date.now() }))
+               }
+               ```
+
+            2. **Implement the Experiment**: For the requested experiment, create variant A and B.
+               Example: if testing "button color", variant A = purple, variant B = orange.
+               Use getVariant() to split users deterministically.
+
+            3. **Tracking**: Add trackExperiment() calls at key outcome events
+               (game started, correct answer, session completed)
+
+            4. **Results Issue**: Create a GitHub issue with label "ab-results" scheduled for
+               2 weeks from now, describing what to measure and how to pick a winner.
+
+            Commit with "experiment: <experiment name> A/B test".
+          allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+          max_turns: "20"
+
+      - run: git push -u origin HEAD 2>/dev/null || true

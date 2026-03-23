@@ -1,0 +1,69 @@
+name: 🧭 Onboarding Watcher Agent
+
+on:
+  schedule:
+    - cron: '0 9 * * *'  # Daily at 09:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  onboarding:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0, token: '${{ secrets.GITHUB_TOKEN }}' }
+
+      - name: Configure git
+        run: |
+          git config user.name "KinderSpark Onboarding Agent"
+          git config user.email "onboarding@kinderspark.ai"
+          git checkout -b "claude/onboarding-$(date +%s)"
+
+      - name: Run Onboarding Agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          task: |
+            You are the ONBOARDING WATCHER AGENT for KinderSpark Pro.
+            You ensure new teachers and parents complete setup successfully.
+
+            YOUR TASKS:
+
+            1. **Onboarding Flow Audit**: Trace the complete teacher onboarding journey:
+               Step 1: Login (app/(auth)/login/page.tsx)
+               Step 2: PIN entry (app/pin/page.tsx)
+               Step 3: Teacher dashboard (app/teacher/page.tsx)
+               Step 4: Create a class
+               Step 5: Add students
+               Step 6: Assign first homework
+
+               Map each step. Is there guidance at each step? Empty states with clear CTAs?
+
+            2. **Empty State Design**: For new teachers with no class/students/homework:
+               Each section should have a welcoming empty state with:
+               - Illustration emoji
+               - "Get started" heading
+               - Clear action button
+               - Brief description of what to do
+               Check and improve teacher/page.tsx empty states.
+
+            3. **Welcome Flow**: After first login, does the teacher see a welcome tutorial?
+               If not, create a simple 3-step tooltip walkthrough:
+               "1. Create your class → 2. Add students → 3. Assign homework"
+
+            4. **Parent Onboarding**: Check app/parent/page.tsx
+               When a parent first logs in with no child linked, what do they see?
+               Improve the empty state and add instructions for linking to their child's class.
+
+            5. **Progress Tracking**: Add a "Setup Progress" bar for new teachers:
+               □ Class created □ Students added □ First homework assigned □ First message sent
+
+            Commit with "feat: improve onboarding flow for teachers and parents".
+          allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+          max_turns: "25"
+
+      - run: git push -u origin HEAD 2>/dev/null || true

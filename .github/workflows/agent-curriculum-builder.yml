@@ -1,0 +1,82 @@
+name: 📖 Curriculum Builder Agent
+
+on:
+  schedule:
+    - cron: '0 6 1 * *'  # 1st of every month
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: 'Topic to build content for (animals/fruits/numbers/colors/space/etc)'
+        required: false
+        default: 'auto'
+      age_group:
+        description: 'Age group (4-6 / 6-8 / 8-10)'
+        required: false
+        default: '4-8'
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  build-curriculum:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule' ||
+      contains(github.event.label.name, 'curriculum') ||
+      contains(github.event.label.name, 'content')
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0, token: '${{ secrets.GITHUB_TOKEN }}' }
+
+      - name: Configure git
+        run: |
+          git config user.name "KinderSpark Curriculum Agent"
+          git config user.email "curriculum@kinderspark.ai"
+          git checkout -b "claude/curriculum-$(date +%s)"
+
+      - name: Run Curriculum Agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          task: |
+            You are the CURRICULUM BUILDER AGENT for KinderSpark Pro.
+            Your job is to keep the learning content fresh, culturally diverse, and educationally sound.
+
+            TOPIC: ${{ github.event.inputs.topic || 'auto-select based on gaps' }}
+            AGE GROUP: ${{ github.event.inputs.age_group || '4-8' }}
+
+            FIRST: Read frontend/lib/modules.ts to see what content already exists.
+
+            YOUR TASKS:
+
+            1. **Identify Gaps**: What topics are missing or thin?
+               Common categories: Animals, Fruits, Vegetables, Colors, Numbers, Shapes,
+               Body Parts, Family, Weather, Transport, Food, Clothes, Sports, Music,
+               Space, Ocean, Jungle, Farm, Dinosaurs, Professions
+
+            2. **Build New Module**: For the selected/needed topic, create a new module:
+               - 20+ emoji-word pairs appropriate for the age group
+               - Include culturally diverse examples (not just Western-centric)
+               - Add `hint` field for each item (short fun fact or sentence)
+               - Pick a vibrant color for the module card
+
+            3. **Expand Existing Modules**: Add 5-10 new items to the thinnest existing modules
+
+            4. **Daily Challenge Pool**: Add 5 new daily challenge prompts to the rotation
+
+            5. **Quality Check**: Review all existing words for:
+               - Age-appropriateness
+               - Spelling accuracy
+               - Cultural sensitivity
+
+            Format for modules.ts follows existing pattern. Add new modules to MODS array.
+            Commit with "content: add <topic> module and expand existing content".
+          allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+          max_turns: "20"
+
+      - run: git push -u origin HEAD 2>/dev/null || true

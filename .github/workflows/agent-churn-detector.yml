@@ -1,0 +1,57 @@
+name: 📉 Churn Detector Agent
+
+on:
+  schedule:
+    - cron: '0 8 * * 3'  # Every Wednesday
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  churn:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0, token: '${{ secrets.GITHUB_TOKEN }}' }
+
+      - name: Configure git
+        run: |
+          git config user.name "KinderSpark Churn Agent"
+          git config user.email "churn@kinderspark.ai"
+          git checkout -b "claude/churn-$(date +%s)"
+
+      - name: Run Churn Detector Agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          task: |
+            You are the CHURN DETECTOR AGENT for KinderSpark Pro.
+            Your job is to identify at-risk students/classes and trigger re-engagement.
+
+            YOUR TASKS:
+
+            1. **Build Churn Detection Endpoint**: If it doesn't exist, create:
+               `GET /api/admin/churn-report` (requireAuth, requireRole admin/teacher)
+               Returns: students with no aiSessions or match games in last 7 days,
+               classes with < 50% weekly active students,
+               teachers who haven't logged in this week
+
+            2. **Re-engagement Notification**: When churn is detected, the system should:
+               - Send a push notification to the parent: "Your child hasn't practiced in 7 days! 🌟"
+               - Send teacher a summary: "3 students in your class are inactive"
+               Check backend/src/services/notification.service.ts and backend/src/routes/push.routes.ts
+
+            3. **Churn Dashboard**: Add a "At Risk" section to teacher dashboard
+               frontend/app/teacher/page.tsx — show inactive students in red
+
+            4. **Streak Saver**: When a student's streak is about to break (hasn't played today),
+               send a push notification at 18:00 local time: "Don't break your streak! 🔥"
+
+            Implement what's missing. Commit with "feat: churn detection and re-engagement".
+          allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+          max_turns: "25"
+
+      - run: git push -u origin HEAD 2>/dev/null || true

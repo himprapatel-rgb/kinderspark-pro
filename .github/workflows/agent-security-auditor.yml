@@ -1,0 +1,100 @@
+name: 🛡️ Security Auditor Agent
+
+on:
+  schedule:
+    - cron: '0 3 * * 3'  # Every Wednesday 03:00 UTC
+  workflow_dispatch:
+    inputs:
+      focus:
+        description: 'Focus area (owasp/deps/secrets/auth/all)'
+        default: 'all'
+
+permissions:
+  contents: write
+  issues: write
+  security-events: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0, token: '${{ secrets.GITHUB_TOKEN }}' }
+
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+
+      - name: Install audit tools
+        run: |
+          npm install -g audit-ci retire
+          cd backend  && npm ci --ignore-scripts 2>/dev/null || true
+          cd ../frontend && npm ci --ignore-scripts 2>/dev/null || true
+
+      - name: npm audit
+        id: npm_audit
+        run: |
+          echo "### Backend" > /tmp/audit.txt
+          cd backend  && npm audit --json 2>/dev/null | node -e "
+            const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8'));
+            const v=d.vulnerabilities||{};
+            const c=Object.values(v).filter(x=>x.severity==='critical'||x.severity==='high');
+            console.log('Critical/High: '+c.length);
+            c.forEach(x=>console.log(' - '+x.name+' ('+x.severity+')'));
+          " >> /tmp/audit.txt 2>/dev/null || echo "audit unavailable" >> /tmp/audit.txt
+          echo "### Frontend" >> /tmp/audit.txt
+          cd ../frontend && npm audit --json 2>/dev/null | node -e "
+            const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8'));
+            const v=d.vulnerabilities||{};
+            const c=Object.values(v).filter(x=>x.severity==='critical'||x.severity==='high');
+            console.log('Critical/High: '+c.length);
+            c.forEach(x=>console.log(' - '+x.name+' ('+x.severity+')'));
+          " >> /tmp/audit.txt 2>/dev/null || echo "audit unavailable" >> /tmp/audit.txt
+          cat /tmp/audit.txt
+          echo "result<<EOF" >> $GITHUB_OUTPUT
+          cat /tmp/audit.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Run Claude Security Agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          task: |
+            You are the SECURITY AUDITOR AGENT for KinderSpark Pro — a children's educational app.
+            This app handles data for children aged 4-10. Security is CRITICAL.
+
+            FOCUS: ${{ github.event.inputs.focus || 'all' }}
+
+            NPM AUDIT RESULTS:
+            ${{ steps.npm_audit.outputs.result }}
+
+            YOUR TASKS:
+            1. Review all backend routes in backend/src/routes/ — check for:
+               - Missing requireAuth middleware
+               - Missing requireRole guards
+               - SQL injection via Prisma (raw queries without parameterization)
+               - Missing input validation/sanitization
+               - Rate limiting gaps on sensitive endpoints
+
+            2. Review backend/src/controllers/ — check for:
+               - Trusting client-supplied user IDs (must use req.user.id)
+               - Unsafe use of req.body without validation
+               - Error messages leaking internal info
+
+            3. Review frontend/lib/api.ts — check for:
+               - Tokens stored in localStorage (should be httpOnly cookies)
+               - Sensitive data logged to console
+
+            4. Check backend/prisma/schema.prisma:
+               - Are there fields that should be @omit in responses?
+               - Missing cascading deletes for GDPR compliance?
+
+            5. Fix any HIGH severity issues directly in code.
+            6. For MEDIUM issues: open GitHub issues with label "security".
+            7. Post a summary comment to GitHub issue (use gh cli if available).
+
+            Commit fixes with "security: <description>", push.
+          allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+          max_turns: "30"
+
+      - run: git config user.name "KinderSpark Security Agent" && git config user.email "security@kinderspark.ai" && git push origin HEAD 2>/dev/null || true

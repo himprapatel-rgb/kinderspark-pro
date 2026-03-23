@@ -1,0 +1,63 @@
+name: 👩‍🏫 Teacher Insight Agent
+
+on:
+  schedule:
+    - cron: '0 7 * * 1'  # Every Monday morning
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  teacher-insights:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0, token: '${{ secrets.GITHUB_TOKEN }}' }
+
+      - name: Configure git
+        run: |
+          git config user.name "KinderSpark Insight Agent"
+          git config user.email "insights@kinderspark.ai"
+          git checkout -b "claude/teacher-insights-$(date +%s)"
+
+      - name: Run Teacher Insight Agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          task: |
+            You are the TEACHER INSIGHT AGENT for KinderSpark Pro.
+            You surface actionable intelligence to teachers every Monday morning.
+
+            YOUR TASKS:
+
+            1. **Insight API**: Create `GET /api/teacher/insights` if it doesn't exist:
+               Returns weekly insights:
+               - inactiveStudents: students with 0 sessions in last 7 days
+               - strugglingStudents: students with accuracy < 50% this week
+               - topPerformers: top 3 students by stars this week
+               - classAvgAccuracy: average accuracy across all students
+               - homeworkCompletionRate: % students who completed homework
+               - streakRisk: students whose streak will break today if they don't play
+
+            2. **Teacher Dashboard Insights Panel**: Update frontend/app/teacher/page.tsx
+               Add an "📊 Weekly Insights" section at the top with:
+               - Alert cards for inactive/struggling students (red/orange)
+               - Celebration card for top performers (gold)
+               - Class health score (0-100) with colour indicator
+               - "Send reminder to inactive students" one-tap button
+
+            3. **Smart Notifications**: When teacher opens the app Monday morning,
+               show a toast/banner: "3 students haven't practiced in 7 days"
+               with a button to send them all a push reminder.
+
+            4. **Homework Completion Alert**: If < 60% of class completed homework,
+               trigger a notification to teacher: "Homework completion is low this week"
+
+            Commit with "feat: teacher weekly insights panel".
+          allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+          max_turns: "25"
+
+      - run: git push -u origin HEAD 2>/dev/null || true

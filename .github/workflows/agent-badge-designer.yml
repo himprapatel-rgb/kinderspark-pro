@@ -1,0 +1,69 @@
+name: 🌟 Badge Designer Agent
+
+on:
+  schedule:
+    - cron: '0 7 1 * *'  # 1st of every month
+  workflow_dispatch:
+    inputs:
+      theme:
+        description: 'Badge theme (seasonal/achievement/streak/special)'
+        default: 'seasonal'
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  design-badges:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0, token: '${{ secrets.GITHUB_TOKEN }}' }
+
+      - name: Configure git
+        run: |
+          git config user.name "KinderSpark Badge Agent"
+          git config user.email "badges@kinderspark.ai"
+          git checkout -b "claude/badges-$(date +%s)"
+
+      - name: Run Badge Designer Agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          task: |
+            You are the BADGE DESIGNER AGENT for KinderSpark Pro.
+            Badges are a core engagement mechanic — children love collecting them.
+
+            THEME: ${{ github.event.inputs.theme || 'seasonal' }}
+            TODAY: Run `date` to know current month/season.
+
+            1. Read backend/src/services/badge.service.ts to understand existing badges
+            2. Read backend/prisma/schema.prisma to see Badge model
+
+            DESIGN NEW BADGES:
+
+            Seasonal (based on current month):
+            - Jan: ❄️ "Ice Explorer", 🎊 "New Year Champion"
+            - Feb: ❤️ "Kindness Star", 💝 "Love Learner"
+            - Mar: 🌸 "Spring Scholar", ☘️ "Lucky Learner"
+            - Apr: 🌧️ "Rain Reader", 🐣 "Fresh Start"
+            - May: 🌻 "Sunshine Student", 👑 "May Master"
+            - Jun: 🎓 "End-of-Year Hero", 🌊 "Summer Splash"
+            - Jul: 🎆 "Star Speller", 🏖️ "Beach Reader"
+            - Aug: 📚 "Back-to-School Champ", 🌟 "August All-Star"
+            - Sep: 🍎 "Apple Scholar", 🏆 "September Star"
+            - Oct: 🎃 "Spooky Smart", 🍂 "Autumn Achiever"
+            - Nov: 🦃 "Grateful Genius", 🍁 "November Navigator"
+            - Dec: 🎄 "Holiday Hero", ⭐ "Year-End Champion"
+
+            Achievement badges:
+            - 🔥 "7-Day Streak", 💯 "Perfect Score", 🚀 "100 Stars",
+            - 🧠 "Word Master", 🤖 "AI Explorer", 🏆 "Top of Class"
+
+            For each new badge: add to badge.service.ts with name, emoji, description, criteria.
+            Commit with "feat: add [season] badges and achievement badges".
+          allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+          max_turns: "20"
+
+      - run: git push -u origin HEAD 2>/dev/null || true

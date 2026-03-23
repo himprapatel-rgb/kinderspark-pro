@@ -1,0 +1,83 @@
+name: 🎨 Theme Designer Agent
+
+on:
+  schedule:
+    - cron: '0 8 15 * *'  # 15th of every month
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      theme_name:
+        description: 'Theme name (e.g. Candy, Arctic, Volcano, Jungle)'
+        required: false
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  design-theme:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule' ||
+      contains(github.event.label.name, 'theme') ||
+      contains(github.event.label.name, 'design')
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0, token: '${{ secrets.GITHUB_TOKEN }}' }
+
+      - name: Configure git
+        run: |
+          git config user.name "KinderSpark Theme Agent"
+          git config user.email "themes@kinderspark.ai"
+          git checkout -b "claude/theme-$(date +%s)"
+
+      - name: Run Theme Designer Agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          task: |
+            You are the THEME DESIGNER AGENT for KinderSpark Pro.
+            You create beautiful new themes children can unlock in the shop.
+
+            THEME NAME: ${{ github.event.inputs.theme_name || 'auto-select seasonal theme' }}
+
+            FIRST: Read frontend/lib/modules.ts — look at SHOP_THS for existing themes.
+            Read frontend/app/child/layout.tsx — understand THEME_SECONDARY and THEME_BG_TINT.
+
+            EXISTING THEMES: th_def, th_ocean, th_forest, th_sunset, th_rose, th_galaxy
+
+            CREATE A NEW THEME:
+            Each theme needs:
+            - id: "th_<name>" (e.g. "th_candy")
+            - name: Display name (e.g. "Candy")
+            - color: Primary color (hex) — vibrant, child-friendly
+            - secondary: Secondary color (hex) — harmonious pair
+            - bgTint: Dark background tint (hex) — very dark version of theme
+            - price: Stars cost to unlock (100-500)
+            - emoji: Theme icon emoji
+            - locked: true (must be purchased)
+
+            SEASONAL SUGGESTIONS (pick based on current month via `date`):
+            - 🍬 Candy — pinks and purples (#FF2D95, #BF5AF2)
+            - 🌊 Deep Ocean — deep teals (#00C7BE, #0A84FF)
+            - 🌋 Volcano — fiery reds (#FF6B35, #FF3B30)
+            - 🏔️ Arctic — ice blues (#64D2FF, #5AC8FA)
+            - 🌴 Tropical — lime greens (#34C759, #FFD60A)
+            - 🍂 Autumn — warm ambers (#FF9F0A, #FF6B35)
+            - 🎃 Halloween — orange/black (#FF9F0A, #8E44AD)
+            - ❄️ Winter — cool blues (#5AC8FA, #BF5AF2)
+            - 🌸 Cherry Blossom — soft pinks (#FF2D55, #FF9F0A)
+            - 🚀 Neon Space — electric (#0A84FF, #30D158)
+
+            After adding to SHOP_THS, also update:
+            - THEME_SECONDARY in frontend/app/child/layout.tsx
+            - THEME_BG_TINT in frontend/app/child/layout.tsx
+
+            Commit with "design: add [theme name] theme to shop".
+          allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+          max_turns: "15"
+
+      - run: git push -u origin HEAD 2>/dev/null || true

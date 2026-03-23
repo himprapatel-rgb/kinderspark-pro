@@ -1,0 +1,67 @@
+name: 📋 GDPR Compliance Agent
+
+on:
+  schedule:
+    - cron: '0 5 1 * *'  # 1st of every month
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  gdpr-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0, token: '${{ secrets.GITHUB_TOKEN }}' }
+
+      - name: Configure git
+        run: |
+          git config user.name "KinderSpark GDPR Agent"
+          git config user.email "gdpr@kinderspark.ai"
+          git checkout -b "claude/gdpr-$(date +%Y-%m)"
+
+      - name: Run GDPR Agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          task: |
+            You are the GDPR & PRIVACY COMPLIANCE AGENT for KinderSpark Pro.
+            This app serves children in the EU/UK, India, UAE, and USA — multiple privacy laws apply:
+            - GDPR (EU) — strict for children under 16
+            - COPPA (USA) — children under 13
+            - DPDP (India) — children under 18 need parental consent
+            - PDPL (UAE) — similar to GDPR
+
+            YOUR AUDIT TASKS:
+
+            1. **Right to Erasure**: Is there a DELETE endpoint for student data?
+               Check backend/src/routes/student.routes.ts and admin.routes.ts
+               If missing: implement `DELETE /api/students/:id` with cascade delete
+
+            2. **Data Minimisation**: Review backend/prisma/schema.prisma
+               Are we storing more data than necessary? Flag unnecessary fields.
+
+            3. **Consent Trail**: When a teacher creates a student, is parental consent recorded?
+               Check schema for a `parentConsentAt` or similar field. Add if missing.
+
+            4. **Data Retention**: Are old AISession records purged automatically?
+               Check if there's a cleanup job. If not, add a Prisma query to delete sessions > 1 year old.
+
+            5. **Data Export**: Can a parent download all data about their child?
+               Check for a GET /api/students/:id/export endpoint. Add if missing.
+
+            6. **Third-party Data Sharing**: Review all external API calls (Claude API).
+               Are we sending child PII to external APIs? Document what is sent.
+
+            7. **Privacy Policy Link**: Is there a link to a privacy policy in the app?
+               Check frontend login page.
+
+            Fix code issues directly. Open GitHub issues with label "gdpr" for policy gaps.
+            Commit with "gdpr: <description>".
+          allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+          max_turns: "25"
+
+      - run: git push -u origin HEAD 2>/dev/null || true

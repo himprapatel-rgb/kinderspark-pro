@@ -1,0 +1,56 @@
+name: 💾 Backup Verifier Agent
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 02:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  backup-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify DB connectivity
+        id: db
+        run: |
+          BACKEND="${{ secrets.BACKEND_URL }}"
+          if [ -z "$BACKEND" ]; then echo "No BACKEND_URL"; exit 0; fi
+          RESPONSE=$(curl -sf --max-time 8 "$BACKEND/health" || echo '{"db":"unreachable"}')
+          DB_STATUS=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('db','unknown'))" 2>/dev/null || echo "unknown")
+          echo "db_status=$DB_STATUS" >> $GITHUB_OUTPUT
+          echo "DB Status: $DB_STATUS"
+          if [ "$DB_STATUS" != "connected" ]; then exit 1; fi
+
+      - name: Alert on backup failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const openIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              labels: 'backup-alert', state: 'open', per_page: 3,
+            })
+            if (openIssues.data.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: openIssues.data[0].number,
+                body: `🔄 DB still unreachable at \`${new Date().toISOString()}\``,
+              })
+              return
+            }
+            await github.rest.issues.create({
+              owner: context.repo.owner, repo: context.repo.repo,
+              title: `🚨 [Backup] DB unreachable — ${new Date().toISOString().slice(0,10)}`,
+              labels: ['critical', 'backup-alert', 'agent-auto'],
+              body: `## 💾 Database Unreachable\n\nThe daily backup verification check found the database is not responding.\n\n**Action required:**\n1. Check Railway PostgreSQL service status\n2. Verify DATABASE_URL environment variable\n3. Check for any recent migrations that may have failed\n4. Restore from latest backup if data is lost\n\n*Auto-created by Backup Verifier Agent*`,
+            })
+
+      - name: Success log
+        if: success()
+        run: echo "✅ DB connected and healthy — $(date)"

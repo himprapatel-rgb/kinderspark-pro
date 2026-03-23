@@ -1,0 +1,66 @@
+name: 📐 Accessibility Auditor Agent
+
+on:
+  schedule:
+    - cron: '0 5 * * 2'  # Every Tuesday 05:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  a11y-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0, token: '${{ secrets.GITHUB_TOKEN }}' }
+
+      - name: Configure git
+        run: |
+          git config user.name "KinderSpark A11y Agent"
+          git config user.email "a11y@kinderspark.ai"
+          git checkout -b "claude/a11y-$(date +%s)"
+
+      - name: Run Accessibility Agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          task: |
+            You are the ACCESSIBILITY AUDITOR for KinderSpark Pro.
+            Children aged 4-10 use this app — including children with disabilities.
+            Target: WCAG 2.1 AA compliance + child-specific accessibility.
+
+            AUDIT ALL PAGES in frontend/app/:
+
+            1. **Touch Targets**: All interactive elements must be ≥ 44×44px
+               Check every button, link, and tab in child screens
+
+            2. **Contrast Ratios**: Text must meet WCAG AA (4.5:1 for normal, 3:1 for large)
+               Check white text on theme colors, especially dim text (text-white/40 etc.)
+
+            3. **Missing ARIA**:
+               - Buttons without text need aria-label
+               - Emoji-only elements need aria-label describing them
+               - Interactive divs need role="button" + tabIndex + keyboard handler
+
+            4. **Keyboard Navigation**: Can teachers/parents use the app without a mouse?
+               Check form focus order, modal traps, escape key handling
+
+            5. **Screen Reader Support**:
+               - Emoji in content should have aria-hidden + adjacent text
+               - Loading states need aria-live regions
+               - Form errors need aria-describedby
+
+            6. **Child-Specific**:
+               - Font sizes large enough for young readers (min 14px body, 11px labels)
+               - High contrast mode for children with visual impairments
+               - Simple, clear language (check button labels)
+
+            Fix violations directly in code. Open issues with label "accessibility" for complex ones.
+            Commit with "a11y: <description>".
+          allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+          max_turns: "25"
+
+      - run: git push -u origin HEAD 2>/dev/null || true

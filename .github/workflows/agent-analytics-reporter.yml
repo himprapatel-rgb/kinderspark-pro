@@ -1,0 +1,82 @@
+name: 📈 Analytics Reporter Agent
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'  # Every Monday 09:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  analytics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch analytics from backend
+        id: stats
+        run: |
+          BACKEND="${{ secrets.BACKEND_URL }}"
+          if [ -z "$BACKEND" ]; then echo "No BACKEND_URL set"; exit 0; fi
+          curl -sf "$BACKEND/health" > /tmp/health.json 2>/dev/null || echo '{}' > /tmp/health.json
+          cat /tmp/health.json
+          echo "health<<EOF" >> $GITHUB_OUTPUT
+          cat /tmp/health.json >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Run Analytics Agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          task: |
+            You are the ANALYTICS REPORTER AGENT for KinderSpark Pro.
+
+            HEALTH DATA: ${{ steps.stats.outputs.health }}
+            WEEK: Run `date` to get current week.
+
+            YOUR TASK:
+            Create a comprehensive weekly analytics report as a GitHub Issue.
+
+            READ the codebase to understand what metrics exist:
+            1. backend/prisma/schema.prisma — what data is tracked (stars, streak, aiSessions, etc.)
+            2. backend/src/routes/ — what API endpoints exist that log usage
+            3. frontend/lib/api.ts — what frontend events are tracked
+
+            REPORT STRUCTURE (create GitHub issue with label "weekly-report"):
+
+            ## 📊 Weekly Analytics Report — [date]
+
+            ### 🏥 System Health
+            - Uptime status
+            - DB connection
+            - Response time
+
+            ### 📈 Usage Metrics (from DB via API if available)
+            - Active students this week
+            - Total AI sessions
+            - Word Match games played
+            - Average accuracy rate
+            - Most popular modules
+
+            ### 🏆 Engagement
+            - Top streaks
+            - Most stars earned
+            - Badge unlocks
+
+            ### 💡 Insights & Recommendations
+            Based on the code and available data, suggest 3 improvements
+            that would most improve engagement.
+
+            ### 🔜 This Week's Agent Activity
+            - What was deployed this week
+            - Open critical issues
+            - Scheduled agent runs
+
+            Create the GitHub issue now using gh cli or GitHub API.
+          allowed_tools: "Bash,Read,Glob,Grep"
+          max_turns: "15"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
