@@ -222,7 +222,7 @@ router.get('/feed', requireAuth, requireRole('admin', 'teacher'), async (_req, r
 })
 
 // POST /api/agents/trigger — manually trigger a workflow
-router.post('/trigger', requireAuth, requireRole('admin'), async (req, res) => {
+router.post('/trigger', dashboardAuth, async (req, res) => {
   if (!GITHUB_TOKEN) return res.status(503).json({ error: 'GitHub token not configured' })
   const { workflow, inputs = {} } = req.body as { workflow: string; inputs?: Record<string, string> }
   if (!workflow) return res.status(400).json({ error: 'workflow required' })
@@ -248,7 +248,7 @@ router.post('/trigger', requireAuth, requireRole('admin'), async (req, res) => {
 })
 
 // POST /api/agents/issue — create a GitHub issue → agent picks it up
-router.post('/issue', requireAuth, requireRole('admin', 'teacher'), async (req, res) => {
+router.post('/issue', dashboardAuth, async (req, res) => {
   if (!GITHUB_TOKEN) return res.status(503).json({ error: 'GitHub token not configured' })
   const { title, body, labels = [] } = req.body as { title: string; body: string; labels?: string[] }
   if (!title) return res.status(400).json({ error: 'title required' })
