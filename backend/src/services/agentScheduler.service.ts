@@ -8,8 +8,7 @@ import cron from 'node-cron'
 import { PrismaClient } from '@prisma/client'
 import { aiComplete } from './ai/router'
 import * as mem from './agentMemory.service'
-import * as fs from 'fs'
-import * as path from 'path'
+import agentsConfigJson from '../agents-config.json'
 
 const prisma = new PrismaClient()
 
@@ -20,17 +19,7 @@ interface AgentDef {
   cat: string; desc: string; trigger: string
 }
 
-function loadAgents(): AgentDef[] {
-  try {
-    const p = path.join(__dirname, '../../../..', 'frontend/public/agents-config.json')
-    const raw = fs.readFileSync(p, 'utf-8')
-    return JSON.parse(raw).agents as AgentDef[]
-  } catch {
-    return []
-  }
-}
-
-const ALL_AGENTS = loadAgents()
+const ALL_AGENTS: AgentDef[] = (agentsConfigJson as any).agents || []
 
 // ── Platform snapshot — shared context for all agents ────────────────────────
 
