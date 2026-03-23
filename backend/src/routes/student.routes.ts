@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express'
+import bcrypt from 'bcryptjs'
 import prisma from '../prisma/client'
 
 const router = Router()
@@ -49,12 +50,13 @@ router.post('/', async (req: Request, res: Response) => {
     if (!name || !pin || !classId) {
       return res.status(400).json({ error: 'name, pin, and classId are required' })
     }
+    const pinHash = await bcrypt.hash(pin, 10)
     const student = await prisma.student.create({
       data: {
         name,
         age: age || 5,
         avatar: avatar || '👧',
-        pin,
+        pin: pinHash,
         stars: stars || 0,
         streak: streak || 0,
         classId,
