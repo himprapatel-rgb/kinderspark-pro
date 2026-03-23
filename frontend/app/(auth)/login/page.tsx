@@ -253,7 +253,7 @@ export default function LoginPage() {
               { label: '👩‍🏫 Teacher',         path: '/teacher' },
               { label: '👨‍👩‍👧 Parent',          path: '/parent' },
               { label: '🧒 Child',            path: '/child' },
-              { label: '🔧 Dev Panel',        path: '/dev' },
+              { label: '🔧 Dev Panel',        path: '/dashboard/agents' },
             ].map(link => (
               <button key={link.path} onClick={() => router.push(link.path)} style={{
                 fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 8,
