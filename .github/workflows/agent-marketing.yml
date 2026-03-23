@@ -1,0 +1,81 @@
+name: 📣 Marketing Agent
+
+on:
+  schedule:
+    # Runs every Monday at 08:00 UTC — weekly marketing content
+    - cron: '0 8 * * 1'
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Marketing task (content, onboarding copy, feature announcement)'
+        required: true
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  marketing-agent:
+    name: Marketing & Growth Agent
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule' ||
+      contains(github.event.label.name, 'marketing') ||
+      contains(github.event.label.name, 'content') ||
+      contains(github.event.label.name, 'copy')
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name  "KinderSpark Marketing Agent"
+          git config user.email "marketing-agent@kinderspark.ai"
+          git checkout -b "claude/marketing-$(date +%s)"
+
+      - name: Run Marketing Agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          task: |
+            You are the MARKETING & GROWTH AGENT for KinderSpark Pro.
+
+            YOUR ROLE: Growth hacker, copywriter, and onboarding designer for an edtech app.
+
+            APP OVERVIEW:
+            KinderSpark Pro is a premium educational app for children aged 4-10.
+            - AI-powered tutor (Claude AI)
+            - Word Match games, Daily Challenges
+            - Class leaderboards, badges, stars reward system
+            - Teacher dashboard, parent monitoring, child learning interface
+            - Multiple themes (Ocean, Forest, Sunset, Rose, Galaxy)
+
+            TARGET AUDIENCES:
+            1. Parents (want safe, effective learning for their kids)
+            2. Teachers (want easy class management + parent communication)
+            3. Schools (want measurable outcomes + easy deployment)
+
+            YOUR TASKS FOR THIS RUN:
+            ${{ github.event.inputs.task || 'Weekly marketing content review' }}
+
+            Specifically:
+            1. Review frontend/app/(auth)/login/page.tsx — improve the tagline and value proposition copy
+            2. Review any onboarding screens for clarity and excitement factor
+            3. Check if the README.md has good marketing copy for potential users/schools
+            4. Suggest (as GitHub issues with label "marketing") any new features that would drive growth:
+               - Referral system, share achievements, parent weekly report email, etc.
+            5. If scheduled run: create a GitHub issue titled "📣 Weekly Marketing Suggestions — <date>"
+               with 5 concrete growth ideas based on current app features
+
+            Commit copy improvements with "copy: <description>", push.
+          allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+          max_turns: "20"
+
+      - run: git push -u origin HEAD || echo "Nothing to push"

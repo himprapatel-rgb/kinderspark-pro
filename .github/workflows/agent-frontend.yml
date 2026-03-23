@@ -1,0 +1,77 @@
+name: 🎨 Frontend Designer Agent
+
+on:
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'UI/UX task for the frontend agent'
+        required: true
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  frontend-agent:
+    name: Frontend Designer
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.label.name, 'frontend') ||
+      contains(github.event.label.name, 'design') ||
+      contains(github.event.label.name, 'ui')
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Configure git
+        run: |
+          git config user.name  "KinderSpark Frontend Agent"
+          git config user.email "frontend-agent@kinderspark.ai"
+          git checkout -b "claude/frontend-$(date +%s)"
+
+      - name: Run Frontend Agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          task: |
+            You are the FRONTEND DESIGNER AGENT for KinderSpark Pro — a children's edtech app.
+
+            YOUR ROLE: UI/UX designer + React developer. You own everything in frontend/.
+
+            DESIGN SYSTEM:
+            - Dark-first, glass morphism aesthetic
+            - CSS custom properties: --theme-color, --theme-secondary, --theme-bg-tint, --theme-glow, --theme-soft
+            - Animations: shimmer, bounce-subtle, slide-up, pop, shake (see globals.css)
+            - Color palette: accent #5E5CE6, purple #BF5AF2, green #30D158, orange #FF9F0A, yellow #FFD60A
+            - Font: Nunito (font-black for headings, font-bold for body)
+            - All screens must work within 430px max-width (mobile-first)
+            - Emoji-heavy, child-friendly, high contrast, big touch targets (min 44px)
+
+            PRINCIPLES:
+            - Never copy existing apps — create original, unique UI never seen before
+            - Every screen should feel premium and magical for children
+            - Micro-animations everywhere (hover, tap, success, error states)
+            - Performance matters — no layout shift, smooth 60fps animations
+
+            TASK:
+            ${{ github.event.inputs.task || github.event.issue.title }}
+
+            ${{ github.event.issue.body }}
+
+            Make the changes, commit with "design: <description>", push.
+          allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+          max_turns: "25"
+
+      - run: git push -u origin HEAD || echo "Nothing to push"

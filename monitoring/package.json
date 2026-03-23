@@ -1,0 +1,13 @@
+{
+  "name": "kinderspark-monitor",
+  "version": "1.0.0",
+  "description": "24/7 health monitor for KinderSpark Pro",
+  "main": "health-check.js",
+  "scripts": {
+    "start": "node health-check.js",
+    "check": "node health-check.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

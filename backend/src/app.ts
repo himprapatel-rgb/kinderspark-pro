@@ -45,7 +45,31 @@ app.use(cookieParser())
 app.use(rateLimiter)
 app.use(authenticate)
 
-app.get('/health', (_req, res) => res.json({ status: 'ok', version: '2.0.0' }))
+app.get('/health', async (_req, res) => {
+  const start = Date.now()
+  let dbStatus = 'connected'
+  try {
+    const { PrismaClient } = await import('@prisma/client')
+    const p = new PrismaClient()
+    await p.$queryRaw`SELECT 1`
+    await p.$disconnect()
+  } catch {
+    dbStatus = 'disconnected'
+  }
+  const mem = process.memoryUsage()
+  res.json({
+    status: dbStatus === 'connected' ? 'ok' : 'degraded',
+    version: '2.0.0',
+    uptime: Math.floor(process.uptime()),
+    db: dbStatus,
+    responseMs: Date.now() - start,
+    memory: {
+      heapUsedMB: Math.round(mem.heapUsed / 1024 / 1024),
+      heapTotalMB: Math.round(mem.heapTotal / 1024 / 1024),
+    },
+    timestamp: new Date().toISOString(),
+  })
+})
 
 app.use('/api/auth', authRoutes)
 app.use('/api/students', cache(20), studentRoutes)

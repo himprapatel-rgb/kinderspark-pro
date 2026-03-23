@@ -1,0 +1,117 @@
+name: 🔍 Health Monitor (24/7)
+
+on:
+  schedule:
+    # Every 15 minutes, 24/7
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Manual trigger reason'
+        required: false
+        default: 'manual check'
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  health-check:
+    name: Check Backend + Frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check Backend /health
+        id: backend
+        run: |
+          RESPONSE=$(curl -sf --max-time 10 "${{ secrets.BACKEND_URL }}/health" || echo '{"status":"unreachable"}')
+          echo "response=$RESPONSE" >> $GITHUB_OUTPUT
+          STATUS=$(echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('status','unknown'))" 2>/dev/null || echo "error")
+          echo "status=$STATUS" >> $GITHUB_OUTPUT
+          DB=$(echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('db','unknown'))" 2>/dev/null || echo "unknown")
+          echo "db=$DB" >> $GITHUB_OUTPUT
+          echo "Backend status: $STATUS | DB: $DB"
+          echo "Full response: $RESPONSE"
+          if [ "$STATUS" != "ok" ]; then exit 1; fi
+
+      - name: Check Frontend
+        id: frontend
+        if: always()
+        run: |
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "${{ secrets.FRONTEND_URL }}" || echo "000")
+          echo "http_code=$HTTP_CODE" >> $GITHUB_OUTPUT
+          echo "Frontend HTTP: $HTTP_CODE"
+          if [ "$HTTP_CODE" -ge 500 ] || [ "$HTTP_CODE" = "000" ]; then exit 1; fi
+
+      - name: Open GitHub Issue on Failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const backendStatus = '${{ steps.backend.outputs.status }}' || 'unreachable'
+            const backendDb     = '${{ steps.backend.outputs.db }}'     || 'unknown'
+            const frontendCode  = '${{ steps.frontend.outputs.http_code }}' || '000'
+            const now           = new Date().toISOString()
+
+            // Check if a recent health issue already exists (avoid spam)
+            const openIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              labels: 'critical',
+              state: 'open',
+              per_page: 5,
+            })
+
+            const recentHealthIssue = openIssues.data.find(i =>
+              i.title.includes('[Health]') &&
+              (Date.now() - new Date(i.created_at).getTime()) < 30 * 60 * 1000  // 30 min
+            )
+
+            if (recentHealthIssue) {
+              console.log('Recent health issue exists — adding comment instead')
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo:  context.repo.repo,
+                issue_number: recentHealthIssue.number,
+                body: `🔄 **Still failing** at \`${now}\`\n- Backend: \`${backendStatus}\` (DB: \`${backendDb}\`)\n- Frontend HTTP: \`${frontendCode}\``,
+              })
+              return
+            }
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              title: `🚨 [Health] Service degraded — ${now.slice(0,16)}`,
+              labels: ['critical', 'agent-auto'],
+              body: `## 🚨 Health Check Failed
+
+**Detected at:** \`${now}\`
+
+| Service  | Status |
+|----------|--------|
+| Backend  | \`${backendStatus}\` (DB: \`${backendDb}\`) |
+| Frontend | HTTP \`${frontendCode}\` |
+
+## Auto-fix steps for the agent
+1. Check Railway deploy logs for errors
+2. If DB is \`disconnected\`: verify \`DATABASE_URL\` env var in Railway
+3. If backend is \`unreachable\`: trigger a redeploy via Railway dashboard
+4. If frontend HTTP ≥ 500: check Next.js build logs
+
+## Links
+- [Railway Dashboard](https://railway.app/dashboard)
+- [GitHub Actions](https://github.com/${{ github.repository }}/actions)
+
+*Auto-created by Health Monitor workflow · Run: [#${{ github.run_number }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})*`,
+            })
+
+      - name: Success Summary
+        if: success()
+        run: |
+          echo "## ✅ All systems operational" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Service  | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend  | ✅ \`${{ steps.backend.outputs.status }}\` (DB: \`${{ steps.backend.outputs.db }}\`) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend | ✅ HTTP \`${{ steps.frontend.outputs.http_code }}\` |" >> $GITHUB_STEP_SUMMARY

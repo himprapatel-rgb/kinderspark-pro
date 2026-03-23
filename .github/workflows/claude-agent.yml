@@ -1,0 +1,159 @@
+name: 🤖 Claude Autonomous Agent
+
+on:
+  # Trigger on any new issue
+  issues:
+    types: [opened, labeled]
+
+  # Trigger on issue comments starting with /claude
+  issue_comment:
+    types: [created]
+
+  # Trigger on PR review requests
+  pull_request:
+    types: [opened, ready_for_review]
+
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Task for Claude to perform'
+        required: true
+      branch:
+        description: 'Branch to work on (leave blank to auto-create)'
+        required: false
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  # ─────────────────────────────────────────────
+  # Decide whether this run should activate
+  # ─────────────────────────────────────────────
+  gate:
+    name: Gate — should Claude act?
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.decide.outputs.should_run }}
+      task:       ${{ steps.decide.outputs.task }}
+    steps:
+      - name: Decide
+        id: decide
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { eventName, payload } = context
+
+            let should_run = false
+            let task = ''
+
+            if (eventName === 'workflow_dispatch') {
+              should_run = true
+              task = context.payload.inputs.task
+            }
+
+            else if (eventName === 'issues') {
+              const issue = payload.issue
+              const hasAgentLabel = issue.labels?.some(l =>
+                ['claude-fix', 'claude-build', 'agent-auto', 'critical'].includes(l.name)
+              )
+              const isAutoCreated = issue.body?.includes('Auto-created by')
+              if (hasAgentLabel || isAutoCreated) {
+                should_run = true
+                task = `Fix this GitHub issue:\n\nTitle: ${issue.title}\n\n${issue.body}`
+              }
+            }
+
+            else if (eventName === 'issue_comment') {
+              const comment = payload.comment.body.trim()
+              if (comment.startsWith('/claude') || comment.startsWith('/fix') || comment.startsWith('/build')) {
+                should_run = true
+                const issue = payload.issue
+                task = `Issue: ${issue.title}\n\n${issue.body}\n\nUser request: ${comment}`
+              }
+            }
+
+            core.setOutput('should_run', String(should_run))
+            core.setOutput('task', task)
+            console.log('should_run:', should_run)
+            console.log('task:', task.slice(0, 200))
+
+  # ─────────────────────────────────────────────
+  # Claude Code — implement the task
+  # ─────────────────────────────────────────────
+  implement:
+    name: Claude implements task
+    needs: gate
+    if: needs.gate.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Create working branch
+        id: branch
+        run: |
+          BRANCH="claude/agent-$(date +%s)"
+          git checkout -b "$BRANCH"
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+          echo "Working on branch: $BRANCH"
+
+      - name: Configure git
+        run: |
+          git config user.name  "KinderSpark Claude Agent"
+          git config user.email "claude-agent@kinderspark.ai"
+
+      - name: Run Claude Code Agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          task: |
+            You are an autonomous developer for KinderSpark Pro — an educational app for young children.
+
+            STACK: Next.js 14 (frontend/), Express + TypeScript + Prisma (backend/), PostgreSQL, Railway deployment.
+            BRANCH: You are on branch ${{ steps.branch.outputs.branch }}. Commit your changes here.
+
+            RULES:
+            - Never break existing functionality
+            - Keep the dark premium design system (CSS vars, glass morphism)
+            - Always bcrypt-hash PINs, never trust client-supplied IDs
+            - Run `cd backend && npx tsc --noEmit` before committing backend changes
+            - Write clean, minimal code — no over-engineering
+            - Commit with clear messages, push when done
+
+            TASK:
+            ${{ needs.gate.outputs.task }}
+
+            When done, output a brief summary of what you changed.
+          allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+          max_turns: "25"
+
+      - name: Push branch
+        run: |
+          git push -u origin "${{ steps.branch.outputs.branch }}" || echo "Nothing to push"
+
+      - name: Comment on issue with result
+        if: github.event_name == 'issues' || github.event_name == 'issue_comment'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueNumber = context.payload.issue?.number
+            if (!issueNumber) return
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              issue_number: issueNumber,
+              body: `🤖 **Claude Agent** completed the task on branch \`${{ steps.branch.outputs.branch }}\`.\n\nChanges will auto-merge to \`main\` via the auto-merge workflow.\n\n*Run: [#${{ github.run_number }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})*`,
+            })

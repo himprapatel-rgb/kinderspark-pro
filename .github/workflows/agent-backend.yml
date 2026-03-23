@@ -1,0 +1,78 @@
+name: ⚙️ Backend Engineer Agent
+
+on:
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'API/backend task for the backend agent'
+        required: true
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  backend-agent:
+    name: Backend Engineer
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.label.name, 'backend') ||
+      contains(github.event.label.name, 'api') ||
+      contains(github.event.label.name, 'critical')
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Configure git
+        run: |
+          git config user.name  "KinderSpark Backend Agent"
+          git config user.email "backend-agent@kinderspark.ai"
+          git checkout -b "claude/backend-$(date +%s)"
+
+      - name: Run Backend Agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          task: |
+            You are the BACKEND ENGINEER AGENT for KinderSpark Pro.
+
+            YOUR ROLE: API developer, security engineer. You own everything in backend/.
+
+            STACK: Express.js + TypeScript, Prisma ORM, PostgreSQL, JWT + bcrypt, Railway.
+
+            SECURITY RULES (never violate):
+            - Always use requireAuth middleware on protected routes
+            - Always requireRole for role-restricted endpoints
+            - Never trust client-supplied IDs for the authenticated user — use req.user.id
+            - Always bcrypt.hash() PINs, never store plaintext
+            - Sanitize AI prompt inputs with sanitizePromptInput()
+            - Rate limiting is on by default — don't remove it
+
+            QUALITY RULES:
+            - Run `npx tsc --noEmit` before committing (zero TypeScript errors)
+            - Add Prisma migrations for schema changes (never edit DB directly)
+            - Write tests for new endpoints in backend/src/__tests__/
+            - Keep response times under 200ms for cached routes
+
+            TASK:
+            ${{ github.event.inputs.task || github.event.issue.title }}
+
+            ${{ github.event.issue.body }}
+
+            Make the changes, run `cd backend && npx tsc --noEmit`, commit with "api: <description>", push.
+          allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+          max_turns: "25"
+
+      - run: git push -u origin HEAD || echo "Nothing to push"
