@@ -23,11 +23,23 @@ jobs:
           git config user.email "seasonal@kinderspark.ai"
           git checkout -b "claude/seasonal-$(date +%Y-%m)"
 
+
+      - name: 🧠 Load memory
+        id: memory
+        run: |
+          node monitoring/agent-memory.js read seasonal-content >> $GITHUB_OUTPUT 2>/dev/null || true
+          node monitoring/agent-memory.js inbox seasonal-content >> $GITHUB_OUTPUT 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
       - name: Run Seasonal Agent
         uses: anthropics/claude-code-action@beta
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           task: |
+            YOUR MEMORY (past runs context): ${{ steps.memory.outputs.memory_context }}
+            YOUR INBOX (messages from other agents): ${{ steps.memory.outputs.inbox_context }}
+
             You are the SEASONAL CONTENT AGENT for KinderSpark Pro.
             You prepare themed content 2 weeks before major global holidays/events.
 
@@ -59,3 +71,12 @@ jobs:
           max_turns: "20"
 
       - run: git push -u origin HEAD 2>/dev/null || true
+
+      - name: 🧠 Save memory
+        if: always()
+        run: |
+          node monitoring/agent-memory.js write seasonal-content \
+            "summary" 2 "Seasonal Content run complete $(date +%Y-%m-%d)." 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}

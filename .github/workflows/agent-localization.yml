@@ -44,11 +44,23 @@ jobs:
           git config user.email "i18n-agent@kinderspark.ai"
           git checkout -b "claude/i18n-$(date +%s)"
 
+
+      - name: 🧠 Load memory
+        id: memory
+        run: |
+          node monitoring/agent-memory.js read localization-agent >> $GITHUB_OUTPUT 2>/dev/null || true
+          node monitoring/agent-memory.js inbox localization-agent >> $GITHUB_OUTPUT 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
       - name: Run Localization Agent
         uses: anthropics/claude-code-action@beta
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           task: |
+            YOUR MEMORY (past runs context): ${{ steps.memory.outputs.memory_context }}
+            YOUR INBOX (messages from other agents): ${{ steps.memory.outputs.inbox_context }}
+
             You are the LOCALIZATION & CULTURAL RELEVANCE AGENT for KinderSpark Pro.
 
             YOUR ROLE: Make KinderSpark culturally relevant for different countries, regions,
@@ -96,3 +108,12 @@ jobs:
           max_turns: "25"
 
       - run: git push -u origin HEAD || echo "Nothing to push"
+
+      - name: 🧠 Save memory
+        if: always()
+        run: |
+          node monitoring/agent-memory.js write localization-agent \
+            "summary" 2 "Localization Agent run complete $(date +%Y-%m-%d)." 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}

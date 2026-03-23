@@ -27,11 +27,23 @@ jobs:
           cat /tmp/health.json >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
+
+      - name: 🧠 Load memory
+        id: memory
+        run: |
+          node monitoring/agent-memory.js read analytics-reporter >> $GITHUB_OUTPUT 2>/dev/null || true
+          node monitoring/agent-memory.js inbox analytics-reporter >> $GITHUB_OUTPUT 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
       - name: Run Analytics Agent
         uses: anthropics/claude-code-action@beta
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           task: |
+            YOUR MEMORY (past runs context): ${{ steps.memory.outputs.memory_context }}
+            YOUR INBOX (messages from other agents): ${{ steps.memory.outputs.inbox_context }}
+
             You are the ANALYTICS REPORTER AGENT for KinderSpark Pro.
 
             HEALTH DATA: ${{ steps.stats.outputs.health }}
@@ -80,3 +92,13 @@ jobs:
           max_turns: "15"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
+      - name: 🧠 Save memory
+        if: always()
+        run: |
+          node monitoring/agent-memory.js write analytics-reporter \
+            "summary" 2 "Analytics Reporter run complete $(date +%Y-%m-%d)." 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}

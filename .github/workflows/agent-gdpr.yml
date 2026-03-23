@@ -23,11 +23,23 @@ jobs:
           git config user.email "gdpr@kinderspark.ai"
           git checkout -b "claude/gdpr-$(date +%Y-%m)"
 
+
+      - name: 🧠 Load memory
+        id: memory
+        run: |
+          node monitoring/agent-memory.js read gdpr-agent >> $GITHUB_OUTPUT 2>/dev/null || true
+          node monitoring/agent-memory.js inbox gdpr-agent >> $GITHUB_OUTPUT 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
       - name: Run GDPR Agent
         uses: anthropics/claude-code-action@beta
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           task: |
+            YOUR MEMORY (past runs context): ${{ steps.memory.outputs.memory_context }}
+            YOUR INBOX (messages from other agents): ${{ steps.memory.outputs.inbox_context }}
+
             You are the GDPR & PRIVACY COMPLIANCE AGENT for KinderSpark Pro.
             This app serves children in the EU/UK, India, UAE, and USA — multiple privacy laws apply:
             - GDPR (EU) — strict for children under 16
@@ -65,3 +77,12 @@ jobs:
           max_turns: "25"
 
       - run: git push -u origin HEAD 2>/dev/null || true
+
+      - name: 🧠 Save memory
+        if: always()
+        run: |
+          node monitoring/agent-memory.js write gdpr-agent \
+            "summary" 2 "GDPR Compliance run complete $(date +%Y-%m-%d)." 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}

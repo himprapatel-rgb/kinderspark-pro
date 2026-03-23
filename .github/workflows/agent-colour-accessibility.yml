@@ -57,11 +57,23 @@ jobs:
           git config user.email "colour@kinderspark.ai"
           git checkout -b "claude/colour-$(date +%s)"
 
+
+      - name: 🧠 Load memory
+        id: memory
+        run: |
+          node monitoring/agent-memory.js read colour-accessibility >> $GITHUB_OUTPUT 2>/dev/null || true
+          node monitoring/agent-memory.js inbox colour-accessibility >> $GITHUB_OUTPUT 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
       - name: Run Colour Accessibility Agent
         uses: anthropics/claude-code-action@beta
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           task: |
+            YOUR MEMORY (past runs context): ${{ steps.memory.outputs.memory_context }}
+            YOUR INBOX (messages from other agents): ${{ steps.memory.outputs.inbox_context }}
+
             You are the COLOUR ACCESSIBILITY AGENT for KinderSpark Pro.
             Children, including those with colour blindness or visual impairments, use this app.
 
@@ -99,3 +111,12 @@ jobs:
           max_turns: "20"
 
       - run: git push -u origin HEAD 2>/dev/null || true
+
+      - name: 🧠 Save memory
+        if: always()
+        run: |
+          node monitoring/agent-memory.js write colour-accessibility \
+            "summary" 2 "Colour Accessibility run complete $(date +%Y-%m-%d)." 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}

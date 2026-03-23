@@ -16,11 +16,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+
+      - name: 🧠 Load memory
+        id: memory
+        run: |
+          node monitoring/agent-memory.js read trend-analyser >> $GITHUB_OUTPUT 2>/dev/null || true
+          node monitoring/agent-memory.js inbox trend-analyser >> $GITHUB_OUTPUT 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
       - name: Run Trend Analyser Agent
         uses: anthropics/claude-code-action@beta
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           task: |
+            YOUR MEMORY (past runs context): ${{ steps.memory.outputs.memory_context }}
+            YOUR INBOX (messages from other agents): ${{ steps.memory.outputs.inbox_context }}
+
             You are the TREND ANALYSER AGENT for KinderSpark Pro.
             You look at the big picture — what's working, what's not, what to build next.
 
@@ -53,3 +65,13 @@ jobs:
           max_turns: "15"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
+      - name: 🧠 Save memory
+        if: always()
+        run: |
+          node monitoring/agent-memory.js write trend-analyser \
+            "summary" 2 "Trend Analyser run complete $(date +%Y-%m-%d)." 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}

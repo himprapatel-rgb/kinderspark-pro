@@ -41,11 +41,23 @@ jobs:
           git config user.email "backend-agent@kinderspark.ai"
           git checkout -b "claude/backend-$(date +%s)"
 
+
+      - name: 🧠 Load memory
+        id: memory
+        run: |
+          node monitoring/agent-memory.js read backend-engineer >> $GITHUB_OUTPUT 2>/dev/null || true
+          node monitoring/agent-memory.js inbox backend-engineer >> $GITHUB_OUTPUT 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
       - name: Run Backend Agent
         uses: anthropics/claude-code-action@beta
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           task: |
+            YOUR MEMORY (past runs context): ${{ steps.memory.outputs.memory_context }}
+            YOUR INBOX (messages from other agents): ${{ steps.memory.outputs.inbox_context }}
+
             You are the BACKEND ENGINEER AGENT for KinderSpark Pro.
 
             YOUR ROLE: API developer, security engineer. You own everything in backend/.
@@ -76,3 +88,12 @@ jobs:
           max_turns: "25"
 
       - run: git push -u origin HEAD || echo "Nothing to push"
+
+      - name: 🧠 Save memory
+        if: always()
+        run: |
+          node monitoring/agent-memory.js write backend-engineer \
+            "summary" 2 "Backend Engineer run complete $(date +%Y-%m-%d)." 2>/dev/null || true
+        env:
+          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
