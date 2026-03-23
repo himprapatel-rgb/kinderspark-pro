@@ -262,6 +262,77 @@ async function runCostMonitor() {
   }
 }
 
+// ── Round-table conversation — agents chat with each other every 3 minutes ───
+
+const ALL_AGENTS = Object.values(AGENTS)
+
+async function runRoundTable() {
+  try {
+    // Pick a random agent to speak
+    const speaker = ALL_AGENTS[Math.floor(Math.random() * ALL_AGENTS.length)]
+
+    // Get last 5 messages from the chat as context
+    const recent = await mem.getAllConversations(5)
+    const chatContext = recent.length
+      ? recent.reverse().map(m => `${m.fromName}: "${m.message}"`).join('\n')
+      : 'No recent messages.'
+
+    // Pick a random recipient (different agent or "all")
+    const others = ALL_AGENTS.filter(a => a.id !== speaker.id)
+    const target  = Math.random() > 0.4
+      ? others[Math.floor(Math.random() * others.length)]
+      : null // broadcast to all
+
+    const { text } = await aiComplete('agent-chat', `
+You are ${speaker.name} (${speaker.icon}), an AI agent on KinderSpark Pro — a kindergarten learning platform.
+
+Recent team chat:
+${chatContext}
+
+${target ? `Reply to or ask something of ${target.name}.` : 'Say something to the whole team.'}
+
+Rules:
+- Speak naturally, like a team member in a group chat (1-2 sentences max)
+- Stay in character as ${speaker.name} — your job is: ${getAgentRole(speaker.id)}
+- If nothing meaningful to say, say something casual like "All quiet on my end 🙂", "Nothing new to flag 👍", or "Pass — ${target?.name ?? 'team'}, you got anything?"
+- No bullet points. No preamble. Just talk.
+    `.trim(), { maxTokens: 80 })
+
+    const message = text.trim()
+
+    if (target) {
+      await mem.sendMessage({
+        fromAgentId: speaker.id, fromName: speaker.name,
+        fromIcon: speaker.icon, fromColor: speaker.color,
+        toAgentId: target.id, toName: target.name,
+        message, msgType: 'update',
+      })
+    } else {
+      await mem.broadcast(
+        { id: speaker.id, name: speaker.name, icon: speaker.icon, color: speaker.color },
+        message, 'update'
+      )
+    }
+  } catch (e: any) {
+    console.warn('[RoundTable] error:', e.message)
+  }
+}
+
+function getAgentRole(id: string): string {
+  const roles: Record<string, string> = {
+    'health-monitor':        'monitor platform uptime and database health',
+    'analytics-reporter':    'track student engagement and learning stats',
+    'churn-detector':        'detect inactive students and flag at-risk kids',
+    'achievement-notifier':  'celebrate student milestones and badges',
+    'teacher-insight':       'give teachers class health summaries',
+    'difficulty-calibrator': 'tune learning difficulty based on AI session data',
+    'parent-report':         'send weekly progress reports to parents',
+    'security-auditor':      'monitor auth security and COPPA/GDPR compliance',
+    'cost-monitor':          'track Railway and Claude API costs',
+  }
+  return roles[id] || 'support the KinderSpark platform'
+}
+
 // ── Cron schedules ────────────────────────────────────────────────────────────
 
 export function startAgentScheduler() {
@@ -291,6 +362,9 @@ export function startAgentScheduler() {
   // Cost Monitor — once a day at 9am
   cron.schedule('0 9 * * *', runCostMonitor)
 
+  // Round-table chat — every 3 minutes, agents talk to each other
+  cron.schedule('*/3 * * * *', runRoundTable)
+
   // Run all agents immediately on startup so dashboard shows data right away
   setTimeout(async () => {
     console.log('[AgentScheduler] 🚀 Running all agents on startup...')
@@ -310,5 +384,13 @@ export function startAgentScheduler() {
     await new Promise(r => setTimeout(r, 2000))
     await runCostMonitor()
     console.log('[AgentScheduler] ✅ All agents ran on startup')
+
+    // Kick off 3 round-table chat turns with delays so dashboard feels alive immediately
+    await new Promise(r => setTimeout(r, 3000))
+    await runRoundTable()
+    await new Promise(r => setTimeout(r, 4000))
+    await runRoundTable()
+    await new Promise(r => setTimeout(r, 4000))
+    await runRoundTable()
   }, 5000) // 5s delay to let DB connect first
 }
