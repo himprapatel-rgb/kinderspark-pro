@@ -1,0 +1,77 @@
+name: 🗄️ Database Agent
+
+on:
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'DB schema/migration/performance task'
+        required: true
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  database-agent:
+    name: Database Engineer
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.label.name, 'database') ||
+      contains(github.event.label.name, 'schema') ||
+      contains(github.event.label.name, 'migration')
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Configure git
+        run: |
+          git config user.name  "KinderSpark Database Agent"
+          git config user.email "db-agent@kinderspark.ai"
+          git checkout -b "claude/database-$(date +%s)"
+
+      - name: Run Database Agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          task: |
+            You are the DATABASE AGENT for KinderSpark Pro.
+
+            YOUR ROLE: Database architect and Prisma expert. You own backend/prisma/.
+
+            RULES:
+            - ALWAYS create a Prisma migration file for schema changes (never raw SQL on prod)
+            - Migration files go in: backend/prisma/migrations/<timestamp_description>/migration.sql
+            - Update backend/prisma/schema.prisma when adding/changing models
+            - Add @@index for any field used in WHERE clauses on large tables
+            - Never drop columns without checking they're unused in the codebase
+            - Always update backend/prisma/seed.ts to reflect schema changes
+            - After schema changes, update TypeScript types accordingly
+
+            PERFORMANCE GUIDELINES:
+            - Students table: index on classId, teacherId
+            - Messages: index on (classId, createdAt)
+            - Homework: index on (classId, dueDate)
+            - AISession: index on (studentId, createdAt)
+
+            TASK:
+            ${{ github.event.inputs.task || github.event.issue.title }}
+
+            ${{ github.event.issue.body }}
+
+            Make schema + migration changes, update seed.ts, commit with "db: <description>", push.
+          allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+          max_turns: "20"
+
+      - run: git push -u origin HEAD || echo "Nothing to push"

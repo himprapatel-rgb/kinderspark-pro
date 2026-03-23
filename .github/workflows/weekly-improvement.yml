@@ -1,0 +1,100 @@
+name: 🔁 Weekly Improvement Loop
+
+on:
+  schedule:
+    # Every Sunday at 02:00 UTC
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+    inputs:
+      focus:
+        description: 'Focus area (performance/security/ux/all)'
+        required: false
+        default: 'all'
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  improve:
+    name: Claude reviews & improves codebase
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Configure git
+        run: |
+          git config user.name  "KinderSpark Claude Agent"
+          git config user.email "claude-agent@kinderspark.ai"
+
+      - name: Create improvement branch
+        id: branch
+        run: |
+          BRANCH="claude/weekly-$(date +%Y-%m-%d)"
+          git checkout -b "$BRANCH"
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+
+      - name: Run Improvement Agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          task: |
+            You are the weekly improvement agent for KinderSpark Pro.
+
+            FOCUS: ${{ github.event.inputs.focus || 'all' }}
+
+            Your job this week:
+            1. Review the entire codebase for bugs, performance issues, UX problems
+            2. Check for security issues (unvalidated inputs, missing auth, etc.)
+            3. Look for missing error handling on critical paths
+            4. Check for dead code, duplicate logic, unused imports
+            5. Review frontend pages for accessibility issues (alt text, contrast, keyboard nav)
+            6. Check backend routes for missing rate limiting or auth guards
+            7. Review Prisma schema for missing indexes on frequently-queried fields
+
+            For EACH issue found:
+            - If it's a quick fix (< 20 lines): FIX IT directly in code
+            - If it's complex: open a GitHub issue with label `claude-build` so the agent can tackle it
+
+            After reviewing, make your improvements, commit them with descriptive messages, and push.
+            Output a markdown report of everything you found and fixed.
+
+            STACK: Next.js 14 (frontend/), Express + TypeScript + Prisma (backend/), PostgreSQL.
+          allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+          max_turns: "40"
+
+      - name: Push improvements
+        run: |
+          git push -u origin "${{ steps.branch.outputs.branch }}" || echo "Nothing to push"
+
+      - name: Post weekly summary issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              title: `📊 Weekly Agent Report — ${new Date().toISOString().slice(0,10)}`,
+              labels: ['weekly-report'],
+              body: `## 🤖 Weekly Improvement Summary
+
+**Branch:** \`${{ steps.branch.outputs.branch }}\`
+**Run:** [#${{ github.run_number }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+The autonomous agent has completed this week's review and improvement cycle.
+Check the run logs for the full report of what was found and fixed.
+
+Auto-merges to \`main\` via the auto-merge workflow.`,
+            })

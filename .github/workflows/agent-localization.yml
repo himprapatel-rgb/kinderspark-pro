@@ -1,0 +1,98 @@
+name: 🌍 Localization & Cultural Agent
+
+on:
+  schedule:
+    # Runs every 1st of the month to check upcoming holidays
+    - cron: '0 6 1 * *'
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      country:
+        description: 'Target country/region (e.g. India, UAE, UK, USA)'
+        required: false
+        default: 'global'
+      task:
+        description: 'Localization task'
+        required: false
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  localization-agent:
+    name: Localization & Cultural Relevance Agent
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule' ||
+      contains(github.event.label.name, 'localization') ||
+      contains(github.event.label.name, 'i18n') ||
+      contains(github.event.label.name, 'cultural')
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name  "KinderSpark Localization Agent"
+          git config user.email "i18n-agent@kinderspark.ai"
+          git checkout -b "claude/i18n-$(date +%s)"
+
+      - name: Run Localization Agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          task: |
+            You are the LOCALIZATION & CULTURAL RELEVANCE AGENT for KinderSpark Pro.
+
+            YOUR ROLE: Make KinderSpark culturally relevant for different countries, regions,
+            and adapt content for upcoming holidays and school calendars.
+
+            TARGET COUNTRY/REGION: ${{ github.event.inputs.country || 'global' }}
+            TODAY: Run `date` to get current date.
+
+            THE APP has:
+            - frontend/lib/i18n.ts — translation system (en, hi, ar currently)
+            - frontend/app/child/page.tsx — Daily Challenge (date-seeded from MODS)
+            - backend/prisma/schema.prisma — Syllabus model with country field
+            - Word modules in frontend/lib/modules.ts
+
+            YOUR TASKS:
+
+            1. **Holiday & Cultural Themes**: Check what major holidays/events are coming up in the
+               next 30 days globally (Eid, Diwali, Christmas, Holi, Lunar New Year, etc.).
+               For each upcoming holiday:
+               - Add a themed Daily Challenge variant
+               - Add culturally relevant emojis/words to the word bank if not present
+               - Open a GitHub issue with label "cultural-theme" for major UI theme suggestions
+
+            2. **Language Expansion**: Review frontend/lib/i18n.ts.
+               - Check if any new UI strings are missing translations
+               - Add missing translations for existing languages (en, hi, ar)
+               - If ${{ github.event.inputs.country }} suggests a new language is needed,
+                 add the language skeleton
+
+            3. **Regional Content**: Based on target country:
+               - UAE/Gulf: Arabic RTL support, Islamic calendar awareness, local curriculum topics
+               - India: Hindi, Diwali/Holi themes, CBSE/ICSE curriculum alignment, regional languages
+               - UK: British English spelling, UK curriculum (KS1/KS2), British holidays
+               - USA: Common Core alignment, US holidays, American English
+               - Global: Focus on universal content that works everywhere
+
+            4. **School Calendar Awareness**: Create GitHub issues for:
+               - Back-to-school season content (Aug/Sep)
+               - End-of-year celebration features (May/Jun)
+               - Summer learning mode suggestions
+
+            Commit changes with "i18n: <description>", push.
+            Create GitHub issues with label "localization" for bigger suggestions.
+          allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+          max_turns: "25"
+
+      - run: git push -u origin HEAD || echo "Nothing to push"
