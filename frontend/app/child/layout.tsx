@@ -39,7 +39,7 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname()
 
   // ── Screen time enforcement ──────────────────────────────────────────────
-  const limitMin: number = (settings as any)?.screenTimeLimit || 0
+  const limitMin: number = (settings as any)?.stLimit || 0
   const [elapsedSec, setElapsedSec] = useState(0)
   const [timeUp, setTimeUp] = useState(false)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
