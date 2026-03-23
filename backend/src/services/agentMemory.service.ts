@@ -35,7 +35,7 @@ export async function writeMemory(entry: MemoryEntry) {
       agentColor: entry.agentColor,
       type:       entry.type,
       content:    entry.content,
-      metadata:   entry.metadata ?? {},
+      metadata:   (entry.metadata ?? {}) as any,
       runId:      entry.runId,
       importance: entry.importance,
     },

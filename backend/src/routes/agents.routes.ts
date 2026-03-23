@@ -200,7 +200,7 @@ router.get('/feed', requireAuth, requireRole('admin', 'teacher'), async (_req, r
           fetch(`${GH_API}/issues?state=open&per_page=10&labels=agent-auto,critical`, { headers: GH_HEADERS }),
         ])
         runs   = (await runsRes.json() as any).workflow_runs || []
-        issues = await issuesRes.json()
+        issues = (await issuesRes.json()) as any[]
       }
       send('update', { memories, conversations, criticals, runs, issues, ts: Date.now() })
     } catch {

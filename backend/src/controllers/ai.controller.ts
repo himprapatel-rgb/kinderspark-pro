@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import { generateLesson, generateTutorFeedback, generateRecommendations, generateHomeworkIdea, generateStudentReport, generateSyllabusAI } from '../services/claude.service'
+import { generateLesson, generateTutorFeedback, generateRecommendations, generateHomeworkIdea, generateStudentReport, generateSyllabusAI } from '../services/ai'
 import { buildClassReport } from '../services/report.service'
 import { sanitizePromptInput } from '../utils/sanitize'
 import prisma from '../prisma/client'
