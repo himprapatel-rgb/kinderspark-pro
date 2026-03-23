@@ -4,6 +4,15 @@ on:
   schedule:
     - cron: '0 9 * * *'  # Daily at 09:00 UTC
   workflow_dispatch:
+    inputs:
+      triggered_by:
+        description: "Agent that assigned this task"
+        required: false
+        default: ""
+      agent_task:
+        description: "Task assigned by another agent"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -37,6 +46,9 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           task: |
+            # ── INBOX PRIORITY ──────────────────────────────────────
+            ${{ github.event.inputs.agent_task != '' && format('🚨 ASSIGNED TASK (from {0}):\n{1}\n\nComplete this FIRST. When done, resolve the conversation in agent-memory.', github.event.inputs.triggered_by, github.event.inputs.agent_task) || '' }}
+
             YOUR MEMORY (past runs context): ${{ steps.memory.outputs.memory_context }}
             YOUR INBOX (messages from other agents): ${{ steps.memory.outputs.inbox_context }}
 

@@ -16,6 +16,15 @@ on:
   # Allow manual trigger
   workflow_dispatch:
     inputs:
+      triggered_by:
+        description: "Agent that assigned this task (leave blank for manual run)"
+        required: false
+        default: ""
+      agent_task:
+        description: "Task assigned by another agent"
+        required: false
+        default: ""
+
       task:
         description: 'Task for Claude to perform'
         required: true
@@ -129,6 +138,9 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           task: |
+            # ── INBOX PRIORITY ──────────────────────────────────────
+            ${{ github.event.inputs.agent_task != '' && format('🚨 ASSIGNED TASK (from {0}):\n{1}\n\nComplete this FIRST. When done, resolve the conversation in agent-memory.', github.event.inputs.triggered_by, github.event.inputs.agent_task) || '' }}
+
             You are an autonomous developer for KinderSpark Pro.
 
             YOUR MEMORY FROM PREVIOUS RUNS (use this context — don't repeat work already done):

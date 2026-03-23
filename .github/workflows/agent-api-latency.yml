@@ -4,6 +4,15 @@ on:
   schedule:
     - cron: '*/30 * * * *'  # Every 30 minutes
   workflow_dispatch:
+    inputs:
+      triggered_by:
+        description: "Agent that assigned this task"
+        required: false
+        default: ""
+      agent_task:
+        description: "Task assigned by another agent"
+        required: false
+        default: ""
 
 permissions:
   contents: read
