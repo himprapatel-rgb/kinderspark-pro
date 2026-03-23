@@ -242,8 +242,31 @@ export default function LoginPage() {
         ))}
       </div>
 
-      {/* ── Dev Quick Login ── */}
+      {/* ── Dev Links ── */}
       <div className="w-full max-w-[360px] mt-6 relative z-10">
+        <div style={{ background: 'rgba(255,200,0,0.07)', border: '1px solid rgba(255,200,0,0.2)', borderRadius: 12, padding: '10px 14px', marginBottom: 12 }}>
+          <div style={{ fontSize: 10, fontWeight: 900, color: 'rgba(255,200,0,0.6)', letterSpacing: '0.15em', marginBottom: 8 }}>🔗 DEV LINKS</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {[
+              { label: '🛸 Agent Dashboard', path: '/dashboard/agents' },
+              { label: '⚙️ Admin',            path: '/admin' },
+              { label: '👩‍🏫 Teacher',         path: '/teacher' },
+              { label: '👨‍👩‍👧 Parent',          path: '/parent' },
+              { label: '🧒 Child',            path: '/child' },
+              { label: '🔧 Dev Panel',        path: '/dev' },
+            ].map(link => (
+              <button key={link.path} onClick={() => router.push(link.path)} style={{
+                fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 8,
+                background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+                color: 'rgba(255,255,255,0.7)', cursor: 'pointer', whiteSpace: 'nowrap',
+              }}>{link.label}</button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Dev Quick Login ── */}
+      <div className="w-full max-w-[360px] relative z-10">
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 16 }}>
           <div style={{ textAlign: 'center', fontSize: 10, fontWeight: 900, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.2em', marginBottom: 10 }}>
             ⚡ DEV QUICK LOGIN
