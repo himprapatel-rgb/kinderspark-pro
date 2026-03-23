@@ -98,12 +98,18 @@ export default function AgentsDashboard() {
       )
     : []
 
+  const lastUserMsgTime = useRef<number>(0)
+
   useEffect(() => {
     if (!selectedAgent) return
     dmEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-    // If we were waiting for a reply and a new agent message arrived, stop waiting
-    if (waitingReply && dmMsgs.some(m => m.fromAgentId === selectedAgent.id)) {
-      setWaitingReply(false)
+    // Stop typing indicator when agent posts a message after our question
+    if (waitingReply) {
+      const hasNewReply = dmMsgs.some(m =>
+        m.fromAgentId === selectedAgent.id &&
+        new Date(m.createdAt).getTime() >= lastUserMsgTime.current - 2000
+      )
+      if (hasNewReply) setWaitingReply(false)
     }
   }, [dmMsgs.length, selectedAgent?.id])
 
@@ -126,6 +132,7 @@ export default function AgentsDashboard() {
     if (!dmInput.trim() || !selectedAgent) return
     setDmSending(true)
     setWaitingReply(true)
+    lastUserMsgTime.current = Date.now()
     const msg = dmInput.trim()
     setDmInput('')
     try {
@@ -137,6 +144,8 @@ export default function AgentsDashboard() {
           agentName: selectedAgent.name,
           agentIcon: selectedAgent.icon,
           agentColor: selectedAgent.color,
+          agentDesc: selectedAgent.desc,
+          agentTrigger: selectedAgent.trigger,
           message: msg,
         }),
       })

@@ -1,6 +1,9 @@
 import { Router } from 'express'
 import { requireAuth, requireRole } from '../middleware/auth.middleware'
 import * as mem from '../services/agentMemory.service'
+import Anthropic from '@anthropic-ai/sdk'
+
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 const router = Router()
 
@@ -247,13 +250,13 @@ router.post('/trigger', dashboardAuth, async (req, res) => {
   }
 })
 
-// POST /api/agents/ask — commander sends a direct question to a specific agent
-// The agent will respond via claude-agent.yml dispatched with the question as task
+// POST /api/agents/ask — commander sends a direct question to a specific agent.
+// Responds instantly using Claude API with the agent's persona.
 router.post('/ask', dashboardAuth, async (req, res) => {
-  const { agentId, agentName, agentIcon, agentColor, message } = req.body
+  const { agentId, agentName, agentIcon, agentColor, message, agentDesc, agentTrigger } = req.body
   if (!agentId || !message) return res.status(400).json({ error: 'agentId + message required' })
   try {
-    // 1. Save the commander's question in the chat
+    // 1. Save the user's question immediately
     await mem.sendMessage({
       fromAgentId: 'commander',
       fromName: 'You',
@@ -265,14 +268,39 @@ router.post('/ask', dashboardAuth, async (req, res) => {
       msgType: 'question',
     })
 
-    // 2. Trigger claude-agent.yml to respond as this agent (if GitHub token available)
-    if (GITHUB_TOKEN) {
-      const task = `You are responding as the ${agentName || agentId} agent (${agentIcon || '🤖'}). The commander (user) has sent you a direct message: "${message}"\n\nRespond directly and helpfully in character as ${agentName || agentId}. Keep your response concise and focused. Post your response using:\n  node monitoring/agent-memory.js message ${agentId} commander update "Your response here"\n\nDo not modify any code. Just read the question and respond via the message system.`
+    // 2. Generate instant response via Claude API
+    if (process.env.ANTHROPIC_API_KEY) {
+      // Fire-and-forget so the HTTP response returns quickly
+      ;(async () => {
+        try {
+          const aiRes = await anthropic.messages.create({
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 400,
+            system: `You are ${agentName || agentId} (${agentIcon || '🤖'}), an autonomous AI agent for KinderSpark Pro — an educational app for young children.
+Your role: ${agentDesc || agentId}. You are triggered by: ${agentTrigger || 'scheduled jobs'}.
+You are responding to a direct message from the commander (the human developer/admin).
+Be helpful, direct, and concise. Stay in character as ${agentName}. Respond in 1-3 sentences max.
+Do not use markdown headers or bullet points — write naturally as if in a chat.`,
+            messages: [{ role: 'user', content: message }],
+          })
 
-      await fetch(`${GH_API}/actions/workflows/claude-agent.yml/dispatches`, {
-        method: 'POST', headers: GH_HEADERS,
-        body: JSON.stringify({ ref: 'main', inputs: { task } }),
-      }).catch(() => {/* non-blocking */})
+          const reply = (aiRes.content[0] as any).text?.trim()
+          if (reply) {
+            await mem.sendMessage({
+              fromAgentId: agentId,
+              fromName: agentName || agentId,
+              fromIcon: agentIcon || '🤖',
+              fromColor: agentColor || '#5E5CE6',
+              toAgentId: 'commander',
+              toName: 'You',
+              message: reply,
+              msgType: 'update',
+            })
+          }
+        } catch (e) {
+          // If Claude API fails, fall through silently
+        }
+      })()
     }
 
     res.json({ ok: true })

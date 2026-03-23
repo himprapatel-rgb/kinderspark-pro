@@ -37,8 +37,8 @@ jobs:
       - name: 🧠 Load memory
         id: memory
         run: |
-          node monitoring/agent-memory.js read security-auditor >> $GITHUB_OUTPUT 2>/dev/null || true
-          node monitoring/agent-memory.js inbox security-auditor >> $GITHUB_OUTPUT 2>/dev/null || true
+          node monitoring/agent-memory.js read security-auditor 2>/dev/null || true
+          node monitoring/agent-memory.js inbox security-auditor 2>/dev/null || true
         env:
           BACKEND_URL:  ${{ secrets.BACKEND_URL }}
           AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
