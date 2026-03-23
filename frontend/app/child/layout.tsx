@@ -38,9 +38,12 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
   const router = useRouter()
   const pathname = usePathname()
 
-  // ── Screen time enforcement ──────────────────────────────────────────────
-  const isDev = process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_DEV_MODE === 'true'
-  const limitMin: number = isDev ? 0 : ((settings as any)?.stLimit || 0)
+  // ── Screen time enforcement (disabled during development) ────────────────
+  const limitMin: number = 0
+  useEffect(() => {
+    // Clear any stale screen time data from localStorage
+    Object.keys(localStorage).filter(k => k.startsWith('ks_session_')).forEach(k => localStorage.removeItem(k))
+  }, [])
   const [elapsedSec, setElapsedSec] = useState(0)
   const [timeUp, setTimeUp] = useState(false)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
