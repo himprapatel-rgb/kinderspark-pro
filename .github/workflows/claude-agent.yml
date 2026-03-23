@@ -111,11 +111,11 @@ jobs:
         with:
           node-version: '20'
 
-      - name: 🧠 Load memory
+      - name: Load memory
         id: memory
         run: |
-          node monitoring/agent-memory.js read auto-dev >> $GITHUB_OUTPUT 2>/dev/null || true
-          node monitoring/agent-memory.js inbox auto-dev >> $GITHUB_OUTPUT 2>/dev/null || true
+          node monitoring/agent-memory.js read auto-dev 2>/dev/null || true
+          node monitoring/agent-memory.js inbox auto-dev 2>/dev/null || true
         env:
           BACKEND_URL:  ${{ secrets.BACKEND_URL }}
           AGENT_SECRET: ${{ secrets.AGENT_SECRET }}

@@ -247,6 +247,40 @@ router.post('/trigger', dashboardAuth, async (req, res) => {
   }
 })
 
+// POST /api/agents/ask — commander sends a direct question to a specific agent
+// The agent will respond via claude-agent.yml dispatched with the question as task
+router.post('/ask', dashboardAuth, async (req, res) => {
+  const { agentId, agentName, agentIcon, agentColor, message } = req.body
+  if (!agentId || !message) return res.status(400).json({ error: 'agentId + message required' })
+  try {
+    // 1. Save the commander's question in the chat
+    await mem.sendMessage({
+      fromAgentId: 'commander',
+      fromName: 'You',
+      fromIcon: '🧑‍💻',
+      fromColor: '#5E5CE6',
+      toAgentId: agentId,
+      toName: agentName || agentId,
+      message,
+      msgType: 'question',
+    })
+
+    // 2. Trigger claude-agent.yml to respond as this agent (if GitHub token available)
+    if (GITHUB_TOKEN) {
+      const task = `You are responding as the ${agentName || agentId} agent (${agentIcon || '🤖'}). The commander (user) has sent you a direct message: "${message}"\n\nRespond directly and helpfully in character as ${agentName || agentId}. Keep your response concise and focused. Post your response using:\n  node monitoring/agent-memory.js message ${agentId} commander update "Your response here"\n\nDo not modify any code. Just read the question and respond via the message system.`
+
+      await fetch(`${GH_API}/actions/workflows/claude-agent.yml/dispatches`, {
+        method: 'POST', headers: GH_HEADERS,
+        body: JSON.stringify({ ref: 'main', inputs: { task } }),
+      }).catch(() => {/* non-blocking */})
+    }
+
+    res.json({ ok: true })
+  } catch (e: any) {
+    res.status(500).json({ error: e.message })
+  }
+})
+
 // POST /api/agents/issue — create a GitHub issue → agent picks it up
 router.post('/issue', dashboardAuth, async (req, res) => {
   if (!GITHUB_TOKEN) return res.status(503).json({ error: 'GitHub token not configured' })

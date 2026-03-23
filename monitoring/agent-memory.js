@@ -90,17 +90,23 @@ async function api(method, path, body) {
 }
 
 async function readMemory(agentId) {
-  console.log(`\n📚 Memory for ${meta(agentId).icon} ${meta(agentId).name}:\n`)
+  process.stderr.write(`\nMemory for ${meta(agentId).name}:\n`)
   const memories = await api('GET', `/memory/${agentId}?limit=10`)
-  if (!memories?.length) { console.log('  (no memories yet — this is your first run)'); return '' }
+  if (!memories?.length) { process.stderr.write('  (no memories yet)\n'); return '' }
 
   const summary = memories.map(m =>
-    `[${m.type.toUpperCase()} · importance:${m.importance} · ${new Date(m.createdAt).toLocaleDateString()}]\n${m.content}`
+    `[${m.type.toUpperCase()} importance:${m.importance} ${new Date(m.createdAt).toLocaleDateString()}]\n${m.content}`
   ).join('\n\n---\n\n')
 
-  console.log(summary)
-  // Output as GitHub Actions env var for use in Claude prompt
-  console.log(`\n::set-output name=memory_context::${summary.replace(/\n/g, '%0A').slice(0, 2000)}`)
+  process.stderr.write(summary + '\n')
+
+  // Write to $GITHUB_OUTPUT using multiline heredoc format (no emojis in key)
+  const ghOutput = process.env.GITHUB_OUTPUT
+  if (ghOutput) {
+    const fs = require('fs')
+    const safe = summary.replace(/\r/g, '').slice(0, 2000)
+    fs.appendFileSync(ghOutput, `memory_context<<MEMORY_EOF\n${safe}\nMEMORY_EOF\n`)
+  }
   return summary
 }
 
@@ -136,17 +142,22 @@ async function broadcast(fromId, message) {
 }
 
 async function readInbox(agentId) {
-  console.log(`\n📬 Inbox for ${meta(agentId).icon} ${meta(agentId).name}:\n`)
+  process.stderr.write(`\nInbox for ${meta(agentId).name}:\n`)
   const msgs = await api('GET', `/inbox/${agentId}`)
-  if (!msgs?.length) { console.log('  (no messages)'); return '' }
+  if (!msgs?.length) { process.stderr.write('  (no messages)\n'); return '' }
 
   const summary = msgs.slice(0, 5).map(m =>
-    `[FROM: ${m.fromName} · ${m.msgType} · ${new Date(m.createdAt).toLocaleDateString()}]\n${m.message}`
+    `[FROM: ${m.fromName} type:${m.msgType} ${new Date(m.createdAt).toLocaleDateString()}]\n${m.message}`
   ).join('\n\n---\n\n')
-  console.log(summary)
+  process.stderr.write(summary + '\n')
 
-  // Output for GitHub Actions
-  console.log(`\n::set-output name=inbox_context::${summary.replace(/\n/g, '%0A').slice(0, 1000)}`)
+  // Write to $GITHUB_OUTPUT using multiline heredoc format
+  const ghOutput = process.env.GITHUB_OUTPUT
+  if (ghOutput) {
+    const fs = require('fs')
+    const safe = summary.replace(/\r/g, '').slice(0, 1000)
+    fs.appendFileSync(ghOutput, `inbox_context<<INBOX_EOF\n${safe}\nINBOX_EOF\n`)
+  }
   return summary
 }
 
