@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import agentsConfig from '@/public/agents-config.json'
 import { useAppStore } from '@/store/appStore'
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
+const API = process.env.NEXT_PUBLIC_API_URL || 'https://kinderspark-backend-production.up.railway.app/api'
 
 type Agent   = typeof agentsConfig.agents[number]
 type MsgType = 'update' | 'handoff' | 'broadcast' | 'alert' | 'observation'
