@@ -94,6 +94,10 @@ app.use((err: any, _req: any, res: any, _next: any) => {
 })
 
 const PORT = process.env.PORT || 4000
-app.listen(PORT, () => console.log(`KinderSpark API running on port ${PORT}`))
+app.listen(PORT, () => {
+  console.log(`KinderSpark API running on port ${PORT}`)
+  const { startAgentScheduler } = require('./services/agentScheduler.service')
+  startAgentScheduler()
+})
 
 export default app
