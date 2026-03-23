@@ -1,7 +1,8 @@
 'use client'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
+import { verifyPin } from '@/lib/api'
 
 const ROLES = [
   {
@@ -62,10 +63,31 @@ const STARS = [
   { top: '95%', left: '55%', size: 3,  delay: 1.1 },
 ]
 
+const DEV_LOGINS = [
+  { label: 'Admin',   emoji: '⚙️',  role: 'admin',   pin: '9999', color: '#BF5AF2' },
+  { label: 'Teacher', emoji: '👩‍🏫', role: 'teacher', pin: '1234', color: '#5E5CE6' },
+  { label: 'Parent',  emoji: '👨‍👩‍👧', role: 'parent',  pin: '1111', color: '#30D158' },
+  { label: 'Kid',     emoji: '🧒',  role: 'child',   pin: '1111', color: '#FF9F0A' },
+]
+
 export default function LoginPage() {
   const router = useRouter()
   const user = useAppStore((s) => s.user)
   const role = useAppStore((s) => s.role)
+  const setAuth = useAppStore((s) => s.setAuth)
+  const [devLoading, setDevLoading] = useState<string | null>(null)
+
+  async function quickLogin(item: typeof DEV_LOGINS[number]) {
+    setDevLoading(item.role)
+    try {
+      const data = await verifyPin(item.pin, item.role)
+      setAuth(data.user, item.role, data.accessToken || data.token)
+      if (item.role === 'teacher') router.replace('/teacher')
+      else if (item.role === 'admin')  router.replace('/admin')
+      else if (item.role === 'parent') router.replace('/parent')
+      else router.replace('/child')
+    } catch { setDevLoading(null) }
+  }
 
   useEffect(() => {
     if (!user || !role) return
@@ -218,6 +240,35 @@ export default function LoginPage() {
             </div>
           </button>
         ))}
+      </div>
+
+      {/* ── Dev Quick Login ── */}
+      <div className="w-full max-w-[360px] mt-6 relative z-10">
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 16 }}>
+          <div style={{ textAlign: 'center', fontSize: 10, fontWeight: 900, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.2em', marginBottom: 10 }}>
+            ⚡ DEV QUICK LOGIN
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {DEV_LOGINS.map(item => (
+              <button
+                key={item.role}
+                onClick={() => quickLogin(item)}
+                disabled={devLoading === item.role}
+                style={{
+                  flex: 1, padding: '8px 4px', borderRadius: 10, border: 'none',
+                  background: devLoading === item.role ? 'rgba(255,255,255,0.05)' : item.color + '22',
+                  color: item.color, fontWeight: 900, fontSize: 10, cursor: 'pointer',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                  border: `1px solid ${item.color}33`,
+                  transition: 'all 0.2s',
+                }}
+              >
+                <span style={{ fontSize: 18 }}>{devLoading === item.role ? '⏳' : item.emoji}</span>
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* ── Footer ── */}
