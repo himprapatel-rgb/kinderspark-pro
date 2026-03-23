@@ -21,6 +21,7 @@ import pushRoutes from './routes/push.routes'
 import classRoutes from './routes/classes'
 import aiSessionRoutes from './routes/aiSessions'
 import feedbackRoutes from './routes/feedback'
+import agentRoutes from './routes/agents.routes'
 
 const app = express()
 
@@ -85,6 +86,7 @@ app.use('/api/push', pushRoutes)
 app.use('/api/classes', cache(30), classRoutes)
 app.use('/api/ai-sessions', aiSessionRoutes)
 app.use('/api/feedback', feedbackRoutes)
+app.use('/api/agents', agentRoutes)
 
 app.use((err: any, _req: any, res: any, _next: any) => {
   console.error(err)

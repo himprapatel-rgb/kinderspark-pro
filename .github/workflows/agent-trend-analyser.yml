@@ -1,0 +1,55 @@
+name: 🔮 Trend Analyser Agent
+
+on:
+  schedule:
+    - cron: '0 10 1 * *'  # 1st of every month
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  trends:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Trend Analyser Agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          task: |
+            You are the TREND ANALYSER AGENT for KinderSpark Pro.
+            You look at the big picture — what's working, what's not, what to build next.
+
+            YOUR TASKS:
+
+            1. **Feature Usage Analysis**: Read the codebase and infer:
+               - Which features are most prominently built? (= likely most used)
+               - Which features are thin/incomplete? (= likely unused)
+               - What has the Marketing Agent been suggesting? (read recent marketing issues)
+
+            2. **Competitive Landscape**: Based on your knowledge of edtech apps:
+               - What features do Duolingo, Khan Academy Kids, Epic have that we don't?
+               - Which of those would be highest-impact for KinderSpark?
+
+            3. **User Journey Analysis**: Trace the user flow in the code:
+               - Teacher: sign up → create class → add students → assign homework
+               - Parent: view child progress → message teacher
+               - Child: log in → daily challenge → word match → AI tutor
+               Where are the biggest friction points in the code?
+
+            4. **Monthly Roadmap**: Create a GitHub issue titled "📊 Monthly Trend Report — [month]"
+               with label "roadmap" containing:
+               - Top 5 recommended features to build this month
+               - Top 3 features to improve
+               - 2 features to consider removing (bloat)
+               - Competitor features worth adding
+
+            Be specific and actionable. Reference actual files and components.
+          allowed_tools: "Bash,Read,Glob,Grep"
+          max_turns: "15"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

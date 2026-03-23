@@ -1,0 +1,80 @@
+name: 📦 Dependency Updater Agent
+
+on:
+  schedule:
+    - cron: '0 4 * * 1'  # Every Monday 04:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  update-deps:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0, token: '${{ secrets.GITHUB_TOKEN }}' }
+
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+
+      - name: Check outdated packages
+        id: outdated
+        run: |
+          echo "=== BACKEND ===" > /tmp/outdated.txt
+          cd backend && npm outdated --json 2>/dev/null | node -e "
+            try {
+              const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8'));
+              Object.entries(d).forEach(([k,v])=>console.log(k+': '+v.current+' → '+v.latest+' (wanted: '+v.wanted+')'));
+            } catch(e) { console.log('none'); }
+          " >> /tmp/outdated.txt || echo "none" >> /tmp/outdated.txt
+          echo "=== FRONTEND ===" >> /tmp/outdated.txt
+          cd ../frontend && npm outdated --json 2>/dev/null | node -e "
+            try {
+              const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8'));
+              Object.entries(d).forEach(([k,v])=>console.log(k+': '+v.current+' → '+v.latest+' (wanted: '+v.wanted+')'));
+            } catch(e) { console.log('none'); }
+          " >> /tmp/outdated.txt || echo "none" >> /tmp/outdated.txt
+          cat /tmp/outdated.txt
+          echo "result<<EOF" >> $GITHUB_OUTPUT
+          cat /tmp/outdated.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Configure git
+        run: |
+          git config user.name "KinderSpark Deps Agent"
+          git config user.email "deps@kinderspark.ai"
+          git checkout -b "claude/deps-$(date +%Y-%m-%d)"
+
+      - name: Run Dependency Agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          task: |
+            You are the DEPENDENCY UPDATER AGENT for KinderSpark Pro.
+
+            OUTDATED PACKAGES:
+            ${{ steps.outdated.outputs.result }}
+
+            YOUR RULES:
+            - Update patch versions freely (1.2.3 → 1.2.4): safe, just do it
+            - Update minor versions if no breaking changes in changelog: do it
+            - Skip major version bumps (1.x → 2.x): open a GitHub issue instead
+            - Never update these without manual review: prisma, next, react, typescript, express
+            - Always run the build after updating to verify nothing broke
+
+            PROCESS:
+            1. For safe patch/minor updates: run `npm update` in backend/ and frontend/
+            2. Run `cd backend && npx tsc --noEmit` — fix any type errors from updates
+            3. Run `cd frontend && npx next build` if possible — verify frontend still builds
+            4. For major version bumps or risky packages: open GitHub issue with label "dependencies"
+            5. Commit with "deps: update packages <list>"
+
+            After updating, provide a summary of what was updated and what was skipped.
+          allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+          max_turns: "20"
+
+      - run: git push -u origin HEAD 2>/dev/null || true

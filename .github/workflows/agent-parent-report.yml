@@ -1,0 +1,62 @@
+name: 📧 Parent Report Generator Agent
+
+on:
+  schedule:
+    - cron: '0 18 * * 0'  # Every Sunday 18:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  parent-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0, token: '${{ secrets.GITHUB_TOKEN }}' }
+
+      - name: Configure git
+        run: |
+          git config user.name "KinderSpark Report Agent"
+          git config user.email "reports@kinderspark.ai"
+          git checkout -b "claude/parent-report-$(date +%s)"
+
+      - name: Run Parent Report Agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          task: |
+            You are the PARENT REPORT GENERATOR AGENT for KinderSpark Pro.
+            Every Sunday you ensure parents receive a beautiful progress report for their child.
+
+            YOUR TASKS:
+
+            1. **Report API Endpoint**: Check if `GET /api/students/:id/weekly-report` exists.
+               If not, create it in backend/src/routes/student.routes.ts:
+               Returns: { student, weekStars, weekSessions, weekStreak, topModule,
+                          accuracy, badges earned, comparison to last week }
+               Use Prisma to query AISession and other tables for last 7 days.
+
+            2. **Email Report Template**: Check if there's an email service.
+               If not, create backend/src/services/email.service.ts with a template:
+               - Beautiful HTML email with child's name, avatar emoji, weekly stats
+               - Star count with a progress bar visual
+               - "Your child learned X new words this week!"
+               - Encouragement message personalised by performance level
+               - Deep link back to the app
+
+            3. **Weekly Report Page**: Create frontend/app/parent/weekly-report/[studentId]/page.tsx
+               A beautiful shareable weekly report card parents can screenshot and share.
+               Include: avatar, name, stars earned, streak, modules completed, badges,
+               a "proud parent" share button.
+
+            4. **Notification Hook**: Add to the Sunday cron: for each student with a parent,
+               send a push notification: "📊 [Child]'s weekly report is ready!"
+
+            Commit with "feat: parent weekly report — email + report card page".
+          allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+          max_turns: "30"
+
+      - run: git push -u origin HEAD 2>/dev/null || true

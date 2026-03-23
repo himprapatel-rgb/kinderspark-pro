@@ -1,0 +1,90 @@
+name: 🧪 Test Generator Agent
+
+on:
+  push:
+    branches: ['main']
+    paths: ['backend/src/**', 'frontend/app/**', 'frontend/lib/**']
+  schedule:
+    - cron: '0 3 * * 5'  # Every Friday 03:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  generate-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0, token: '${{ secrets.GITHUB_TOKEN }}' }
+
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+
+      - name: Find untested files
+        id: coverage
+        run: |
+          echo "=== Backend files without tests ===" > /tmp/untested.txt
+          for f in backend/src/routes/*.ts backend/src/controllers/*.ts backend/src/services/*.ts; do
+            basename="${f##*/}"
+            testname="${basename%.ts}"
+            if ! find backend/src/__tests__ -name "${testname}*" 2>/dev/null | grep -q .; then
+              echo "UNTESTED: $f" >> /tmp/untested.txt
+            fi
+          done
+          echo "=== Frontend files without tests ===" >> /tmp/untested.txt
+          for f in frontend/lib/*.ts frontend/hooks/*.ts; do
+            basename="${f##*/}"
+            testname="${basename%.ts}"
+            if ! find frontend/__tests__ -name "${testname}*" 2>/dev/null | grep -q .; then
+              echo "UNTESTED: $f" >> /tmp/untested.txt
+            fi
+          done
+          cat /tmp/untested.txt
+          echo "result<<EOF" >> $GITHUB_OUTPUT
+          cat /tmp/untested.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Configure git
+        run: |
+          git config user.name "KinderSpark Test Agent"
+          git config user.email "tests@kinderspark.ai"
+          git checkout -b "claude/tests-$(date +%s)"
+
+      - name: Run Test Generator Agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          task: |
+            You are the TEST GENERATOR AGENT for KinderSpark Pro.
+
+            UNTESTED FILES:
+            ${{ steps.coverage.outputs.result }}
+
+            YOUR TASK:
+            Write comprehensive tests for the most critical untested files.
+            Prioritize: auth controllers, security middleware, API routes.
+
+            BACKEND TESTS (Jest):
+            - Location: backend/src/__tests__/
+            - Use jest.mock() for Prisma client
+            - Test happy path + error cases + edge cases
+            - Test that auth middleware rejects unauthenticated requests
+            - Test that role guards reject wrong roles
+            - Look at existing tests in backend/src/__tests__/ for patterns
+
+            FRONTEND TESTS (Vitest):
+            - Location: frontend/__tests__/
+            - Test utility functions in frontend/lib/
+            - Test custom hooks with renderHook
+            - Look at existing tests in frontend/__tests__/ for patterns
+
+            Write tests for the 3-5 most critical untested files.
+            Make them actually run — no placeholder tests.
+            Commit with "test: add tests for <files>", push.
+          allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+          max_turns: "25"
+
+      - run: git push -u origin HEAD 2>/dev/null || true

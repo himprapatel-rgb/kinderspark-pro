@@ -1,0 +1,59 @@
+name: 🎯 Difficulty Calibrator Agent
+
+on:
+  schedule:
+    - cron: '0 2 * * 1'  # Every Monday
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  calibrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0, token: '${{ secrets.GITHUB_TOKEN }}' }
+
+      - name: Configure git
+        run: |
+          git config user.name "KinderSpark Calibrator Agent"
+          git config user.email "calibrator@kinderspark.ai"
+          git checkout -b "claude/calibrate-$(date +%s)"
+
+      - name: Run Calibrator Agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          task: |
+            You are the DIFFICULTY CALIBRATOR AGENT for KinderSpark Pro.
+
+            YOUR TASK:
+            Analyse the current game mechanics and adjust difficulty to be optimally engaging.
+
+            1. Read frontend/app/child/match/page.tsx — the Word Match game
+               - Currently 10 questions per round, 3 wrong choices
+               - Is there a difficulty progression? (easier → harder within a round?)
+               - Add difficulty levels if missing: Easy (3 choices), Medium (4 choices), Hard (4 choices + timer)
+
+            2. Read frontend/lib/modules.ts
+               - Tag each word with a difficulty score (1=easy, 2=medium, 3=hard)
+               - Easy: common everyday words (cat, dog, apple)
+               - Medium: less common but known (elephant, strawberry)
+               - Hard: complex/longer words (butterfly, submarine)
+
+            3. Implement adaptive difficulty:
+               - If player gets 8+/10 correct → increase difficulty next round
+               - If player gets <5/10 → decrease difficulty next round
+               - Store difficulty preference in localStorage
+
+            4. Add a difficulty selector to the Word Match ready screen
+
+            Changes should feel natural and fun — not frustrating.
+            Commit with "feat: adaptive difficulty calibration for Word Match".
+          allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+          max_turns: "20"
+
+      - run: git push -u origin HEAD 2>/dev/null || true

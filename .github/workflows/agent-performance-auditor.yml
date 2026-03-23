@@ -1,0 +1,78 @@
+name: 🔬 Performance Auditor Agent
+
+on:
+  schedule:
+    - cron: '0 4 * * 0'  # Every Sunday 04:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  perf-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0, token: '${{ secrets.GITHUB_TOKEN }}' }
+
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+
+      - name: Measure bundle size
+        id: bundle
+        run: |
+          cd frontend
+          npm ci --ignore-scripts 2>/dev/null || true
+          echo "Bundle analysis:" > /tmp/bundle.txt
+          find .next/static 2>/dev/null -name "*.js" -exec du -sh {} \; | sort -rh | head -10 >> /tmp/bundle.txt || echo "Build not available" >> /tmp/bundle.txt
+          cat /tmp/bundle.txt
+          echo "result<<EOF" >> $GITHUB_OUTPUT
+          cat /tmp/bundle.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Configure git
+        run: |
+          git config user.name "KinderSpark Perf Agent"
+          git config user.email "perf@kinderspark.ai"
+          git checkout -b "claude/perf-$(date +%s)"
+
+      - name: Run Performance Agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          task: |
+            You are the PERFORMANCE AUDITOR AGENT for KinderSpark Pro.
+            Children use this app on low-end phones — performance matters enormously.
+
+            BUNDLE ANALYSIS:
+            ${{ steps.bundle.outputs.result }}
+
+            YOUR AUDIT TASKS:
+
+            1. **Frontend Performance**:
+               - Check frontend/app/ for large components without React.memo or useMemo
+               - Find images/assets not using Next.js Image optimization
+               - Identify useEffect hooks without proper dependency arrays (infinite loops)
+               - Look for expensive computations on every render
+               - Check if heavy libraries can be lazy-loaded
+               - Find CSS animations that should use `will-change` for GPU acceleration
+
+            2. **Backend Performance**:
+               - Review backend/src/routes/ for N+1 Prisma queries
+               - Find routes missing the cache() middleware that should be cached
+               - Check for missing `select` in Prisma queries (over-fetching)
+               - Look for synchronous operations blocking the event loop
+
+            3. **Database Performance**:
+               - Review backend/prisma/schema.prisma for missing indexes
+               - Identify frequently-joined relations that need compound indexes
+               - Check if any queries could be combined
+
+            Fix quick wins directly. For complex optimizations, open GitHub issues with label "performance".
+            Commit with "perf: <description>".
+          allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+          max_turns: "25"
+
+      - run: git push -u origin HEAD 2>/dev/null || true

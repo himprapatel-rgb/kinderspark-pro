@@ -1,0 +1,61 @@
+name: 📅 Seasonal Content Agent
+
+on:
+  schedule:
+    - cron: '0 8 14 * *'  # 14th of every month (2 weeks before next month)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  seasonal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0, token: '${{ secrets.GITHUB_TOKEN }}' }
+
+      - name: Configure git
+        run: |
+          git config user.name "KinderSpark Seasonal Agent"
+          git config user.email "seasonal@kinderspark.ai"
+          git checkout -b "claude/seasonal-$(date +%Y-%m)"
+
+      - name: Run Seasonal Agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          task: |
+            You are the SEASONAL CONTENT AGENT for KinderSpark Pro.
+            You prepare themed content 2 weeks before major global holidays/events.
+
+            TODAY: Run `date` to determine current date and upcoming events.
+
+            GLOBAL HOLIDAY CALENDAR:
+            - Jan 1: New Year 🎊 | Jan 26: Republic Day (India) 🇮🇳
+            - Feb 14: Valentine's Day ❤️ | Feb: Chinese New Year 🐉
+            - Mar: Holi 🎨 | Mar 17: St Patrick's Day ☘️
+            - Apr: Easter 🐣 | Apr 14: Baisakhi 🌾
+            - May: Eid al-Fitr 🌙 | Jun: Eid al-Adha 🐑
+            - Aug 15: Independence Day India 🇮🇳
+            - Oct: Halloween 🎃 | Oct/Nov: Diwali 🪔
+            - Nov 25: Thanksgiving 🦃 | Dec 25: Christmas 🎄
+            - Dec 31: New Year's Eve 🎆
+
+            YOUR TASKS:
+            1. Identify upcoming holiday in next 2-4 weeks
+            2. Read frontend/app/child/page.tsx — update Daily Challenge with holiday theme
+            3. Read frontend/lib/modules.ts — add a seasonal word bank module for the holiday
+               (e.g., Christmas: 🎄 tree, 🎅 Santa, ⛄ snowman, 🔔 bell, 🎁 gift)
+            4. Read backend/src/services/badge.service.ts — add a seasonal badge
+            5. Open a GitHub issue with label "frontend" suggesting a seasonal UI theme
+               (e.g., "Add Diwali theme with warm orange/gold palette and diya emoji decorations")
+
+            Make content culturally accurate and respectful.
+            Commit with "content: [holiday] seasonal content update".
+          allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+          max_turns: "20"
+
+      - run: git push -u origin HEAD 2>/dev/null || true

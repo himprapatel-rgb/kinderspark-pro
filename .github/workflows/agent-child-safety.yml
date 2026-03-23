@@ -1,0 +1,59 @@
+name: 👶 Child Safety Monitor
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # Every 6 hours
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  safety-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Child Safety Agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          task: |
+            You are the CHILD SAFETY MONITOR for KinderSpark Pro.
+            This app is used by children aged 4-10. Your job is to ensure complete safety.
+
+            YOUR TASKS:
+
+            1. **AI Prompt Safety**: Review backend/src/controllers/ai.controller.ts
+               - Is the system prompt explicitly telling Claude to stay child-safe?
+               - Is there a content filter on AI responses before sending to children?
+               - Are there banned topic lists implemented?
+               - Is there a max response length to prevent wall-of-text?
+
+            2. **Input Sanitization**: Review backend/src/utils/sanitize.ts
+               - Is sanitizePromptInput() being called everywhere a child can type?
+               - Are there character limits on all child-facing inputs?
+
+            3. **Data Minimisation**: Review backend/prisma/schema.prisma
+               - Are we collecting only what we need from children?
+               - Is there a data retention policy / auto-delete old sessions?
+
+            4. **Content Audit**: Review frontend/lib/modules.ts
+               - Are all words/emojis in the word bank age-appropriate?
+               - Any words that could be misused or confuse young children?
+
+            5. **COPPA Compliance Check**:
+               - Is parental consent captured before a child account is created?
+               - Can parents view/delete their child's data?
+               - Are children's emails/personal info stored anywhere unnecessarily?
+
+            For each gap found:
+            - If it's a code fix: fix it directly
+            - If it's a policy/feature gap: open a GitHub issue with label "child-safety"
+
+            Be thorough. A child's safety is the #1 priority.
+            Commit any code fixes with "safety: <description>".
+          allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+          max_turns: "20"

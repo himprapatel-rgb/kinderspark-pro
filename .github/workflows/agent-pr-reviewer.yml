@@ -1,0 +1,80 @@
+name: 👁️ PR Code Reviewer Agent
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to review'
+        required: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Get diff
+        id: diff
+        run: |
+          BASE="${{ github.event.pull_request.base.sha || 'HEAD~1' }}"
+          git diff "$BASE"...HEAD --stat > /tmp/diff_stat.txt
+          git diff "$BASE"...HEAD > /tmp/diff.txt
+          echo "stat<<EOF" >> $GITHUB_OUTPUT
+          cat /tmp/diff_stat.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Run PR Review Agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          task: |
+            You are the PR CODE REVIEWER for KinderSpark Pro.
+            Review the incoming pull request with the eyes of a senior full-stack engineer.
+
+            PR TITLE: ${{ github.event.pull_request.title || 'Manual review' }}
+            PR AUTHOR: ${{ github.event.pull_request.user.login || 'unknown' }}
+
+            DIFF STATS:
+            ${{ steps.diff.outputs.stat }}
+
+            Read the actual diff at /tmp/diff.txt and the full changed files.
+
+            REVIEW CHECKLIST:
+            ✅ Security: missing auth, trusting client IDs, unvalidated inputs
+            ✅ Logic bugs: off-by-one, wrong conditions, race conditions
+            ✅ TypeScript: any type errors or unsafe casts
+            ✅ Performance: N+1 queries, missing indexes, heavy re-renders
+            ✅ Design system: does UI follow the dark/glass theme? correct CSS vars?
+            ✅ Child safety: any new AI prompts safe for children?
+            ✅ Tests: are new features covered by tests?
+            ✅ Breaking changes: does this break existing API contracts?
+
+            OUTPUT FORMAT:
+            Write a review comment using GitHub markdown. Structure it as:
+            ## PR Review by Claude Agent
+            ### ✅ Looks Good
+            - list what's done well
+            ### ⚠️ Suggestions
+            - list non-blocking improvements
+            ### ❌ Must Fix
+            - list blocking issues (if any)
+            ### Verdict: APPROVE / REQUEST CHANGES / COMMENT
+
+            Post the review using: gh pr review ${{ github.event.pull_request.number }} --comment --body "..."
+            If there are blocking issues: gh pr review ${{ github.event.pull_request.number }} --request-changes --body "..."
+            Otherwise: gh pr review ${{ github.event.pull_request.number }} --approve --body "..."
+          allowed_tools: "Bash,Read,Glob,Grep"
+          max_turns: "15"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

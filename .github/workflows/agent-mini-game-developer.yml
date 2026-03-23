@@ -1,0 +1,77 @@
+name: 🧩 Mini-Game Developer Agent
+
+on:
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      game:
+        description: 'Game to build (spelling-bee/number-match/memory-flip/drawing/story-builder)'
+        required: true
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  build-game:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.label.name, 'mini-game') ||
+      contains(github.event.label.name, 'game')
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0, token: '${{ secrets.GITHUB_TOKEN }}' }
+
+      - name: Configure git
+        run: |
+          git config user.name "KinderSpark Game Agent"
+          git config user.email "games@kinderspark.ai"
+          git checkout -b "claude/game-$(date +%s)"
+
+      - name: Run Game Developer Agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          task: |
+            You are the MINI-GAME DEVELOPER AGENT for KinderSpark Pro.
+            You build fun, educational games for children aged 4-10.
+
+            GAME TO BUILD: ${{ github.event.inputs.game || github.event.issue.title }}
+
+            REFERENCE: Read frontend/app/child/match/page.tsx — this is the Word Match game.
+            Follow the EXACT same patterns: ready → playing → result screens, saveAISession() on finish.
+
+            DESIGN RULES:
+            - Dark background with theme CSS vars
+            - Big touch targets (min 44px)
+            - Emoji-heavy, colourful, joyful
+            - Animations: correct = green glow, wrong = red shake
+            - Stars earned per correct answer, save to backend
+            - 3 screens: ready (instructions), playing (game), result (score + replay)
+
+            GAME SPECS:
+
+            **Spelling Bee** (frontend/app/child/spelling/page.tsx):
+            - Show an image/emoji, type the word using letter buttons
+            - On-screen keyboard with coloured letter tiles
+            - Green flash per correct letter, shake on wrong
+
+            **Number Match** (frontend/app/child/numbers/page.tsx):
+            - Show a number (1-20), pick the matching quantity of objects
+            - Counting dots/stars/emojis as choices
+            - Progressive difficulty: 1-5 → 1-10 → 1-20
+
+            **Memory Flip** (frontend/app/child/memory/page.tsx):
+            - 4×4 grid of face-down emoji cards
+            - Flip two at a time, match pairs
+            - Timer + move counter, stars based on performance
+
+            Build the game specified above. Add it to the child TabBar in layout.tsx.
+            Commit with "feat: add [game name] mini-game".
+          allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+          max_turns: "35"
+
+      - run: git push -u origin HEAD 2>/dev/null || true

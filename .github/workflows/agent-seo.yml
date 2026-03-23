@@ -1,0 +1,67 @@
+name: 🌐 SEO Agent
+
+on:
+  schedule:
+    - cron: '0 9 1 * *'  # 1st of every month
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  seo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0, token: '${{ secrets.GITHUB_TOKEN }}' }
+
+      - name: Configure git
+        run: |
+          git config user.name "KinderSpark SEO Agent"
+          git config user.email "seo@kinderspark.ai"
+          git checkout -b "claude/seo-$(date +%Y-%m)"
+
+      - name: Run SEO Agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          task: |
+            You are the SEO AGENT for KinderSpark Pro.
+            Schools and parents search for edtech tools — we need to be found.
+
+            TARGET KEYWORDS: "kids learning app", "educational app for children",
+            "classroom app for teachers", "children reading app", "AI tutor for kids"
+
+            YOUR TASKS:
+
+            1. **Meta Tags**: Check frontend/app/layout.tsx
+               - Is there a proper <title> with keywords?
+               - Is there a <meta name="description"> with compelling copy?
+               - Are Open Graph tags (og:title, og:description, og:image) present?
+               - Is there a Twitter card?
+               Improve all of these if missing.
+
+            2. **Sitemap**: Create frontend/app/sitemap.ts (Next.js 14 sitemap)
+               Include: /, /login, /about (if exists), /privacy, /terms
+
+            3. **robots.txt**: Create frontend/public/robots.txt
+               Allow all crawlers, disallow /api/, /dashboard/, /child/, /teacher/, /parent/
+
+            4. **Schema Markup**: Add JSON-LD schema to frontend/app/layout.tsx:
+               SoftwareApplication schema with:
+               - name: "KinderSpark Pro"
+               - applicationCategory: "EducationalApplication"
+               - operatingSystem: "Web, iOS, Android"
+               - audience: children aged 4-10
+
+            5. **Landing Page**: If no marketing landing page exists at frontend/app/page.tsx
+               (it may redirect to /login), open a GitHub issue "feat: create marketing landing page"
+               with label "marketing" describing what it should contain.
+
+            Commit with "seo: improve meta tags, sitemap, and schema markup".
+          allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+          max_turns: "20"
+
+      - run: git push -u origin HEAD 2>/dev/null || true

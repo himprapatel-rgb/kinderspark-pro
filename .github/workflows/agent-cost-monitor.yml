@@ -1,0 +1,55 @@
+name: 💸 Cost Monitor Agent
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'  # Every Monday
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  cost-monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Cost Monitor Agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          task: |
+            You are the COST MONITOR AGENT for KinderSpark Pro.
+            Railway bills by compute usage. Claude API bills by tokens. Keep costs low.
+
+            YOUR TASKS:
+
+            1. **Railway Cost Analysis**: Review the architecture:
+               - How many Railway services are running? (backend, frontend, postgres, monitor)
+               - Which services run 24/7 vs on-demand?
+               - Are there any services that could be combined?
+               - Is the health monitor service sleeping between checks? (it should)
+
+            2. **Claude API Token Usage**: Review backend/src/controllers/ai.controller.ts
+               - What's the max_tokens setting for AI responses?
+               - Is there a per-student daily limit on AI sessions?
+               - Are system prompts unnecessarily long? (every token costs money)
+               - Could we cache common AI responses?
+
+            3. **Database Optimization**: Review backend/prisma/schema.prisma
+               - Are there tables growing unbounded? (AISession, Message logs)
+               - Suggest data archival strategy for records > 6 months old
+
+            4. **CDN/Caching**: Review frontend caching strategy
+               - Are static assets cached with long TTLs?
+               - Is the Next.js ISR (incremental static regeneration) used where possible?
+               - Are API responses cached appropriately?
+
+            5. **Cost Report Issue**: Create a GitHub issue titled "💸 Cost Optimisation Report — [date]"
+               with label "infrastructure" containing specific recommendations with estimated savings.
+          allowed_tools: "Bash,Read,Glob,Grep"
+          max_turns: "15"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

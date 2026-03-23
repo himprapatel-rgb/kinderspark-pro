@@ -1,0 +1,63 @@
+name: 🎉 Achievement Notifier Agent
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'  # Every 30 minutes
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  achievements:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0, token: '${{ secrets.GITHUB_TOKEN }}' }
+
+      - name: Configure git
+        run: |
+          git config user.name "KinderSpark Achievement Agent"
+          git config user.email "achievements@kinderspark.ai"
+          git checkout -b "claude/achievements-$(date +%s)"
+
+      - name: Run Achievement Agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          task: |
+            You are the ACHIEVEMENT NOTIFIER AGENT for KinderSpark Pro.
+            You ensure children and parents are instantly notified of achievements.
+
+            YOUR TASKS:
+
+            1. **Real-time Achievement Triggers**: Review backend/src/services/badge.service.ts
+               Are badges awarded immediately when criteria are met?
+               If not, update the badge service to:
+               - Award badge immediately after the triggering action
+               - Send push notification to child's device: "🏆 You earned [badge]!"
+               - Send push to parent: "[Child] just earned [badge]! 🎉"
+
+            2. **Milestone Notifications**: Implement these milestone alerts:
+               - First 10 stars → "🌟 You're on fire!"
+               - 7-day streak → "🔥 One week streak! Amazing!"
+               - 100 stars total → "💯 100 Stars Champion!"
+               - First AI session → "🤖 First tutor session complete!"
+               - Perfect score (10/10) → "💯 Perfect round!"
+               - Top of leaderboard → "👑 You're #1 in your class!"
+
+            3. **Celebration Animation**: When a badge is earned, the child screen should
+               show a full-screen celebration overlay (confetti effect using CSS animations).
+               Check frontend/app/child/page.tsx for the existing badge sheet.
+               Enhance it to auto-trigger when a new badge is earned.
+
+            4. **Parent Real-time Feed**: Add a "Recent Achievements" section to
+               frontend/app/parent/page.tsx — live feed of child's recent badges and milestones.
+
+            Commit with "feat: real-time achievement notifications".
+          allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+          max_turns: "20"
+
+      - run: git push -u origin HEAD 2>/dev/null || true

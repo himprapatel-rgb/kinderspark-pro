@@ -1,0 +1,65 @@
+name: 📡 API Latency Monitor Agent
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'  # Every 30 minutes
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  latency:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Measure endpoint latencies
+        id: latency
+        run: |
+          BACKEND="${{ secrets.BACKEND_URL }}"
+          if [ -z "$BACKEND" ]; then echo "No BACKEND_URL"; exit 0; fi
+
+          measure() {
+            START=$(date +%s%N)
+            HTTP=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$1" 2>/dev/null || echo "000")
+            END=$(date +%s%N)
+            MS=$(( (END - START) / 1000000 ))
+            echo "$2: ${MS}ms (HTTP $HTTP)"
+            echo "$MS"
+          }
+
+          echo "=== Latency Report $(date) ===" > /tmp/latency.txt
+          H=$(measure "$BACKEND/health" "Health"); echo "health: $H" >> /tmp/latency.txt
+          cat /tmp/latency.txt
+
+          # Alert if health > 2000ms
+          HEALTH_MS=$(echo "$H" | head -1)
+          if [ "$HEALTH_MS" -gt 2000 ] 2>/dev/null; then
+            echo "slow=true" >> $GITHUB_OUTPUT
+            echo "health_ms=$HEALTH_MS" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Open issue if slow
+        if: steps.latency.outputs.slow == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const healthMs = '${{ steps.latency.outputs.health_ms }}'
+            const openIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              labels: 'performance', state: 'open', per_page: 3,
+            })
+            const recentPerf = openIssues.data.find(i =>
+              i.title.includes('[Latency]') &&
+              Date.now() - new Date(i.created_at).getTime() < 60 * 60 * 1000
+            )
+            if (recentPerf) return
+            await github.rest.issues.create({
+              owner: context.repo.owner, repo: context.repo.repo,
+              title: `🐌 [Latency] Backend responding slowly — ${healthMs}ms`,
+              labels: ['performance', 'backend', 'agent-auto'],
+              body: `## 📡 High Latency Detected\n\nBackend health endpoint responded in **${healthMs}ms** (threshold: 2000ms)\n\n**Investigate:**\n1. Check Railway backend logs for slow queries\n2. DB connection pool exhausted?\n3. Memory usage high? (check /health endpoint memory stats)\n4. Recent deployment causing cold starts?\n\n*Auto-created by API Latency Monitor*`,
+            })

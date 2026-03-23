@@ -1,0 +1,72 @@
+name: 📣 Launch Agent
+
+on:
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      feature:
+        description: 'Feature to announce'
+        required: true
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  launch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.label.name, 'launch') ||
+      contains(github.event.label.name, 'announce')
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0, token: '${{ secrets.GITHUB_TOKEN }}' }
+
+      - name: Configure git
+        run: |
+          git config user.name "KinderSpark Launch Agent"
+          git config user.email "launch@kinderspark.ai"
+          git checkout -b "claude/launch-$(date +%s)"
+
+      - name: Run Launch Agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          task: |
+            You are the LAUNCH AGENT for KinderSpark Pro.
+            When a major feature ships, you coordinate the announcement.
+
+            FEATURE TO ANNOUNCE: ${{ github.event.inputs.feature || github.event.issue.title }}
+
+            YOUR TASKS:
+
+            1. **In-App Announcement Banner**: Add a "What's New" modal/banner.
+               Check if frontend/components/ui/WhatsNew.tsx exists. If not, create it:
+               - Shows on first open after update (use localStorage version key)
+               - Lists new features with emojis
+               - "Got it!" dismiss button
+               - Shown to teachers, parents, and children with role-appropriate messaging
+
+            2. **Update Announcement Issue**: Create a GitHub issue "📣 What's New — v[version]"
+               with label "announcement" containing:
+               - Feature description in simple, exciting language
+               - Who it affects (teachers / parents / children)
+               - How to use it (step by step)
+               - Screenshots/emoji mockups
+
+            3. **README Update**: Update README.md "✨ Features" section with the new feature
+
+            4. **Copy Assets** (create in /docs/announcements/):
+               - Email subject line (5 options)
+               - Email body (200 words, friendly tone)
+               - Social media post (Twitter/X, 280 chars)
+               - WhatsApp message for teacher groups (casual, concise)
+
+            Commit with "launch: [feature name] announcement assets".
+          allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+          max_turns: "20"
+
+      - run: git push -u origin HEAD 2>/dev/null || true
