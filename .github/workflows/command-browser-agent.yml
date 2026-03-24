@@ -1,0 +1,309 @@
+name: 🌐 /browser-agent
+
+# ─────────────────────────────────────────────────────────────────────────────
+# AI-powered Playwright browser agent. Triggered by issue comment:
+#
+#   /browser-agent <task>
+#
+# Examples:
+#   /browser-agent take screenshots of all main pages
+#   /browser-agent test the teacher PIN 1234 login flow
+#   /browser-agent check the app on mobile (375px) and tablet (768px)
+#   /browser-agent fill the student registration form and verify it submits
+#   /browser-agent scrape all navigation links and check for broken pages
+#   /browser-agent verify the dashboard loads within 3 seconds
+#
+# Required secret:  ANTHROPIC_API_KEY
+# Optional secrets: FRONTEND_URL  (defaults to localhost if app is started)
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      task:
+        description: "Browser task for the agent to perform"
+        required: true
+      url:
+        description: "Target URL (leave blank to use FRONTEND_URL secret)"
+        required: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  browser-agent:
+    name: 🌐 Browser Agent
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      startsWith(github.event.comment.body, '/browser-agent')
+
+    steps:
+      # ── 0. Parse task from comment ────────────────────────────────────────
+      - name: Parse task
+        id: parse
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let task = ''
+            let url  = '${{ github.event.inputs.url }}' ||
+                       '${{ secrets.FRONTEND_URL }}'   || ''
+
+            if (context.eventName === 'workflow_dispatch') {
+              task = '${{ github.event.inputs.task }}'
+            } else {
+              const body = context.payload.comment.body.trim()
+              task = body.replace(/^\/browser-agent\s*/i, '').trim()
+            }
+
+            if (!task) {
+              core.setFailed('No task provided. Usage: /browser-agent <describe what to do>')
+              return
+            }
+
+            core.setOutput('task', task)
+            core.setOutput('url',  url)
+            console.log('Task:', task)
+            console.log('URL:',  url || '(none — agent will start local app)')
+
+      # ── 0b. React to comment ──────────────────────────────────────────────
+      - name: React 🤖 to comment
+        if: github.event_name == 'issue_comment'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'eyes'
+            })
+
+      # ── 1. Checkout + Node ────────────────────────────────────────────────
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # ── 2. Install Playwright ─────────────────────────────────────────────
+      - name: Install Playwright + Chromium
+        run: |
+          npm install -g playwright @playwright/test
+          npx playwright install chromium --with-deps
+          echo "✅ Playwright $(npx playwright --version) + Chromium ready"
+
+      # ── 3. Create workspace ───────────────────────────────────────────────
+      - name: Create browser-agent workspace
+        run: |
+          mkdir -p browser-agent/{scripts,screenshots,reports,videos}
+          cat > browser-agent/README.md << 'EOF'
+          # Browser Agent Workspace
+          - scripts/     — Playwright scripts written by the agent
+          - screenshots/ — PNG screenshots captured
+          - reports/     — JSON / HTML test reports
+          - videos/      — Screen recordings (if captured)
+          EOF
+          echo "TARGET_URL=${{ steps.parse.outputs.url }}" >> browser-agent/.env
+          echo "AGENT_WORKSPACE=$GITHUB_WORKSPACE/browser-agent" >> $GITHUB_ENV
+          echo "PLAYWRIGHT_BROWSERS_PATH=$(npx playwright install --dry-run chromium 2>/dev/null | grep -o '[^ ]*chromium[^ ]*' | head -1 || echo '')" >> $GITHUB_ENV
+
+      # ── 4. Claude browser agent ───────────────────────────────────────────
+      - name: Run Claude Browser Agent
+        id: agent
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+          max_turns: "40"
+          task: |
+            You are a **Playwright browser automation agent** for KinderSpark Pro.
+
+            ## Your mission
+            Complete this browser task:
+            > ${{ steps.parse.outputs.task }}
+
+            ## Target
+            - URL: ${{ steps.parse.outputs.url || 'http://localhost:3000' }}
+            - App: KinderSpark Pro (children edtech — Next.js 14 frontend, Express backend)
+            - Key routes: `/` (landing), `/login` (PIN login), `/dashboard`, `/learn`, `/games`
+            - Test PINs: Teacher=1234, Admin=9999, Students=1111/2222/3333/4444/5555
+
+            ## Workspace
+            All your files go in: `${{ env.AGENT_WORKSPACE }}`
+            - `scripts/`     — write your .js Playwright scripts here
+            - `screenshots/` — save all screenshots here
+            - `reports/`     — save JSON/HTML reports here
+            - `videos/`      — optional recordings
+
+            ## How to work
+            1. **Write** a Playwright script in `browser-agent/scripts/task.js`
+            2. **Run** it with `node browser-agent/scripts/task.js`
+            3. **Save screenshots** to `browser-agent/screenshots/`
+            4. **Iterate** — fix errors and retry until the task succeeds
+            5. **Write a report** to `browser-agent/reports/summary.json`
+
+            ## Playwright script template
+            ```js
+            const { chromium } = require('playwright');
+            (async () => {
+              const browser = await chromium.launch({ headless: true });
+              const context = await browser.newContext({
+                viewport: { width: 390, height: 844 }, // iPhone 14 Pro
+                recordVideo: { dir: 'browser-agent/videos/' }, // optional
+              });
+              const page = await context.newPage();
+              // --- your automation here ---
+              await page.goto('TARGET_URL');
+              await page.screenshot({ path: 'browser-agent/screenshots/page.png', fullPage: true });
+              // ---
+              await context.close();
+              await browser.close();
+            })();
+            ```
+
+            ## Rules
+            - Always use `headless: true`
+            - Take a screenshot after every meaningful action (before/after click, form fill, etc.)
+            - Name screenshots descriptively: `01-homepage.png`, `02-login-form.png`, etc.
+            - If the target URL is unreachable, note it and try `http://localhost:3000` instead
+            - If the app needs a PIN login, use Teacher PIN: 1234
+            - Handle errors gracefully — catch and screenshot the error state too
+            - Write `browser-agent/reports/summary.json` at the end:
+              ```json
+              {
+                "task": "...",
+                "status": "success|partial|failed",
+                "steps": ["step 1", "step 2"],
+                "screenshots": ["01-homepage.png"],
+                "findings": ["finding 1", "finding 2"],
+                "errors": []
+              }
+              ```
+
+            ## Viewport presets (use as needed)
+            - Mobile:  `{ width: 390, height: 844 }`  (iPhone 14 Pro)
+            - Tablet:  `{ width: 768, height: 1024 }` (iPad)
+            - Desktop: `{ width: 1440, height: 900 }`
+
+            Start now. Write the script, run it, iterate until complete.
+
+      # ── 5. Upload artifacts ───────────────────────────────────────────────
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-screenshots-${{ github.run_number }}
+          path: browser-agent/screenshots/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload full report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-report-${{ github.run_number }}
+          path: browser-agent/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      # ── 6. Read summary for issue comment ────────────────────────────────
+      - name: Read summary
+        if: always()
+        id: summary
+        run: |
+          if [ -f browser-agent/reports/summary.json ]; then
+            STATUS=$(python3 -c "import json; d=json.load(open('browser-agent/reports/summary.json')); print(d.get('status','unknown'))")
+            STEPS=$(python3 -c "import json; d=json.load(open('browser-agent/reports/summary.json')); print('\n'.join(['- ' + s for s in d.get('steps',[])]))")
+            FINDINGS=$(python3 -c "import json; d=json.load(open('browser-agent/reports/summary.json')); print('\n'.join(['- ' + f for f in d.get('findings',[])]))")
+            ERRORS=$(python3 -c "import json; d=json.load(open('browser-agent/reports/summary.json')); print('\n'.join(['- ' + e for e in d.get('errors',[])]))")
+            SHOTS=$(python3 -c "import json; d=json.load(open('browser-agent/reports/summary.json')); print(', '.join(d.get('screenshots',[])))")
+            echo "status=$STATUS"          >> $GITHUB_OUTPUT
+            echo "steps<<EOF"              >> $GITHUB_OUTPUT
+            echo "$STEPS"                  >> $GITHUB_OUTPUT
+            echo "EOF"                     >> $GITHUB_OUTPUT
+            echo "findings<<EOF"           >> $GITHUB_OUTPUT
+            echo "$FINDINGS"               >> $GITHUB_OUTPUT
+            echo "EOF"                     >> $GITHUB_OUTPUT
+            echo "errors<<EOF"             >> $GITHUB_OUTPUT
+            echo "$ERRORS"                 >> $GITHUB_OUTPUT
+            echo "EOF"                     >> $GITHUB_OUTPUT
+            echo "shots=$SHOTS"            >> $GITHUB_OUTPUT
+          else
+            echo "status=unknown"          >> $GITHUB_OUTPUT
+          fi
+
+          # Count screenshots
+          SHOT_COUNT=$(ls browser-agent/screenshots/*.png 2>/dev/null | wc -l | tr -d ' ')
+          echo "shot_count=$SHOT_COUNT"    >> $GITHUB_OUTPUT
+
+      # ── 7. Comment result on issue ────────────────────────────────────────
+      - name: Comment success on issue
+        if: success() && github.event_name == 'issue_comment'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const status   = '${{ steps.summary.outputs.status }}'
+            const steps    = `${{ steps.summary.outputs.steps }}`
+            const findings = `${{ steps.summary.outputs.findings }}`
+            const errors   = `${{ steps.summary.outputs.errors }}`
+            const shots    = '${{ steps.summary.outputs.shot_count }}'
+            const runUrl   = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
+
+            const emoji = status === 'success' ? '✅' : status === 'partial' ? '⚠️' : '❌'
+
+            const lines = [
+              `${emoji} **Browser Agent complete** — status: \`${status}\``,
+              '',
+              `**Task:** ${decodeURIComponent('${{ steps.parse.outputs.task }}'.replace(/\+/g,' '))}`,
+              '',
+            ]
+
+            if (steps) {
+              lines.push('**Steps taken:**', steps, '')
+            }
+            if (findings) {
+              lines.push('**Findings:**', findings, '')
+            }
+            if (errors) {
+              lines.push('**Errors:**', errors, '')
+            }
+
+            lines.push(
+              `📸 **${shots} screenshot(s)** captured — [download artifacts](${runUrl}#artifacts)`,
+              '',
+              `*[View full run logs](${runUrl})*`,
+            )
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              issue_number: context.payload.issue.number,
+              body: lines.join('\n'),
+            })
+
+      - name: Comment failure on issue
+        if: failure() && github.event_name == 'issue_comment'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              issue_number: context.payload.issue.number,
+              body: [
+                '❌ **Browser Agent failed.**',
+                '',
+                `[View logs](${runUrl}) for details.`,
+                '',
+                'Common fixes:',
+                '- Make sure `ANTHROPIC_API_KEY` secret is set',
+                '- Set `FRONTEND_URL` secret if testing against a live deployment',
+              ].join('\n'),
+            })
