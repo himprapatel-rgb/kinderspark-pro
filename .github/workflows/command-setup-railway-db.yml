@@ -1,0 +1,423 @@
+name: 🤖 /setup-railway-db
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Trigger by commenting  /setup-railway-db  on any issue, or via manual run.
+#
+# Required GitHub secrets:
+#   RAILWAY_TOKEN   – Railway account token (railway.app → Account → Tokens)
+#
+# Optional (auto-wired if present):
+#   ANTHROPIC_API_KEY, JWT_SECRET
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  secrets: write
+
+jobs:
+  setup-db:
+    name: Provision Railway PostgreSQL
+    runs-on: ubuntu-latest
+
+    # Only run when triggered manually OR when the comment is exactly the command
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      startsWith(github.event.comment.body, '/setup-railway-db')
+
+    steps:
+      # ── 0. Acknowledge ────────────────────────────────────────────────────
+      - name: React 🚀 to comment
+        if: github.event_name == 'issue_comment'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'rocket'
+            })
+
+      - uses: actions/checkout@v4
+
+      # ── 1. Validate token ─────────────────────────────────────────────────
+      - name: Validate RAILWAY_TOKEN
+        run: |
+          if [ -z "$RAILWAY_TOKEN" ]; then
+            echo "❌ RAILWAY_TOKEN secret is not set."
+            echo "Add it at: https://github.com/${{ github.repository }}/settings/secrets/actions"
+            exit 1
+          fi
+          echo "✅ RAILWAY_TOKEN present"
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      # ── 2. Discover project + environment via GraphQL ─────────────────────
+      - name: Discover Railway project & environment
+        id: railway
+        run: |
+          python3 - <<'PYEOF'
+          import json, os, sys, urllib.request, urllib.error
+
+          TOKEN   = os.environ["RAILWAY_TOKEN"]
+          API_URL = "https://backboard.railway.app/graphql/v2"
+
+          def gql(query, variables=None):
+              payload = json.dumps({"query": query, "variables": variables or {}}).encode()
+              req = urllib.request.Request(
+                  API_URL,
+                  data=payload,
+                  headers={
+                      "Authorization": f"Bearer {TOKEN}",
+                      "Content-Type": "application/json",
+                  },
+              )
+              try:
+                  with urllib.request.urlopen(req, timeout=30) as r:
+                      return json.loads(r.read())
+              except urllib.error.HTTPError as e:
+                  print(f"HTTP {e.code}: {e.read().decode()}", file=sys.stderr)
+                  sys.exit(1)
+
+          # --- find project ---
+          resp = gql("{ me { projects { edges { node { id name } } } } }")
+          projects = resp["data"]["me"]["projects"]["edges"]
+          project_id = None
+          for edge in projects:
+              n = edge["node"]
+              if "kinderspark" in n["name"].lower():
+                  project_id = n["id"]
+                  print(f"Found project: {n['name']} ({project_id})")
+                  break
+
+          if not project_id:
+              names = [e["node"]["name"] for e in projects]
+              print(f"❌ No 'kinderspark' project found. Available: {names}", file=sys.stderr)
+              sys.exit(1)
+
+          # --- find production environment ---
+          resp2 = gql(
+              "query($id:String!){ project(id:$id){ environments{ edges{ node{ id name } } } } }",
+              {"id": project_id},
+          )
+          envs = resp2["data"]["project"]["environments"]["edges"]
+          env_id = None
+          for edge in envs:
+              n = edge["node"]
+              if n["name"].lower() == "production":
+                  env_id = n["id"]
+                  break
+          if not env_id and envs:
+              env_id = envs[0]["node"]["id"]
+
+          print(f"Environment: {env_id}")
+
+          # --- find backend service ID ---
+          resp3 = gql(
+              "query($id:String!){ project(id:$id){ services{ edges{ node{ id name } } } } }",
+              {"id": project_id},
+          )
+          services = resp3["data"]["project"]["services"]["edges"]
+          backend_id = None
+          for edge in services:
+              n = edge["node"]
+              if "backend" in n["name"].lower():
+                  backend_id = n["id"]
+                  break
+
+          print(f"Backend service: {backend_id}")
+
+          # Write outputs
+          output_file = os.environ["GITHUB_OUTPUT"]
+          with open(output_file, "a") as f:
+              f.write(f"project_id={project_id}\n")
+              f.write(f"env_id={env_id}\n")
+              f.write(f"backend_id={backend_id or ''}\n")
+          PYEOF
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      # ── 3. Provision PostgreSQL plugin ────────────────────────────────────
+      - name: Provision PostgreSQL
+        id: postgres
+        run: |
+          python3 - <<'PYEOF'
+          import json, os, sys, time, urllib.request, urllib.error
+
+          TOKEN      = os.environ["RAILWAY_TOKEN"]
+          PROJECT_ID = os.environ["PROJECT_ID"]
+          ENV_ID     = os.environ["ENV_ID"]
+          API_URL    = "https://backboard.railway.app/graphql/v2"
+
+          def gql(query, variables=None):
+              payload = json.dumps({"query": query, "variables": variables or {}}).encode()
+              req = urllib.request.Request(
+                  API_URL,
+                  data=payload,
+                  headers={
+                      "Authorization": f"Bearer {TOKEN}",
+                      "Content-Type": "application/json",
+                  },
+              )
+              with urllib.request.urlopen(req, timeout=30) as r:
+                  return json.loads(r.read())
+
+          # Check if PostgreSQL plugin already exists
+          resp = gql(
+              "query($id:String!){ project(id:$id){ plugins{ edges{ node{ id name } } } } }",
+              {"id": PROJECT_ID},
+          )
+          plugins = resp["data"]["project"]["plugins"]["edges"]
+          plugin_id = None
+          for edge in plugins:
+              n = edge["node"]
+              if "postgres" in n["name"].lower():
+                  plugin_id = n["id"]
+                  print(f"PostgreSQL plugin already exists: {plugin_id}")
+                  break
+
+          if not plugin_id:
+              print("Creating PostgreSQL plugin...")
+              create_resp = gql(
+                  """mutation($input: PluginCreateInput!) {
+                    pluginCreate(input: $input) { id name }
+                  }""",
+                  {"input": {"projectId": PROJECT_ID, "name": "postgresql"}},
+              )
+              errors = create_resp.get("errors")
+              if errors:
+                  print(f"❌ Plugin create errors: {errors}", file=sys.stderr)
+                  sys.exit(1)
+              plugin_id = create_resp["data"]["pluginCreate"]["id"]
+              print(f"✅ PostgreSQL plugin created: {plugin_id}")
+              print("Waiting 20s for DATABASE_URL to propagate...")
+              time.sleep(20)
+          else:
+              print("✅ PostgreSQL already provisioned")
+
+          output_file = os.environ["GITHUB_OUTPUT"]
+          with open(output_file, "a") as f:
+              f.write(f"plugin_id={plugin_id}\n")
+          PYEOF
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          PROJECT_ID:    ${{ steps.railway.outputs.project_id }}
+          ENV_ID:        ${{ steps.railway.outputs.env_id }}
+
+      # ── 4. Read DATABASE_URL ──────────────────────────────────────────────
+      - name: Read DATABASE_URL from plugin
+        id: db
+        run: |
+          python3 - <<'PYEOF'
+          import json, os, sys, time, urllib.request
+
+          TOKEN      = os.environ["RAILWAY_TOKEN"]
+          PROJECT_ID = os.environ["PROJECT_ID"]
+          ENV_ID     = os.environ["ENV_ID"]
+          PLUGIN_ID  = os.environ["PLUGIN_ID"]
+          API_URL    = "https://backboard.railway.app/graphql/v2"
+
+          def gql(query, variables=None):
+              payload = json.dumps({"query": query, "variables": variables or {}}).encode()
+              req = urllib.request.Request(
+                  API_URL,
+                  data=payload,
+                  headers={
+                      "Authorization": f"Bearer {TOKEN}",
+                      "Content-Type": "application/json",
+                  },
+              )
+              with urllib.request.urlopen(req, timeout=30) as r:
+                  return json.loads(r.read())
+
+          db_url = None
+          for attempt in range(6):
+              resp = gql(
+                  """query($projectId:String!, $environmentId:String!, $pluginId:String!) {
+                    pluginVariables(projectId:$projectId, environmentId:$environmentId, pluginId:$pluginId)
+                  }""",
+                  {"projectId": PROJECT_ID, "environmentId": ENV_ID, "pluginId": PLUGIN_ID},
+              )
+              variables = resp.get("data", {}).get("pluginVariables", {})
+              db_url = variables.get("DATABASE_URL") or variables.get("DATABASE_PRIVATE_URL")
+              if db_url:
+                  print(f"✅ DATABASE_URL obtained (attempt {attempt+1})")
+                  break
+              print(f"Waiting for DATABASE_URL... attempt {attempt+1}/6")
+              time.sleep(10)
+
+          if not db_url:
+              print("❌ Could not retrieve DATABASE_URL after 60s", file=sys.stderr)
+              sys.exit(1)
+
+          output_file = os.environ["GITHUB_OUTPUT"]
+          # Mask the value
+          print(f"::add-mask::{db_url}")
+          with open(output_file, "a") as f:
+              f.write(f"DATABASE_URL={db_url}\n")
+          PYEOF
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          PROJECT_ID:    ${{ steps.railway.outputs.project_id }}
+          ENV_ID:        ${{ steps.railway.outputs.env_id }}
+          PLUGIN_ID:     ${{ steps.postgres.outputs.plugin_id }}
+
+      # ── 5. Wire DATABASE_URL → backend service ────────────────────────────
+      - name: Wire DATABASE_URL to backend
+        if: steps.railway.outputs.backend_id != ''
+        run: |
+          python3 - <<'PYEOF'
+          import json, os, sys, urllib.request
+
+          TOKEN       = os.environ["RAILWAY_TOKEN"]
+          PROJECT_ID  = os.environ["PROJECT_ID"]
+          ENV_ID      = os.environ["ENV_ID"]
+          SERVICE_ID  = os.environ["BACKEND_ID"]
+          DATABASE_URL = os.environ["DATABASE_URL"]
+          API_URL     = "https://backboard.railway.app/graphql/v2"
+
+          def gql(query, variables=None):
+              payload = json.dumps({"query": query, "variables": variables or {}}).encode()
+              req = urllib.request.Request(
+                  API_URL,
+                  data=payload,
+                  headers={
+                      "Authorization": f"Bearer {TOKEN}",
+                      "Content-Type": "application/json",
+                  },
+              )
+              with urllib.request.urlopen(req, timeout=30) as r:
+                  return json.loads(r.read())
+
+          resp = gql(
+              """mutation($input: VariableUpsertInput!) {
+                variableUpsert(input: $input)
+              }""",
+              {"input": {
+                  "projectId": PROJECT_ID,
+                  "environmentId": ENV_ID,
+                  "serviceId": SERVICE_ID,
+                  "name": "DATABASE_URL",
+                  "value": DATABASE_URL,
+              }},
+          )
+          errors = resp.get("errors")
+          if errors:
+              print(f"❌ variableUpsert errors: {errors}", file=sys.stderr)
+              sys.exit(1)
+          print("✅ DATABASE_URL set on kinderspark-backend")
+          PYEOF
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          PROJECT_ID:    ${{ steps.railway.outputs.project_id }}
+          ENV_ID:        ${{ steps.railway.outputs.env_id }}
+          BACKEND_ID:    ${{ steps.railway.outputs.backend_id }}
+          DATABASE_URL:  ${{ steps.db.outputs.DATABASE_URL }}
+
+      # ── 6. Save DATABASE_URL as GitHub secret ─────────────────────────────
+      - name: Save DATABASE_URL as GitHub secret
+        run: |
+          gh secret set DATABASE_URL \
+            --body "${{ steps.db.outputs.DATABASE_URL }}" \
+            --repo "${{ github.repository }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── 7. Trigger backend redeploy ───────────────────────────────────────
+      - name: Trigger backend redeploy
+        if: steps.railway.outputs.backend_id != ''
+        run: |
+          python3 - <<'PYEOF'
+          import json, os, sys, urllib.request
+
+          TOKEN      = os.environ["RAILWAY_TOKEN"]
+          SERVICE_ID = os.environ["BACKEND_ID"]
+          ENV_ID     = os.environ["ENV_ID"]
+          API_URL    = "https://backboard.railway.app/graphql/v2"
+
+          def gql(query, variables=None):
+              payload = json.dumps({"query": query, "variables": variables or {}}).encode()
+              req = urllib.request.Request(
+                  API_URL,
+                  data=payload,
+                  headers={
+                      "Authorization": f"Bearer {TOKEN}",
+                      "Content-Type": "application/json",
+                  },
+              )
+              with urllib.request.urlopen(req, timeout=30) as r:
+                  return json.loads(r.read())
+
+          resp = gql(
+              """mutation($serviceId:String!, $environmentId:String!) {
+                serviceInstanceRedeploy(serviceId:$serviceId, environmentId:$environmentId)
+              }""",
+              {"serviceId": SERVICE_ID, "environmentId": ENV_ID},
+          )
+          errors = resp.get("errors")
+          if errors:
+              print(f"⚠️  Redeploy errors (non-fatal): {errors}")
+          else:
+              print("✅ Backend redeploy triggered")
+          PYEOF
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          BACKEND_ID:    ${{ steps.railway.outputs.backend_id }}
+          ENV_ID:        ${{ steps.railway.outputs.env_id }}
+
+      # ── 8. Comment result on issue ────────────────────────────────────────
+      - name: Comment success on issue
+        if: success() && github.event_name == 'issue_comment'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              issue_number: context.payload.issue.number,
+              body: [
+                "✅ **Railway PostgreSQL is ready!**",
+                "",
+                "| Step | Status |",
+                "|------|--------|",
+                "| PostgreSQL plugin | ✅ provisioned |",
+                "| `DATABASE_URL` → backend service | ✅ wired |",
+                "| `DATABASE_URL` → GitHub secret | ✅ saved |",
+                "| Backend redeploy | ✅ triggered |",
+                "",
+                "Wait ~3 min for the build, then seed the database:",
+                "```",
+                "bash scripts/seed.sh",
+                "```",
+                "",
+                `*[View run](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})*`,
+              ].join("\n")
+            })
+
+      - name: Comment failure on issue
+        if: failure() && github.event_name == 'issue_comment'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              issue_number: context.payload.issue.number,
+              body: [
+                "❌ **Railway DB setup failed.**",
+                "",
+                "Check the [run logs](" +
+                  `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}` +
+                  ") for details.",
+                "",
+                "Common causes:",
+                "- `RAILWAY_TOKEN` secret missing or expired",
+                "- No Railway project named `kinderspark-*` found",
+              ].join("\n")
+            })
