@@ -146,6 +146,7 @@ export default function AgentsDashboard() {
           agentColor: selectedAgent.color,
           agentDesc: selectedAgent.desc,
           agentTrigger: selectedAgent.trigger,
+          agentWorkflow: (selectedAgent as any).workflow,
           message: msg,
         }),
       })

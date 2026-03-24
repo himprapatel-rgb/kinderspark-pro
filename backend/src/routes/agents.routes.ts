@@ -250,13 +250,19 @@ router.post('/trigger', dashboardAuth, async (req, res) => {
   }
 })
 
-// POST /api/agents/ask — commander sends a direct question to a specific agent.
-// Responds instantly using Claude API with the agent's persona.
+// POST /api/agents/ask — commander sends a message to a specific agent.
+// Agent responds instantly via Claude API. If the message is a task/command,
+// Claude appends [TRIGGER_WORKFLOW] and we dispatch the real agent workflow.
 router.post('/ask', dashboardAuth, async (req, res) => {
-  const { agentId, agentName, agentIcon, agentColor, message, agentDesc, agentTrigger } = req.body
+  const { agentId, agentName, agentIcon, agentColor, message,
+          agentDesc, agentTrigger, agentWorkflow } = req.body
   if (!agentId || !message) return res.status(400).json({ error: 'agentId + message required' })
+
+  // Return immediately so the UI feels snappy — all AI work is fire-and-forget
+  res.json({ ok: true })
+
   try {
-    // 1. Save the user's question immediately
+    // 1. Save the user's message
     await mem.sendMessage({
       fromAgentId: 'commander',
       fromName: 'You',
@@ -268,45 +274,55 @@ router.post('/ask', dashboardAuth, async (req, res) => {
       msgType: 'question',
     })
 
-    // 2. Generate instant response via Claude API
-    if (process.env.ANTHROPIC_API_KEY) {
-      // Fire-and-forget so the HTTP response returns quickly
-      ;(async () => {
-        try {
-          const aiRes = await anthropic.messages.create({
-            model: 'claude-haiku-4-5-20251001',
-            max_tokens: 400,
-            system: `You are ${agentName || agentId} (${agentIcon || '🤖'}), an autonomous AI agent for KinderSpark Pro — an educational app for young children.
-Your role: ${agentDesc || agentId}. You are triggered by: ${agentTrigger || 'scheduled jobs'}.
-You are responding to a direct message from the commander (the human developer/admin).
-Be helpful, direct, and concise. Stay in character as ${agentName}. Respond in 1-3 sentences max.
-Do not use markdown headers or bullet points — write naturally as if in a chat.`,
-            messages: [{ role: 'user', content: message }],
-          })
+    if (!process.env.ANTHROPIC_API_KEY) return
 
-          const reply = (aiRes.content[0] as any).text?.trim()
-          if (reply) {
-            await mem.sendMessage({
-              fromAgentId: agentId,
-              fromName: agentName || agentId,
-              fromIcon: agentIcon || '🤖',
-              fromColor: agentColor || '#5E5CE6',
-              toAgentId: 'commander',
-              toName: 'You',
-              message: reply,
-              msgType: 'update',
-            })
-          }
-        } catch (e) {
-          // If Claude API fails, fall through silently
-        }
-      })()
+    // 2. Ask Claude to respond in-character, marking tasks with [TRIGGER_WORKFLOW]
+    const aiRes = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 300,
+      system: `You are ${agentName || agentId} (${agentIcon || '🤖'}), an autonomous AI agent for KinderSpark Pro.
+Your role: ${agentDesc || 'autonomous AI agent'}. Triggered by: ${agentTrigger || 'scheduled jobs and commands'}.
+You are talking directly with the commander (the human developer/owner of the app).
+
+CRITICAL RULES:
+- If the commander sends a TASK or COMMAND ("check X", "fix Y", "make Z better", "improve", "work away", "complete", "audit", "optimize", "review", "analyse", "run X") — respond with a short confirmation of what you're starting RIGHT NOW (1 sentence), then on a new line write exactly: [TRIGGER_WORKFLOW]
+- If they ask a QUESTION ("what are you doing?", "how does X work?", "what's your status?") — answer directly in 1-2 sentences, no [TRIGGER_WORKFLOW].
+- NEVER ask for clarification. If a task is vague, make a sensible assumption and start.
+- Do not use markdown, headers, or bullet points. Write naturally.
+- Stay in character as ${agentName}.`,
+      messages: [{ role: 'user', content: message }],
+    })
+
+    let reply = ((aiRes.content[0] as any).text || '').trim()
+    const shouldTrigger = reply.includes('[TRIGGER_WORKFLOW]')
+    reply = reply.replace('[TRIGGER_WORKFLOW]', '').trim()
+
+    // 3. Post the agent's reply to chat
+    if (reply) {
+      await mem.sendMessage({
+        fromAgentId: agentId,
+        fromName: agentName || agentId,
+        fromIcon: agentIcon || '🤖',
+        fromColor: agentColor || '#5E5CE6',
+        toAgentId: 'commander',
+        toName: 'You',
+        message: reply,
+        msgType: 'update',
+      })
     }
 
-    res.json({ ok: true })
-  } catch (e: any) {
-    res.status(500).json({ error: e.message })
-  }
+    // 4. If it was a task, trigger the real agent workflow
+    if (shouldTrigger && GITHUB_TOKEN && agentWorkflow) {
+      await fetch(`${GH_API}/actions/workflows/${agentWorkflow}/dispatches`, {
+        method: 'POST', headers: GH_HEADERS,
+        body: JSON.stringify({
+          ref: 'main',
+          // send both keys — different workflows use different input names
+          inputs: { task: message, agent_task: message, triggered_by: 'commander' },
+        }),
+      }).catch(() => {/* non-blocking */})
+    }
+  } catch { /* silent — response already sent */ }
 })
 
 // POST /api/agents/issue — create a GitHub issue → agent picks it up
