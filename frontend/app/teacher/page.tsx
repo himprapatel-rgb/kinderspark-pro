@@ -5,7 +5,7 @@ import { useAppStore } from '@/store/appStore'
 import { Loading, InlineEmpty } from '@/components/UIStates'
 import DashboardSidebar from '@/components/DashboardSidebar'
 import TopBarActions from '@/components/TopBarActions'
-import { BarChart3, Bell, Bot, BookOpen, Users } from 'lucide-react'
+import { BarChart3, Bell, Bot, BookOpen, Users, Home, MessageSquare, ClipboardList, CheckSquare } from 'lucide-react'
 import {
   getClasses, getStudents, getHomework, getSyllabuses, getMessages,
   createClass, createStudent, deleteStudent, createHomework, deleteHomework,
@@ -351,13 +351,13 @@ export default function TeacherDashboard() {
 
   if (loading) return <Loading emoji="👩‍🏫" text="Loading your classes…" />
 
-  const TABS: { id: Tab; emoji: string; label: string }[] = [
-    { id: 'home',       emoji: '🏠', label: 'Home' },
-    { id: 'students',   emoji: '👥', label: 'Students' },
-    { id: 'homework',   emoji: '📚', label: 'Homework' },
-    { id: 'attendance', emoji: '✅', label: 'Attend' },
-    { id: 'syllabus',   emoji: '📖', label: 'Syllabus' },
-    { id: 'messages',   emoji: '💬', label: 'Messages' },
+  const TABS: { id: Tab; icon: React.ReactNode; label: string }[] = [
+    { id: 'home',       icon: <Home size={14} />,          label: 'Home' },
+    { id: 'students',   icon: <Users size={14} />,         label: 'Students' },
+    { id: 'homework',   icon: <BookOpen size={14} />,      label: 'Homework' },
+    { id: 'attendance', icon: <CheckSquare size={14} />,   label: 'Attend' },
+    { id: 'syllabus',   icon: <ClipboardList size={14} />, label: 'Syllabus' },
+    { id: 'messages',   icon: <MessageSquare size={14} />, label: 'Messages' },
   ]
 
   const loadAttendance = async () => {
@@ -497,7 +497,7 @@ export default function TeacherDashboard() {
             className={`flex-1 py-3 text-xs font-black transition-colors flex items-center justify-center gap-1.5 relative app-pressable ${tab === t.id ? 'border-b-2' : ''}`}
             style={{ color: tab === t.id ? 'var(--app-accent)' : 'rgba(70, 75, 96, 0.6)', borderColor: tab === t.id ? 'var(--app-accent)' : 'transparent' }}
           >
-            <span>{t.emoji}</span>
+            <span>{t.icon}</span>
             <span className="hidden sm:inline">{t.label}</span>
             {t.id === 'messages' && unreadCount > 0 && (
               <span className="absolute top-1.5 right-1/4 bg-red-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center app-pressable">

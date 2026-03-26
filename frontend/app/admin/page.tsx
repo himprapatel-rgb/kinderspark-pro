@@ -199,7 +199,7 @@ export default function AdminPage() {
               ))}
             </div>
 
-            <div className="text-xs font-bold app-muted mt-4">🏆 TOP 3 PERFORMERS</div>
+            <div className="text-xs font-bold app-muted mt-4 inline-flex items-center gap-1.5"><span className="inline-block translate-y-[1px]">🏆</span> TOP 3 PERFORMERS</div>
             {leaderboard.slice(0, 3).map((s, i) => (
               <div key={s.id} className="rounded-2xl p-4 flex items-center gap-3"
                 style={{ background: i === 0 ? 'rgba(255,215,10,0.06)' : 'var(--app-surface)', border: i === 0 ? '1px solid rgba(255,215,10,0.2)' : i === 1 ? '1px solid rgba(192,192,192,0.2)' : i === 2 ? '1px solid rgba(205,127,50,0.2)' : '1px solid var(--app-border)' }}>

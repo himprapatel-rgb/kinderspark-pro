@@ -6,7 +6,7 @@ import { Loading, InlineEmpty } from '@/components/UIStates'
 import TopBarActions from '@/components/TopBarActions'
 import { getHomework, getMessages, sendMessage, getAISessions, getAttendanceSummary, markAllMessagesRead, completeHomework, createMessageStream } from '@/lib/api'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
-import { BarChart3, Bell, Home, Users } from 'lucide-react'
+import { BarChart3, Bell, Home, Users, MessageSquare } from 'lucide-react'
 
 // SVG ring component for circular progress
 function Ring({ pct, color, size = 80, stroke = 8 }: { pct: number; color: string; size?: number; stroke?: number }) {
@@ -496,7 +496,7 @@ export default function ParentPage() {
         {/* ── MESSAGES TAB ──────────────────────────────────────── */}
         {tab === 2 && (
           <div className="px-3 pt-2">
-            <h2 className="font-black text-lg mb-4">💬 Messages</h2>
+            <h2 className="font-black text-lg mb-4 inline-flex items-center gap-2"><MessageSquare size={16} /> Messages</h2>
             <div className="space-y-3">
               {messages.map(msg => (
                 <div key={msg.id} className="rounded-2xl p-4"
