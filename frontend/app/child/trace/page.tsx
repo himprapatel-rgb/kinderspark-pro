@@ -143,7 +143,7 @@ export default function TracePage() {
     <div className="min-h-screen flex flex-col app-page app-container">
       {/* Header */}
       <div className="flex items-center justify-between p-4">
-        <button className="app-pressable" onClick={() => router.push('/child')} className="app-muted font-bold">← Back</button>
+        <button onClick={() => router.push('/child')} className="app-muted font-bold app-pressable">← Back</button>
         <div className="app-title">✍️ Trace Letters</div>
         <div className="app-muted text-sm font-bold">{completed.size}/26</div>
       </div>
@@ -172,7 +172,7 @@ export default function TracePage() {
           <span>Tracing {currentLetter}</span>
           <span>{progress}%</span>
         </div>
-        <div className="bg-gray-200 rounded-full h-3">
+        <div className="rounded-full h-3" style={{ background: 'rgba(120,120,140,0.18)' }}>
           <div className="h-3 rounded-full transition-all"
             style={{ width: `${progress}%`, background: progress >= 100 ? '#4CAF6A' : '#5B7FE8' }} />
         </div>

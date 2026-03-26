@@ -102,16 +102,16 @@ export default function LessonPage() {
         {confetti && <Confetti />}
         <div className="text-7xl mb-4 animate-bounce">🎉</div>
         <div className="text-3xl font-black mb-2" style={{ color: 'rgb(var(--foreground-rgb))' }}>Amazing!</div>
-        <div className="text-white/70 font-bold text-center mb-6">
+        <div className="app-muted font-bold text-center mb-6">
           You completed {title}!<br />+10 ⭐ stars earned!
         </div>
         <div className="flex gap-3">
-          <button className="app-pressable" onClick={() => { setDone(false); setIdx(0) }}
+          <button onClick={() => { setDone(false); setIdx(0) }}
             className="px-6 py-3 rounded-2xl font-black inline-flex items-center gap-2"
             style={{ background: color, color: '#fff' }}>
             <RotateCcw size={16} /> Play Again
           </button>
-          <button className="app-pressable" onClick={() => router.push('/child')}
+          <button onClick={() => router.push('/child')}
             className="px-6 py-3 rounded-2xl font-black bg-white/20 inline-flex items-center gap-2">
             <Home size={16} /> Home
           </button>
@@ -130,7 +130,7 @@ export default function LessonPage() {
             <span>{title}</span>
             <span>{idx + 1}/{total}</span>
           </div>
-          <div className="bg-gray-200 rounded-full h-2">
+          <div className="rounded-full h-2" style={{ background: 'rgba(120,120,140,0.18)' }}>
             <div className="h-2 rounded-full transition-all" style={{ width: `${pct}%`, background: color }} />
           </div>
         </div>
@@ -187,14 +187,14 @@ function LessonCard({ card, type, color, onSpeak }: any) {
         <>
           <div className="text-8xl font-black text-white mb-2">{card.e}</div>
           <div className="text-4xl font-black text-white mb-4">{card.w}</div>
-          {card.hint && <div className="text-white/60 font-bold">{card.hint}</div>}
+          {card.hint && <div className="app-muted font-bold">{card.hint}</div>}
         </>
       )}
       {type === 'letters' && (
         <>
           <div className="text-9xl font-black text-white mb-2" style={{ color }}>{card.w}</div>
           <div className="text-5xl mb-2">{card.e}</div>
-          {card.hint && <div className="text-white/60 font-bold text-sm">{card.hint}</div>}
+          {card.hint && <div className="app-muted font-bold text-sm">{card.hint}</div>}
         </>
       )}
       {type === 'words' && (
@@ -209,7 +209,7 @@ function LessonCard({ card, type, color, onSpeak }: any) {
               </div>
             ))}
           </div>
-          {card.hint && <div className="text-white/60 font-bold text-sm italic">"{card.hint}"</div>}
+          {card.hint && <div className="app-muted font-bold text-sm italic">"{card.hint}"</div>}
         </>
       )}
       {type === 'colors' && (
@@ -217,14 +217,14 @@ function LessonCard({ card, type, color, onSpeak }: any) {
           <div className="w-24 h-24 rounded-full mx-auto mb-4 shadow-lg"
             style={{ background: getColorHex(card.w) }} />
           <div className="text-3xl font-black text-white mb-2">{card.w}</div>
-          {card.hint && <div className="text-white/60 font-bold text-sm">{card.hint}</div>}
+          {card.hint && <div className="app-muted font-bold text-sm">{card.hint}</div>}
         </>
       )}
       {type === 'items' && (
         <>
           <div className="text-8xl mb-4">{card.e}</div>
           <div className="text-3xl font-black text-white mb-2">{card.w}</div>
-          {card.hint && <div className="text-white/60 font-bold text-sm">{card.hint}</div>}
+          {card.hint && <div className="app-muted font-bold text-sm">{card.hint}</div>}
         </>
       )}
     </div>

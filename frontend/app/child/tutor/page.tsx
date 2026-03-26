@@ -156,7 +156,7 @@ export default function TutorPage() {
         <div className="text-3xl font-black mb-1">
           {accuracy >= 80 ? 'Excellent!' : accuracy >= 60 ? 'Good Job!' : 'Keep Trying!'}
         </div>
-        <div className="text-white/60 font-bold mb-6">{topicInfo?.label} Quiz Complete</div>
+        <div className="app-muted font-bold mb-6">{topicInfo?.label} Quiz Complete</div>
 
         {/* Stats */}
         <div className="w-full rounded-2xl p-5 mb-5" style={{ background: 'var(--app-surface)', border: '1px solid rgba(120,120,140,0.2)' }}>
@@ -258,7 +258,7 @@ export default function TutorPage() {
 
       {/* Progress bar */}
       <div className="px-4 mb-4">
-        <div className="bg-gray-200 rounded-full h-2">
+        <div className="rounded-full h-2" style={{ background: 'rgba(120,120,140,0.18)' }}>
           <div className="h-2 rounded-full transition-all"
             style={{ width: `${(qIdx / TOTAL_Q) * 100}%`, background: topicInfo?.color || '#5B7FE8' }} />
         </div>

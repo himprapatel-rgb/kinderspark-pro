@@ -105,7 +105,7 @@ export default function DrawPage() {
     <div className="min-h-screen flex flex-col app-page app-container">
       {/* Header */}
       <div className="flex items-center justify-between p-4">
-        <button className="app-pressable" onClick={() => router.push('/child')} className="app-muted font-bold">← Back</button>
+        <button onClick={() => router.push('/child')} className="app-muted font-bold app-pressable">← Back</button>
         <div className="app-title">🎨 Drawing Canvas</div>
         <button onClick={clearCanvas} className="text-orange-400 font-bold text-sm app-pressable">Clear</button>
       </div>
