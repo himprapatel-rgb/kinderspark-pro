@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
+import { Loading, InlineEmpty } from '@/components/UIStates'
 import {
   getClasses, getStudents, getHomework, getSyllabuses, getMessages,
   createClass, createStudent, deleteStudent, createHomework, deleteHomework,
@@ -345,13 +346,7 @@ export default function TeacherDashboard() {
     return { total: students.length, done: completedCount }
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--app-bg)' }}>
-        <div className="font-bold text-lg" style={{ color: 'rgba(70, 75, 96, 0.85)' }}>Loading...</div>
-      </div>
-    )
-  }
+  if (loading) return <Loading emoji="👩‍🏫" text="Loading your classes…" />
 
   const TABS: { id: Tab; emoji: string; label: string }[] = [
     { id: 'home',       emoji: '🏠', label: 'Home' },
@@ -889,9 +884,7 @@ export default function TeacherDashboard() {
                   </div>
                 )
               })}
-              {students.length === 0 && (
-                <div className="text-center text-white/30 font-bold py-8">No students in this class</div>
-              )}
+              {students.length === 0 && <InlineEmpty emoji="👥" text="No students in this class" />}
             </div>
           </div>
         )}
@@ -1133,9 +1126,7 @@ export default function TeacherDashboard() {
                   </div>
                 )
               })}
-              {homework.length === 0 && (
-                <div className="text-center text-white/30 font-bold py-8">No homework assigned yet</div>
-              )}
+              {homework.length === 0 && <InlineEmpty emoji="📚" text="No homework assigned yet" />}
             </div>
 
             {/* Due-tomorrow reminders */}
@@ -1246,9 +1237,7 @@ export default function TeacherDashboard() {
                   )}
                 </div>
               ))}
-              {syllabuses.length === 0 && (
-                <div className="text-center text-white/30 font-bold py-8">No syllabuses yet</div>
-              )}
+              {syllabuses.length === 0 && <InlineEmpty emoji="📖" text="No syllabuses yet" />}
             </div>
           </div>
         )}
@@ -1299,9 +1288,7 @@ export default function TeacherDashboard() {
                   <div className="text-white/60 text-xs leading-relaxed">{msg.body}</div>
                 </div>
               ))}
-              {messages.length === 0 && (
-                <div className="text-center text-white/30 font-bold py-8">No messages yet</div>
-              )}
+              {messages.length === 0 && <InlineEmpty emoji="💬" text="No messages yet" />}
             </div>
           </div>
         )}

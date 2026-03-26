@@ -70,6 +70,8 @@ const DEV_LOGINS = [
   { label: 'Kid',     emoji: '🧒',  role: 'child',   pin: '1111', color: '#FF9F0A' },
 ]
 
+const IS_DEV = process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_SHOW_DEV_TOOLS === 'true'
+
 export default function LoginPage() {
   const router = useRouter()
   const user = useAppStore((s) => s.user)
@@ -242,58 +244,62 @@ export default function LoginPage() {
         ))}
       </div>
 
-      {/* ── Dev Links ── */}
-      <div className="w-full max-w-[360px] mt-6 relative z-10">
-        <div style={{ background: 'rgba(255,200,0,0.07)', border: '1px solid rgba(255,200,0,0.2)', borderRadius: 12, padding: '10px 14px', marginBottom: 12 }}>
-          <div style={{ fontSize: 10, fontWeight: 900, color: 'rgba(255,200,0,0.6)', letterSpacing: '0.15em', marginBottom: 8 }}>🔗 DEV LINKS</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            {[
-              { label: '🛸 Agent Dashboard', path: '/dashboard/agents' },
-              { label: '⚙️ Admin',            path: '/admin' },
-              { label: '👩‍🏫 Teacher',         path: '/teacher' },
-              { label: '👨‍👩‍👧 Parent',          path: '/parent' },
-              { label: '🧒 Child',            path: '/child' },
-              { label: '🔧 Dev Panel',        path: '/dashboard/agents' },
-            ].map(link => (
-              <button key={link.path} onClick={() => router.push(link.path)} className="app-pressable" style={{
-                fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 8,
-                background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
-                color: 'rgba(255,255,255,0.7)', cursor: 'pointer', whiteSpace: 'nowrap',
-              }}>{link.label}</button>
-            ))}
+      {/* ── Dev Links (hidden in production) ── */}
+      {IS_DEV && (
+        <div className="w-full max-w-[360px] mt-6 relative z-10">
+          <div style={{ background: 'rgba(255,200,0,0.07)', border: '1px solid rgba(255,200,0,0.2)', borderRadius: 12, padding: '10px 14px', marginBottom: 12 }}>
+            <div style={{ fontSize: 10, fontWeight: 900, color: 'rgba(255,200,0,0.6)', letterSpacing: '0.15em', marginBottom: 8 }}>🔗 DEV LINKS</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {[
+                { label: '🛸 Agent Dashboard', path: '/dashboard/agents' },
+                { label: '⚙️ Admin',            path: '/admin' },
+                { label: '👩‍🏫 Teacher',         path: '/teacher' },
+                { label: '👨‍👩‍👧 Parent',          path: '/parent' },
+                { label: '🧒 Child',            path: '/child' },
+                { label: '🔧 Dev Panel',        path: '/dashboard/agents' },
+              ].map(link => (
+                <button key={link.path} onClick={() => router.push(link.path)} className="app-pressable" style={{
+                  fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 8,
+                  background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+                  color: 'rgba(255,255,255,0.7)', cursor: 'pointer', whiteSpace: 'nowrap' as const,
+                }}>{link.label}</button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* ── Dev Quick Login ── */}
-      <div className="w-full max-w-[360px] relative z-10">
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 16 }}>
-          <div style={{ textAlign: 'center', fontSize: 10, fontWeight: 900, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.2em', marginBottom: 10 }}>
-            ⚡ DEV QUICK LOGIN
-          </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            {DEV_LOGINS.map(item => (
-              <button
-                key={item.role}
-                onClick={() => quickLogin(item)}
-                disabled={devLoading === item.role}
-                className="app-pressable"
-                style={{
-                  flex: 1, padding: '8px 4px', borderRadius: 10, border: 'none',
-                  background: devLoading === item.role ? 'rgba(255,255,255,0.05)' : item.color + '22',
-                  color: item.color, fontWeight: 900, fontSize: 10, cursor: 'pointer',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-                  border: `1px solid ${item.color}33`,
-                  transition: 'all 0.2s',
-                }}
-              >
-                <span style={{ fontSize: 18 }}>{devLoading === item.role ? '⏳' : item.emoji}</span>
-                {item.label}
-              </button>
-            ))}
+      {/* ── Dev Quick Login (hidden in production) ── */}
+      {IS_DEV && (
+        <div className="w-full max-w-[360px] relative z-10">
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 16 }}>
+            <div style={{ textAlign: 'center', fontSize: 10, fontWeight: 900, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.2em', marginBottom: 10 }}>
+              ⚡ DEV QUICK LOGIN
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {DEV_LOGINS.map(item => (
+                <button
+                  key={item.role}
+                  onClick={() => quickLogin(item)}
+                  disabled={devLoading === item.role}
+                  className="app-pressable"
+                  style={{
+                    flex: 1, padding: '8px 4px', borderRadius: 10,
+                    background: devLoading === item.role ? 'rgba(255,255,255,0.05)' : item.color + '22',
+                    color: item.color, fontWeight: 900, fontSize: 10, cursor: 'pointer',
+                    display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: 3,
+                    border: `1px solid ${item.color}33`,
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  <span style={{ fontSize: 18 }}>{devLoading === item.role ? '⏳' : item.emoji}</span>
+                  {item.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* ── Footer ── */}
       <div className="mt-12 text-center relative z-10 animate-fade-in">

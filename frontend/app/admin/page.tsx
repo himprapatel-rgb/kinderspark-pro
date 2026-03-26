@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore as useStore } from '@/store/appStore'
+import { Loading, InlineEmpty } from '@/components/UIStates'
 import { getAdminStats, getAdminLeaderboard, getClasses, getClassAnalytics } from '@/lib/api'
 
 export default function AdminPage() {
@@ -41,13 +42,7 @@ export default function AdminPage() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--app-bg)' }}>
-        <div className="font-bold animate-pulse" style={{ color: 'rgba(70, 75, 96, 0.85)' }}>Loading admin panel...</div>
-      </div>
-    )
-  }
+  if (loading) return <Loading emoji="⚙️" text="Loading admin panel…" />
 
   const TABS = ['📊 Overview', '🏆 Leaderboard', '🏫 Classes', '📈 AI Stats']
   const medals = ['🥇', '🥈', '🥉']
@@ -277,9 +272,7 @@ export default function AdminPage() {
                 </div>
               )
             })}
-            {classes.length === 0 && (
-              <div className="text-center text-white/30 font-bold py-10">No classes yet.</div>
-            )}
+            {classes.length === 0 && <InlineEmpty emoji="🏫" text="No classes yet" />}
           </div>
         )}
 
@@ -346,9 +339,7 @@ export default function AdminPage() {
                 </div>
               </div>
             ))}
-            {classAnalytics.length === 0 && (
-              <div className="text-center text-white/30 font-bold py-10">No analytics data yet.</div>
-            )}
+            {classAnalytics.length === 0 && <InlineEmpty emoji="📈" text="No analytics data yet" />}
           </div>
         )}
       </div>

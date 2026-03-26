@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore as useStore } from '@/store/appStore'
+import { Loading, InlineEmpty } from '@/components/UIStates'
 import { getHomework, getMessages, sendMessage, getAISessions, getAttendanceSummary, markAllMessagesRead, completeHomework, createMessageStream } from '@/lib/api'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 
@@ -202,16 +203,7 @@ export default function ParentPage() {
     } catch (e: any) { alert(e.message) }
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--app-bg)' }}>
-        <div className="flex flex-col items-center gap-3">
-          <div className="text-4xl animate-bounce">👪</div>
-          <div className="font-bold" style={{ color: 'rgba(70, 75, 96, 0.85)' }}>Loading...</div>
-        </div>
-      </div>
-    )
-  }
+  if (loading) return <Loading emoji="👪" text="Loading your child's data…" />
 
   const TABS = [
     { label: '🏠 Home', idx: 0 },
@@ -498,9 +490,7 @@ export default function ParentPage() {
               </div>
             )}
 
-            {aiSessions.length === 0 && homework.length === 0 && (
-              <div className="text-center text-white/30 font-bold py-10">No activity yet.</div>
-            )}
+            {aiSessions.length === 0 && homework.length === 0 && <InlineEmpty emoji="📊" text="No activity yet" />}
           </div>
         )}
 
@@ -528,9 +518,7 @@ export default function ParentPage() {
                   </button>
                 </div>
               ))}
-              {messages.length === 0 && (
-                <div className="text-center text-white/30 font-bold py-10">No messages yet.</div>
-              )}
+              {messages.length === 0 && <InlineEmpty emoji="💬" text="No messages yet" />}
             </div>
           </div>
         )}
