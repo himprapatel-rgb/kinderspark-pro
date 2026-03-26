@@ -123,7 +123,7 @@ export default function LessonPage() {
     <div className="min-h-screen flex flex-col app-page app-container">
       {/* Header */}
       <div className="flex items-center gap-3 p-4">
-        <button className="app-pressable" onClick={() => router.push('/child')} className="text-white/60 font-bold">← Back</button>
+        <button onClick={() => router.push('/child')} className="text-white/85 font-bold app-pressable">← Back</button>
         <div className="flex-1">
           <div className="flex justify-between text-xs font-bold app-muted mb-1">
             <span>{title}</span>

@@ -528,15 +528,15 @@ export default function ParentPage() {
           <div className="w-full max-w-[430px] rounded-t-3xl p-5 pb-10" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
             <div className="flex justify-between items-center mb-3">
               <h3 className="font-black">Reply</h3>
-              <button onClick={() => setShowReply(null)} className="text-white/50 text-2xl leading-none app-pressable">×</button>
+              <button onClick={() => setShowReply(null)} className="app-muted text-2xl leading-none app-pressable">×</button>
             </div>
             <div className="text-xs font-bold app-muted mb-3">Re: {showReply.subject}</div>
             <textarea placeholder="Your message..." value={replyBody} rows={5}
               onChange={e => setReplyBody(e.target.value)}
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 font-bold text-sm resize-none outline-none mb-3" />
+              className="app-input mb-3 resize-none" />
             <button onClick={handleReply}
               className="w-full py-3 rounded-xl font-black app-pressable"
-              style={{ background: '#4CAF6A' }}>
+              style={{ background: 'var(--app-success)', color: '#fff' }}>
               Send Reply
             </button>
           </div>

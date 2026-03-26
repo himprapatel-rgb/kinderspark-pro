@@ -65,7 +65,7 @@ export default function ShopPage() {
     <div className="min-h-screen pb-8 app-page app-container">
       {/* Header */}
       <div className="m-3 rounded-3xl p-5" style={{ background: 'linear-gradient(135deg, #F5A623, #E05252)' }}>
-        <button className="app-pressable" onClick={() => router.push('/child')} className="text-white/70 font-bold text-sm mb-3">← Back</button>
+        <button onClick={() => router.push('/child')} className="text-white/85 font-bold text-sm mb-3 app-pressable">← Back</button>
         <div className="text-2xl font-black">🛍️ Star Shop</div>
         <div className="text-white/80 font-bold">You have <span className="font-black text-yellow-300">⭐ {stars}</span> stars</div>
       </div>

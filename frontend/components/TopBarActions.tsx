@@ -27,12 +27,8 @@ export default function TopBarActions({
   const logout = useAppStore(s => s.logout)
 
   const btnClass = variant === 'light'
-    ? 'flex items-center justify-center rounded-xl text-sm font-bold active:scale-95 transition-all app-pressable'
-    : 'flex items-center justify-center rounded-xl text-sm font-bold active:scale-95 transition-all app-pressable'
-
-  const btnStyle = variant === 'light'
-    ? { background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.25)', color: '#fff', backdropFilter: 'blur(8px)' }
-    : { background: 'var(--app-surface)', border: '1px solid var(--app-border)', color: 'rgb(var(--foreground-rgb))' }
+    ? 'flex items-center justify-center rounded-xl text-sm font-bold active:scale-95 transition-all app-pressable app-btn-glass'
+    : 'flex items-center justify-center rounded-xl text-sm font-bold active:scale-95 transition-all app-pressable app-btn-soft'
 
   return (
     <div className="flex items-center gap-2">
@@ -42,7 +38,6 @@ export default function TopBarActions({
         <button
           onClick={() => router.push(settingsHref)}
           className={`${btnClass} w-10 h-10`}
-          style={btnStyle}
           title="Settings"
         >
           ⚙️
@@ -52,7 +47,6 @@ export default function TopBarActions({
       <button
         onClick={() => { logout(); router.push('/') }}
         className={`${btnClass} h-10 px-3 gap-1.5`}
-        style={btnStyle}
         title="Sign out"
       >
         <span>🚪</span>

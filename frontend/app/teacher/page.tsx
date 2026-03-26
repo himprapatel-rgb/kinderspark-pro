@@ -454,8 +454,7 @@ export default function TeacherDashboard() {
             extra={
               <button
                 onClick={() => router.push('/teacher/reports')}
-                className="flex items-center justify-center rounded-xl h-10 px-3 gap-1.5 text-sm font-bold active:scale-95 transition-all app-pressable"
-                style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.25)', color: '#fff', backdropFilter: 'blur(8px)' }}
+                className="flex items-center justify-center rounded-xl h-10 px-3 gap-1.5 text-sm font-bold active:scale-95 transition-all app-pressable app-btn-glass"
               >
                 📊 <span className="hidden sm:inline text-xs">Report</span>
               </button>
