@@ -177,10 +177,22 @@ export default function ChildPage() {
                 <h1 className="text-2xl font-black leading-tight">{student?.name}!</h1>
               </div>
             </div>
-            <div className="flex flex-col gap-1.5 items-end">
-              <button onClick={() => router.push('/child/shop')} className="glass-btn app-pressable">🛍️ Shop</button>
-              <button onClick={() => router.push('/child/settings')} className="glass-btn app-pressable">⚙️</button>
-              <button onClick={() => { logout(); router.push('/') }} className="text-white/30 text-[10px] font-bold mt-0.5 app-pressable">Logout</button>
+            <div className="flex gap-2 items-center">
+              <button onClick={() => router.push('/child/shop')}
+                className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-black active:scale-95 transition-all app-pressable"
+                style={{ background: 'rgba(255,255,255,0.25)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', backdropFilter: 'blur(8px)' }}>
+                🛍️ Shop
+              </button>
+              <button onClick={() => router.push('/child/settings')}
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-lg active:scale-95 transition-all app-pressable"
+                style={{ background: 'rgba(255,255,255,0.25)', border: '1px solid rgba(255,255,255,0.3)', backdropFilter: 'blur(8px)' }}>
+                ⚙️
+              </button>
+              <button onClick={() => { logout(); router.push('/') }}
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black active:scale-95 transition-all app-pressable"
+                style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(8px)' }}>
+                🚪
+              </button>
             </div>
           </div>
 
