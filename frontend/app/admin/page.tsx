@@ -143,7 +143,7 @@ export default function AdminPage() {
               const avgStars = stats.totalStudents ? Math.round(stats.totalStars / stats.totalStudents) : 0
               const healthScore = Math.min(100, Math.round((avgStars / 500) * 40 + (stats.totalSyllabuses / 20) * 30 + (Math.min(stats.totalStudents, 50) / 50) * 30))
               return (
-                <div className="rounded-2xl p-5" style={{ background: 'linear-gradient(135deg, #1a0a3a, #2d1b69)' }}>
+                <div className="rounded-2xl p-5" style={{ background: 'linear-gradient(135deg, rgba(94,92,230,0.08), rgba(191,90,242,0.06))', border: '1px solid rgba(94,92,230,0.2)' }}>
                   <div className="flex items-center justify-between mb-3">
                     <div className="font-black">🏫 School Health Score</div>
                     <div className="text-xs font-bold app-muted">{stats.totalClasses} classes</div>
@@ -151,7 +151,7 @@ export default function AdminPage() {
                   <div className="flex items-end gap-4">
                     <div className="font-black" style={{ fontSize: '3rem', lineHeight: 1 }}>{healthScore}</div>
                     <div className="flex-1 pb-2">
-                      <div className="bg-white/10 rounded-full h-4">
+                      <div className="bg-gray-200 rounded-full h-4">
                         <div className="h-4 rounded-full transition-all" style={{
                           width: `${healthScore}%`,
                           background: healthScore >= 70 ? '#30D158' : healthScore >= 40 ? '#FF9F0A' : '#FF453A'
@@ -177,7 +177,7 @@ export default function AdminPage() {
                     <div className="font-black text-sm">{m.icon} {m.label}</div>
                     <div className="font-black">{typeof m.value === 'number' ? m.value.toLocaleString() : m.value}</div>
                   </div>
-                  <div className="bg-white/10 rounded-full h-2.5">
+                  <div className="bg-gray-200 rounded-full h-2.5">
                     <div className="h-2.5 rounded-full transition-all"
                       style={{ width: Math.min(100, Math.round(m.value / m.max * 100)) + '%', background: m.color }} />
                   </div>
@@ -261,7 +261,7 @@ export default function AdminPage() {
                       <div className="flex justify-between text-xs font-bold text-white/40 mb-1">
                         <span>HW completion</span><span>{ca.hwCompletionRate}%</span>
                       </div>
-                      <div className="bg-white/10 rounded-full h-1.5">
+                      <div className="bg-gray-200 rounded-full h-1.5">
                         <div className="h-1.5 rounded-full" style={{ width: `${ca.hwCompletionRate}%`, background: ca.hwCompletionRate >= 70 ? '#30D158' : '#FF9F0A' }} />
                       </div>
                       {ca.aiHomeworkCount > 0 && (
@@ -279,7 +279,7 @@ export default function AdminPage() {
         {tab === 3 && (
           <div className="space-y-4">
             {/* School-wide AI summary */}
-            <div className="rounded-2xl p-5" style={{ background: 'linear-gradient(135deg, #1a0a3a, #2d1b69)' }}>
+            <div className="rounded-2xl p-5" style={{ background: 'linear-gradient(135deg, rgba(94,92,230,0.08), rgba(191,90,242,0.06))', border: '1px solid rgba(94,92,230,0.2)' }}>
               <div className="font-black mb-3">🤖 School-Wide AI Usage</div>
               <div className="grid grid-cols-3 gap-3 text-center">
                 <div>
@@ -333,7 +333,7 @@ export default function AdminPage() {
                 </div>
                 {/* HW completion bar */}
                 <div className="mt-3">
-                  <div className="bg-white/10 rounded-full h-2">
+                  <div className="bg-gray-200 rounded-full h-2">
                     <div className="h-2 rounded-full transition-all" style={{ width: `${ca.hwCompletionRate}%`, background: ca.hwCompletionRate >= 70 ? '#30D158' : '#FF9F0A' }} />
                   </div>
                 </div>

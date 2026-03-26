@@ -17,8 +17,8 @@
 /* ── Custom scrollbar ────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+::-webkit-scrollbar-thumb { background: rgba(120,120,140,0.2); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(120,120,140,0.35); }
 
 /* ── Base ────────────────────────────────────────────────────────────────────── */
 * { -webkit-tap-highlight-color: transparent; }
@@ -180,25 +180,25 @@ body {
 .delay-500 { animation-delay: 500ms; }
 .delay-600 { animation-delay: 600ms; }
 
-/* ── Glass morphism ──────────────────────────────────────────────────────────── */
+/* ── Glass morphism (light-first) ─────────────────────────────────────────── */
 .glass {
-  background: rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.75);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--app-border);
 }
 .glass-dark {
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.06);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--app-border);
 }
 .glass-hover {
   transition: all 0.25s ease;
 }
 .glass-hover:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(120,120,140,0.3);
   transform: translateY(-2px);
 }
 
@@ -239,9 +239,9 @@ body {
 /* ── Card polish ─────────────────────────────────────────────────────────────── */
 .card-elevated {
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  box-shadow: 0 4px 16px rgba(20, 25, 45, 0.06);
   transition: all 0.25s cubic-bezier(.16,1,.3,1);
 }
 .card-elevated:active { transform: scale(0.98); }
@@ -267,10 +267,10 @@ body {
 
 /* ── Tab bar ─────────────────────────────────────────────────────────────────── */
 .tab-bar {
-  background: rgba(18, 18, 30, 0.92);
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border-top: 1px solid rgba(255,255,255,0.08);
+  border-top: 1px solid var(--app-border);
 }
 
 /* ── Star badge (child dashboard) ───────────────────────────────────────────── */
@@ -301,11 +301,6 @@ body {
 .glass-btn:active { transform: scale(0.95); }
 
 /* ── Progress bar polish ─────────────────────────────────────────────────────── */
-.progress-track {
-  background: rgba(255,255,255,0.1);
-  border-radius: 99px;
-  overflow: hidden;
-}
 .progress-fill {
   border-radius: 99px;
   position: relative;
@@ -323,17 +318,17 @@ body {
 
 /* ── Modal ───────────────────────────────────────────────────────────────────── */
 .modal-sheet {
-  background: linear-gradient(180deg, #1e1e32 0%, #16162a 100%);
-  border-top: 1px solid rgba(255,255,255,0.1);
-  box-shadow: 0 -24px 80px rgba(0,0,0,0.6);
+  background: var(--app-surface);
+  border-top: 1px solid var(--app-border);
+  box-shadow: 0 -12px 40px rgba(20, 25, 45, 0.15);
 }
 
 /* ── Input fields ─────────────────────────────────────────────────────────────  */
 .input-field {
-  background: rgba(255,255,255,0.06);
-  border: 1.5px solid rgba(255,255,255,0.12);
+  background: rgba(70, 75, 96, 0.06);
+  border: 1.5px solid var(--app-border);
   border-radius: 14px;
-  color: white;
+  color: rgb(var(--foreground-rgb));
   padding: 12px 16px;
   font-size: 14px;
   font-weight: 600;
@@ -342,10 +337,10 @@ body {
 }
 .input-field:focus {
   border-color: rgba(94,92,230,0.7);
-  background: rgba(255,255,255,0.09);
-  box-shadow: 0 0 0 3px rgba(94,92,230,0.15);
+  background: rgba(70, 75, 96, 0.03);
+  box-shadow: 0 0 0 3px rgba(94,92,230,0.12);
 }
-.input-field::placeholder { color: rgba(255,255,255,0.3); }
+.input-field::placeholder { color: rgba(70, 75, 96, 0.4); }
 
 /* ── Orb backgrounds ──────────────────────────────────────────────────────────── */
 .orb {
@@ -364,6 +359,25 @@ html.high-contrast * { border-color: #fff !important; outline-color: #fff !impor
   width: 8px; height: 8px;
   background: #FF453A;
   border-radius: 50%;
-  border: 1.5px solid #0d0d1a;
+  border: 1.5px solid var(--app-surface);
   animation: glow-pulse 2s ease infinite;
+}
+
+/* ── Responsive page container ────────────────────────────────────────────────── */
+.app-container {
+  max-width: 480px;
+  margin: 0 auto;
+}
+@media (min-width: 768px) {
+  .app-container { max-width: 720px; }
+}
+@media (min-width: 1024px) {
+  .app-container { max-width: 960px; }
+}
+
+/* ── Shimmer (light-first) ────────────────────────────────────────────────────── */
+.progress-track {
+  background: rgba(70,75,96,0.1);
+  border-radius: 99px;
+  overflow: hidden;
 }

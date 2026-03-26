@@ -19,7 +19,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
-      <body className="font-kid bg-gradient-to-b from-spark-yellow/10 to-white min-h-screen">
+      <body className="font-nunito min-h-screen" style={{ background: 'var(--app-bg)' }}>
         <AccessibilityProvider>
           {children}
           <ThemeCustomizer />

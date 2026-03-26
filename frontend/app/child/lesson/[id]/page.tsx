@@ -129,7 +129,7 @@ export default function LessonPage() {
             <span>{title}</span>
             <span>{idx + 1}/{total}</span>
           </div>
-          <div className="bg-white/10 rounded-full h-2">
+          <div className="bg-gray-200 rounded-full h-2">
             <div className="h-2 rounded-full transition-all" style={{ width: `${pct}%`, background: color }} />
           </div>
         </div>

@@ -172,7 +172,7 @@ export default function TracePage() {
           <span>Tracing {currentLetter}</span>
           <span>{progress}%</span>
         </div>
-        <div className="bg-white/10 rounded-full h-3">
+        <div className="bg-gray-200 rounded-full h-3">
           <div className="h-3 rounded-full transition-all"
             style={{ width: `${progress}%`, background: progress >= 100 ? '#30D158' : '#5E5CE6' }} />
         </div>

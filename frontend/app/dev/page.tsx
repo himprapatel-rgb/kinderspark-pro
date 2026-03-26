@@ -445,7 +445,7 @@ function MissionControl() {
         {/* Right: Live Feed */}
         <div className="w-80 flex-shrink-0">
           <div className="sticky top-4">
-            <div className="rounded-2xl p-4 mb-4" style={{ background: 'rgba(94,92,230,0.08)', border: '1px solid rgba(94,92,230,0.2)' }}>
+            <div className="rounded-2xl p-4 mb-4" style={{ background: 'rgba(94,92,230,0.05)', border: '1px solid rgba(94,92,230,0.2)' }}>
               <p className="font-black text-sm mb-2">📋 Send Task to Agent</p>
               <div className="flex gap-2 mb-2">
                 {['frontend', 'backend', 'claude-build'].map(l => (

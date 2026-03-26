@@ -257,7 +257,7 @@ export default function TutorPage() {
 
       {/* Progress bar */}
       <div className="px-4 mb-4">
-        <div className="bg-white/10 rounded-full h-2">
+        <div className="bg-gray-200 rounded-full h-2">
           <div className="h-2 rounded-full transition-all"
             style={{ width: `${(qIdx / TOTAL_Q) * 100}%`, background: topicInfo?.color || '#5E5CE6' }} />
         </div>

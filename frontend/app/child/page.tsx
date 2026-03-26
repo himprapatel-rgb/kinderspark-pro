@@ -232,7 +232,7 @@ export default function ChildPage() {
               <span className="text-white/80 text-xs font-black uppercase tracking-wide">Overall Progress</span>
               <span className="font-black text-xs">{overallPct}%</span>
             </div>
-            <div className="h-4 rounded-full overflow-hidden" style={{ background: 'rgba(0,0,0,0.25)' }}>
+            <div className="h-4 rounded-full overflow-hidden" style={{ background: 'rgba(120,120,140,0.15)' }}>
               <div
                 className="h-full rounded-full relative overflow-hidden transition-all duration-1000"
                 style={{
@@ -300,7 +300,7 @@ export default function ChildPage() {
           <div
             className="rounded-3xl overflow-hidden"
             style={{
-              background: 'linear-gradient(135deg, #2d1200, #3d1a00)',
+              background: 'linear-gradient(135deg, rgba(255,159,10,0.08), rgba(255,107,53,0.06))', border: '1px solid rgba(255,159,10,0.2)',
               border: '1.5px solid rgba(255,159,10,0.35)',
               boxShadow: '0 8px 32px rgba(255,107,53,0.2)',
             }}

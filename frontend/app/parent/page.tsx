@@ -236,7 +236,7 @@ export default function ParentPage() {
         {tab === 0 && (
           <div>
             {/* Hero card */}
-            <div className="m-3 rounded-3xl p-5 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #1a3a1a, #2a5a2a)' }}>
+            <div className="m-3 rounded-3xl p-5 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(48,209,88,0.08), rgba(67,198,172,0.06))', border: '1px solid rgba(48,209,88,0.2)' }}>
               <div className="absolute right-0 top-0 w-40 h-40 rounded-full bg-white/5 -translate-y-12 translate-x-12" />
               <div className="absolute right-8 bottom-0 w-24 h-24 rounded-full bg-white/3 translate-y-8" />
               <div className="flex justify-between items-start relative">
@@ -348,7 +348,7 @@ export default function ParentPage() {
 
             {/* Push notification opt-in banner */}
             {notifPermission !== 'granted' && notifPermission !== 'denied' && (
-              <div className="mx-3 mb-4 rounded-2xl p-4 flex items-center gap-3" style={{ background: 'linear-gradient(135deg, #1a2a1a, #2a4a2a)', border: '1px solid #30D15840' }}>
+              <div className="mx-3 mb-4 rounded-2xl p-4 flex items-center gap-3" style={{ background: 'linear-gradient(135deg, rgba(48,209,88,0.06), rgba(67,198,172,0.04))', border: '1px solid #30D15840' }}>
                 <div className="text-2xl shrink-0">🔔</div>
                 <div className="flex-1 min-w-0">
                   <div className="font-black text-sm">Enable Homework Alerts</div>
@@ -430,7 +430,7 @@ export default function ParentPage() {
                 <div className="font-black text-sm">Overall Homework</div>
                 <div className="font-black">{hwPct}%</div>
               </div>
-              <div className="bg-white/10 rounded-full h-3">
+              <div className="bg-gray-200 rounded-full h-3">
                 <div className="h-3 rounded-full transition-all" style={{ width: `${hwPct}%`, background: hwPct >= 80 ? '#30D158' : hwPct >= 50 ? '#FF9F0A' : '#FF453A' }} />
               </div>
               <div className="text-xs font-bold app-muted mt-1">{completedHW.length} done · {pendingHW.length} pending</div>
@@ -445,7 +445,7 @@ export default function ParentPage() {
                       <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0" style={{ background: 'rgba(191,90,242,0.2)' }}>🧠</div>
                       <div className="flex-1 min-w-0">
                         <div className="font-black text-sm truncate">{s.topic}</div>
-                        <div className="bg-white/10 rounded-full h-1.5 mt-1">
+                        <div className="bg-gray-200 rounded-full h-1.5 mt-1">
                           <div className="h-1.5 rounded-full bg-purple-400" style={{ width: `${s.accuracy}%` }} />
                         </div>
                         <div className="text-xs font-bold app-muted">{s.correct}/{s.total} correct · Lv {s.maxLevel}</div>

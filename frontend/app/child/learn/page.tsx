@@ -73,7 +73,7 @@ export default function LearnPage() {
 
       {/* Progress strip */}
       {!loading && started > 0 && (
-        <div style={{ margin: '12px 16px 0', padding: '10px 14px', borderRadius: 16, background: 'rgba(94,92,230,0.08)', border: '1px solid rgba(94,92,230,0.2)', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ margin: '12px 16px 0', padding: '10px 14px', borderRadius: 16, background: 'rgba(94,92,230,0.05)', border: '1px solid rgba(94,92,230,0.2)', display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ fontSize: 22 }}>🎯</span>
           <div style={{ flex: 1 }}>
             <p style={{ margin: 0, fontSize: 12, fontWeight: 900, color: '#5E5CE6' }}>{done} of {MODS.length} modules completed</p>

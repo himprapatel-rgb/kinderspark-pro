@@ -560,7 +560,7 @@ export default function TeacherDashboard() {
                       <div className="font-black text-sm">📊 Homework Completion</div>
                       <div className="font-black">{classStats.avgHwCompletion}%</div>
                     </div>
-                    <div className="bg-white/10 rounded-full h-3">
+                    <div className="bg-gray-200 rounded-full h-3">
                       <div
                         className="h-3 rounded-full transition-all"
                         style={{ width: `${classStats.avgHwCompletion}%`, background: classStats.avgHwCompletion >= 80 ? '#30D158' : classStats.avgHwCompletion >= 50 ? '#FF9F0A' : '#FF453A' }}
@@ -837,7 +837,7 @@ export default function TeacherDashboard() {
 
                     {/* Inline grading panel */}
                     {isGrading && (
-                      <div className="px-4 pb-4 border-t border-gray-200 pt-3" style={{ background: 'rgba(94,92,230,0.08)' }}>
+                      <div className="px-4 pb-4 border-t border-gray-200 pt-3" style={{ background: 'rgba(94,92,230,0.05)' }}>
                         <div className="text-xs font-bold app-muted mb-2">Grade for {s.name}</div>
                         <div className="flex gap-2 mb-3">
                           {['A+', 'A', 'B', 'C', 'D'].map(g => (
@@ -909,7 +909,7 @@ export default function TeacherDashboard() {
 
             {/* Wizard panel */}
             {showWizard && (
-              <div className="rounded-2xl overflow-hidden" style={{ background: 'rgba(94,92,230,0.08)', border: '1.5px solid rgba(94,92,230,0.3)' }}>
+              <div className="rounded-2xl overflow-hidden" style={{ background: 'rgba(94,92,230,0.05)', border: '1.5px solid rgba(94,92,230,0.3)' }}>
                 <div className="p-4">
                   <div className="text-xs app-muted font-bold mb-3">Quick topic chips</div>
                   <div className="flex flex-wrap gap-2 mb-3">
@@ -962,7 +962,7 @@ export default function TeacherDashboard() {
                   {/* Generated preview card */}
                   {wizardResult && !wizardLoading && (
                     <div className="mt-4 space-y-3">
-                      <div className="rounded-xl p-4" style={{ background: 'linear-gradient(135deg, rgba(94,92,230,0.25), rgba(191,90,242,0.15))', border: '1px solid rgba(94,92,230,0.4)' }}>
+                      <div className="rounded-xl p-4" style={{ background: 'linear-gradient(135deg, rgba(94,92,230,0.1), rgba(191,90,242,0.06))', border: '1px solid rgba(94,92,230,0.4)' }}>
                         {/* Title row */}
                         <div className="flex items-start gap-3 mb-3">
                           <div className="text-4xl">{wizardResult.emoji || '📝'}</div>
@@ -1118,7 +1118,7 @@ export default function TeacherDashboard() {
                       <button onClick={() => handleDeleteHomework(hw.id)} className="text-red-400/60 text-xs font-bold flex-shrink-0 app-pressable">🗑️</button>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="flex-1 bg-white/10 rounded-full h-1.5">
+                      <div className="flex-1 bg-gray-200 rounded-full h-1.5">
                         <div className="h-1.5 rounded-full transition-all" style={{ width: `${pct}%`, background: pct >= 80 ? '#30D158' : '#FF9F0A' }} />
                       </div>
                       <div className="text-xs font-bold app-muted">{done}/{total}</div>
@@ -1387,7 +1387,7 @@ export default function TeacherDashboard() {
           <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: 'rgba(0,0,0,0.75)' }} onClick={() => setDeepDiveStudent(null)}>
             <div className="w-full max-w-[430px] rounded-t-3xl pb-10 overflow-hidden" style={{ background: 'var(--app-surface)' }} onClick={e => e.stopPropagation()}>
               {/* Header */}
-              <div className="p-5 flex items-center gap-4" style={{ background: 'linear-gradient(135deg,#1a1a3a,#2a1a4a)' }}>
+              <div className="p-5 flex items-center gap-4" style={{ background: 'linear-gradient(135deg, rgba(94,92,230,0.08), rgba(191,90,242,0.06))' }}>
                 <div className="text-4xl">{s.avatar || '🧒'}</div>
                 <div className="flex-1">
                   <div className="font-black text-lg">{s.name}</div>
