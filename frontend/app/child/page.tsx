@@ -5,7 +5,7 @@ import { useAppStore as useStore } from '@/store/appStore'
 import { getHomework, getSyllabuses, getProgress, getRecommendations, getStudentBadges, completeHomework } from '@/lib/api'
 import TopBarActions from '@/components/TopBarActions'
 import { MODS } from '@/lib/modules'
-import { ArrowRight, BookOpen, PlayCircle, ShoppingBag, Sparkles, Trophy } from 'lucide-react'
+import { ArrowRight, BookOpen, Bot, Flame, Palette, PencilLine, PlayCircle, Shapes, ShoppingBag, Sparkles, Star, Trophy } from 'lucide-react'
 
 // ── Daily Challenge helper ─────────────────────────────────────────────────────
 function getDailyChallenge() {
@@ -143,6 +143,14 @@ export default function ChildPage() {
   const themeColor = 'var(--theme-color, #5B7FE8)'
   const themeSecondary = 'var(--theme-secondary, #8B6CC1)'
   const streak = student?.streak ?? 0
+  const ACTIVITY_ITEMS = [
+    { label: 'Draw', icon: Palette, path: '/child/draw', bg: 'rgba(245,166,35,0.18)', border: 'rgba(245,166,35,0.35)', iconColor: '#D4881A' },
+    { label: 'Trace', icon: PencilLine, path: '/child/trace', bg: 'rgba(76,175,106,0.18)', border: 'rgba(76,175,106,0.35)', iconColor: '#2F9E52' },
+    { label: 'Match', icon: Shapes, path: '/child/match', bg: 'rgba(91,127,232,0.16)', border: 'rgba(91,127,232,0.35)', iconColor: '#4A6ED0' },
+    { label: 'Tutor', icon: Bot, path: '/child/tutor', bg: 'rgba(139,108,193,0.16)', border: 'rgba(139,108,193,0.35)', iconColor: '#7C5AB6' },
+    { label: 'Rank', icon: Trophy, path: '/child/leaderboard', bg: 'rgba(245,183,49,0.18)', border: 'rgba(245,183,49,0.35)', iconColor: '#C79012' },
+    { label: 'Shop', icon: ShoppingBag, path: '/child/shop', bg: 'rgba(77,170,223,0.16)', border: 'rgba(77,170,223,0.35)', iconColor: '#2E8FC2' },
+  ] as const
 
   return (
     <div
@@ -205,7 +213,7 @@ export default function ChildPage() {
               className="flex-1 rounded-2xl py-2.5 px-3 flex items-center gap-2"
               style={{ background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.25)' }}
             >
-              <span className="text-xl">⭐</span>
+              <span className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(245,183,49,0.22)' }}><Star size={16} style={{ color: '#C79012' }} /></span>
               <div>
                 <p className="text-yellow-200 font-black text-base leading-none">{(student?.stars ?? 0).toLocaleString()}</p>
                 <p className="text-[10px] font-bold app-muted">Stars</p>
@@ -220,7 +228,9 @@ export default function ChildPage() {
                 border: streak > 0 ? '1px solid rgba(255,107,53,0.4)' : '1px solid rgba(255,255,255,0.15)',
               }}
             >
-              <span className="text-xl">{streak > 0 ? '🔥' : '💤'}</span>
+              <span className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: streak > 0 ? 'rgba(224,82,82,0.22)' : 'rgba(120,120,140,0.18)' }}>
+                <Flame size={16} style={{ color: streak > 0 ? '#E05252' : '#7C8296' }} />
+              </span>
               <div>
                 <p className="font-black text-base leading-none">{streak}d</p>
                 <p className="text-[10px] font-bold app-muted">Streak</p>
@@ -232,7 +242,7 @@ export default function ChildPage() {
               className="flex-1 rounded-2xl py-2.5 px-3 flex items-center gap-2"
               style={{ background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.25)' }}
             >
-              <span className="text-xl">🏆</span>
+              <span className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(139,108,193,0.22)' }}><Trophy size={16} style={{ color: '#7C5AB6' }} /></span>
               <div>
                 <p className="font-black text-base leading-none">Lv {student?.aiBestLevel ?? 1}</p>
                 <p className="text-[10px] font-bold app-muted">Level</p>
@@ -489,21 +499,16 @@ export default function ChildPage() {
         <div>
           <h2 className="font-black text-base mb-3 inline-flex items-center gap-2"><PlayCircle size={16} /> Quick Activities</h2>
           <div className="grid grid-cols-3 tablet:grid-cols-6 gap-3">
-            {[
-              { label: 'Draw',  icon: '🎨', path: '/child/draw',        grad: 'linear-gradient(135deg,#E0525222,#F5A62322)', border: '#F5A62340' },
-              { label: 'Trace', icon: '✍️', path: '/child/trace',       grad: 'linear-gradient(135deg,#4CAF6A22,#5FBF7F22)', border: '#4CAF6A40' },
-              { label: 'Match', icon: '🔤', path: '/child/match',       grad: 'linear-gradient(135deg,#F5A62322,#D4881A22)', border: '#F5A62340' },
-              { label: 'Tutor', icon: '🤖', path: '/child/tutor',       grad: 'linear-gradient(135deg,#5B7FE822,#8B6CC122)', border: '#8B6CC140' },
-              { label: 'Rank',  icon: '🏆', path: '/child/leaderboard', grad: 'linear-gradient(135deg,#F5B73122,#F5A62322)', border: '#F5B73140' },
-              { label: 'Shop',  icon: '🛍️', path: '/child/shop',        grad: 'linear-gradient(135deg,#8B6CC122,#5B7FE822)', border: '#8B6CC140' },
-            ].map(a => (
+            {ACTIVITY_ITEMS.map(a => (
               <button className="app-pressable"
                 key={a.label}
                 onClick={() => router.push(a.path)}
                 className="rounded-2xl p-4 flex flex-col items-center gap-2 active:scale-[0.94] transition-all"
-                style={{ background: a.grad, border: `1.5px solid ${a.border}` }}
+                style={{ background: a.bg, border: `1.5px solid ${a.border}` }}
               >
-                <span className="text-3xl">{a.icon}</span>
+                <span className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.8)' }}>
+                  <a.icon size={22} style={{ color: a.iconColor }} />
+                </span>
                 <span className="font-black text-xs">{a.label}</span>
               </button>
             ))}
