@@ -18,16 +18,16 @@ function markChallengeComplete(todayKey: string) {
 }
 
 const BADGE_INFO: Record<string, { emoji: string; label: string; color: string }> = {
-  first_homework: { emoji: '🏅', label: 'First HW',    color: '#F97316' },
-  first_ai:       { emoji: '🤖', label: 'AI Debut',    color: '#6C63FF' },
-  stars_50:       { emoji: '⭐', label: '50 Stars',    color: '#F59E0B' },
-  stars_100:      { emoji: '🌟', label: '100 Stars',   color: '#F59E0B' },
-  stars_500:      { emoji: '💫', label: '500 Stars',   color: '#F59E0B' },
-  ai_level_3:     { emoji: '🧠', label: 'Lv 3 AI',    color: '#8B5CF6' },
-  ai_level_5:     { emoji: '🏆', label: 'Lv 5 AI',    color: '#8B5CF6' },
-  perfect_score:  { emoji: '🎯', label: 'Perfect!',   color: '#2DB854' },
-  streak_3:       { emoji: '🔥', label: '3-Day',       color: '#EA580C' },
-  streak_7:       { emoji: '🌈', label: '7-Day',       color: '#8B5CF6' },
+  first_homework: { emoji: '🏅', label: 'First HW',    color: '#E8753A' },
+  first_ai:       { emoji: '🤖', label: 'AI Debut',    color: '#4F6BED' },
+  stars_50:       { emoji: '⭐', label: '50 Stars',    color: '#E5982A' },
+  stars_100:      { emoji: '🌟', label: '100 Stars',   color: '#E5982A' },
+  stars_500:      { emoji: '💫', label: '500 Stars',   color: '#E5982A' },
+  ai_level_3:     { emoji: '🧠', label: 'Lv 3 AI',    color: '#7C5BBF' },
+  ai_level_5:     { emoji: '🏆', label: 'Lv 5 AI',    color: '#7C5BBF' },
+  perfect_score:  { emoji: '🎯', label: 'Perfect!',   color: '#2BA55E' },
+  streak_3:       { emoji: '🔥', label: '3-Day',       color: '#C4611F' },
+  streak_7:       { emoji: '🌈', label: '7-Day',       color: '#7C5BBF' },
 }
 
 export default function ChildPage() {
@@ -118,7 +118,7 @@ export default function ChildPage() {
         <div
           className="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl animate-bounce-subtle"
           style={{
-            background: 'linear-gradient(135deg, var(--theme-color, #6C63FF), var(--theme-secondary, #8B5CF6))',
+            background: 'linear-gradient(135deg, var(--theme-color, #4F6BED), var(--theme-secondary, #7C5BBF))',
             boxShadow: '0 8px 32px rgba(94,92,230,0.4)',
           }}
         >
@@ -134,8 +134,8 @@ export default function ChildPage() {
     )
   }
 
-  const themeColor = 'var(--theme-color, #6C63FF)'
-  const themeSecondary = 'var(--theme-secondary, #8B5CF6)'
+  const themeColor = 'var(--theme-color, #4F6BED)'
+  const themeSecondary = 'var(--theme-secondary, #7C5BBF)'
   const streak = student?.streak ?? 0
 
   return (
@@ -147,7 +147,7 @@ export default function ChildPage() {
       <div
         className="relative overflow-hidden"
         style={{
-          background: `linear-gradient(145deg, var(--theme-color, #6C63FF) 0%, var(--theme-secondary, #8B5CF6) 100%)`,
+          background: `linear-gradient(145deg, var(--theme-color, #4F6BED) 0%, var(--theme-secondary, #7C5BBF) 100%)`,
           paddingBottom: 28,
         }}
       >
@@ -237,7 +237,7 @@ export default function ChildPage() {
                 className="h-full rounded-full relative overflow-hidden transition-all duration-1000"
                 style={{
                   width: `${Math.max(overallPct, 4)}%`,
-                  background: 'linear-gradient(90deg, #F59E0B, #F97316)',
+                  background: 'linear-gradient(90deg, #E5982A, #E8753A)',
                 }}
               >
                 <div className="absolute inset-0 shimmer" />
@@ -252,7 +252,7 @@ export default function ChildPage() {
           <div className="px-5 pb-1">
             <div className="flex gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
               {badges.map((b: any) => {
-                const info = BADGE_INFO[b.type] || { emoji: '🏅', label: b.type, color: '#F59E0B' }
+                const info = BADGE_INFO[b.type] || { emoji: '🏅', label: b.type, color: '#E5982A' }
                 return (
                   <div
                     key={b.id}
@@ -315,7 +315,7 @@ export default function ChildPage() {
                 </div>
                 <div
                   className="rounded-full px-2.5 py-1 text-xs font-black"
-                  style={{ background: 'rgba(255,159,10,0.25)', color: '#F97316' }}
+                  style={{ background: 'rgba(255,159,10,0.25)', color: '#E8753A' }}
                 >
                   {pendingHW.length}
                 </div>
@@ -342,7 +342,7 @@ export default function ChildPage() {
                     disabled={markingDone === hw.id}
                     className="mt-1.5 w-full py-2.5 rounded-2xl text-sm font-black active:scale-[0.97] transition-all disabled:opacity-50 flex items-center justify-center gap-2 app-pressable"
                     style={{
-                      background: 'linear-gradient(135deg, #2DB854, #27AE7A)',
+                      background: 'linear-gradient(135deg, #2BA55E, #27AE7A)',
                       boxShadow: '0 4px 16px rgba(48,209,88,0.3)',
                     }}
                   >
@@ -369,7 +369,7 @@ export default function ChildPage() {
             background: dailyDone
               ? 'linear-gradient(135deg, #0d2e0d, #0a200a)'
               : `linear-gradient(135deg, ${dailyMod.color}18, ${dailyMod.color}30)`,
-            border: `1.5px solid ${dailyDone ? '#2DB85440' : dailyMod.color + '55'}`,
+            border: `1.5px solid ${dailyDone ? '#2BA55E40' : dailyMod.color + '55'}`,
             boxShadow: dailyDone ? 'none' : `0 6px 24px ${dailyMod.color}20`,
           }}
         >
@@ -379,7 +379,7 @@ export default function ChildPage() {
               className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
               style={{
                 background: dailyDone ? 'rgba(48,209,88,0.2)' : dailyMod.color + '30',
-                border: `1px solid ${dailyDone ? '#2DB85440' : dailyMod.color + '40'}`,
+                border: `1px solid ${dailyDone ? '#2BA55E40' : dailyMod.color + '40'}`,
               }}
             >
               {dailyDone ? '✅' : dailyMod.icon}
@@ -387,7 +387,7 @@ export default function ChildPage() {
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-0.5">
                 <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full"
-                  style={{ background: dailyDone ? '#2DB85420' : '#F59E0B22', color: dailyDone ? '#2DB854' : '#F59E0B' }}>
+                  style={{ background: dailyDone ? '#2BA55E20' : '#E5982A22', color: dailyDone ? '#2BA55E' : '#E5982A' }}>
                   {dailyDone ? '✓ Done' : '⚡ Daily'}
                 </span>
               </div>
@@ -439,7 +439,7 @@ export default function ChildPage() {
             <div
               className="rounded-2xl px-4 py-3 font-black text-sm flex-shrink-0"
               style={{
-                background: 'linear-gradient(135deg, #6C63FF, #8B5CF6)',
+                background: 'linear-gradient(135deg, #4F6BED, #7C5BBF)',
                 boxShadow: '0 4px 16px rgba(94,92,230,0.5)',
               }}
             >
@@ -455,7 +455,7 @@ export default function ChildPage() {
               <h2 className="font-black text-base">✨ Just For You</h2>
               <span
                 className="text-xs font-black rounded-full px-2.5 py-0.5"
-                style={{ background: 'rgba(191,90,242,0.2)', color: '#8B5CF6', border: '1px solid rgba(191,90,242,0.3)' }}
+                style={{ background: 'rgba(191,90,242,0.2)', color: '#7C5BBF', border: '1px solid rgba(191,90,242,0.3)' }}
               >
                 AI Pick
               </span>
@@ -465,7 +465,7 @@ export default function ChildPage() {
                 const mod = MODS.find(m => m.id === rec.moduleId)
                 const done = progressMap[rec.moduleId] || 0
                 const pct = Math.min(100, Math.round((done / (mod?.items.length || 1)) * 100))
-                const color = mod?.color || '#6C63FF'
+                const color = mod?.color || '#4F6BED'
                 return (
                   <button className="app-pressable"
                     key={i}
@@ -496,12 +496,12 @@ export default function ChildPage() {
           <h2 className="font-black text-base mb-3">🎮 Activities</h2>
           <div className="grid grid-cols-3 gap-3">
             {[
-              { label: 'Draw',  icon: '🎨', path: '/child/draw',        grad: 'linear-gradient(135deg,#EF444422,#F9731622)', border: '#F9731640' },
-              { label: 'Trace', icon: '✍️', path: '/child/trace',       grad: 'linear-gradient(135deg,#2DB85422,#34D39922)', border: '#2DB85440' },
-              { label: 'Match', icon: '🔤', path: '/child/match',       grad: 'linear-gradient(135deg,#F9731622,#EA580C22)', border: '#F9731640' },
-              { label: 'Tutor', icon: '🤖', path: '/child/tutor',       grad: 'linear-gradient(135deg,#6C63FF22,#8B5CF622)', border: '#8B5CF640' },
-              { label: 'Rank',  icon: '🏆', path: '/child/leaderboard', grad: 'linear-gradient(135deg,#F59E0B22,#F9731622)', border: '#F59E0B40' },
-              { label: 'Shop',  icon: '🛍️', path: '/child/shop',        grad: 'linear-gradient(135deg,#8B5CF622,#6C63FF22)', border: '#8B5CF640' },
+              { label: 'Draw',  icon: '🎨', path: '/child/draw',        grad: 'linear-gradient(135deg,#DC434322,#E8753A22)', border: '#E8753A40' },
+              { label: 'Trace', icon: '✍️', path: '/child/trace',       grad: 'linear-gradient(135deg,#2BA55E22,#3CC78A22)', border: '#2BA55E40' },
+              { label: 'Match', icon: '🔤', path: '/child/match',       grad: 'linear-gradient(135deg,#E8753A22,#C4611F22)', border: '#E8753A40' },
+              { label: 'Tutor', icon: '🤖', path: '/child/tutor',       grad: 'linear-gradient(135deg,#4F6BED22,#7C5BBF22)', border: '#7C5BBF40' },
+              { label: 'Rank',  icon: '🏆', path: '/child/leaderboard', grad: 'linear-gradient(135deg,#E5982A22,#E8753A22)', border: '#E5982A40' },
+              { label: 'Shop',  icon: '🛍️', path: '/child/shop',        grad: 'linear-gradient(135deg,#7C5BBF22,#4F6BED22)', border: '#7C5BBF40' },
             ].map(a => (
               <button className="app-pressable"
                 key={a.label}
@@ -577,7 +577,7 @@ export default function ChildPage() {
                   {complete && (
                     <div
                       className="absolute top-2.5 right-2.5 w-6 h-6 rounded-full flex items-center justify-center text-[11px]"
-                      style={{ background: '#2DB854', boxShadow: '0 2px 8px rgba(48,209,88,0.4)' }}
+                      style={{ background: '#2BA55E', boxShadow: '0 2px 8px rgba(48,209,88,0.4)' }}
                     >
                       ✓
                     </div>
@@ -588,7 +588,7 @@ export default function ChildPage() {
                   <div className="mt-2.5 h-2 rounded-full overflow-hidden" style={{ background: 'rgba(120,120,140,0.06)' }}>
                     <div
                       className="h-full rounded-full transition-all duration-700"
-                      style={{ width: `${pct}%`, background: complete ? '#2DB854' : mod.color }}
+                      style={{ width: `${pct}%`, background: complete ? '#2BA55E' : mod.color }}
                     />
                   </div>
                 </button>
@@ -622,7 +622,7 @@ export default function ChildPage() {
 
             <div className="flex flex-wrap justify-center gap-5 mb-7">
               {celebrationBadges.map((b: any, i: number) => {
-                const info = BADGE_INFO[b.type] || { emoji: '🏅', label: b.type, color: '#F59E0B' }
+                const info = BADGE_INFO[b.type] || { emoji: '🏅', label: b.type, color: '#E5982A' }
                 return (
                   <div key={b.type} className="flex flex-col items-center gap-2 animate-pop" style={{ animationDelay: `${i * 150}ms` }}>
                     <div
@@ -645,7 +645,7 @@ export default function ChildPage() {
               onClick={() => setCelebrationBadges([])}
               className="w-full py-4 rounded-2xl text-black font-black text-base"
               style={{
-                background: 'linear-gradient(135deg, #F59E0B, #F97316)',
+                background: 'linear-gradient(135deg, #E5982A, #E8753A)',
                 boxShadow: '0 6px 24px rgba(255,159,10,0.5)',
               }}
             >

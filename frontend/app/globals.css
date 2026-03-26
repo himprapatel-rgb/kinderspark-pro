@@ -3,61 +3,61 @@
 @tailwind utilities;
 
 :root {
-  /* ── Core palette ─────────────────────────────────────────────── */
-  --foreground-rgb: 32, 36, 52;
-  --background-start-rgb: 246, 248, 255;
+  /* ── "Bright Bloom" palette — warm premium educational ─────────── */
+  --foreground-rgb: 38, 35, 30;
+  --background-start-rgb: 248, 247, 244;
 
   /* Surfaces */
-  --app-bg: #f5f7fe;
-  --app-surface: #ffffff;
-  --app-surface-soft: #f8f9ff;
-  --app-surface-elevated: #ffffff;
+  --app-bg: #F8F7F4;
+  --app-surface: #FFFFFF;
+  --app-surface-soft: #FAF9F6;
+  --app-surface-elevated: #FFFFFF;
 
   /* Borders */
-  --app-border: rgba(100, 105, 130, 0.16);
-  --app-border-strong: rgba(100, 105, 130, 0.28);
+  --app-border: rgba(120, 110, 95, 0.14);
+  --app-border-strong: rgba(120, 110, 95, 0.26);
 
   /* Text */
-  --app-text-muted: rgba(55, 60, 80, 0.65);
-  --app-text-subtle: rgba(55, 60, 80, 0.45);
+  --app-text-muted: rgba(60, 55, 45, 0.60);
+  --app-text-subtle: rgba(60, 55, 45, 0.38);
 
-  /* Primary accent (indigo-violet) */
-  --app-accent: #6C63FF;
-  --app-accent-hover: #5B52EE;
-  --app-accent-soft: #EEEDFF;
-  --app-accent-glow: rgba(108, 99, 255, 0.35);
+  /* Primary accent — cornflower blue */
+  --app-accent: #4F6BED;
+  --app-accent-hover: #3E5AD9;
+  --app-accent-soft: #ECF0FF;
+  --app-accent-glow: rgba(79, 107, 237, 0.28);
 
   /* Semantic colors */
-  --app-success: #2DB854;
-  --app-success-soft: #E8F8ED;
-  --app-warning: #F5A623;
-  --app-warning-soft: #FFF5E0;
-  --app-danger: #EF4444;
-  --app-danger-soft: #FEF2F2;
-  --app-info: #3B82F6;
-  --app-info-soft: #EFF6FF;
+  --app-success: #2BA55E;
+  --app-success-soft: #E6F9EE;
+  --app-warning: #E5982A;
+  --app-warning-soft: #FFF6E8;
+  --app-danger: #DC4343;
+  --app-danger-soft: #FDF1F1;
+  --app-info: #3A8BDE;
+  --app-info-soft: #EDF5FF;
 
-  /* Stars/rewards */
-  --app-gold: #F59E0B;
-  --app-gold-soft: #FEF3C7;
+  /* Stars / rewards */
+  --app-gold: #E5982A;
+  --app-gold-soft: #FFF6E8;
 
   /* Role accents */
-  --role-child: #F97316;
-  --role-child-soft: #FFF7ED;
-  --role-teacher: #6C63FF;
-  --role-teacher-soft: #EEEDFF;
-  --role-parent: #10B981;
-  --role-parent-soft: #ECFDF5;
-  --role-admin: #8B5CF6;
-  --role-admin-soft: #F5F3FF;
+  --role-child: #E8753A;
+  --role-child-soft: #FFF3EB;
+  --role-teacher: #4F6BED;
+  --role-teacher-soft: #ECF0FF;
+  --role-parent: #2BA55E;
+  --role-parent-soft: #E6F9EE;
+  --role-admin: #7C5BBF;
+  --role-admin-soft: #F3F0FA;
 
   /* Overlay */
-  --app-overlay: rgba(15, 20, 40, 0.5);
+  --app-overlay: rgba(25, 22, 18, 0.45);
 
   /* Shadows */
-  --app-shadow-sm: 0 2px 8px rgba(15, 20, 40, 0.06);
-  --app-shadow-md: 0 4px 16px rgba(15, 20, 40, 0.08);
-  --app-shadow-lg: 0 8px 32px rgba(15, 20, 40, 0.12);
+  --app-shadow-sm: 0 2px 8px rgba(25, 22, 18, 0.05);
+  --app-shadow-md: 0 4px 16px rgba(25, 22, 18, 0.07);
+  --app-shadow-lg: 0 8px 28px rgba(25, 22, 18, 0.10);
 }
 
 /* ── Custom scrollbar ────────────────────────────────────────────────────────── */
@@ -294,11 +294,11 @@ body {
 .card-elevated:active { transform: scale(0.98); }
 
 /* ── Glow effects ────────────────────────────────────────────────────────────── */
-.glow-purple { box-shadow: 0 0 24px rgba(108, 99, 255, 0.35); }
-.glow-orange { box-shadow: 0 0 24px rgba(249, 115, 22, 0.35); }
-.glow-green  { box-shadow: 0 0 24px rgba(45, 184, 84, 0.35); }
-.glow-pink   { box-shadow: 0 0 24px rgba(239, 68, 68, 0.35); }
-.glow-blue   { box-shadow: 0 0 24px rgba(59, 130, 246, 0.35); }
+.glow-purple { box-shadow: 0 0 22px rgba(124, 91, 191, 0.30); }
+.glow-orange { box-shadow: 0 0 22px rgba(232, 117, 58, 0.30); }
+.glow-green  { box-shadow: 0 0 22px rgba(43, 165, 94, 0.30); }
+.glow-pink   { box-shadow: 0 0 22px rgba(220, 67, 67, 0.30); }
+.glow-blue   { box-shadow: 0 0 22px rgba(58, 139, 222, 0.30); }
 
 /* ── Button style overrides ──────────────────────────────────────────────────── */
 .btn-primary {

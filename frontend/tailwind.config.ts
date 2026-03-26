@@ -4,14 +4,14 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        accent: '#6C63FF',
-        'accent-hover': '#5B52EE',
-        'accent-purple': '#8B5CF6',
-        'app-green': '#2DB854',
-        'app-red': '#EF4444',
-        'app-orange': '#F97316',
-        'app-yellow': '#F59E0B',
-        'app-blue': '#3B82F6',
+        accent: '#4F6BED',
+        'accent-hover': '#3E5AD9',
+        'accent-purple': '#7C5BBF',
+        'app-green': '#2BA55E',
+        'app-red': '#DC4343',
+        'app-orange': '#E8753A',
+        'app-yellow': '#E5982A',
+        'app-blue': '#3A8BDE',
       },
       fontFamily: {
         nunito: ['Nunito', 'sans-serif'],

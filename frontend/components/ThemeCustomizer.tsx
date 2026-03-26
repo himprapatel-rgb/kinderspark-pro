@@ -3,10 +3,10 @@ import { useState } from 'react'
 import { useAppStore } from '@/store/appStore'
 
 const ACCENTS = [
-  { id: 'violet', color: '#6C63FF' },
+  { id: 'violet', color: '#4F6BED' },
   { id: 'blue', color: '#0A84FF' },
-  { id: 'green', color: '#2DB854' },
-  { id: 'orange', color: '#F97316' },
+  { id: 'green', color: '#2BA55E' },
+  { id: 'orange', color: '#E8753A' },
   { id: 'pink', color: '#FF2D55' },
 ] as const
 

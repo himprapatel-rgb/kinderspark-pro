@@ -14,7 +14,7 @@ const SORT_OPTIONS: { key: SortBy; label: string; icon: string }[] = [
 
 const RANK_MEDALS = ['🥇', '🥈', '🥉']
 const PODIUM_COLORS = [
-  { bg: 'linear-gradient(135deg, #F59E0B, #F97316)', shadow: 'rgba(255,214,10,0.5)', height: 90 },
+  { bg: 'linear-gradient(135deg, #E5982A, #E8753A)', shadow: 'rgba(255,214,10,0.5)', height: 90 },
   { bg: 'linear-gradient(135deg, #8E8E93, #636366)', shadow: 'rgba(142,142,147,0.4)', height: 70 },
   { bg: 'linear-gradient(135deg, #CD7F32, #A0522D)', shadow: 'rgba(205,127,50,0.4)', height: 55 },
 ]
@@ -50,7 +50,7 @@ export default function LeaderboardPage() {
     return (
       <div
         className="min-h-screen flex items-center justify-center"
-        style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #f0eeff), var(--app-bg))' }}
+        style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #ECF0FF), var(--app-bg))' }}
       >
         <div className="text-5xl animate-bounce-subtle">🏆</div>
       </div>
@@ -60,13 +60,13 @@ export default function LeaderboardPage() {
   return (
     <div
       className="min-h-screen pb-28 app-container"
-      style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #f0eeff), var(--app-bg))' }}
+      style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #ECF0FF), var(--app-bg))' }}
     >
       {/* Header */}
       <div
         className="px-5 pt-12 pb-6 relative overflow-hidden"
         style={{
-          background: 'linear-gradient(145deg, var(--theme-color, #6C63FF), var(--theme-secondary, #8B5CF6))',
+          background: 'linear-gradient(145deg, var(--theme-color, #4F6BED), var(--theme-secondary, #7C5BBF))',
         }}
       >
         <div className="absolute inset-0 opacity-[0.07]"
@@ -209,7 +209,7 @@ export default function LeaderboardPage() {
                       ⭐ {s.stars} · 🔥 {s.streak}d · 🤖 {s.aiSessions}
                     </p>
                   </div>
-                  <span className="font-black text-sm" style={{ color: isMe ? 'var(--theme-color, #6C63FF)' : 'var(--app-text-muted)' }}>
+                  <span className="font-black text-sm" style={{ color: isMe ? 'var(--theme-color, #4F6BED)' : 'var(--app-text-muted)' }}>
                     {sortBy === 'stars' ? `⭐ ${val}` : sortBy === 'streak' ? `🔥 ${val}d` : `🤖 ${val}`}
                   </span>
                 </div>

@@ -64,7 +64,7 @@ export default function ShopPage() {
   return (
     <div className="min-h-screen pb-8 app-page app-container">
       {/* Header */}
-      <div className="m-3 rounded-3xl p-5" style={{ background: 'linear-gradient(135deg, #F97316, #EF4444)' }}>
+      <div className="m-3 rounded-3xl p-5" style={{ background: 'linear-gradient(135deg, #E8753A, #DC4343)' }}>
         <button className="app-pressable" onClick={() => router.push('/child')} className="text-white/70 font-bold text-sm mb-3">← Back</button>
         <div className="text-2xl font-black">🛍️ Star Shop</div>
         <div className="text-white/80 font-bold">You have <span className="font-black text-yellow-300">⭐ {stars}</span> stars</div>
@@ -90,8 +90,8 @@ export default function ShopPage() {
                   disabled={buying === item.id}
                   className="rounded-2xl p-4 flex flex-col items-center gap-1 active:scale-95 transition-all"
                   style={{
-                    background: owned ? '#2DB85420' : 'var(--app-surface)',
-                    border: `2px solid ${owned ? '#2DB854' : stars >= item.price ? 'var(--app-border)' : 'rgba(255,69,58,0.3)'}`,
+                    background: owned ? '#2BA55E20' : 'var(--app-surface)',
+                    border: `2px solid ${owned ? '#2BA55E' : stars >= item.price ? 'var(--app-border)' : 'rgba(255,69,58,0.3)'}`,
                   }}>
                   <div className="text-4xl">{item.emoji}</div>
                   <div className="font-black text-xs" style={{ color: 'rgb(var(--foreground-rgb))' }}>{item.label}</div>
@@ -120,7 +120,7 @@ export default function ShopPage() {
                   className="rounded-2xl p-4 flex items-center gap-3 active:scale-95 transition-all"
                   style={{
                     background: active ? item.color + '30' : owned ? 'rgba(48,209,88,0.06)' : 'var(--app-surface)',
-                    border: `2px solid ${active ? item.color : owned ? '#2DB854' : 'var(--app-border)'}`,
+                    border: `2px solid ${active ? item.color : owned ? '#2BA55E' : 'var(--app-border)'}`,
                   }}>
                   <div className="w-8 h-8 rounded-full flex-shrink-0" style={{ background: item.color }} />
                   <div className="flex-1 text-left">

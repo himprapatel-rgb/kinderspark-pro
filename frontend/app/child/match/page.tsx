@@ -141,12 +141,12 @@ export default function WordMatchPage() {
     return (
       <div
         className="min-h-screen flex flex-col items-center justify-center px-5 pb-24"
-        style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #f0eeff), var(--app-bg))' }}
+        style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #ECF0FF), var(--app-bg))' }}
       >
         <div
           className="w-24 h-24 rounded-3xl flex items-center justify-center text-5xl mb-6 animate-bounce-subtle"
           style={{
-            background: 'linear-gradient(135deg, #F97316, #EA580C)',
+            background: 'linear-gradient(135deg, #E8753A, #C4611F)',
             boxShadow: '0 8px 32px rgba(255,159,10,0.45)',
           }}
         >
@@ -176,7 +176,7 @@ export default function WordMatchPage() {
           onClick={startGame}
           className="w-full max-w-[280px] py-5 rounded-3xl font-black text-xl active:scale-95 transition-all relative overflow-hidden app-pressable"
           style={{
-            background: 'linear-gradient(135deg, #F97316, #EA580C)',
+            background: 'linear-gradient(135deg, #E8753A, #C4611F)',
             boxShadow: '0 8px 32px rgba(255,159,10,0.5)',
           }}
         >
@@ -199,7 +199,7 @@ export default function WordMatchPage() {
     return (
       <div
         className="min-h-screen flex flex-col items-center justify-center px-5 pb-24"
-        style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #f0eeff), var(--app-bg))' }}
+        style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #ECF0FF), var(--app-bg))' }}
       >
         <div className="text-7xl mb-4 animate-bounce">{accuracy >= 70 ? '🎉' : '💪'}</div>
         <h1 className="text-3xl font-black mb-1">{grade}</h1>
@@ -208,9 +208,9 @@ export default function WordMatchPage() {
         {/* Stats */}
         <div className="w-full max-w-[320px] grid grid-cols-3 gap-3 mb-8">
           {[
-            { label: 'Score', value: `${score}/${QUESTIONS_PER_ROUND}`, icon: '🎯', color: '#6C63FF' },
-            { label: 'Stars', value: `+${starsEarned}⭐`, icon: '⭐', color: '#F59E0B' },
-            { label: 'Best Streak', value: `${maxStreak}🔥`, icon: '🔥', color: '#EA580C' },
+            { label: 'Score', value: `${score}/${QUESTIONS_PER_ROUND}`, icon: '🎯', color: '#4F6BED' },
+            { label: 'Stars', value: `+${starsEarned}⭐`, icon: '⭐', color: '#E5982A' },
+            { label: 'Best Streak', value: `${maxStreak}🔥`, icon: '🔥', color: '#C4611F' },
           ].map((s, i) => (
             <div
               key={i}
@@ -229,7 +229,7 @@ export default function WordMatchPage() {
             <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(120,120,140,0.12)" strokeWidth="10" />
             <circle
               cx="60" cy="60" r="50" fill="none"
-              stroke={accuracy >= 70 ? '#2DB854' : '#F97316'} strokeWidth="10"
+              stroke={accuracy >= 70 ? '#2BA55E' : '#E8753A'} strokeWidth="10"
               strokeLinecap="round"
               strokeDasharray={`${accuracy * 3.14} 314`}
               transform="rotate(-90 60 60)"
@@ -245,7 +245,7 @@ export default function WordMatchPage() {
         <button
           onClick={startGame}
           className="w-full max-w-[280px] py-4 rounded-2xl font-black text-lg active:scale-95 transition-all mb-3 app-pressable"
-          style={{ background: 'linear-gradient(135deg, #F97316, #EA580C)', boxShadow: '0 6px 24px rgba(255,159,10,0.4)' }}
+          style={{ background: 'linear-gradient(135deg, #E8753A, #C4611F)', boxShadow: '0 6px 24px rgba(255,159,10,0.4)' }}
         >
           Play Again 🔄
         </button>
@@ -267,7 +267,7 @@ export default function WordMatchPage() {
   return (
     <div
       className="min-h-screen flex flex-col pb-24"
-      style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #f0eeff), var(--app-bg))' }}
+      style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #ECF0FF), var(--app-bg))' }}
     >
       {/* Header */}
       <div className="px-5 pt-10 pb-4">
@@ -276,7 +276,7 @@ export default function WordMatchPage() {
           <div className="flex-1 h-3 rounded-full overflow-hidden" style={{ background: 'rgba(120,120,140,0.12)' }}>
             <div
               className="h-full rounded-full transition-all duration-500 relative overflow-hidden"
-              style={{ width: `${progress}%`, background: 'linear-gradient(90deg, #F59E0B, #F97316)' }}
+              style={{ width: `${progress}%`, background: 'linear-gradient(90deg, #E5982A, #E8753A)' }}
             >
               <div className="absolute inset-0 shimmer" />
             </div>
@@ -305,11 +305,11 @@ export default function WordMatchPage() {
           className={`w-40 h-40 rounded-3xl flex items-center justify-center transition-all duration-300 ${feedback === 'correct' ? 'scale-110' : feedback === 'wrong' ? 'animate-shake' : ''}`}
           style={{
             background: feedback === 'correct'
-              ? 'linear-gradient(135deg, #2DB85440, #27AE7A40)'
+              ? 'linear-gradient(135deg, #2BA55E40, #27AE7A40)'
               : feedback === 'wrong'
-              ? 'linear-gradient(135deg, #EF444430, #FF2D5530)'
+              ? 'linear-gradient(135deg, #DC434330, #FF2D5530)'
               : q.modColor + '22',
-            border: `3px solid ${feedback === 'correct' ? '#2DB854' : feedback === 'wrong' ? '#EF4444' : q.modColor + '55'}`,
+            border: `3px solid ${feedback === 'correct' ? '#2BA55E' : feedback === 'wrong' ? '#DC4343' : q.modColor + '55'}`,
             boxShadow: feedback === 'correct'
               ? '0 0 40px rgba(48,209,88,0.4)'
               : feedback === 'wrong'
@@ -335,9 +335,9 @@ export default function WordMatchPage() {
             let border = 'var(--app-border)'
             let textColor = 'rgb(var(--foreground-rgb))'
 
-            if (isSelected && feedback === 'correct') { bg = 'rgba(48,209,88,0.25)'; border = '#2DB854'; textColor = '#2DB854' }
-            else if (isSelected && feedback === 'wrong') { bg = 'rgba(255,69,58,0.25)'; border = '#EF4444'; textColor = '#EF4444' }
-            else if (selected && isCorrect && feedback === 'wrong') { bg = 'rgba(48,209,88,0.2)'; border = '#2DB854'; textColor = '#2DB854' }
+            if (isSelected && feedback === 'correct') { bg = 'rgba(48,209,88,0.25)'; border = '#2BA55E'; textColor = '#2BA55E' }
+            else if (isSelected && feedback === 'wrong') { bg = 'rgba(255,69,58,0.25)'; border = '#DC4343'; textColor = '#DC4343' }
+            else if (selected && isCorrect && feedback === 'wrong') { bg = 'rgba(48,209,88,0.2)'; border = '#2BA55E'; textColor = '#2BA55E' }
 
             return (
               <button className="app-pressable"

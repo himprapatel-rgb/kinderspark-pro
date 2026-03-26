@@ -133,7 +133,7 @@ export default function AiTutor({ studentId, onComplete }: AiTutorProps) {
           {stars >= 3 ? '🏆' : stars >= 2 ? '⭐' : '💪'}
         </div>
         <div className="text-white font-black text-2xl">Quiz Complete!</div>
-        <div className="text-5xl font-black" style={{ color: '#F59E0B' }}>
+        <div className="text-5xl font-black" style={{ color: '#E5982A' }}>
           {correct}/{questions.length}
         </div>
         <div className="flex gap-1">
@@ -151,9 +151,9 @@ export default function AiTutor({ studentId, onComplete }: AiTutorProps) {
         {/* Stats */}
         <div className="w-full grid grid-cols-3 gap-2">
           {[
-            { label: 'Accuracy', value: `${accuracy}%`, color: '#2DB854' },
-            { label: 'Level', value: `Lv ${maxLevel}`, color: '#6C63FF' },
-            { label: 'Stars', value: `+${stars}⭐`, color: '#F59E0B' },
+            { label: 'Accuracy', value: `${accuracy}%`, color: '#2BA55E' },
+            { label: 'Level', value: `Lv ${maxLevel}`, color: '#4F6BED' },
+            { label: 'Stars', value: `+${stars}⭐`, color: '#E5982A' },
           ].map((stat) => (
             <div
               key={stat.label}
@@ -169,7 +169,7 @@ export default function AiTutor({ studentId, onComplete }: AiTutorProps) {
         <button
           onClick={() => setScreen('topics')}
           className="w-full py-4 rounded-2xl font-black text-white text-base transition-all active:scale-95"
-          style={{ background: 'linear-gradient(135deg, #6C63FF, #8B5CF6)' }}
+          style={{ background: 'linear-gradient(135deg, #4F6BED, #7C5BBF)' }}
         >
           Play Again! 🎮
         </button>
@@ -194,7 +194,7 @@ export default function AiTutor({ studentId, onComplete }: AiTutorProps) {
               key={i}
               className="w-2 h-2 rounded-full transition-all"
               style={{
-                background: i < qIndex ? '#2DB854' : i === qIndex ? '#6C63FF' : 'rgba(255,255,255,0.2)'
+                background: i < qIndex ? '#2BA55E' : i === qIndex ? '#4F6BED' : 'rgba(255,255,255,0.2)'
               }}
             />
           ))}
@@ -210,7 +210,7 @@ export default function AiTutor({ studentId, onComplete }: AiTutorProps) {
         <div className="h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.1)' }}>
           <div
             className="h-full rounded-full transition-all"
-            style={{ width: `${(level / 5) * 100}%`, background: '#6C63FF' }}
+            style={{ width: `${(level / 5) * 100}%`, background: '#4F6BED' }}
           />
         </div>
       </div>
@@ -232,8 +232,8 @@ export default function AiTutor({ studentId, onComplete }: AiTutorProps) {
           let bg = 'rgba(255,255,255,0.08)'
           let border = 'rgba(255,255,255,0.15)'
           if (selected) {
-            if (isCorrect) { bg = 'rgba(48,209,88,0.25)'; border = '#2DB854' }
-            else if (isSelected) { bg = 'rgba(255,69,58,0.25)'; border = '#EF4444' }
+            if (isCorrect) { bg = 'rgba(48,209,88,0.25)'; border = '#2BA55E' }
+            else if (isSelected) { bg = 'rgba(255,69,58,0.25)'; border = '#DC4343' }
           }
 
           return (

@@ -33,7 +33,7 @@ export default function TracePage() {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
     ctx.clearRect(0, 0, canvas.width, canvas.height)
-    ctx.fillStyle = '#f0f2f8'
+    ctx.fillStyle = '#F4F3F0'
     ctx.fillRect(0, 0, canvas.width, canvas.height)
 
     // Draw faint letter guide
@@ -93,7 +93,7 @@ export default function TracePage() {
     ctx.lineWidth = 12
     ctx.lineCap = 'round'
     ctx.lineJoin = 'round'
-    ctx.strokeStyle = '#6C63FF'
+    ctx.strokeStyle = '#4F6BED'
     ctx.lineTo(pos.x, pos.y)
     ctx.stroke()
 
@@ -156,9 +156,9 @@ export default function TracePage() {
               onClick={() => { setCurrentLetter(l); speak(l) }}
               className="w-10 h-10 rounded-xl font-black text-sm flex-shrink-0 transition-all active:scale-90"
               style={{
-                background: currentLetter === l ? '#6C63FF' : completed.has(l) ? '#2DB85440' : 'var(--app-surface)',
-                color: currentLetter === l ? 'white' : completed.has(l) ? '#2DB854' : 'rgba(70,75,96,0.75)',
-                border: currentLetter === l ? '2px solid #6C63FF' : '1px solid var(--app-border)',
+                background: currentLetter === l ? '#4F6BED' : completed.has(l) ? '#2BA55E40' : 'var(--app-surface)',
+                color: currentLetter === l ? 'white' : completed.has(l) ? '#2BA55E' : 'rgba(70,75,96,0.75)',
+                border: currentLetter === l ? '2px solid #4F6BED' : '1px solid var(--app-border)',
               }}>
               {l}
             </button>
@@ -174,7 +174,7 @@ export default function TracePage() {
         </div>
         <div className="bg-gray-200 rounded-full h-3">
           <div className="h-3 rounded-full transition-all"
-            style={{ width: `${progress}%`, background: progress >= 100 ? '#2DB854' : '#6C63FF' }} />
+            style={{ width: `${progress}%`, background: progress >= 100 ? '#2BA55E' : '#4F6BED' }} />
         </div>
         {progress >= 100 && (
           <div className="text-green-400 text-xs font-black text-center mt-1">+3 ⭐ Earned!</div>
@@ -203,12 +203,12 @@ export default function TracePage() {
       <div className="p-4 flex gap-3">
         <button onClick={clearCanvas}
           className="flex-1 py-3 rounded-2xl font-black text-white app-pressable"
-          style={{ background: '#EF444440', border: '1px solid #EF444480' }}>
+          style={{ background: '#DC434340', border: '1px solid #DC434380' }}>
           Clear
         </button>
         <button onClick={nextLetter} disabled={LETTERS.indexOf(currentLetter) === LETTERS.length - 1}
           className="flex-1 py-3 rounded-2xl font-black text-white disabled:opacity-40 app-pressable"
-          style={{ background: '#6C63FF' }}>
+          style={{ background: '#4F6BED' }}>
           Next Letter →
         </button>
       </div>

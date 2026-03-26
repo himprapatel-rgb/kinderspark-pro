@@ -5,10 +5,10 @@ import { verifyPin } from '@/lib/api'
 import { useAppStore } from '@/store/appStore'
 
 const ROLE_META: Record<string, { emoji: string; label: string; grad: string; color: string; glow: string }> = {
-  child:   { emoji: '🧒', label: 'Kid',     grad: 'linear-gradient(135deg,#F97316,#EA580C)', color: '#F97316', glow: 'rgba(255,159,10,0.45)' },
-  teacher: { emoji: '👩‍🏫', label: 'Teacher', grad: 'linear-gradient(135deg,#6C63FF,#8B5CF6)', color: '#6C63FF', glow: 'rgba(94,92,230,0.45)' },
-  parent:  { emoji: '👨‍👩‍👧', label: 'Parent',  grad: 'linear-gradient(135deg,#2DB854,#34D399)', color: '#2DB854', glow: 'rgba(48,209,88,0.45)' },
-  admin:   { emoji: '⚙️', label: 'Admin',   grad: 'linear-gradient(135deg,#8B5CF6,#6C63FF)', color: '#8B5CF6', glow: 'rgba(191,90,242,0.45)' },
+  child:   { emoji: '🧒', label: 'Kid',     grad: 'linear-gradient(135deg,#E8753A,#C4611F)', color: '#E8753A', glow: 'rgba(255,159,10,0.45)' },
+  teacher: { emoji: '👩‍🏫', label: 'Teacher', grad: 'linear-gradient(135deg,#4F6BED,#7C5BBF)', color: '#4F6BED', glow: 'rgba(94,92,230,0.45)' },
+  parent:  { emoji: '👨‍👩‍👧', label: 'Parent',  grad: 'linear-gradient(135deg,#2BA55E,#3CC78A)', color: '#2BA55E', glow: 'rgba(48,209,88,0.45)' },
+  admin:   { emoji: '⚙️', label: 'Admin',   grad: 'linear-gradient(135deg,#7C5BBF,#4F6BED)', color: '#7C5BBF', glow: 'rgba(191,90,242,0.45)' },
 }
 
 function PinContent() {
@@ -78,7 +78,7 @@ function PinContent() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center px-5 relative overflow-hidden"
-      style={{ background: 'linear-gradient(160deg, #eef3ff 0%, #f6f8ff 60%, #f3f8ff 100%)' }}
+      style={{ background: 'linear-gradient(160deg, #F8F7F4 0%, #FAF9F6 60%, #F6F8F4 100%)' }}
     >
       {/* Background orb matching role color */}
       <div
@@ -163,7 +163,7 @@ function PinContent() {
       {error && (
         <div
           className="mb-6 px-5 py-2.5 rounded-2xl text-sm font-bold relative z-10 animate-pop"
-          style={{ background: 'rgba(255,69,58,0.15)', border: '1px solid rgba(255,69,58,0.3)', color: '#EF4444' }}
+          style={{ background: 'rgba(255,69,58,0.15)', border: '1px solid rgba(255,69,58,0.3)', color: '#DC4343' }}
         >
           ⚠️ {error}
         </div>

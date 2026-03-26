@@ -34,16 +34,16 @@ function statusOf(run: any): 'running' | 'success' | 'failure' | 'info' {
   return 'info'
 }
 function msgColor(type: string) {
-  if (type === 'success') return '#2DB854'
-  if (type === 'failure') return '#EF4444'
-  if (type === 'running') return '#F59E0B'
-  if (type === 'alert')   return '#F97316'
+  if (type === 'success') return '#2BA55E'
+  if (type === 'failure') return '#DC4343'
+  if (type === 'running') return '#E5982A'
+  if (type === 'alert')   return '#E8753A'
   return '#8E8E93'
 }
 function importanceColor(n: number) {
-  if (n >= 4) return '#EF4444'
-  if (n >= 3) return '#F97316'
-  if (n >= 2) return '#F59E0B'
+  if (n >= 4) return '#DC4343'
+  if (n >= 3) return '#E8753A'
+  if (n >= 2) return '#E5982A'
   return '#8E8E93'
 }
 function importanceLabel(n: number) {
@@ -140,13 +140,13 @@ function MissionControl() {
             id: String(run.id),
             agentName: agent?.name || run.name || 'Agent',
             agentIcon: agent?.icon || '🤖',
-            agentColor: agent?.color || '#6C63FF',
+            agentColor: agent?.color || '#4F6BED',
             message: type === 'running' ? 'Running...' : type === 'success' ? 'Completed successfully' : type === 'failure' ? 'Failed — needs attention' : `Status: ${run.conclusion || run.status}`,
             type, ts: new Date(run.created_at).getTime(), url: run.html_url,
           }
         })
         const issueMsgs: FeedMsg[] = (data.issues || []).slice(0, 5).map((issue: any) => ({
-          id: `issue-${issue.number}`, agentName: 'Health Monitor', agentIcon: '🚨', agentColor: '#EF4444',
+          id: `issue-${issue.number}`, agentName: 'Health Monitor', agentIcon: '🚨', agentColor: '#DC4343',
           message: issue.title, type: 'alert' as const, ts: new Date(issue.created_at).getTime(), url: issue.html_url,
         }))
         const memMsgs: FeedMsg[] = (data.memories || []).slice(0, 10).map((m: Memory) => ({
@@ -227,11 +227,11 @@ function MissionControl() {
     <div className="min-h-screen app-page app-container" style={{ fontFamily: 'Nunito, sans-serif' }}>
 
       {/* Header */}
-      <div style={{ background: 'linear-gradient(135deg, var(--app-accent), #5B52EE)', borderBottom: '1px solid rgba(120,120,140,0.2)' }}>
+      <div style={{ background: 'linear-gradient(135deg, var(--app-accent), #3E5AD9)', borderBottom: '1px solid rgba(120,120,140,0.2)' }}>
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center gap-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
-              style={{ background: 'linear-gradient(135deg, #6C63FF, #8B5CF6)', boxShadow: '0 4px 20px rgba(94,92,230,0.4)' }}>
+              style={{ background: 'linear-gradient(135deg, #4F6BED, #7C5BBF)', boxShadow: '0 4px 20px rgba(94,92,230,0.4)' }}>
               🛸
             </div>
             <div>
@@ -240,25 +240,25 @@ function MissionControl() {
             </div>
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <div className="px-2 py-1 rounded-lg text-[10px] font-black" style={{ background: 'rgba(255,69,58,0.15)', color: '#EF4444', border: '1px solid rgba(255,69,58,0.3)' }}>
+            <div className="px-2 py-1 rounded-lg text-[10px] font-black" style={{ background: 'rgba(255,69,58,0.15)', color: '#DC4343', border: '1px solid rgba(255,69,58,0.3)' }}>
               🔒 DEV ONLY
             </div>
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black"
               style={{ background: isConnected ? 'rgba(48,209,88,0.15)' : 'rgba(255,69,58,0.15)',
-                       color: isConnected ? '#2DB854' : '#EF4444',
-                       border: `1px solid ${isConnected ? '#2DB85440' : '#EF444440'}` }}>
-              <span className="w-1.5 h-1.5 rounded-full" style={{ background: isConnected ? '#2DB854' : '#EF4444', boxShadow: isConnected ? '0 0 6px #2DB854' : 'none' }} />
+                       color: isConnected ? '#2BA55E' : '#DC4343',
+                       border: `1px solid ${isConnected ? '#2BA55E40' : '#DC434340'}` }}>
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: isConnected ? '#2BA55E' : '#DC4343', boxShadow: isConnected ? '0 0 6px #2BA55E' : 'none' }} />
               {isConnected ? 'LIVE' : 'OFFLINE'}
             </div>
             {runningCount > 0 && (
               <div className="px-3 py-1.5 rounded-xl text-xs font-black"
-                style={{ background: 'rgba(255,214,10,0.15)', color: '#F59E0B', border: '1px solid rgba(255,214,10,0.25)' }}>
+                style={{ background: 'rgba(255,214,10,0.15)', color: '#E5982A', border: '1px solid rgba(255,214,10,0.25)' }}>
                 ⚡ {runningCount} running
               </div>
             )}
             {failedCount > 0 && (
               <div className="px-3 py-1.5 rounded-xl text-xs font-black"
-                style={{ background: 'rgba(255,69,58,0.15)', color: '#EF4444', border: '1px solid rgba(255,69,58,0.25)' }}>
+                style={{ background: 'rgba(255,69,58,0.15)', color: '#DC4343', border: '1px solid rgba(255,69,58,0.25)' }}>
                 ❌ {failedCount} failed
               </div>
             )}
@@ -273,7 +273,7 @@ function MissionControl() {
               style={{
                 background: activeTab === tab.key ? 'rgba(255,255,255,0.18)' : 'transparent',
                 color: activeTab === tab.key ? '#ffffff' : 'rgba(255,255,255,0.65)',
-                borderBottom: activeTab === tab.key ? '2px solid #6C63FF' : '2px solid transparent',
+                borderBottom: activeTab === tab.key ? '2px solid #4F6BED' : '2px solid transparent',
               }}>
               {tab.label}
             </button>
@@ -290,7 +290,7 @@ function MissionControl() {
               <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
                 <button onClick={() => setActiveCat('all')}
                   className="flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-black transition-all"
-                  style={{ background: activeCat === 'all' ? '#6C63FF25' : 'rgba(255,255,255,0.05)', border: `1px solid ${activeCat === 'all' ? '#6C63FF50' : 'rgba(255,255,255,0.08)'}`, color: activeCat === 'all' ? '#6C63FF' : 'rgba(255,255,255,0.4)' }}>
+                  style={{ background: activeCat === 'all' ? '#4F6BED25' : 'rgba(255,255,255,0.05)', border: `1px solid ${activeCat === 'all' ? '#4F6BED50' : 'rgba(255,255,255,0.08)'}`, color: activeCat === 'all' ? '#4F6BED' : 'rgba(255,255,255,0.4)' }}>
                   All Agents
                 </button>
                 {Object.entries(categories).map(([key, cat]) => (
@@ -361,7 +361,7 @@ function MissionControl() {
               <div className="flex items-center justify-between mb-4">
                 <p className="text-sm font-bold app-muted">Agent-to-agent messages, handoffs and broadcasts</p>
                 <button onClick={fetchTabData} className="text-xs font-black px-3 py-1.5 rounded-xl"
-                  style={{ background: 'rgba(94,92,230,0.15)', color: '#6C63FF', border: '1px solid rgba(94,92,230,0.3)' }}>↻ Refresh</button>
+                  style={{ background: 'rgba(94,92,230,0.15)', color: '#4F6BED', border: '1px solid rgba(94,92,230,0.3)' }}>↻ Refresh</button>
               </div>
               {conversations.length === 0 ? (
                 <div className="text-center py-20">
@@ -382,14 +382,14 @@ function MissionControl() {
                             <span className="text-white/30 text-[10px] font-bold">→</span>
                             <span className="text-xs app-muted font-black">{conv.toAgentId === 'all' ? '📢 All Agents' : conv.toName || conv.toAgentId}</span>
                             <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full ml-auto" style={{ background: 'var(--app-surface-soft)', color: 'rgba(255,255,255,0.4)' }}>{conv.msgType}</span>
-                            {conv.resolved && <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(48,209,88,0.15)', color: '#2DB854' }}>✓ resolved</span>}
+                            {conv.resolved && <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(48,209,88,0.15)', color: '#2BA55E' }}>✓ resolved</span>}
                           </div>
                           <p className="text-sm font-bold leading-snug">{conv.message}</p>
                           <div className="flex items-center gap-3 mt-2">
                             <span className="text-white/25 text-[10px] font-bold">{new Date(conv.createdAt).toLocaleString()}</span>
                             {!conv.resolved && (
                               <button onClick={() => resolveConv(conv.id)} className="text-[10px] font-black px-2 py-0.5 rounded-lg"
-                                style={{ background: 'rgba(48,209,88,0.1)', color: '#2DB854', border: '1px solid rgba(48,209,88,0.2)' }}>
+                                style={{ background: 'rgba(48,209,88,0.1)', color: '#2BA55E', border: '1px solid rgba(48,209,88,0.2)' }}>
                                 ✓ Mark resolved
                               </button>
                             )}
@@ -409,7 +409,7 @@ function MissionControl() {
               <div className="flex items-center justify-between mb-4">
                 <p className="text-sm font-bold app-muted">What every agent has learned and decided</p>
                 <button onClick={fetchTabData} className="text-xs font-black px-3 py-1.5 rounded-xl"
-                  style={{ background: 'rgba(94,92,230,0.15)', color: '#6C63FF', border: '1px solid rgba(94,92,230,0.3)' }}>↻ Refresh</button>
+                  style={{ background: 'rgba(94,92,230,0.15)', color: '#4F6BED', border: '1px solid rgba(94,92,230,0.3)' }}>↻ Refresh</button>
               </div>
               {memories.length === 0 ? (
                 <div className="text-center py-20">

@@ -33,7 +33,7 @@ function ReportsContent() {
 
   return (
     <div className="min-h-screen pb-8 app-container" style={{ background: 'var(--app-bg)' }}>
-      <div className="p-5 pt-10" style={{ background: 'linear-gradient(135deg, var(--app-accent), #5B52EE)' }}>
+      <div className="p-5 pt-10" style={{ background: 'linear-gradient(135deg, var(--app-accent), #3E5AD9)' }}>
         <button className="app-pressable" onClick={() => router.back()} className="text-sm font-bold mb-4 flex items-center gap-1">← Back</button>
         <h1 className="font-black text-2xl">Weekly Report 📊</h1>
         <p className="text-sm font-bold mt-1">AI-generated class summary</p>
@@ -51,7 +51,7 @@ function ReportsContent() {
                   className="w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold text-sm transition-all"
                   style={{
                     background: classId === cls.id ? 'rgba(94,92,230,0.15)' : 'rgba(70,75,96,0.06)',
-                    border: classId === cls.id ? '1.5px solid #6C63FF' : '1.5px solid transparent',
+                    border: classId === cls.id ? '1.5px solid #4F6BED' : '1.5px solid transparent',
                     color: classId === cls.id ? '#2d245d' : 'rgb(32,36,52)',
                   }}
                 >
@@ -71,7 +71,7 @@ function ReportsContent() {
 
         <button onClick={handleGenerate} disabled={loading || !classId}
           className="w-full py-4 rounded-2xl font-black text-white text-base transition-all active:scale-95 disabled:opacity-50 app-pressable"
-          style={{ background: 'linear-gradient(135deg, #6C63FF, #8B5CF6)' }}>
+          style={{ background: 'linear-gradient(135deg, #4F6BED, #7C5BBF)' }}>
           {loading ? <span className="flex items-center justify-center gap-2"><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Generating with AI...</span> : '✨ Generate Report'}
         </button>
 
