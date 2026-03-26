@@ -212,9 +212,10 @@ function PinContent() {
       <button
         onClick={() => submit(pinStr)}
         disabled={pinStr.length < 4 || loading || success}
-        className="w-full max-w-[280px] py-4 rounded-2xl font-black text-base transition-all active:scale-95 disabled:opacity-40 relative z-10 overflow-hidden app-pressable"
+        className="w-full max-w-[280px] py-4 rounded-2xl font-black text-base text-white transition-all active:scale-95 disabled:opacity-40 relative z-10 overflow-hidden app-pressable"
         style={{
           background: meta.grad,
+          color: '#fff',
           boxShadow: pinStr.length >= 4 ? `0 6px 28px ${meta.glow}` : 'none',
         }}
       >

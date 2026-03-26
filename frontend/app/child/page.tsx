@@ -45,6 +45,7 @@ export default function ChildPage() {
   const [markingDone, setMarkingDone] = useState<string | null>(null)
   const [celebrationBadges, setCelebrationBadges] = useState<any[]>([])
   const [dailyDone, setDailyDone] = useState(false)
+  const [showAllMods, setShowAllMods] = useState(false)
   const { mod: dailyMod, todayKey } = getDailyChallenge()
 
   const student = currentStudent || user
@@ -570,9 +571,18 @@ export default function ChildPage() {
 
         {/* ── All Lessons grid ── */}
         <div>
-          <h2 className="font-black text-base mb-3">📚 All Lessons</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-black text-base">📚 All Lessons</h2>
+            <button
+              onClick={() => setShowAllMods(v => !v)}
+              className="text-xs font-bold app-pressable px-3 py-1 rounded-full"
+              style={{ background: 'var(--app-accent-soft)', color: 'var(--app-accent)' }}
+            >
+              {showAllMods ? 'Show Less' : `Show All (${MODS.length})`}
+            </button>
+          </div>
           <div className="grid grid-cols-2 gap-3">
-            {MODS.map(mod => {
+            {(showAllMods ? MODS : MODS.slice(0, 6)).map(mod => {
               const done = progressMap[mod.id] || 0
               const pct = Math.min(100, Math.round((done / mod.items.length) * 100))
               const complete = pct === 100
