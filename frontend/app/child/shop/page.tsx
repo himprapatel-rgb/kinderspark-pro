@@ -62,10 +62,10 @@ export default function ShopPage() {
   }
 
   return (
-    <div className="min-h-screen pb-8" style={{ background: '#0f0f1a' }}>
+    <div className="min-h-screen pb-8 app-page">
       {/* Header */}
       <div className="m-3 rounded-3xl p-5" style={{ background: 'linear-gradient(135deg, #FF9F0A, #FF453A)' }}>
-        <button onClick={() => router.push('/child')} className="text-white/70 font-bold text-sm mb-3">← Back</button>
+        <button className="app-pressable" onClick={() => router.push('/child')} className="text-white/70 font-bold text-sm mb-3">← Back</button>
         <div className="text-white text-2xl font-black">🛍️ Star Shop</div>
         <div className="text-white/80 font-bold">You have <span className="font-black text-yellow-300">⭐ {stars}</span> stars</div>
       </div>
@@ -80,21 +80,21 @@ export default function ShopPage() {
       <div className="px-3 space-y-6">
         {/* Avatars */}
         <div>
-          <div className="text-white font-black text-base mb-3">😊 Avatars</div>
+          <div className="app-title text-base mb-3">😊 Avatars</div>
           <div className="grid grid-cols-3 gap-3">
             {SHOP_AVS.map(item => {
               const owned = ownedItems.includes(item.id)
               return (
-                <button key={item.id}
+                <button className="app-pressable" key={item.id}
                   onClick={() => handleBuy(item.id, item.price, 'avatar')}
                   disabled={buying === item.id}
                   className="rounded-2xl p-4 flex flex-col items-center gap-1 active:scale-95 transition-all"
                   style={{
-                    background: owned ? '#30D15820' : '#1a1a2e',
-                    border: `2px solid ${owned ? '#30D158' : stars >= item.price ? 'rgba(255,255,255,0.1)' : 'rgba(255,69,58,0.3)'}`,
+                    background: owned ? '#30D15820' : 'var(--app-surface)',
+                    border: `2px solid ${owned ? '#30D158' : stars >= item.price ? 'var(--app-border)' : 'rgba(255,69,58,0.3)'}`,
                   }}>
                   <div className="text-4xl">{item.emoji}</div>
-                  <div className="text-white font-black text-xs">{item.label}</div>
+                  <div className="font-black text-xs" style={{ color: 'rgb(var(--foreground-rgb))' }}>{item.label}</div>
                   {owned ? (
                     <div className="text-green-400 text-xs font-bold">✓ Owned</div>
                   ) : (
@@ -108,23 +108,23 @@ export default function ShopPage() {
 
         {/* Themes */}
         <div>
-          <div className="text-white font-black text-base mb-3">🎨 Themes</div>
+          <div className="app-title text-base mb-3">🎨 Themes</div>
           <div className="grid grid-cols-2 gap-3">
             {SHOP_THS.map(item => {
               const owned = ownedItems.includes(item.id)
               const active = selectedTheme === item.id
               return (
-                <button key={item.id}
+                <button className="app-pressable" key={item.id}
                   onClick={() => handleBuy(item.id, item.price, 'theme')}
                   disabled={buying === item.id}
                   className="rounded-2xl p-4 flex items-center gap-3 active:scale-95 transition-all"
                   style={{
-                    background: active ? item.color + '30' : owned ? '#1a2a1a' : '#1a1a2e',
-                    border: `2px solid ${active ? item.color : owned ? '#30D158' : 'rgba(255,255,255,0.1)'}`,
+                    background: active ? item.color + '30' : owned ? '#1a2a1a' : 'var(--app-surface)',
+                    border: `2px solid ${active ? item.color : owned ? '#30D158' : 'var(--app-border)'}`,
                   }}>
                   <div className="w-8 h-8 rounded-full flex-shrink-0" style={{ background: item.color }} />
                   <div className="flex-1 text-left">
-                    <div className="text-white font-black text-xs">{item.label}</div>
+                    <div className="font-black text-xs" style={{ color: 'rgb(var(--foreground-rgb))' }}>{item.label}</div>
                     {active ? (
                       <div className="text-xs font-bold" style={{ color: item.color }}>Active</div>
                     ) : owned ? (

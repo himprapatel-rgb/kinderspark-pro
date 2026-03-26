@@ -119,9 +119,9 @@ export default function TutorPage() {
 
   if (phase === 'topics') {
     return (
-      <div className="min-h-screen flex flex-col" style={{ background: '#0f0f1a' }}>
+      <div className="min-h-screen flex flex-col" style={{ background: 'var(--app-bg)' }}>
         <div className="flex items-center gap-3 p-5">
-          <button onClick={() => router.push('/child')} className="text-white/60 font-bold">← Back</button>
+          <button className="app-pressable" onClick={() => router.push('/child')} className="font-bold" style={{ color: 'rgba(70, 75, 96, 0.85)' }}>← Back</button>
         </div>
         <div className="px-5 pb-10">
           <div className="text-center mb-8">
@@ -131,11 +131,11 @@ export default function TutorPage() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             {TUTOR_TOPICS.map(t => (
-              <button key={t.id} onClick={() => startQuiz(t.id)}
+              <button className="app-pressable" key={t.id} onClick={() => startQuiz(t.id)}
                 className="rounded-2xl p-5 flex flex-col items-center gap-2 active:scale-95 transition-all"
                 style={{ background: t.color + '22', border: `2px solid ${t.color}44` }}>
                 <div className="text-4xl">{t.emoji}</div>
-                <div className="text-white font-black text-sm">{t.label}</div>
+                <div className="font-black text-sm" style={{ color: 'rgb(32,36,52)' }}>{t.label}</div>
               </button>
             ))}
           </div>
@@ -148,7 +148,7 @@ export default function TutorPage() {
     const topicInfo = TUTOR_TOPICS.find(t => t.id === topic)
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-6"
-        style={{ background: 'linear-gradient(180deg, #1a0a2e, #0f0f1a)' }}>
+        style={{ background: 'var(--app-bg)' }}>
         <div className="text-7xl mb-3 animate-bounce">
           {accuracy >= 80 ? '🏆' : accuracy >= 60 ? '🌟' : '💪'}
         </div>
@@ -158,7 +158,7 @@ export default function TutorPage() {
         <div className="text-white/60 font-bold mb-6">{topicInfo?.label} Quiz Complete</div>
 
         {/* Stats */}
-        <div className="w-full rounded-2xl p-5 mb-5" style={{ background: '#1a1a2e' }}>
+        <div className="w-full rounded-2xl p-5 mb-5" style={{ background: 'var(--app-surface)', border: '1px solid rgba(120,120,140,0.2)' }}>
           <div className="grid grid-cols-3 gap-4 mb-4">
             <div className="text-center">
               <div className="text-yellow-400 text-2xl font-black">{correct}/{TOTAL_Q}</div>
@@ -202,12 +202,12 @@ export default function TutorPage() {
         )}
 
         <div className="flex gap-3 w-full">
-          <button onClick={() => startQuiz(topic)}
+          <button className="app-pressable" onClick={() => startQuiz(topic)}
             className="flex-1 py-3 rounded-2xl text-white font-black"
             style={{ background: '#5E5CE6' }}>
             Play Again
           </button>
-          <button onClick={() => router.push('/child')}
+          <button className="app-pressable" onClick={() => router.push('/child')}
             className="flex-1 py-3 rounded-2xl text-white font-black bg-white/20">
             Home
           </button>
@@ -221,10 +221,10 @@ export default function TutorPage() {
   const choices = currentQ?.choices || []
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#0f0f1a' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--app-bg)' }}>
       {/* HUD */}
       <div className="p-4 flex items-center gap-3">
-        <button onClick={() => setPhase('topics')} className="text-white/60 font-bold">✕</button>
+          <button className="app-pressable" onClick={() => setPhase('topics')} className="font-bold" style={{ color: 'rgba(70, 75, 96, 0.85)' }}>✕</button>
         <div className="flex-1 flex gap-4 justify-center">
           <div className="text-center">
             <div className="text-white font-black text-sm">{qIdx + 1}/{TOTAL_Q}</div>
@@ -266,8 +266,8 @@ export default function TutorPage() {
       {/* Sparkle speech bubble */}
       <div className="px-4 mb-4 flex gap-3 items-start">
         <div className="text-4xl">🤖</div>
-        <div className="flex-1 rounded-2xl rounded-tl-none p-3" style={{ background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)' }}>
-          <div className="text-white/80 font-bold text-sm">
+        <div className="flex-1 rounded-2xl rounded-tl-none p-3" style={{ background: 'var(--app-surface)', border: '1px solid rgba(120,120,140,0.2)' }}>
+          <div className="font-bold text-sm" style={{ color: 'rgba(32,36,52,0.9)' }}>
             {answered
               ? selected === currentQ?.a ? '🎉 Correct! You got it!' : `❌ The answer was "${currentQ?.a}"`
               : 'Think carefully and choose the right answer! 🤔'}
@@ -277,9 +277,9 @@ export default function TutorPage() {
 
       {/* Question card */}
       <div className="px-4 mb-5">
-        <div className="rounded-2xl p-5 text-center" style={{ background: '#1a1a2e' }}>
+        <div className="rounded-2xl p-5 text-center" style={{ background: 'var(--app-surface)', border: '1px solid rgba(120,120,140,0.2)' }}>
           <div className="text-5xl mb-3">{currentQ?.e}</div>
-          <div className="text-white font-black text-lg">{currentQ?.q}</div>
+          <div className="font-black text-lg" style={{ color: 'rgb(32,36,52)' }}>{currentQ?.q}</div>
         </div>
       </div>
 
@@ -287,19 +287,19 @@ export default function TutorPage() {
       <div className="px-4 flex-1">
         <div className="grid grid-cols-2 gap-3">
           {choices.map((choice: string) => {
-            let bg = '#1a1a2e'
-            let border = 'rgba(255,255,255,0.1)'
+            let bg = 'var(--app-surface)'
+            let border = 'rgba(120,120,140,0.22)'
             if (answered) {
               if (choice === currentQ.a) { bg = '#30D15840'; border = '#30D158' }
               else if (choice === selected) { bg = '#FF453A40'; border = '#FF453A' }
             }
             return (
-              <button key={choice}
+              <button className="app-pressable" key={choice}
                 onClick={() => handleAnswer(choice)}
                 disabled={answered}
                 className="rounded-2xl p-4 text-center active:scale-95 transition-all"
                 style={{ background: bg, border: `2px solid ${border}` }}>
-                <div className="text-white font-black text-base">{choice}</div>
+                <div className="font-black text-base" style={{ color: 'rgb(32,36,52)' }}>{choice}</div>
               </button>
             )
           })}
@@ -310,7 +310,7 @@ export default function TutorPage() {
       {answered && (
         <div className="p-4">
           <button onClick={handleNext}
-            className="w-full py-4 rounded-2xl text-white font-black text-lg active:scale-95 transition-all"
+            className="w-full py-4 rounded-2xl text-white font-black text-lg active:scale-95 transition-all app-pressable"
             style={{ background: topicInfo?.color || '#5E5CE6' }}>
             {qIdx === TOTAL_Q - 1 ? 'See Results! 🎉' : 'Next Question →'}
           </button>

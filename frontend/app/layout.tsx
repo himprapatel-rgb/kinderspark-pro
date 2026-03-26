@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import type { Metadata } from 'next';
 import AccessibilityProvider from '@/components/AccessibilityProvider';
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
+import ThemeCustomizer from '@/components/ThemeCustomizer';
 
 export const metadata: Metadata = {
   title: 'KinderSpark Pro · v1.1',
@@ -21,6 +22,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className="font-kid bg-gradient-to-b from-spark-yellow/10 to-white min-h-screen">
         <AccessibilityProvider>
           {children}
+          <ThemeCustomizer />
         </AccessibilityProvider>
         <ServiceWorkerRegistration />
       </body>

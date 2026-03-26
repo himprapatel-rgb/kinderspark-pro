@@ -62,13 +62,13 @@ function KeyGate({ children }: { children: React.ReactNode }) {
   if (!key || key !== devKey) {
     return (
       <div style={{
-        minHeight: '100vh', background: '#080614', display: 'flex',
+        minHeight: '100vh', background: 'var(--app-bg)', display: 'flex',
         alignItems: 'center', justifyContent: 'center',
         fontFamily: 'Nunito, sans-serif',
       }}>
         <div style={{ textAlign: 'center' }}>
           <p style={{ fontSize: 48, margin: 0 }}>404</p>
-          <p style={{ color: 'rgba(255,255,255,0.2)', fontSize: 13, fontWeight: 700, marginTop: 8 }}>
+            <p style={{ color: 'rgba(70,75,96,0.6)', fontSize: 13, fontWeight: 700, marginTop: 8 }}>
             Page not found
           </p>
         </div>
@@ -224,10 +224,10 @@ function MissionControl() {
   ]
 
   return (
-    <div className="min-h-screen" style={{ background: '#080614', fontFamily: 'Nunito, sans-serif', color: 'white' }}>
+    <div className="min-h-screen app-page" style={{ fontFamily: 'Nunito, sans-serif' }}>
 
       {/* Header */}
-      <div style={{ background: 'linear-gradient(135deg, #0d0824, #0a1228)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+      <div style={{ background: 'linear-gradient(135deg, var(--app-accent), #7B59FF)', borderBottom: '1px solid rgba(120,120,140,0.2)' }}>
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center gap-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
@@ -236,7 +236,7 @@ function MissionControl() {
             </div>
             <div>
               <h1 className="text-white font-black text-lg leading-none">Mission Control</h1>
-              <p className="text-white/40 text-xs font-bold">{agents.length} Autonomous Agents · Developer View · KinderSpark Pro</p>
+              <p className="text-white/80 text-xs font-bold">{agents.length} Autonomous Agents · Developer View · KinderSpark Pro</p>
             </div>
           </div>
           <div className="ml-auto flex items-center gap-2">
@@ -271,8 +271,8 @@ function MissionControl() {
             <button key={tab.key} onClick={() => setActiveTab(tab.key as any)}
               className="px-4 py-2 text-xs font-black rounded-t-xl transition-all"
               style={{
-                background: activeTab === tab.key ? 'rgba(94,92,230,0.15)' : 'transparent',
-                color: activeTab === tab.key ? '#5E5CE6' : 'rgba(255,255,255,0.3)',
+                background: activeTab === tab.key ? 'rgba(255,255,255,0.18)' : 'transparent',
+                color: activeTab === tab.key ? '#ffffff' : 'rgba(255,255,255,0.65)',
                 borderBottom: activeTab === tab.key ? '2px solid #5E5CE6' : '2px solid transparent',
               }}>
               {tab.label}

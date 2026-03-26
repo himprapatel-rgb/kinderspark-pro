@@ -100,7 +100,7 @@ export default function LoginPage() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center px-5 py-12 relative overflow-hidden"
-      style={{ background: 'linear-gradient(160deg, #0a0a18 0%, #12102a 40%, #0f1a10 100%)' }}
+      style={{ background: 'linear-gradient(160deg, #eef3ff 0%, #f6f8ff 45%, #eefaf2 100%)' }}
     >
       {/* ── Background orbs ── */}
       <div className="orb w-80 h-80 top-[-80px] left-[-80px] opacity-30"
@@ -184,9 +184,9 @@ export default function LoginPage() {
 
       {/* ── Divider ── */}
       <div className="flex items-center gap-3 mb-6 w-full max-w-[360px] animate-slide-up delay-100">
-        <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.12))' }} />
-        <span className="text-white/30 text-xs font-black uppercase tracking-widest px-1">Who are you?</span>
-        <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.12), transparent)' }} />
+        <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(70,75,96,0.25))' }} />
+        <span className="text-xs font-black uppercase tracking-widest px-1" style={{ color: 'rgba(70, 75, 96, 0.7)' }}>Who are you?</span>
+        <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, rgba(70,75,96,0.25), transparent)' }} />
       </div>
 
       {/* ── Role cards ── */}
@@ -195,12 +195,12 @@ export default function LoginPage() {
           <button
             key={r.id}
             onClick={() => router.push(`/pin?role=${r.id}`)}
-            className="w-full rounded-2xl p-4 flex items-center gap-4 text-left relative overflow-hidden group transition-all duration-200 active:scale-[0.97]"
+            className="w-full rounded-2xl p-4 flex items-center gap-4 text-left relative overflow-hidden group transition-all duration-200 active:scale-[0.97] app-pressable"
             style={{
               animationDelay: `${(i + 2) * 100}ms`,
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              boxShadow: `0 4px 24px rgba(0,0,0,0.3)`,
+              background: 'rgba(255,255,255,0.88)',
+              border: '1px solid rgba(120,120,140,0.22)',
+              boxShadow: `0 8px 22px rgba(30,40,70,0.12)`,
             }}
           >
             {/* Hover gradient fill */}
@@ -227,8 +227,8 @@ export default function LoginPage() {
 
             {/* Text */}
             <div className="flex-1 relative z-10">
-              <div className="text-white text-base font-black leading-tight">{r.label}</div>
-              <div className="text-white/55 text-xs font-semibold mt-0.5">{r.sub}</div>
+              <div className="text-base font-black leading-tight" style={{ color: 'rgb(32,36,52)' }}>{r.label}</div>
+              <div className="text-xs font-semibold mt-0.5" style={{ color: 'rgba(70, 75, 96, 0.8)' }}>{r.sub}</div>
             </div>
 
             {/* Arrow */}
@@ -255,7 +255,7 @@ export default function LoginPage() {
               { label: '🧒 Child',            path: '/child' },
               { label: '🔧 Dev Panel',        path: '/dashboard/agents' },
             ].map(link => (
-              <button key={link.path} onClick={() => router.push(link.path)} style={{
+              <button key={link.path} onClick={() => router.push(link.path)} className="app-pressable" style={{
                 fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 8,
                 background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
                 color: 'rgba(255,255,255,0.7)', cursor: 'pointer', whiteSpace: 'nowrap',
@@ -277,6 +277,7 @@ export default function LoginPage() {
                 key={item.role}
                 onClick={() => quickLogin(item)}
                 disabled={devLoading === item.role}
+                className="app-pressable"
                 style={{
                   flex: 1, padding: '8px 4px', borderRadius: 10, border: 'none',
                   background: devLoading === item.role ? 'rgba(255,255,255,0.05)' : item.color + '22',

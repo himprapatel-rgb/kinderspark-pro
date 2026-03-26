@@ -142,19 +142,19 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
       <div
         className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto flex items-center justify-around z-40"
         style={{
-          background: 'rgba(10,8,20,0.97)',
+          background: 'rgba(255,255,255,0.94)',
           backdropFilter: 'blur(24px)',
           WebkitBackdropFilter: 'blur(24px)',
-          borderTop: '1px solid rgba(255,255,255,0.08)',
+          borderTop: '1px solid rgba(120,120,140,0.2)',
           paddingBottom: 'max(14px, env(safe-area-inset-bottom))',
           paddingTop: 10,
-          boxShadow: '0 -8px 32px rgba(0,0,0,0.5)',
+          boxShadow: '0 -8px 28px rgba(20,25,45,0.14)',
         }}
       >
         {NAV_TABS.map((tab, i) => {
           const active = i === activeIdx
           return (
-            <button
+            <button className="app-pressable"
               key={tab.path}
               onClick={() => router.push(tab.path)}
               className="flex flex-col items-center gap-1 transition-all duration-200"
@@ -178,7 +178,7 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
               </div>
               <span
                 className="text-[9px] font-black transition-colors duration-200"
-                style={{ color: active ? theme.color : 'rgba(255,255,255,0.3)' }}
+                style={{ color: active ? theme.color : 'rgba(70, 75, 96, 0.65)' }}
               >
                 {tab.label}
               </span>

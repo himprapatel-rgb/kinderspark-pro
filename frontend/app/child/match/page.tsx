@@ -174,7 +174,7 @@ export default function WordMatchPage() {
         </div>
         <button
           onClick={startGame}
-          className="w-full max-w-[280px] py-5 rounded-3xl text-white font-black text-xl active:scale-95 transition-all relative overflow-hidden"
+          className="w-full max-w-[280px] py-5 rounded-3xl text-white font-black text-xl active:scale-95 transition-all relative overflow-hidden app-pressable"
           style={{
             background: 'linear-gradient(135deg, #FF9F0A, #FF6B35)',
             boxShadow: '0 8px 32px rgba(255,159,10,0.5)',
@@ -183,7 +183,7 @@ export default function WordMatchPage() {
           <div className="absolute inset-0 shimmer" />
           <span className="relative">Play ▶</span>
         </button>
-        <button
+        <button className="app-pressable"
           onClick={() => router.back()}
           className="mt-5 text-white/30 text-sm font-bold"
         >
@@ -244,12 +244,12 @@ export default function WordMatchPage() {
 
         <button
           onClick={startGame}
-          className="w-full max-w-[280px] py-4 rounded-2xl text-white font-black text-lg active:scale-95 transition-all mb-3"
+          className="w-full max-w-[280px] py-4 rounded-2xl text-white font-black text-lg active:scale-95 transition-all mb-3 app-pressable"
           style={{ background: 'linear-gradient(135deg, #FF9F0A, #FF6B35)', boxShadow: '0 6px 24px rgba(255,159,10,0.4)' }}
         >
           Play Again 🔄
         </button>
-        <button
+        <button className="app-pressable"
           onClick={() => router.back()}
           className="w-full max-w-[280px] py-3.5 rounded-2xl font-black text-sm active:scale-95 transition-all"
           style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.6)' }}
@@ -272,7 +272,7 @@ export default function WordMatchPage() {
       {/* Header */}
       <div className="px-5 pt-10 pb-4">
         <div className="flex items-center gap-3 mb-4">
-          <button onClick={() => setScreen('ready')} className="text-white/40 text-xl font-bold w-8">←</button>
+          <button className="app-pressable" onClick={() => setScreen('ready')} className="text-white/40 text-xl font-bold w-8">←</button>
           <div className="flex-1 h-3 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
             <div
               className="h-full rounded-full transition-all duration-500 relative overflow-hidden"
@@ -340,7 +340,7 @@ export default function WordMatchPage() {
             else if (selected && isCorrect && feedback === 'wrong') { bg = 'rgba(48,209,88,0.2)'; border = '#30D158'; textColor = '#30D158' }
 
             return (
-              <button
+              <button className="app-pressable"
                 key={choice}
                 onClick={() => handleChoice(choice)}
                 disabled={!!selected}

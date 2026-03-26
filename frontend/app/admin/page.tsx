@@ -43,8 +43,8 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#0a0a1a' }}>
-        <div className="text-white/60 font-bold animate-pulse">Loading admin panel...</div>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--app-bg)' }}>
+        <div className="font-bold animate-pulse" style={{ color: 'rgba(70, 75, 96, 0.85)' }}>Loading admin panel...</div>
       </div>
     )
   }
@@ -53,9 +53,9 @@ export default function AdminPage() {
   const medals = ['🥇', '🥈', '🥉']
 
   return (
-    <div className="min-h-screen pb-20" style={{ background: 'linear-gradient(180deg, #0a0a1a 0%, #06060f 100%)' }}>
+    <div className="min-h-screen pb-20" style={{ background: 'var(--app-bg)' }}>
       {/* Header */}
-      <div className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #1a0a3a, #2d1b69)' }}>
+      <div className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, var(--app-accent), #7B59FF)' }}>
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '25px 25px' }} />
         <div className="relative p-5 pt-10">
           <div className="flex justify-between items-start">
@@ -64,7 +64,7 @@ export default function AdminPage() {
               <div className="text-white text-2xl font-black">⚙️ {user?.name}</div>
               <div className="text-white/50 text-sm font-bold">KinderSpark Pro Dashboard</div>
             </div>
-            <button onClick={() => { logout(); router.push('/') }}
+            <button className="app-pressable" onClick={() => { logout(); router.push('/') }}
               className="text-white/50 text-xs font-bold border border-white/20 rounded-full px-3 py-1">
               Logout
             </button>
@@ -90,11 +90,12 @@ export default function AdminPage() {
       </div>
 
       {/* Tab bar */}
-      <div className="sticky top-0 z-40 bg-black/80 backdrop-blur border-b border-white/10">
+      <div className="sticky top-0 z-40 backdrop-blur border-b" style={{ background: 'rgba(255,255,255,0.9)', borderColor: 'rgba(120,120,140,0.2)' }}>
         <div className="flex">
           {TABS.map((t, i) => (
-            <button key={i} onClick={() => setTab(i)}
-              className={`flex-1 py-3 text-xs font-black transition-colors ${tab === i ? 'text-purple-400 border-b-2 border-purple-400' : 'text-white/50'}`}>
+            <button className="app-pressable" key={i} onClick={() => setTab(i)}
+              className={`flex-1 py-3 text-xs font-black transition-colors ${tab === i ? 'border-b-2' : ''}`}
+              style={{ color: tab === i ? 'var(--app-accent)' : 'rgba(70, 75, 96, 0.8)', borderColor: tab === i ? 'var(--app-accent)' : 'transparent' }}>
               {t}
             </button>
           ))}

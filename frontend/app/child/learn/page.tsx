@@ -38,12 +38,12 @@ export default function LearnPage() {
   }
 
   return (
-    <div style={{ background: '#080614', minHeight: '100vh', fontFamily: 'Nunito, sans-serif', color: 'white', paddingBottom: 100 }}>
+    <div className="app-page" style={{ minHeight: '100vh', fontFamily: 'Nunito, sans-serif', paddingBottom: 100 }}>
 
       {/* Header */}
       <div style={{ background: 'linear-gradient(135deg, #0d0824, #0a1228)', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '16px 16px 12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-          <button onClick={() => router.back()} style={{ background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 12, width: 36, height: 36, color: 'white', fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>←</button>
+          <button className="app-pressable" onClick={() => router.back()} style={{ background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 12, width: 36, height: 36, color: 'white', fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>←</button>
           <div>
             <h1 style={{ margin: 0, fontSize: 20, fontWeight: 900 }}>📚 Learn</h1>
             <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)' }}>
@@ -55,14 +55,14 @@ export default function LearnPage() {
         {/* Category pills */}
         <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2 }}>
           {CATS.map(c => (
-            <button
+            <button className="app-pressable"
               key={c}
               onClick={() => setCat(c)}
               style={{
                 flexShrink: 0, padding: '6px 14px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 900,
-                background: cat === c ? 'rgba(94,92,230,0.25)' : 'rgba(255,255,255,0.06)',
-                color: cat === c ? '#5E5CE6' : 'rgba(255,255,255,0.4)',
-                boxShadow: cat === c ? '0 0 0 1px rgba(94,92,230,0.4)' : '0 0 0 1px rgba(255,255,255,0.08)',
+                background: cat === c ? 'rgba(94,92,230,0.18)' : 'rgba(70,75,96,0.06)',
+                color: cat === c ? '#5E5CE6' : 'rgba(70,75,96,0.7)',
+                boxShadow: cat === c ? '0 0 0 1px rgba(94,92,230,0.4)' : '0 0 0 1px rgba(120,120,140,0.22)',
               }}
             >
               {c.charAt(0).toUpperCase() + c.slice(1)}
@@ -98,11 +98,11 @@ export default function LearnPage() {
           const b = badge(mod)
 
           return (
-            <button
+            <button className="app-pressable"
               key={mod.id}
               onClick={() => router.push(`/child/lesson/${mod.id}`)}
               style={{
-                background: `linear-gradient(135deg, ${mod.color}14, transparent)`,
+                background: `linear-gradient(135deg, ${mod.color}14, var(--app-surface))`,
                 border: `1px solid ${mod.color}${isDone ? '50' : '28'}`,
                 borderRadius: 20, padding: '14px 12px', cursor: 'pointer', textAlign: 'left',
                 transition: 'transform 0.15s', display: 'flex', flexDirection: 'column', gap: 6,
@@ -112,7 +112,7 @@ export default function LearnPage() {
               onTouchEnd={e => (e.currentTarget.style.transform = 'scale(1)')}
             >
               <span style={{ fontSize: 28 }}>{mod.icon}</span>
-              <p style={{ margin: 0, fontSize: 12, fontWeight: 900, color: 'white', lineHeight: 1.2 }}>{mod.title}</p>
+              <p style={{ margin: 0, fontSize: 12, fontWeight: 900, color: 'rgb(var(--foreground-rgb))', lineHeight: 1.2 }}>{mod.title}</p>
 
               {/* Progress bar */}
               <div style={{ height: 3, borderRadius: 3, background: 'rgba(255,255,255,0.08)' }}>

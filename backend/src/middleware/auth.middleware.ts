@@ -6,6 +6,9 @@ const JWT_SECRET = process.env.JWT_SECRET || 'kinderspark-secret'
 // Warn loudly at startup if using the weak default secret
 if (JWT_SECRET === 'kinderspark-secret') {
   console.warn('[SECURITY] JWT_SECRET is using the default weak value. Set a strong JWT_SECRET in your .env file.')
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('Refusing to start with default JWT_SECRET in production')
+  }
 }
 
 export interface AuthUser {

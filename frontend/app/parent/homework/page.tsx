@@ -80,12 +80,12 @@ export default function ParentHomeworkPage() {
   ]
 
   return (
-    <div style={{ background: '#080614', minHeight: '100vh', fontFamily: 'Nunito, sans-serif', color: 'white', paddingBottom: 32 }}>
+    <div style={{ background: 'var(--app-bg)', minHeight: '100vh', fontFamily: 'Nunito, sans-serif', color: 'rgb(32,36,52)', paddingBottom: 32 }}>
 
       {/* Header */}
-      <div style={{ background: 'linear-gradient(135deg, #0d0824, #0a1228)', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '16px 16px 14px' }}>
+      <div style={{ background: 'linear-gradient(135deg, var(--app-accent), #7B59FF)', borderBottom: '1px solid rgba(120,120,140,0.2)', padding: '16px 16px 14px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button onClick={() => router.back()} style={{ background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 12, width: 36, height: 36, color: 'white', fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>←</button>
+          <button className="app-pressable" onClick={() => router.back()} style={{ background: 'rgba(255,255,255,0.16)', border: 'none', borderRadius: 12, width: 36, height: 36, color: 'white', fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>←</button>
           <div>
             <h1 style={{ margin: 0, fontSize: 20, fontWeight: 900 }}>📋 Homework</h1>
             <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)' }}>
@@ -97,7 +97,7 @@ export default function ParentHomeworkPage() {
         {/* Filter pills */}
         <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
           {FILTERS.map(f => (
-            <button
+            <button className="app-pressable"
               key={f.key}
               onClick={() => setFilter(f.key)}
               style={{
@@ -122,7 +122,7 @@ export default function ParentHomeworkPage() {
         {!loading && filtered.length === 0 && (
           <div style={{ textAlign: 'center', padding: '60px 20px' }}>
             <p style={{ fontSize: 48, margin: 0 }}>🎉</p>
-            <p style={{ fontWeight: 900, fontSize: 18, marginTop: 12 }}>
+            <p style={{ fontWeight: 900, fontSize: 18, marginTop: 12, color: 'rgb(32,36,52)' }}>
               {filter === 'done' ? 'No completed homework yet' : 'All homework done!'}
             </p>
             <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, fontWeight: 700 }}>
@@ -140,15 +140,15 @@ export default function ParentHomeworkPage() {
               key={hw.id}
               style={{
                 borderRadius: 20, padding: '14px 16px',
-                background: done ? 'rgba(255,255,255,0.03)' : 'rgba(94,92,230,0.06)',
-                border: `1px solid ${done ? 'rgba(255,255,255,0.06)' : overdue ? 'rgba(255,69,58,0.25)' : 'rgba(94,92,230,0.2)'}`,
+                background: done ? 'rgba(70,75,96,0.04)' : 'var(--app-surface)',
+                border: `1px solid ${done ? 'rgba(120,120,140,0.2)' : overdue ? 'rgba(255,69,58,0.25)' : 'rgba(94,92,230,0.2)'}`,
                 opacity: done ? 0.7 : 1,
                 display: 'flex', alignItems: 'center', gap: 12,
               }}
             >
               <div style={{ fontSize: 28, flexShrink: 0 }}>{done ? '✅' : overdue ? '🚨' : '📝'}</div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ margin: 0, fontSize: 14, fontWeight: 900, color: 'white', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <p style={{ margin: 0, fontSize: 14, fontWeight: 900, color: 'rgb(32,36,52)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {hw.title}
                 </p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
@@ -166,7 +166,7 @@ export default function ParentHomeworkPage() {
                 </div>
               </div>
               {!done && (
-                <button
+                <button className="app-pressable"
                   onClick={() => markDone(hw)}
                   disabled={completing === hw.id}
                   style={{
@@ -187,8 +187,8 @@ export default function ParentHomeworkPage() {
       {toast && (
         <div style={{
           position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
-          background: '#1c1c2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14,
-          padding: '10px 20px', fontSize: 13, fontWeight: 900, color: 'white',
+          background: 'var(--app-surface)', border: '1px solid rgba(120,120,140,0.2)', borderRadius: 14,
+          padding: '10px 20px', fontSize: 13, fontWeight: 900, color: 'rgb(32,36,52)',
           boxShadow: '0 8px 32px rgba(0,0,0,0.4)', zIndex: 50,
         }}>
           {toast}

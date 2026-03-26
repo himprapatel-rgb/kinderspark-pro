@@ -140,25 +140,25 @@ export default function TracePage() {
   const endDraw = () => setDrawing(false)
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#0f0f1a' }}>
+    <div className="min-h-screen flex flex-col app-page">
       {/* Header */}
       <div className="flex items-center justify-between p-4">
-        <button onClick={() => router.push('/child')} className="text-white/60 font-bold">← Back</button>
-        <div className="text-white font-black">✍️ Trace Letters</div>
-        <div className="text-white/60 text-sm font-bold">{completed.size}/26</div>
+        <button className="app-pressable" onClick={() => router.push('/child')} className="app-muted font-bold">← Back</button>
+        <div className="app-title">✍️ Trace Letters</div>
+        <div className="app-muted text-sm font-bold">{completed.size}/26</div>
       </div>
 
       {/* Letter selector */}
       <div className="overflow-x-auto px-3 pb-3">
         <div className="flex gap-2 w-max">
           {LETTERS.map(l => (
-            <button key={l}
+            <button className="app-pressable" key={l}
               onClick={() => { setCurrentLetter(l); speak(l) }}
               className="w-10 h-10 rounded-xl font-black text-sm flex-shrink-0 transition-all active:scale-90"
               style={{
-                background: currentLetter === l ? '#5E5CE6' : completed.has(l) ? '#30D15840' : 'rgba(255,255,255,0.1)',
-                color: currentLetter === l ? 'white' : completed.has(l) ? '#30D158' : 'rgba(255,255,255,0.6)',
-                border: currentLetter === l ? '2px solid #5E5CE6' : '1px solid rgba(255,255,255,0.1)',
+                background: currentLetter === l ? '#5E5CE6' : completed.has(l) ? '#30D15840' : 'var(--app-surface)',
+                color: currentLetter === l ? 'white' : completed.has(l) ? '#30D158' : 'rgba(70,75,96,0.75)',
+                border: currentLetter === l ? '2px solid #5E5CE6' : '1px solid var(--app-border)',
               }}>
               {l}
             </button>
@@ -201,12 +201,12 @@ export default function TracePage() {
       {/* Bottom controls */}
       <div className="p-4 flex gap-3">
         <button onClick={clearCanvas}
-          className="flex-1 py-3 rounded-2xl font-black text-white"
+          className="flex-1 py-3 rounded-2xl font-black text-white app-pressable"
           style={{ background: '#FF453A40', border: '1px solid #FF453A80' }}>
           Clear
         </button>
         <button onClick={nextLetter} disabled={LETTERS.indexOf(currentLetter) === LETTERS.length - 1}
-          className="flex-1 py-3 rounded-2xl font-black text-white disabled:opacity-40"
+          className="flex-1 py-3 rounded-2xl font-black text-white disabled:opacity-40 app-pressable"
           style={{ background: '#5E5CE6' }}>
           Next Letter →
         </button>

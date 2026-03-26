@@ -102,12 +102,12 @@ export default function DrawPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#0f0f1a' }}>
+    <div className="min-h-screen flex flex-col app-page">
       {/* Header */}
       <div className="flex items-center justify-between p-4">
-        <button onClick={() => router.push('/child')} className="text-white/60 font-bold">← Back</button>
-        <div className="text-white font-black">🎨 Drawing Canvas</div>
-        <button onClick={clearCanvas} className="text-orange-400 font-bold text-sm">Clear</button>
+        <button className="app-pressable" onClick={() => router.push('/child')} className="app-muted font-bold">← Back</button>
+        <div className="app-title">🎨 Drawing Canvas</div>
+        <button onClick={clearCanvas} className="text-orange-400 font-bold text-sm app-pressable">Clear</button>
       </div>
 
       {/* Canvas */}
@@ -117,7 +117,7 @@ export default function DrawPage() {
           width={380}
           height={420}
           className="rounded-2xl w-full touch-none"
-          style={{ maxHeight: '50vh', background: '#1a1a2e' }}
+          style={{ maxHeight: '50vh', background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}
           onMouseDown={startDraw}
           onMouseMove={draw}
           onMouseUp={endDraw}
@@ -135,7 +135,7 @@ export default function DrawPage() {
           <div className="text-white/60 text-xs font-bold mb-2">Color</div>
           <div className="flex flex-wrap gap-2">
             {COLORS.map(c => (
-              <button key={c} onClick={() => setColor(c)}
+              <button className="app-pressable" key={c} onClick={() => setColor(c)}
                 className="w-8 h-8 rounded-full transition-all active:scale-90"
                 style={{
                   background: c,
@@ -156,7 +156,7 @@ export default function DrawPage() {
 
         {/* Save button */}
         <button onClick={handleSave} disabled={!hasDrawn}
-          className="w-full py-4 rounded-2xl font-black text-white transition-all active:scale-95 disabled:opacity-40"
+          className="w-full py-4 rounded-2xl font-black text-white transition-all active:scale-95 disabled:opacity-40 app-pressable"
           style={{ background: saved ? '#30D158' : 'linear-gradient(135deg, #5E5CE6, #BF5AF2)' }}>
           {saved ? '✅ Saved! +5 ⭐' : '💾 Save Drawing (+5 ⭐)'}
         </button>

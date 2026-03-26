@@ -1,10 +1,12 @@
 import { Router, Request, Response } from 'express'
 import prisma from '../prisma/client'
+import { requireAuth, requireRole } from '../middleware/auth.middleware'
 
 const router = Router()
+router.use(requireAuth)
 
 // GET /api/attendance?classId=&date=YYYY-MM-DD
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', requireRole('teacher', 'admin'), async (req: Request, res: Response) => {
   try {
     const { classId, date } = req.query
     if (!classId || !date) return res.status(400).json({ error: 'classId and date required' })
@@ -43,7 +45,7 @@ router.get('/', async (req: Request, res: Response) => {
 
 // POST /api/attendance — bulk save attendance for a class on a date
 // body: { classId, date, records: [{ studentId, present, note? }] }
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', requireRole('teacher', 'admin'), async (req: Request, res: Response) => {
   try {
     const { classId, date, records } = req.body
     if (!classId || !date || !Array.isArray(records)) {
@@ -72,6 +74,15 @@ router.get('/summary', async (req: Request, res: Response) => {
   try {
     const { classId, days = '30' } = req.query
     if (!classId) return res.status(400).json({ error: 'classId required' })
+    if (req.user?.role === 'child' || req.user?.role === 'parent') {
+      const self = await prisma.student.findUnique({
+        where: { id: req.user.id },
+        select: { classId: true },
+      })
+      if (!self || self.classId !== String(classId)) {
+        return res.status(403).json({ error: 'Insufficient permissions' })
+      }
+    }
 
     const cutoff = new Date()
     cutoff.setDate(cutoff.getDate() - Number(days))
