@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
 import { Loading, InlineEmpty } from '@/components/UIStates'
 import DashboardSidebar from '@/components/DashboardSidebar'
+import TopBarActions from '@/components/TopBarActions'
 import {
   getClasses, getStudents, getHomework, getSyllabuses, getMessages,
   createClass, createStudent, deleteStudent, createHomework, deleteHomework,
@@ -448,20 +449,18 @@ export default function TeacherDashboard() {
             <div className="text-xs app-muted font-bold uppercase tracking-wider">Teacher Portal</div>
             <div className="text-white text-xl font-black mt-0.5">{user?.name || 'Teacher'}</div>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => router.push('/teacher/reports')}
-              className="text-xs app-muted font-bold border border-white/30 rounded-full px-3 py-1.5 app-pressable"
-            >
-              📊 Report
-            </button>
-            <button
-              onClick={() => { logout(); router.push('/') }}
-              className="text-xs font-bold app-muted border border-gray-200 rounded-full px-3 py-1.5 app-pressable"
-            >
-              Logout
-            </button>
-          </div>
+          <TopBarActions
+            variant="light"
+            extra={
+              <button
+                onClick={() => router.push('/teacher/reports')}
+                className="flex items-center justify-center rounded-xl h-10 px-3 gap-1.5 text-sm font-bold active:scale-95 transition-all app-pressable"
+                style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.25)', color: '#fff', backdropFilter: 'blur(8px)' }}
+              >
+                📊 <span className="hidden sm:inline text-xs">Report</span>
+              </button>
+            }
+          />
         </div>
 
         {/* Class selector */}

@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore as useStore } from '@/store/appStore'
 import { Loading, InlineEmpty } from '@/components/UIStates'
+import TopBarActions from '@/components/TopBarActions'
 import { getHomework, getMessages, sendMessage, getAISessions, getAttendanceSummary, markAllMessagesRead, completeHomework, createMessageStream } from '@/lib/api'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 
@@ -251,10 +252,7 @@ export default function ParentPage() {
                     <span className="bg-purple-400/20 text-purple-300 rounded-full px-3 py-0.5 text-xs font-black">🤖 Lv {student?.aiBestLevel}</span>
                   </div>
                 </div>
-                <button onClick={() => { logout(); router.push('/') }}
-                  className="text-xs font-bold app-muted border border-white/30 rounded-full px-3 py-1.5 shrink-0 app-pressable">
-                  Logout
-                </button>
+                <TopBarActions variant="light" />
               </div>
             </div>
 

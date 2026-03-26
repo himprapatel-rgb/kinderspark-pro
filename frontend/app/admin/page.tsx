@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useAppStore as useStore } from '@/store/appStore'
 import { Loading, InlineEmpty } from '@/components/UIStates'
 import DashboardSidebar from '@/components/DashboardSidebar'
+import TopBarActions from '@/components/TopBarActions'
 import { getAdminStats, getAdminLeaderboard, getClasses, getClassAnalytics } from '@/lib/api'
 
 export default function AdminPage() {
@@ -79,10 +80,7 @@ export default function AdminPage() {
               <div className="text-2xl font-black">⚙️ {user?.name}</div>
               <div className="text-sm font-bold app-muted">KinderSpark Pro Dashboard</div>
             </div>
-            <button className="app-pressable" onClick={() => { logout(); router.push('/') }}
-              className="text-xs font-bold app-muted border border-gray-200 rounded-full px-3 py-1">
-              Logout
-            </button>
+            <TopBarActions variant="light" />
           </div>
 
           {stats && (
