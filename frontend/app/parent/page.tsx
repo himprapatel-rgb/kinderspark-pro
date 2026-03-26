@@ -283,7 +283,7 @@ export default function ParentPage() {
                   No pending homework today. Great job staying on track.
                 </div>
               )}
-              <div className="text-white/75 text-xs font-bold mt-3">
+              <div className="app-muted text-xs font-bold mt-3">
                 {insightText}
               </div>
             </div>
@@ -429,7 +429,7 @@ export default function ParentPage() {
                 <div className="font-black text-sm">Overall Homework</div>
                 <div className="font-black">{hwPct}%</div>
               </div>
-              <div className="bg-gray-200 rounded-full h-3">
+              <div className="rounded-full h-3" style={{ background: 'rgba(120,120,140,0.14)' }}>
                 <div className="h-3 rounded-full transition-all" style={{ width: `${hwPct}%`, background: hwPct >= 80 ? '#4CAF6A' : hwPct >= 50 ? '#F5A623' : '#E05252' }} />
               </div>
               <div className="text-xs font-bold app-muted mt-1">{completedHW.length} done · {pendingHW.length} pending</div>
@@ -444,7 +444,7 @@ export default function ParentPage() {
                       <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0" style={{ background: 'rgba(191,90,242,0.2)' }}>🧠</div>
                       <div className="flex-1 min-w-0">
                         <div className="font-black text-sm truncate">{s.topic}</div>
-                        <div className="bg-gray-200 rounded-full h-1.5 mt-1">
+                        <div className="rounded-full h-1.5 mt-1" style={{ background: 'rgba(120,120,140,0.14)' }}>
                           <div className="h-1.5 rounded-full bg-purple-400" style={{ width: `${s.accuracy}%` }} />
                         </div>
                         <div className="text-xs font-bold app-muted">{s.correct}/{s.total} correct · Lv {s.maxLevel}</div>

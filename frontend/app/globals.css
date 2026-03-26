@@ -95,6 +95,16 @@ body {
   background: var(--app-bg);
   color: rgb(var(--foreground-rgb));
 }
+.app-content {
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 1rem;
+}
+.app-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
 .app-surface {
   background: var(--app-surface);
   border: 1px solid var(--app-border);

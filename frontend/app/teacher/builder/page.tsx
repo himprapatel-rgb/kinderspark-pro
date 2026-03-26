@@ -104,7 +104,7 @@ function BuilderContent() {
     return (
       <div className="min-h-screen flex flex-col app-page app-container" style={{ background: `linear-gradient(180deg, ${meta.color}22, var(--app-bg))` }}>
         <div className="flex items-center gap-3 p-4">
-          <button className="app-pressable" onClick={() => setPreview(false)} className="app-muted font-bold">← Back</button>
+          <button onClick={() => setPreview(false)} className="app-muted font-bold app-pressable">← Back</button>
           <div className="font-black" style={{ color: 'rgb(var(--foreground-rgb))' }}>Preview: {meta.title}</div>
         </div>
         <div className="flex-1 flex flex-col items-center justify-center px-6">
@@ -127,9 +127,9 @@ function BuilderContent() {
     <div className="min-h-screen flex flex-col app-page app-container">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: 'var(--app-border)', background: 'rgba(255,255,255,0.82)' }}>
-        <button className="app-pressable" onClick={() => router.back()} className="app-muted font-bold">← Back</button>
+        <button onClick={() => router.back()} className="app-muted font-bold app-pressable">← Back</button>
         <div className="app-title">{id ? 'Edit Syllabus' : 'Build Syllabus'}</div>
-        <button className="app-pressable" onClick={() => setPreview(true)} className="app-muted font-bold text-sm">Preview</button>
+        <button onClick={() => setPreview(true)} className="app-muted font-bold text-sm app-pressable">Preview</button>
       </div>
 
       <div className="flex-1 overflow-y-auto pb-32 px-4 pt-4">
@@ -211,7 +211,7 @@ function BuilderContent() {
                   className="w-12 text-center text-2xl bg-transparent border rounded-lg p-1" style={{ borderColor: 'var(--app-border)' }} />
                 <input placeholder="Word" value={card.word} onChange={e => updateCard(idx, 'word', e.target.value)}
                   className="flex-1 app-input" />
-                <button className="app-pressable" onClick={() => removeCard(idx)} className="text-red-400 text-lg">✕</button>
+                <button onClick={() => removeCard(idx)} className="text-red-400 text-lg app-pressable">✕</button>
               </div>
               <input placeholder="Hint (optional)" value={card.hint} onChange={e => updateCard(idx, 'hint', e.target.value)}
                 className="app-input text-sm" />
@@ -245,7 +245,7 @@ function BuilderContent() {
           <div className="w-full max-w-[430px] rounded-t-3xl p-5 pb-10 app-surface">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-black text-lg" style={{ color: 'rgb(var(--foreground-rgb))' }}>🤖 AI Generate</h3>
-              <button className="app-pressable" onClick={() => setShowAI(false)} className="app-muted text-2xl">×</button>
+              <button onClick={() => setShowAI(false)} className="app-muted text-2xl app-pressable">×</button>
             </div>
             <input placeholder="Topic (e.g. Sea Animals, Space)" value={aiTopic}
               onChange={e => setAiTopic(e.target.value)}
@@ -271,7 +271,7 @@ function BuilderContent() {
           <div className="w-full max-w-[430px] rounded-t-3xl p-5 pb-10 app-surface">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-black text-lg" style={{ color: 'rgb(var(--foreground-rgb))' }}>✨ Templates</h3>
-              <button className="app-pressable" onClick={() => setShowTemplate(false)} className="app-muted text-2xl">×</button>
+              <button onClick={() => setShowTemplate(false)} className="app-muted text-2xl app-pressable">×</button>
             </div>
             <div className="space-y-3">
               {TEMPLATES.map(t => (

@@ -508,11 +508,11 @@ export default function TeacherDashboard() {
         ))}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 pb-10">
+      <div className="flex-1 overflow-y-auto app-content pb-10">
 
         {/* ── HOME TAB ─────────────────────────────────────────────────────── */}
         {tab === 'home' && (
-          <div className="space-y-4">
+          <div className="space-y-5">
             {selectedClass ? (
               <>
                 {/* Priority actions (top workflow shortcuts) */}
@@ -572,7 +572,7 @@ export default function TeacherDashboard() {
                       <div className="font-black text-sm">📊 Homework Completion</div>
                       <div className="font-black">{classStats.avgHwCompletion}%</div>
                     </div>
-                    <div className="bg-gray-200 rounded-full h-3">
+                    <div className="rounded-full h-3" style={{ background: 'rgba(120,120,140,0.14)' }}>
                       <div
                         className="h-3 rounded-full transition-all"
                         style={{ width: `${classStats.avgHwCompletion}%`, background: classStats.avgHwCompletion >= 80 ? '#4CAF6A' : classStats.avgHwCompletion >= 50 ? '#F5A623' : '#E05252' }}
@@ -742,7 +742,7 @@ export default function TeacherDashboard() {
             )}
 
             {/* Create class form */}
-            <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}>
               <div className="font-black mb-3">+ New Class</div>
               <div className="flex gap-2">
                 <input
@@ -769,7 +769,7 @@ export default function TeacherDashboard() {
         {tab === 'students' && (
           <div className="space-y-4">
             {/* Add student form */}
-            <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}>
               <div className="font-black mb-3">➕ Add Student</div>
               <div className="space-y-2">
                 <input
@@ -1061,7 +1061,7 @@ export default function TeacherDashboard() {
             )}
 
             {/* Manual Create HW form */}
-            <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}>
               <div className="font-black mb-3">📝 Manual Assignment</div>
               <div className="space-y-2">
                 <input
@@ -1131,7 +1131,7 @@ export default function TeacherDashboard() {
                       <button onClick={() => handleDeleteHomework(hw.id)} className="text-red-400/60 text-xs font-bold flex-shrink-0 app-pressable">🗑️</button>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="flex-1 bg-gray-200 rounded-full h-1.5">
+                      <div className="flex-1 rounded-full h-1.5" style={{ background: 'rgba(120,120,140,0.14)' }}>
                         <div className="h-1.5 rounded-full transition-all" style={{ width: `${pct}%`, background: pct >= 80 ? '#4CAF6A' : '#F5A623' }} />
                       </div>
                       <div className="text-xs font-bold app-muted">{done}/{total}</div>
@@ -1259,7 +1259,7 @@ export default function TeacherDashboard() {
         {tab === 'messages' && (
           <div className="space-y-4">
             {/* Send message form */}
-            <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}>
               <div className="font-black mb-3">📨 Send to Class</div>
               <div className="space-y-2">
                 <input

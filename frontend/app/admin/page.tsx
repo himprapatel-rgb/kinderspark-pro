@@ -121,9 +121,9 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <div className="px-4 pt-4">
+      <div className="app-content">
         {tab === 0 && stats && (
-          <div className="space-y-4">
+          <div className="app-stack">
             {/* Needs attention (operational priority) */}
             {needsAttention.length > 0 && (
               <div className="rounded-2xl p-4" style={{ background: 'rgba(255,159,10,0.1)', border: '1px solid rgba(255,159,10,0.3)' }}>
@@ -165,7 +165,7 @@ export default function AdminPage() {
                   <div className="flex items-end gap-4">
                     <div className="font-black" style={{ fontSize: '3rem', lineHeight: 1 }}>{healthScore}</div>
                     <div className="flex-1 pb-2">
-                      <div className="bg-gray-200 rounded-full h-4">
+                    <div className="rounded-full h-4" style={{ background: 'rgba(120,120,140,0.14)' }}>
                         <div className="h-4 rounded-full transition-all" style={{
                           width: `${healthScore}%`,
                           background: healthScore >= 70 ? '#4CAF6A' : healthScore >= 40 ? '#F5A623' : '#E05252'
@@ -191,7 +191,7 @@ export default function AdminPage() {
                     <div className="font-black text-sm">{m.icon} {m.label}</div>
                     <div className="font-black">{typeof m.value === 'number' ? m.value.toLocaleString() : m.value}</div>
                   </div>
-                  <div className="bg-gray-200 rounded-full h-2.5">
+                  <div className="rounded-full h-2.5" style={{ background: 'rgba(120,120,140,0.14)' }}>
                     <div className="h-2.5 rounded-full transition-all"
                       style={{ width: Math.min(100, Math.round(m.value / m.max * 100)) + '%', background: m.color }} />
                   </div>
@@ -275,7 +275,7 @@ export default function AdminPage() {
                       <div className="flex justify-between text-xs font-bold app-muted mb-1">
                         <span>HW completion</span><span>{ca.hwCompletionRate}%</span>
                       </div>
-                      <div className="bg-gray-200 rounded-full h-1.5">
+                      <div className="rounded-full h-1.5" style={{ background: 'rgba(120,120,140,0.14)' }}>
                         <div className="h-1.5 rounded-full" style={{ width: `${ca.hwCompletionRate}%`, background: ca.hwCompletionRate >= 70 ? '#4CAF6A' : '#F5A623' }} />
                       </div>
                       {ca.aiHomeworkCount > 0 && (
@@ -347,7 +347,7 @@ export default function AdminPage() {
                 </div>
                 {/* HW completion bar */}
                 <div className="mt-3">
-                  <div className="bg-gray-200 rounded-full h-2">
+                  <div className="rounded-full h-2" style={{ background: 'rgba(120,120,140,0.14)' }}>
                     <div className="h-2 rounded-full transition-all" style={{ width: `${ca.hwCompletionRate}%`, background: ca.hwCompletionRate >= 70 ? '#4CAF6A' : '#F5A623' }} />
                   </div>
                 </div>
