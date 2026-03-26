@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
 import { getProgress } from '@/lib/api'
 import { MODS } from '@/lib/modules'
+import { BookOpen, Goal, Sparkles } from 'lucide-react'
 
 const CATS = ['All', 'numbers', 'letters', 'words', 'colors', 'items'] as const
 
@@ -41,12 +42,12 @@ export default function LearnPage() {
     <div className="app-page" style={{ minHeight: '100vh', fontFamily: 'Nunito, sans-serif', paddingBottom: 100 }}>
 
       {/* Header */}
-      <div style={{ background: 'linear-gradient(135deg, #0d0824, #0a1228)', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '16px 16px 12px' }}>
+      <div className="doodle-surface" style={{ background: 'linear-gradient(135deg, var(--app-accent), var(--role-admin))', borderBottom: '1px solid rgba(255,255,255,0.12)', padding: '16px 16px 12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-          <button className="app-pressable" onClick={() => router.back()} style={{ background: 'var(--app-surface-soft)', border: 'none', borderRadius: 12, width: 36, height: 36, color: 'white', fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>←</button>
+          <button className="app-pressable sticker-bubble" onClick={() => router.back()} style={{ border: 'none', width: 36, height: 36, color: 'rgb(var(--foreground-rgb))', fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>←</button>
           <div>
-            <h1 style={{ margin: 0, fontSize: 20, fontWeight: 900 }}>📚 Learn</h1>
-            <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)' }}>
+            <h1 style={{ margin: 0, fontSize: 20, fontWeight: 900, display: 'inline-flex', alignItems: 'center', gap: 6, color: 'white' }}><BookOpen size={18} /> Learn</h1>
+            <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.82)' }}>
               {loading ? 'Loading...' : `${started} started · ${done} completed · ${MODS.length} total`}
             </p>
           </div>
@@ -74,7 +75,7 @@ export default function LearnPage() {
       {/* Progress strip */}
       {!loading && started > 0 && (
         <div style={{ margin: '12px 16px 0', padding: '10px 14px', borderRadius: 16, background: 'rgba(94,92,230,0.05)', border: '1px solid rgba(94,92,230,0.2)', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 22 }}>🎯</span>
+          <span className="sticker-bubble" style={{ width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'rotate(-6deg)' }}><Goal size={18} color="var(--app-accent)" /></span>
           <div style={{ flex: 1 }}>
             <p style={{ margin: 0, fontSize: 12, fontWeight: 900, color: '#5B7FE8' }}>{done} of {MODS.length} modules completed</p>
             <div style={{ marginTop: 4, height: 4, borderRadius: 4, background: 'var(--app-surface-soft)' }}>
@@ -111,7 +112,9 @@ export default function LearnPage() {
               onTouchStart={e => (e.currentTarget.style.transform = 'scale(0.97)')}
               onTouchEnd={e => (e.currentTarget.style.transform = 'scale(1)')}
             >
-              <span style={{ fontSize: 28 }}>{mod.icon}</span>
+                <span className="sticker-bubble" style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', transform: cards > 0 ? 'rotate(-4deg)' : 'rotate(4deg)' }}>
+                  <span style={{ fontSize: 24 }}>{mod.icon}</span>
+                </span>
               <p style={{ margin: 0, fontSize: 12, fontWeight: 900, color: 'rgb(var(--foreground-rgb))', lineHeight: 1.2 }}>{mod.title}</p>
 
               {/* Progress bar */}
@@ -121,7 +124,7 @@ export default function LearnPage() {
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: 9, fontWeight: 900, color: b.color, background: b.color + '20', padding: '2px 6px', borderRadius: 8 }}>{b.label}</span>
-                <span style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.3)' }}>{cards}/{mod.items.length}</span>
+                <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--app-text-muted)' }}>{cards}/{mod.items.length}</span>
               </div>
             </button>
           )

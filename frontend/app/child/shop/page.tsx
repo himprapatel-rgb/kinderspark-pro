@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useAppStore as useStore } from '@/store/appStore'
 import { updateStudent } from '@/lib/api'
 import { SHOP_AVS, SHOP_THS } from '@/lib/modules'
+import { Palette, ShoppingBag, Smile } from 'lucide-react'
 
 export default function ShopPage() {
   const router = useRouter()
@@ -64,9 +65,9 @@ export default function ShopPage() {
   return (
     <div className="min-h-screen pb-8 app-page app-container">
       {/* Header */}
-      <div className="m-3 rounded-3xl p-5" style={{ background: 'linear-gradient(135deg, #F5A623, #E05252)' }}>
+      <div className="m-3 rounded-3xl p-5 doodle-surface" style={{ background: 'linear-gradient(135deg, #F5A623, #E05252)' }}>
         <button onClick={() => router.push('/child')} className="text-white/85 font-bold text-sm mb-3 app-pressable">← Back</button>
-        <div className="text-2xl font-black">🛍️ Star Shop</div>
+        <div className="text-2xl font-black inline-flex items-center gap-2"><ShoppingBag size={22} /> Star Shop</div>
         <div className="text-white/80 font-bold">You have <span className="font-black text-yellow-300">⭐ {stars}</span> stars</div>
       </div>
 
@@ -80,7 +81,7 @@ export default function ShopPage() {
       <div className="px-3 space-y-6">
         {/* Avatars */}
         <div>
-          <div className="app-title text-base mb-3">😊 Avatars</div>
+          <div className="app-title text-base mb-3 inline-flex items-center gap-2"><Smile size={16} /> Avatars</div>
           <div className="grid grid-cols-3 gap-3">
             {SHOP_AVS.map(item => {
               const owned = ownedItems.includes(item.id)
@@ -93,7 +94,7 @@ export default function ShopPage() {
                     background: owned ? '#4CAF6A20' : 'var(--app-surface)',
                     border: `2px solid ${owned ? '#4CAF6A' : stars >= item.price ? 'var(--app-border)' : 'rgba(255,69,58,0.3)'}`,
                   }}>
-                  <div className="text-4xl">{item.emoji}</div>
+                  <div className="text-4xl sticker-bubble w-14 h-14 flex items-center justify-center" style={{ transform: 'rotate(-4deg)' }}>{item.emoji}</div>
                   <div className="font-black text-xs" style={{ color: 'rgb(var(--foreground-rgb))' }}>{item.label}</div>
                   {owned ? (
                     <div className="text-green-400 text-xs font-bold">✓ Owned</div>
@@ -108,7 +109,7 @@ export default function ShopPage() {
 
         {/* Themes */}
         <div>
-          <div className="app-title text-base mb-3">🎨 Themes</div>
+          <div className="app-title text-base mb-3 inline-flex items-center gap-2"><Palette size={16} /> Themes</div>
           <div className="grid grid-cols-2 gap-3">
             {SHOP_THS.map(item => {
               const owned = ownedItems.includes(item.id)

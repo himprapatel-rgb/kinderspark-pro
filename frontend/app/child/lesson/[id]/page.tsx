@@ -5,6 +5,7 @@ import { useAppStore as useStore } from '@/store/appStore'
 import { updateProgress, updateStudent, getSyllabus } from '@/lib/api'
 import { MODS } from '@/lib/modules'
 import { speak } from '@/lib/speech'
+import { Home, RotateCcw, Volume2 } from 'lucide-react'
 
 export default function LessonPage() {
   const router = useRouter()
@@ -106,13 +107,13 @@ export default function LessonPage() {
         </div>
         <div className="flex gap-3">
           <button className="app-pressable" onClick={() => { setDone(false); setIdx(0) }}
-            className="px-6 py-3 rounded-2xl font-black"
-            style={{ background: color }}>
-            Play Again
+            className="px-6 py-3 rounded-2xl font-black inline-flex items-center gap-2"
+            style={{ background: color, color: '#fff' }}>
+            <RotateCcw size={16} /> Play Again
           </button>
           <button className="app-pressable" onClick={() => router.push('/child')}
-            className="px-6 py-3 rounded-2xl font-black bg-white/20">
-            Home
+            className="px-6 py-3 rounded-2xl font-black bg-white/20 inline-flex items-center gap-2">
+            <Home size={16} /> Home
           </button>
         </div>
       </div>
@@ -122,8 +123,8 @@ export default function LessonPage() {
   return (
     <div className="min-h-screen flex flex-col app-page app-container">
       {/* Header */}
-      <div className="flex items-center gap-3 p-4">
-        <button onClick={() => router.push('/child')} className="text-white/85 font-bold app-pressable">← Back</button>
+      <div className="flex items-center gap-3 p-4 doodle-surface">
+        <button onClick={() => router.push('/child')} className="font-bold app-pressable sticker-bubble px-3 py-1.5" style={{ color: 'rgb(var(--foreground-rgb))' }}>← Back</button>
         <div className="flex-1">
           <div className="flex justify-between text-xs font-bold app-muted mb-1">
             <span>{title}</span>
@@ -166,9 +167,9 @@ export default function LessonPage() {
           </button>
 
           <button onClick={() => speak(card?.w || '')}
-            className="w-14 h-14 rounded-full flex items-center justify-center text-2xl active:scale-95 transition-all app-pressable"
+            className="w-14 h-14 rounded-full flex items-center justify-center text-2xl active:scale-95 transition-all app-pressable sticker-bubble"
             style={{ background: color + '18', border: `2px solid ${color}33` }}>
-            🔊
+            <Volume2 size={22} color={color} />
           </button>
 
           <div className="w-12 text-center text-xs font-black app-muted">{idx + 1}/{total}</div>
