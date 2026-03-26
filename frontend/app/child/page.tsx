@@ -159,7 +159,7 @@ export default function ChildPage() {
     >
       {/* ── HERO HEADER ── */}
       <div
-        className="relative overflow-hidden"
+        className="relative overflow-hidden doodle-surface"
         style={{
           background: `linear-gradient(145deg, var(--theme-color, #5B7FE8) 0%, var(--theme-secondary, #8B6CC1) 100%)`,
           paddingBottom: 28,
@@ -177,11 +177,12 @@ export default function ChildPage() {
           <div className="flex justify-between items-start mb-5">
             <div className="flex items-center gap-3">
               <div
-                className="w-16 h-16 rounded-3xl flex items-center justify-center text-4xl flex-shrink-0"
+                className="w-16 h-16 rounded-3xl flex items-center justify-center text-4xl flex-shrink-0 sticker-bubble"
                 style={{
-                  background: 'rgba(255,255,255,0.2)',
+                  background: 'rgba(255,255,255,0.24)',
                   boxShadow: '0 4px 20px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.3)',
                   filter: 'drop-shadow(0 0 12px rgba(255,215,0,0.3))',
+                  transform: 'rotate(-3deg)',
                 }}
               >
                 {student?.avatar || '🧒'}
@@ -213,7 +214,7 @@ export default function ChildPage() {
               className="flex-1 rounded-2xl py-2.5 px-3 flex items-center gap-2"
               style={{ background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.25)' }}
             >
-              <span className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(245,183,49,0.22)' }}><Star size={16} style={{ color: '#C79012' }} /></span>
+              <span className="w-8 h-8 flex items-center justify-center sticker-bubble" style={{ background: 'rgba(245,183,49,0.22)', transform: 'rotate(-6deg)' }}><Star size={16} style={{ color: '#C79012' }} /></span>
               <div>
                 <p className="text-yellow-200 font-black text-base leading-none">{(student?.stars ?? 0).toLocaleString()}</p>
                 <p className="text-[10px] font-bold app-muted">Stars</p>
@@ -228,7 +229,7 @@ export default function ChildPage() {
                 border: streak > 0 ? '1px solid rgba(255,107,53,0.4)' : '1px solid rgba(255,255,255,0.15)',
               }}
             >
-              <span className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: streak > 0 ? 'rgba(224,82,82,0.22)' : 'rgba(120,120,140,0.18)' }}>
+              <span className="w-8 h-8 flex items-center justify-center sticker-bubble" style={{ background: streak > 0 ? 'rgba(224,82,82,0.22)' : 'rgba(120,120,140,0.18)', transform: 'rotate(5deg)' }}>
                 <Flame size={16} style={{ color: streak > 0 ? '#E05252' : '#7C8296' }} />
               </span>
               <div>
@@ -242,7 +243,7 @@ export default function ChildPage() {
               className="flex-1 rounded-2xl py-2.5 px-3 flex items-center gap-2"
               style={{ background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.25)' }}
             >
-              <span className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(139,108,193,0.22)' }}><Trophy size={16} style={{ color: '#7C5AB6' }} /></span>
+              <span className="w-8 h-8 flex items-center justify-center sticker-bubble" style={{ background: 'rgba(139,108,193,0.22)', transform: 'rotate(-4deg)' }}><Trophy size={16} style={{ color: '#7C5AB6' }} /></span>
               <div>
                 <p className="font-black text-base leading-none">Lv {student?.aiBestLevel ?? 1}</p>
                 <p className="text-[10px] font-bold app-muted">Level</p>
@@ -506,7 +507,7 @@ export default function ChildPage() {
                 className="rounded-2xl p-4 flex flex-col items-center gap-2 active:scale-[0.94] transition-all"
                 style={{ background: a.bg, border: `1.5px solid ${a.border}` }}
               >
-                <span className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.8)' }}>
+                <span className="w-12 h-12 flex items-center justify-center sticker-bubble" style={{ background: 'rgba(255,255,255,0.74)', transform: a.label.length % 2 ? 'rotate(-5deg)' : 'rotate(4deg)' }}>
                   <a.icon size={22} style={{ color: a.iconColor }} />
                 </span>
                 <span className="font-black text-xs">{a.label}</span>

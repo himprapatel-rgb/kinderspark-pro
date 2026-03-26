@@ -141,6 +141,40 @@ body {
   border: 1px solid var(--app-border);
   color: rgb(var(--foreground-rgb));
 }
+.sticker-bubble {
+  border-radius: 18px;
+  background: linear-gradient(145deg, rgba(255,255,255,0.92), rgba(255,255,255,0.72));
+  border: 1px solid rgba(255,255,255,0.95);
+  box-shadow:
+    0 8px 18px rgba(40, 30, 15, 0.14),
+    inset 0 1px 0 rgba(255,255,255,0.9);
+}
+.doodle-surface {
+  position: relative;
+  overflow: hidden;
+}
+.doodle-surface::before {
+  content: '';
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  right: -34px;
+  top: -30px;
+  border-radius: 40% 60% 62% 38% / 40% 44% 56% 60%;
+  background: rgba(255, 255, 255, 0.15);
+  transform: rotate(-12deg);
+}
+.doodle-surface::after {
+  content: '';
+  position: absolute;
+  width: 84px;
+  height: 84px;
+  left: -18px;
+  bottom: -32px;
+  border-radius: 58% 42% 50% 50% / 44% 58% 42% 56%;
+  background: rgba(255, 255, 255, 0.12);
+  transform: rotate(8deg);
+}
 .app-toggle {
   width: 3rem;
   height: 1.5rem;
