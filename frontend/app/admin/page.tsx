@@ -51,6 +51,16 @@ export default function AdminPage() {
 
   const TABS = ['📊 Overview', '🏆 Leaderboard', '🏫 Classes', '📈 AI Stats']
   const medals = ['🥇', '🥈', '🥉']
+  const needsAttention = classAnalytics
+    .map((ca: any) => {
+      const reasons: string[] = []
+      if ((ca.hwCompletionRate ?? 100) < 60) reasons.push('Low HW completion')
+      if ((ca.totalAISessions ?? 0) === 0) reasons.push('No AI activity')
+      if ((ca.totalStudents ?? 0) === 0) reasons.push('No students assigned')
+      return { ...ca, reasons }
+    })
+    .filter((ca: any) => ca.reasons.length > 0)
+    .slice(0, 4)
 
   return (
     <div className="min-h-screen pb-20" style={{ background: 'var(--app-bg)' }}>
@@ -105,6 +115,34 @@ export default function AdminPage() {
       <div className="px-4 pt-4">
         {tab === 0 && stats && (
           <div className="space-y-4">
+            {/* Needs attention (operational priority) */}
+            {needsAttention.length > 0 && (
+              <div className="rounded-2xl p-4" style={{ background: 'rgba(255,159,10,0.1)', border: '1px solid rgba(255,159,10,0.3)' }}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-white font-black text-sm">Needs Attention</div>
+                  <div className="text-orange-300 text-[11px] font-bold">{needsAttention.length} class{needsAttention.length > 1 ? 'es' : ''}</div>
+                </div>
+                <div className="space-y-2">
+                  {needsAttention.map((ca: any) => (
+                    <button
+                      key={ca.id}
+                      onClick={() => setTab(2)}
+                      className="w-full rounded-xl p-3 text-left app-pressable"
+                      style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,159,10,0.2)' }}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-white font-black text-sm truncate">{ca.name}</div>
+                        <div className="text-white/50 text-xs font-bold shrink-0">{ca.hwCompletionRate}% HW</div>
+                      </div>
+                      <div className="text-orange-200/90 text-xs font-bold mt-1 truncate">
+                        {ca.reasons.join(' • ')}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* School health score */}
             {(() => {
               const avgStars = stats.totalStudents ? Math.round(stats.totalStars / stats.totalStudents) : 0

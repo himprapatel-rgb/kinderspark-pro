@@ -441,15 +441,15 @@ export default function TeacherDashboard() {
             <div className="text-white text-xl font-black mt-0.5">{user?.name || 'Teacher'}</div>
           </div>
           <div className="flex gap-2">
-            <button className="app-pressable"
+            <button
               onClick={() => router.push('/teacher/reports')}
-              className="text-white/70 text-xs font-bold border border-white/30 rounded-full px-3 py-1.5"
+              className="text-white/70 text-xs font-bold border border-white/30 rounded-full px-3 py-1.5 app-pressable"
             >
               📊 Report
             </button>
-            <button className="app-pressable"
+            <button
               onClick={() => { logout(); router.push('/') }}
-              className="text-white/50 text-xs font-bold border border-white/20 rounded-full px-3 py-1.5"
+              className="text-white/50 text-xs font-bold border border-white/20 rounded-full px-3 py-1.5 app-pressable"
             >
               Logout
             </button>
@@ -459,10 +459,10 @@ export default function TeacherDashboard() {
         {/* Class selector */}
         <div className="mt-4 flex items-center gap-2 overflow-x-auto pb-1">
           {classes.map(cls => (
-            <button className="app-pressable"
+            <button
               key={cls.id}
               onClick={() => setSelectedClass(cls)}
-              className="flex-shrink-0 rounded-full px-4 py-1.5 text-xs font-black transition-all"
+              className="flex-shrink-0 rounded-full px-4 py-1.5 text-xs font-black transition-all app-pressable"
               style={{
                 background: selectedClass?.id === cls.id ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.15)',
                 color: selectedClass?.id === cls.id ? '#5E5CE6' : 'white',
@@ -471,9 +471,9 @@ export default function TeacherDashboard() {
               {cls.name}
             </button>
           ))}
-          <button className="app-pressable"
+          <button
             onClick={() => setTab('home')}
-            className="flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-black"
+            className="flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-black app-pressable"
             style={{ background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)' }}
           >
             + New
@@ -484,7 +484,7 @@ export default function TeacherDashboard() {
       {/* Tab bar */}
       <div className="flex border-b backdrop-blur" style={{ borderColor: 'rgba(120,120,140,0.2)', background: 'rgba(255,255,255,0.9)' }}>
         {TABS.map(t => (
-          <button className="app-pressable"
+          <button
             key={t.id}
             onClick={() => setTab(t.id)}
             className={`flex-1 py-3 text-xs font-black transition-colors flex flex-col items-center gap-0.5 relative ${tab === t.id ? 'border-t-2' : ''}`}
@@ -493,7 +493,7 @@ export default function TeacherDashboard() {
             <span>{t.emoji}</span>
             <span>{t.label}</span>
             {t.id === 'messages' && unreadCount > 0 && (
-              <span className="absolute top-1.5 right-1/4 bg-red-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center">
+              <span className="absolute top-1.5 right-1/4 bg-red-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center app-pressable">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
@@ -508,6 +508,40 @@ export default function TeacherDashboard() {
           <div className="space-y-4">
             {selectedClass ? (
               <>
+                {/* Priority actions (top workflow shortcuts) */}
+                <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)' }}>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="text-white font-black text-sm">Priority Actions</div>
+                    <div className="text-white/40 text-[11px] font-bold">Daily workflow</div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <button
+                      onClick={() => setTab('attendance')}
+                      className="rounded-xl px-3 py-3 text-left app-pressable"
+                      style={{ background: 'rgba(48,209,88,0.18)', border: '1px solid rgba(48,209,88,0.3)' }}
+                    >
+                      <div className="text-lg mb-1">✅</div>
+                      <div className="text-white text-xs font-black">Take Attendance</div>
+                    </button>
+                    <button
+                      onClick={() => setTab('homework')}
+                      className="rounded-xl px-3 py-3 text-left app-pressable"
+                      style={{ background: 'rgba(255,159,10,0.18)', border: '1px solid rgba(255,159,10,0.3)' }}
+                    >
+                      <div className="text-lg mb-1">📚</div>
+                      <div className="text-white text-xs font-black">Assign Homework</div>
+                    </button>
+                    <button
+                      onClick={() => setTab('messages')}
+                      className="rounded-xl px-3 py-3 text-left app-pressable"
+                      style={{ background: 'rgba(94,92,230,0.2)', border: '1px solid rgba(94,92,230,0.3)' }}
+                    >
+                      <div className="text-lg mb-1">📨</div>
+                      <div className="text-white text-xs font-black">Send Parent Update</div>
+                    </button>
+                  </div>
+                </div>
+
                 {/* Rich Stats Row */}
                 <div className="grid grid-cols-2 gap-3">
                   {[
@@ -544,30 +578,30 @@ export default function TeacherDashboard() {
                   </div>
                 )}
 
-                {/* Quick actions */}
+                {/* More tools */}
                 <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                  <div className="text-white font-black mb-3">Quick Actions</div>
+                  <div className="text-white font-black mb-3">More Tools</div>
                   <div className="grid grid-cols-2 gap-2">
-                    <button className="app-pressable" onClick={() => setTab('students')} className="rounded-xl p-3 text-left" style={{ background: '#5E5CE622' }}>
+                    <button onClick={() => setTab('students')} className="rounded-xl p-3 text-left app-pressable" style={{ background: '#5E5CE622' }}>
                       <div className="text-xl mb-1">👥</div>
                       <div className="text-white text-xs font-black">Manage Students</div>
                     </button>
-                    <button className="app-pressable" onClick={() => setTab('homework')} className="rounded-xl p-3 text-left" style={{ background: '#FF9F0A22' }}>
+                    <button onClick={() => setTab('homework')} className="rounded-xl p-3 text-left app-pressable" style={{ background: '#FF9F0A22' }}>
                       <div className="text-xl mb-1">📚</div>
                       <div className="text-white text-xs font-black">Assign Homework</div>
                     </button>
-                    <button className="app-pressable" onClick={() => router.push('/teacher/syllabus/builder')} className="rounded-xl p-3 text-left" style={{ background: '#30D15822' }}>
+                    <button onClick={() => router.push('/teacher/syllabus/builder')} className="rounded-xl p-3 text-left app-pressable" style={{ background: '#30D15822' }}>
                       <div className="text-xl mb-1">📖</div>
                       <div className="text-white text-xs font-black">Build Syllabus</div>
                     </button>
-                    <button className="app-pressable"
+                    <button
                       onClick={() => router.push(`/teacher/reports?classId=${selectedClass.id}`)}
-                      className="rounded-xl p-3 text-left" style={{ background: '#BF5AF222' }}
+                      className="rounded-xl p-3 text-left app-pressable" style={{ background: '#BF5AF222' }}
                     >
                       <div className="text-xl mb-1">📊</div>
                       <div className="text-white text-xs font-black">AI Report</div>
                     </button>
-                    <button className="app-pressable"
+                    <button
                       onClick={async () => {
                         if (!selectedClass) return
                         setBusy(true)
@@ -578,7 +612,7 @@ export default function TeacherDashboard() {
                         setBusy(false)
                       }}
                       disabled={busy}
-                      className="rounded-xl p-3 text-left col-span-2" style={{ background: 'rgba(94,92,230,0.15)', border: '1px solid rgba(94,92,230,0.25)' }}
+                      className="rounded-xl p-3 text-left col-span-2 app-pressable" style={{ background: 'rgba(94,92,230,0.15)', border: '1px solid rgba(94,92,230,0.25)' }}
                     >
                       <div className="text-xl mb-1">📨</div>
                       <div className="text-white text-xs font-black">Send AI Weekly Reports to Parents</div>
@@ -636,14 +670,14 @@ export default function TeacherDashboard() {
                                   {daysAgo !== null ? `${daysAgo} days inactive` : 'Never logged in'}
                                 </p>
                               </div>
-                              <button className="app-pressable"
+                              <button
                                 onClick={async () => {
                                   try {
                                     await sendHomeworkReminders(selectedClass?.id)
                                     showToast(`🔔 Reminder sent for ${s.name}`)
                                   } catch { showToast('Failed to send reminder') }
                                 }}
-                                className="text-xs font-black px-3 py-1.5 rounded-xl"
+                                className="text-xs font-black px-3 py-1.5 rounded-xl app-pressable"
                                 style={{ background: 'rgba(255,159,10,0.15)', color: '#FF9F0A', border: '1px solid rgba(255,159,10,0.3)', cursor: 'pointer' }}
                               >
                                 🔔 Remind
@@ -682,12 +716,12 @@ export default function TeacherDashboard() {
                       <div className="text-white font-black mb-2">Delete "{selectedClass.name}"?</div>
                       <div className="text-white/60 text-xs font-bold mb-4">This removes all students and data in this class.</div>
                       <div className="flex gap-2">
-                        <button className="app-pressable" onClick={() => setShowDeleteConfirm(null)} className="flex-1 py-2 rounded-xl text-white/60 font-bold text-sm" style={{ background: 'rgba(255,255,255,0.1)' }}>Cancel</button>
-                        <button className="app-pressable" onClick={() => handleDeleteClass(selectedClass.id)} disabled={busy} className="flex-1 py-2 rounded-xl text-white font-black text-sm" style={{ background: '#FF453A' }}>Delete</button>
+                        <button onClick={() => setShowDeleteConfirm(null)} className="flex-1 py-2 rounded-xl text-white/60 font-bold text-sm app-pressable" style={{ background: 'rgba(255,255,255,0.1)' }}>Cancel</button>
+                        <button onClick={() => handleDeleteClass(selectedClass.id)} disabled={busy} className="flex-1 py-2 rounded-xl text-white font-black text-sm app-pressable" style={{ background: '#FF453A' }}>Delete</button>
                       </div>
                     </div>
                   ) : (
-                    <button className="app-pressable" onClick={() => setShowDeleteConfirm(selectedClass.id)} className="text-red-400/60 text-xs font-bold">🗑️ Delete Class</button>
+                    <button onClick={() => setShowDeleteConfirm(selectedClass.id)} className="text-red-400/60 text-xs font-bold app-pressable">🗑️ Delete Class</button>
                   )}
                 </div>
               </>
@@ -747,10 +781,10 @@ export default function TeacherDashboard() {
                   <div className="text-white/50 text-xs font-bold mb-1">Avatar</div>
                   <div className="flex gap-2 flex-wrap">
                     {AVATARS.map(av => (
-                      <button className="app-pressable"
+                      <button
                         key={av}
                         onClick={() => setNewStudent(p => ({ ...p, avatar: av }))}
-                        className="text-2xl rounded-lg p-1 transition-all"
+                        className="text-2xl rounded-lg p-1 transition-all app-pressable"
                         style={{ background: newStudent.avatar === av ? 'rgba(94,92,230,0.4)' : 'rgba(255,255,255,0.05)', outline: newStudent.avatar === av ? '2px solid #5E5CE6' : 'none' }}
                       >
                         {av}
@@ -795,14 +829,14 @@ export default function TeacherDashboard() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <button className="app-pressable"
+                        <button
                           onClick={() => isGrading ? setGradingStudentId(null) : openGrading(s.id)}
-                          className="text-xs font-black px-3 py-1.5 rounded-full transition-all"
+                          className="text-xs font-black px-3 py-1.5 rounded-full transition-all app-pressable"
                           style={{ background: isGrading ? '#5E5CE6' : 'rgba(94,92,230,0.2)', color: isGrading ? '#fff' : '#5E5CE6' }}
                         >
                           📝 Grade
                         </button>
-                        <button className="app-pressable" onClick={() => handleDeleteStudent(s.id)} className="text-red-400/60 text-xs font-bold">🗑️</button>
+                        <button onClick={() => handleDeleteStudent(s.id)} className="text-red-400/60 text-xs font-bold app-pressable">🗑️</button>
                       </div>
                     </div>
 
@@ -812,10 +846,10 @@ export default function TeacherDashboard() {
                         <div className="text-white/60 text-xs font-bold mb-2">Grade for {s.name}</div>
                         <div className="flex gap-2 mb-3">
                           {['A+', 'A', 'B', 'C', 'D'].map(g => (
-                            <button className="app-pressable"
+                            <button
                               key={g}
                               onClick={() => setGradeForm(p => ({ ...p, grade: p.grade === g ? '' : g }))}
-                              className="flex-1 py-2 rounded-xl font-black text-sm transition-all"
+                              className="flex-1 py-2 rounded-xl font-black text-sm transition-all app-pressable"
                               style={{
                                 background: gradeForm.grade === g ? (GRADE_COLORS[g] + 'cc') : 'rgba(255,255,255,0.08)',
                                 color: gradeForm.grade === g ? '#fff' : GRADE_COLORS[g] || '#fff',
@@ -834,17 +868,17 @@ export default function TeacherDashboard() {
                           className="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white font-bold text-xs outline-none resize-none placeholder:text-white/30 mb-2"
                         />
                         <div className="flex gap-2">
-                          <button className="app-pressable"
+                          <button
                             onClick={() => setGradingStudentId(null)}
-                            className="flex-1 py-2 rounded-xl text-white/50 font-bold text-xs"
+                            className="flex-1 py-2 rounded-xl text-white/50 font-bold text-xs app-pressable"
                             style={{ background: 'rgba(255,255,255,0.08)' }}
                           >
                             Cancel
                           </button>
-                          <button className="app-pressable"
+                          <button
                             onClick={() => handleSaveGrade(s.id)}
                             disabled={gradeBusy}
-                            className="flex-1 py-2 rounded-xl text-white font-black text-xs"
+                            className="flex-1 py-2 rounded-xl text-white font-black text-xs app-pressable"
                             style={{ background: '#5E5CE6', opacity: gradeBusy ? 0.6 : 1 }}
                           >
                             {gradeBusy ? 'Saving...' : '✓ Save Grade'}
@@ -867,9 +901,9 @@ export default function TeacherDashboard() {
           <div className="space-y-4">
 
             {/* ✨ AI Homework Wizard banner */}
-            <button className="app-pressable"
+            <button
               onClick={() => { setShowWizard(v => !v); setWizardResult(null); setWizardTopic('') }}
-              className="w-full rounded-2xl p-4 flex items-center gap-4 active:scale-95 transition-all"
+              className="w-full rounded-2xl p-4 flex items-center gap-4 active:scale-95 transition-all app-pressable"
               style={{ background: 'linear-gradient(135deg, #5E5CE6, #BF5AF2)', boxShadow: '0 8px 24px rgba(94,92,230,0.35)' }}
             >
               <div className="text-4xl">✨</div>
@@ -887,10 +921,10 @@ export default function TeacherDashboard() {
                   <div className="text-white/70 text-xs font-bold mb-3">Quick topic chips</div>
                   <div className="flex flex-wrap gap-2 mb-3">
                     {['Counting 1–10', 'Animal Sounds', 'Colors & Shapes', 'Letters A–E', 'Sight Words', 'Feelings', 'Fruits & Veggies', 'Good Habits'].map(t => (
-                      <button className="app-pressable"
+                      <button
                         key={t}
                         onClick={() => setWizardTopic(t)}
-                        className="text-xs font-black px-3 py-1.5 rounded-full transition-all"
+                        className="text-xs font-black px-3 py-1.5 rounded-full transition-all app-pressable"
                         style={{
                           background: wizardTopic === t ? 'rgba(94,92,230,0.6)' : 'rgba(255,255,255,0.08)',
                           color: wizardTopic === t ? '#fff' : 'rgba(255,255,255,0.6)',
@@ -990,9 +1024,9 @@ export default function TeacherDashboard() {
 
                       {/* Action buttons */}
                       <div className="flex gap-2">
-                        <button className="app-pressable"
+                        <button
                           onClick={() => { setWizardResult(null); setWizardTopic('') }}
-                          className="flex-1 py-2.5 rounded-xl text-white/50 font-bold text-xs"
+                          className="flex-1 py-2.5 rounded-xl text-white/50 font-bold text-xs app-pressable"
                           style={{ background: 'rgba(255,255,255,0.08)' }}
                         >
                           ↩ Start Over
@@ -1088,7 +1122,7 @@ export default function TeacherDashboard() {
                         )}
                         <div className="text-white/30 text-xs font-bold mt-0.5">Due: {fmt(hw.dueDate)} · ⭐{hw.starsReward}</div>
                       </div>
-                      <button className="app-pressable" onClick={() => handleDeleteHomework(hw.id)} className="text-red-400/60 text-xs font-bold flex-shrink-0">🗑️</button>
+                      <button onClick={() => handleDeleteHomework(hw.id)} className="text-red-400/60 text-xs font-bold flex-shrink-0 app-pressable">🗑️</button>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="flex-1 bg-white/10 rounded-full h-1.5">
@@ -1105,7 +1139,7 @@ export default function TeacherDashboard() {
             </div>
 
             {/* Due-tomorrow reminders */}
-            <button className="app-pressable"
+            <button
               onClick={async () => {
                 if (!selectedClass) return
                 setBusy(true)
@@ -1116,7 +1150,7 @@ export default function TeacherDashboard() {
                 setBusy(false)
               }}
               disabled={busy}
-              className="w-full rounded-2xl p-4 flex items-center gap-3 active:scale-95 transition-all"
+              className="w-full rounded-2xl p-4 flex items-center gap-3 active:scale-95 transition-all app-pressable"
               style={{ background: 'rgba(255,159,10,0.12)', border: '1px solid rgba(255,159,10,0.25)' }}
             >
               <span className="text-2xl">⏰</span>
@@ -1133,9 +1167,9 @@ export default function TeacherDashboard() {
           <div className="space-y-4">
             {/* ✨ AI Lesson Auto-Builder */}
             <div className="rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg,rgba(191,90,242,0.15),rgba(94,92,230,0.15))', border: '1px solid rgba(191,90,242,0.3)' }}>
-              <button className="app-pressable"
+              <button
                 onClick={() => setShowAISyl(v => !v)}
-                className="w-full p-4 flex items-center gap-3"
+                className="w-full p-4 flex items-center gap-3 app-pressable"
               >
                 <span className="text-3xl">✨</span>
                 <div className="text-left flex-1">
@@ -1152,7 +1186,7 @@ export default function TeacherDashboard() {
                     placeholder="e.g. Animals, Colors, Numbers 1-20, Shapes..."
                     className="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white font-bold text-sm outline-none placeholder:text-white/30"
                   />
-                  <button className="app-pressable"
+                  <button
                     onClick={async () => {
                       if (!aiSylTopic.trim() || !selectedClass) return
                       setAiSylLoading(true)
@@ -1166,7 +1200,7 @@ export default function TeacherDashboard() {
                       finally { setAiSylLoading(false) }
                     }}
                     disabled={aiSylLoading || !aiSylTopic.trim()}
-                    className="w-full py-3 rounded-xl text-white font-black text-sm active:scale-95 transition-all"
+                    className="w-full py-3 rounded-xl text-white font-black text-sm active:scale-95 transition-all app-pressable"
                     style={{ background: 'linear-gradient(135deg,#BF5AF2,#5E5CE6)', opacity: (!aiSylTopic.trim() || aiSylLoading) ? 0.5 : 1 }}
                   >
                     {aiSylLoading ? '✨ Building…' : '✨ Auto-Build Syllabus'}
@@ -1175,9 +1209,9 @@ export default function TeacherDashboard() {
               )}
             </div>
 
-            <button className="app-pressable"
+            <button
               onClick={() => router.push('/teacher/syllabus/builder')}
-              className="w-full rounded-2xl p-5 flex items-center gap-4 active:scale-95 transition-all"
+              className="w-full rounded-2xl p-5 flex items-center gap-4 active:scale-95 transition-all app-pressable"
               style={{ background: 'linear-gradient(135deg,#30D158,#43C6AC)' }}
             >
               <div className="text-4xl">✏️</div>
@@ -1196,7 +1230,7 @@ export default function TeacherDashboard() {
                     <div className="text-white/40 text-xs font-bold">{syl.items?.length || 0} cards · {syl.published ? '✅ Published' : '📝 Draft'}</div>
                   </div>
                   {!syl.published && (
-                    <button className="app-pressable"
+                    <button
                       onClick={async () => {
                         try {
                           await assignSyllabus(syl.id, 'class', selectedClass?.id)
@@ -1204,7 +1238,7 @@ export default function TeacherDashboard() {
                           showToast('Syllabus published!')
                         } catch (e: any) { showToast(e.message) }
                       }}
-                      className="text-xs font-black px-3 py-1 rounded-full"
+                      className="text-xs font-black px-3 py-1 rounded-full app-pressable"
                       style={{ background: '#30D15830', color: '#30D158' }}
                     >
                       Publish
@@ -1302,24 +1336,24 @@ export default function TeacherDashboard() {
                         {students.filter(s => attendanceRecords[s.id] !== false).length}/{students.length} Present
                       </div>
                       <div className="flex gap-2">
-                        <button className="app-pressable" onClick={() => {
+                        <button onClick={() => {
                           const all: Record<string, boolean> = {}
                           students.forEach(s => { all[s.id] = true })
                           setAttendanceRecords(all)
-                        }} className="text-green-400 text-xs font-bold bg-green-400/10 rounded-full px-3 py-1">All Present</button>
-                        <button className="app-pressable" onClick={() => {
+                        }} className="text-green-400 text-xs font-bold bg-green-400/10 rounded-full px-3 py-1 app-pressable">All Present</button>
+                        <button onClick={() => {
                           const all: Record<string, boolean> = {}
                           students.forEach(s => { all[s.id] = false })
                           setAttendanceRecords(all)
-                        }} className="text-red-400 text-xs font-bold bg-red-400/10 rounded-full px-3 py-1">All Absent</button>
+                        }} className="text-red-400 text-xs font-bold bg-red-400/10 rounded-full px-3 py-1 app-pressable">All Absent</button>
                       </div>
                     </div>
                     {students.map(s => {
                       const present = attendanceRecords[s.id] !== false
                       return (
-                        <button className="app-pressable" key={s.id}
+                        <button key={s.id}
                           onClick={() => setAttendanceRecords(prev => ({ ...prev, [s.id]: !present }))}
-                          className="w-full flex items-center gap-3 rounded-2xl p-3 transition-all active:scale-95"
+                          className="w-full flex items-center gap-3 rounded-2xl p-3 transition-all active:scale-95 app-pressable"
                           style={{ background: present ? 'rgba(48,209,88,0.15)' : 'rgba(255,69,58,0.15)', border: `1.5px solid ${present ? '#30D15840' : '#FF453A40'}` }}>
                           <div className="text-2xl">{s.avatar}</div>
                           <div className="flex-1 text-left">
@@ -1376,7 +1410,7 @@ export default function TeacherDashboard() {
                     {s.streak > 0 && <span className="text-xs font-black px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-300">🔥 {s.streak}d</span>}
                   </div>
                 </div>
-                <button className="app-pressable" onClick={() => setDeepDiveStudent(null)} className="text-white/40 text-3xl leading-none">×</button>
+                <button onClick={() => setDeepDiveStudent(null)} className="text-white/40 text-3xl leading-none app-pressable">×</button>
               </div>
               {/* Stats grid */}
               <div className="p-4 grid grid-cols-3 gap-3">

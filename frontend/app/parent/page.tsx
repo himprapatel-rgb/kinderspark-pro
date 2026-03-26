@@ -168,6 +168,12 @@ export default function ParentPage() {
     ? Math.round(aiSessions.reduce((a: number, s: any) => a + (s.accuracy || 0), 0) / aiSessions.length)
     : 0
   const totalAIStars = aiSessions.reduce((a: number, s: any) => a + (s.stars || 0), 0)
+  const todayAction = pendingHW[0] || null
+  const insightText = pendingHW.length > 0
+    ? `${pendingHW.length} homework item${pendingHW.length > 1 ? 's' : ''} need attention today.`
+    : hwPct >= 80
+      ? 'Great momentum this week. Keep the routine going.'
+      : 'Progress is steady. A short 5-minute practice can help a lot.'
 
   const handleMarkDone = async (hwId: string) => {
     if (!student || markingDone) return
@@ -219,12 +225,12 @@ export default function ParentPage() {
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-50 backdrop-blur border-b" style={{ background: 'rgba(255,255,255,0.9)', borderColor: 'rgba(120,120,140,0.2)' }}>
         <div className="flex">
           {TABS.map(t => (
-            <button className="app-pressable" key={t.idx} onClick={() => setTab(t.idx)}
+            <button key={t.idx} onClick={() => setTab(t.idx)}
               className={`flex-1 py-3 text-xs font-black transition-colors relative ${tab === t.idx ? 'border-b-2' : ''}`}
               style={{ color: tab === t.idx ? 'var(--app-accent)' : 'rgba(70, 75, 96, 0.8)', borderColor: tab === t.idx ? 'var(--app-accent)' : 'transparent' }}>
               {t.label}
               {t.idx === 2 && unreadMsgs > 0 && (
-                <span className="absolute top-1 right-2 bg-red-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center">
+                <span className="absolute top-1 right-2 bg-red-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center app-pressable">
                   {unreadMsgs > 9 ? '9+' : unreadMsgs}
                 </span>
               )}
@@ -253,10 +259,41 @@ export default function ParentPage() {
                     <span className="bg-purple-400/20 text-purple-300 rounded-full px-3 py-0.5 text-xs font-black">🤖 Lv {student?.aiBestLevel}</span>
                   </div>
                 </div>
-                <button className="app-pressable" onClick={() => { logout(); router.push('/') }}
-                  className="text-white/50 text-xs font-bold border border-white/30 rounded-full px-3 py-1.5 shrink-0">
+                <button onClick={() => { logout(); router.push('/') }}
+                  className="text-white/50 text-xs font-bold border border-white/30 rounded-full px-3 py-1.5 shrink-0 app-pressable">
                   Logout
                 </button>
+              </div>
+            </div>
+
+            {/* Parent co-pilot: today action + plain-language insight */}
+            <div className="mx-3 mb-4 rounded-2xl p-4" style={{ background: 'rgba(48,209,88,0.12)', border: '1px solid rgba(48,209,88,0.3)' }}>
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="text-white font-black text-sm">Today&apos;s 5-minute action</div>
+                <div className="text-green-300 text-[11px] font-bold">Parent Co-Pilot</div>
+              </div>
+              {todayAction ? (
+                <div className="rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                  <div className="text-white font-black text-sm">{todayAction.title}</div>
+                  <div className="text-white/60 text-xs font-bold mt-0.5">Help your child finish this first.</div>
+                  <div className="flex items-center justify-between mt-2">
+                    <div className="text-yellow-300 text-xs font-black">⭐ {todayAction.starsReward} stars</div>
+                    <button
+                      onClick={() => setTab(2)}
+                      className="text-xs font-black px-2.5 py-1 rounded-lg app-pressable"
+                      style={{ background: 'rgba(48,209,88,0.2)', color: '#9EF0B2' }}
+                    >
+                      Message Teacher
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-xl p-3 text-white/70 text-xs font-bold" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                  No pending homework today. Great job staying on track.
+                </div>
+              )}
+              <div className="text-white/75 text-xs font-bold mt-3">
+                {insightText}
               </div>
             </div>
 
@@ -353,10 +390,10 @@ export default function ParentPage() {
                       </div>
                       <div className="flex flex-col items-end gap-1.5">
                         <div className="text-yellow-400 text-xs font-bold">⭐{hw.starsReward}</div>
-                        <button className="app-pressable"
+                        <button
                           onClick={() => handleMarkDone(hw.id)}
                           disabled={markingDone === hw.id}
-                          className="text-[10px] font-black px-2 py-1 rounded-lg active:scale-95 transition-all"
+                          className="text-[10px] font-black px-2 py-1 rounded-lg active:scale-95 transition-all app-pressable"
                           style={{ background: '#30D15820', color: '#30D158', opacity: markingDone === hw.id ? 0.5 : 1 }}
                         >
                           {markingDone === hw.id ? '…' : 'Mark Done ✅'}
@@ -384,7 +421,7 @@ export default function ParentPage() {
                     <div className="text-white/50 text-xs font-bold">From: {msg.from}</div>
                   </div>
                 ))}
-                <button className="app-pressable" onClick={() => setTab(2)} className="text-green-400 text-sm font-bold">View all →</button>
+                <button onClick={() => setTab(2)} className="text-green-400 text-sm font-bold app-pressable">View all →</button>
               </div>
             )}
           </div>
@@ -484,8 +521,8 @@ export default function ParentPage() {
                   </div>
                   <div className="text-white/60 text-xs font-bold mb-2">From: {msg.from}</div>
                   <div className="text-white/70 text-xs leading-relaxed mb-3">{msg.body}</div>
-                  <button className="app-pressable" onClick={() => setShowReply(msg)}
-                    className="px-3 py-1.5 rounded-lg text-xs font-bold text-green-400"
+                  <button onClick={() => setShowReply(msg)}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold text-green-400 app-pressable"
                     style={{ background: '#30D15820' }}>
                     ↩ Reply
                   </button>
@@ -505,7 +542,7 @@ export default function ParentPage() {
           <div className="w-full max-w-[430px] rounded-t-3xl p-5 pb-10" style={{ background: '#1a2a1a' }}>
             <div className="flex justify-between items-center mb-3">
               <h3 className="text-white font-black">Reply</h3>
-              <button className="app-pressable" onClick={() => setShowReply(null)} className="text-white/50 text-2xl leading-none">×</button>
+              <button onClick={() => setShowReply(null)} className="text-white/50 text-2xl leading-none app-pressable">×</button>
             </div>
             <div className="text-white/50 text-xs font-bold mb-3">Re: {showReply.subject}</div>
             <textarea placeholder="Your message..." value={replyBody} rows={5}

@@ -88,6 +88,15 @@ export default function ChildPage() {
   const totalCards = MODS.reduce((a, m) => a + m.items.length, 0)
   const doneCards = MODS.reduce((a, m) => a + Math.min(m.items.length, progressMap[m.id] || 0), 0)
   const overallPct = totalCards ? Math.round((doneCards / totalCards) * 100) : 0
+  const startTodayHomework = pendingHW[0] || null
+  const startTodayHref = startTodayHomework
+    ? (startTodayHomework.aiGenerated
+      ? `/child/tutor?topic=${encodeURIComponent(startTodayHomework.moduleId || 'daily-practice')}`
+      : `/child/lesson/${startTodayHomework.moduleId || dailyMod.id}`)
+    : `/child/lesson/${dailyMod.id}`
+  const startTodayTitle = startTodayHomework
+    ? `Start with: ${startTodayHomework.title}`
+    : `Start today's challenge: ${dailyMod.title}`
 
   const handleMarkDone = async (hwId: string) => {
     if (!student || markingDone) return
@@ -169,12 +178,9 @@ export default function ChildPage() {
               </div>
             </div>
             <div className="flex flex-col gap-1.5 items-end">
-              <button className="app-pressable" onClick={() => router.push('/child/shop')}
-                className="glass-btn">🛍️ Shop</button>
-              <button className="app-pressable" onClick={() => router.push('/child/settings')}
-                className="glass-btn">⚙️</button>
-              <button className="app-pressable" onClick={() => { logout(); router.push('/') }}
-                className="text-white/30 text-[10px] font-bold mt-0.5">Logout</button>
+              <button onClick={() => router.push('/child/shop')} className="glass-btn app-pressable">🛍️ Shop</button>
+              <button onClick={() => router.push('/child/settings')} className="glass-btn app-pressable">⚙️</button>
+              <button onClick={() => { logout(); router.push('/') }} className="text-white/30 text-[10px] font-bold mt-0.5 app-pressable">Logout</button>
             </div>
           </div>
 
@@ -268,6 +274,26 @@ export default function ChildPage() {
 
       {/* ── CONTENT ── */}
       <div className="px-4 pt-5 space-y-4">
+        {/* ── Start Today (guided primary action) ── */}
+        <button
+          onClick={() => router.push(startTodayHref)}
+          className="w-full rounded-3xl p-4 text-left app-pressable"
+          style={{ background: 'linear-gradient(135deg, rgba(94,92,230,0.25), rgba(191,90,242,0.22))', border: '1.5px solid rgba(94,92,230,0.45)' }}
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl" style={{ background: 'rgba(255,255,255,0.18)' }}>
+              🚀
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-white text-[11px] font-black uppercase tracking-wider mb-1">Start Today</p>
+              <p className="text-white font-black text-sm truncate">{startTodayTitle}</p>
+              <p className="text-white/60 text-xs font-bold mt-0.5">
+                {startTodayHomework ? 'Finish your top pending task first' : 'Quick daily learning challenge'}
+              </p>
+            </div>
+            <span className="text-white/70 text-xl">›</span>
+          </div>
+        </button>
 
         {/* ── Homework Alert ── */}
         {pendingHW.length > 0 && (
@@ -296,9 +322,9 @@ export default function ChildPage() {
               </div>
               {pendingHW.slice(0, 2).map(hw => (
                 <div key={hw.id} className="mb-2 last:mb-0">
-                  <button className="app-pressable"
+                  <button
                     onClick={() => hw.moduleId && router.push(hw.aiGenerated ? `/child/tutor?topic=${encodeURIComponent(hw.moduleId)}` : `/child/lesson/${hw.moduleId}`)}
-                    className="w-full rounded-2xl p-3 flex items-center gap-3 active:scale-[0.98] transition-all text-left"
+                    className="w-full rounded-2xl p-3 flex items-center gap-3 active:scale-[0.98] transition-all text-left app-pressable"
                     style={{
                       background: hw.aiGenerated ? 'rgba(94,92,230,0.25)' : 'rgba(255,255,255,0.08)',
                       border: `1px solid ${hw.aiGenerated ? 'rgba(94,92,230,0.4)' : 'rgba(255,255,255,0.1)'}`,
@@ -311,10 +337,10 @@ export default function ChildPage() {
                     </div>
                     <span className="text-white/40 text-lg flex-shrink-0">›</span>
                   </button>
-                  <button className="app-pressable"
+                  <button
                     onClick={() => handleMarkDone(hw.id)}
                     disabled={markingDone === hw.id}
-                    className="mt-1.5 w-full py-2.5 rounded-2xl text-sm font-black active:scale-[0.97] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="mt-1.5 w-full py-2.5 rounded-2xl text-sm font-black active:scale-[0.97] transition-all disabled:opacity-50 flex items-center justify-center gap-2 app-pressable"
                     style={{
                       background: 'linear-gradient(135deg, #30D158, #27AE7A)',
                       boxShadow: '0 4px 16px rgba(48,209,88,0.3)',
@@ -332,13 +358,13 @@ export default function ChildPage() {
         )}
 
         {/* ── Daily Challenge ── */}
-        <button className="app-pressable"
+        <button
           onClick={() => {
             markChallengeComplete(todayKey)
             setDailyDone(true)
             router.push(`/child/lesson/${dailyMod.id}`)
           }}
-          className="w-full rounded-3xl p-4 text-left active:scale-[0.97] transition-all relative overflow-hidden"
+          className="w-full rounded-3xl p-4 text-left active:scale-[0.97] transition-all relative overflow-hidden app-pressable"
           style={{
             background: dailyDone
               ? 'linear-gradient(135deg, #0d2e0d, #0a200a)'
