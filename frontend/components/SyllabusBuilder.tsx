@@ -21,14 +21,14 @@ interface SyllabusBuilderProps {
   onCancel?: () => void
 }
 
-const COLORS = ['#5E5CE6', '#30D158', '#FF453A', '#FF9F0A', '#BF5AF2', '#0A84FF', '#FF375F', '#43C6AC']
+const COLORS = ['#6C63FF', '#2DB854', '#EF4444', '#F97316', '#8B5CF6', '#0A84FF', '#FF375F', '#34D399']
 const ICONS = ['📖', '🔢', '🔤', '🎨', '🐾', '🍎', '🚗', '⭐', '🌟', '🎯', '🎮', '🌈']
 const EMOJIS = ['⭐', '🔢', '🔤', '🎨', '🐾', '🍎', '🐱', '🐶', '🌸', '🎯', '🎮', '🌈', '🦁', '🐯', '🐘', '🦒', '✈️', '🚗', '🎂', '🍕']
 
 export default function SyllabusBuilder({ initial, classId, onSave, onCancel }: SyllabusBuilderProps) {
   const [title, setTitle] = useState(initial?.title || '')
   const [icon, setIcon] = useState(initial?.icon || '📖')
-  const [color, setColor] = useState(initial?.color || '#5E5CE6')
+  const [color, setColor] = useState(initial?.color || '#6C63FF')
   const [items, setItems] = useState<CardItem[]>(
     initial?.items?.map((it: any) => ({
       w: it.word || it.w || '',
@@ -236,7 +236,7 @@ export default function SyllabusBuilder({ initial, classId, onSave, onCancel }: 
           onClick={() => handleSave(true)}
           disabled={saving}
           className="flex-1 py-3 rounded-2xl font-black text-sm text-white transition-all active:scale-95 disabled:opacity-50"
-          style={{ background: 'linear-gradient(135deg, #30D158, #43C6AC)' }}
+          style={{ background: 'linear-gradient(135deg, #2DB854, #34D399)' }}
         >
           {saving ? '...' : 'Publish 🚀'}
         </button>

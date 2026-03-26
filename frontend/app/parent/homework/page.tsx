@@ -43,8 +43,8 @@ export default function ParentHomeworkPage() {
 
   function dueDateColor(hw: any) {
     if (isDone(hw)) return 'rgba(255,255,255,0.2)'
-    if (isOverdue(hw)) return '#FF453A'
-    if (isToday(hw)) return '#FF9F0A'
+    if (isOverdue(hw)) return '#EF4444'
+    if (isToday(hw)) return '#F97316'
     return 'rgba(255,255,255,0.4)'
   }
 
@@ -83,7 +83,7 @@ export default function ParentHomeworkPage() {
     <div style={{ background: 'var(--app-bg)', minHeight: '100vh', fontFamily: 'Nunito, sans-serif', color: 'rgb(32,36,52)', paddingBottom: 32 }}>
 
       {/* Header */}
-      <div style={{ background: 'linear-gradient(135deg, var(--app-accent), #7B59FF)', borderBottom: '1px solid rgba(120,120,140,0.2)', padding: '16px 16px 14px' }}>
+      <div style={{ background: 'linear-gradient(135deg, var(--app-accent), #5B52EE)', borderBottom: '1px solid rgba(120,120,140,0.2)', padding: '16px 16px 14px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button className="app-pressable" onClick={() => router.back()} style={{ background: 'rgba(255,255,255,0.16)', border: 'none', borderRadius: 12, width: 36, height: 36, color: 'white', fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>←</button>
           <div>
@@ -103,7 +103,7 @@ export default function ParentHomeworkPage() {
               style={{
                 padding: '6px 14px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 900,
                 background: filter === f.key ? 'rgba(94,92,230,0.25)' : 'rgba(255,255,255,0.06)',
-                color: filter === f.key ? '#5E5CE6' : 'rgba(255,255,255,0.4)',
+                color: filter === f.key ? '#6C63FF' : 'rgba(255,255,255,0.4)',
                 boxShadow: filter === f.key ? '0 0 0 1px rgba(94,92,230,0.4)' : '0 0 0 1px rgba(255,255,255,0.08)',
               }}
             >
@@ -159,7 +159,7 @@ export default function ParentHomeworkPage() {
                     </span>
                   )}
                   {hw.starsReward && (
-                    <span style={{ fontSize: 10, fontWeight: 700, color: '#FFD60A', background: 'rgba(255,214,10,0.12)', padding: '1px 6px', borderRadius: 8 }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: '#F59E0B', background: 'rgba(255,214,10,0.12)', padding: '1px 6px', borderRadius: 8 }}>
                       ⭐ {hw.starsReward}
                     </span>
                   )}
@@ -171,7 +171,7 @@ export default function ParentHomeworkPage() {
                   disabled={completing === hw.id}
                   style={{
                     flexShrink: 0, padding: '7px 12px', borderRadius: 12, border: 'none', cursor: 'pointer',
-                    background: 'rgba(48,209,88,0.15)', color: '#30D158', fontSize: 11, fontWeight: 900,
+                    background: 'rgba(48,209,88,0.15)', color: '#2DB854', fontSize: 11, fontWeight: 900,
                     boxShadow: '0 0 0 1px rgba(48,209,88,0.3)', opacity: completing === hw.id ? 0.5 : 1,
                   }}
                 >

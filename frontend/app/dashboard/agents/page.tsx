@@ -183,12 +183,12 @@ export default function AgentsDashboard() {
           <div style={{ fontWeight: 900, fontSize: 14 }}>KinderSpark Agent Room</div>
           <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>
             {agentsConfig.agents.length} agents ·{' '}
-            <span style={{ color: connected ? '#30D158' : '#FF453A' }}>{connected ? '● live' : '○ connecting'}</span>
+            <span style={{ color: connected ? '#2DB854' : '#EF4444' }}>{connected ? '● live' : '○ connecting'}</span>
           </div>
         </div>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 4 }}>
           {(['chat', 'memory', 'runs'] as const).map(t => (
-            <button key={t} onClick={() => setTab(t)} style={{ padding: '5px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', background: tab === t ? '#5E5CE6' : 'rgba(255,255,255,0.06)', color: tab === t ? 'white' : 'rgba(255,255,255,0.4)', fontWeight: 800, fontSize: 11, fontFamily: 'Nunito, sans-serif', transition: 'all 0.15s' }}>
+            <button key={t} onClick={() => setTab(t)} style={{ padding: '5px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', background: tab === t ? '#6C63FF' : 'rgba(255,255,255,0.06)', color: tab === t ? 'white' : 'rgba(255,255,255,0.4)', fontWeight: 800, fontSize: 11, fontFamily: 'Nunito, sans-serif', transition: 'all 0.15s' }}>
               {t === 'chat' ? `💬 Chat${conversations.length ? ` (${conversations.length})` : ''}` : t === 'memory' ? '🧠 Memory' : '⚡ Runs'}
             </button>
           ))}
@@ -201,7 +201,7 @@ export default function AgentsDashboard() {
         <div style={{ width: 210, background: '#13101f', borderRight: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', overflow: 'hidden', flexShrink: 0 }}>
           {/* Category filter */}
           <div style={{ padding: '8px 8px 6px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-            <button onClick={() => setCatFilter('all')} style={{ fontSize: 9, fontWeight: 800, padding: '2px 7px', borderRadius: 5, border: 'none', cursor: 'pointer', background: catFilter === 'all' ? '#5E5CE6' : 'rgba(255,255,255,0.07)', color: catFilter === 'all' ? 'white' : 'rgba(255,255,255,0.4)' }}>ALL</button>
+            <button onClick={() => setCatFilter('all')} style={{ fontSize: 9, fontWeight: 800, padding: '2px 7px', borderRadius: 5, border: 'none', cursor: 'pointer', background: catFilter === 'all' ? '#6C63FF' : 'rgba(255,255,255,0.07)', color: catFilter === 'all' ? 'white' : 'rgba(255,255,255,0.4)' }}>ALL</button>
             {CATS.map(([id, cat]) => (
               <button key={id} onClick={() => setCatFilter(id)} style={{ fontSize: 9, fontWeight: 800, padding: '2px 6px', borderRadius: 5, border: 'none', cursor: 'pointer', background: catFilter === id ? cat.color : 'rgba(255,255,255,0.07)', color: catFilter === id ? 'white' : 'rgba(255,255,255,0.4)', transition: 'all 0.15s' }}>
                 {cat.icon}
@@ -223,7 +223,7 @@ export default function AgentsDashboard() {
                 >
                   <div style={{ position: 'relative', flexShrink: 0 }}>
                     <div style={{ width: 28, height: 28, borderRadius: 8, background: agent.color + '22', border: `1px solid ${agent.color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>{agent.icon}</div>
-                    <div style={{ position: 'absolute', bottom: -1, right: -1, width: 7, height: 7, borderRadius: '50%', background: active ? '#30D158' : '#2a2a3a', border: '1.5px solid #13101f', animation: active ? 'pulse 2.5s infinite' : 'none' }} />
+                    <div style={{ position: 'absolute', bottom: -1, right: -1, width: 7, height: 7, borderRadius: '50%', background: active ? '#2DB854' : '#2a2a3a', border: '1.5px solid #13101f', animation: active ? 'pulse 2.5s infinite' : 'none' }} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 10, fontWeight: 800, color: isOpen ? 'white' : active ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.45)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{agent.name}</div>
@@ -246,7 +246,7 @@ export default function AgentsDashboard() {
                 placeholder="Dispatch a task..."
                 style={{ flex: 1, background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 7, padding: '6px 8px', color: 'white', fontSize: 10, outline: 'none', fontFamily: 'Nunito, sans-serif' }}
               />
-              <button onClick={sendTask} disabled={sending || !taskInput.trim()} style={{ background: sending || !taskInput.trim() ? 'rgba(255,255,255,0.06)' : '#5E5CE6', border: 'none', borderRadius: 7, padding: '6px 9px', color: 'white', fontWeight: 900, fontSize: 11, cursor: sending || !taskInput.trim() ? 'default' : 'pointer', fontFamily: 'Nunito, sans-serif', transition: 'background 0.15s' }}>
+              <button onClick={sendTask} disabled={sending || !taskInput.trim()} style={{ background: sending || !taskInput.trim() ? 'rgba(255,255,255,0.06)' : '#6C63FF', border: 'none', borderRadius: 7, padding: '6px 9px', color: 'white', fontWeight: 900, fontSize: 11, cursor: sending || !taskInput.trim() ? 'default' : 'pointer', fontFamily: 'Nunito, sans-serif', transition: 'background 0.15s' }}>
                 {sending ? '…' : '→'}
               </button>
             </div>
@@ -282,7 +282,7 @@ export default function AgentsDashboard() {
                   const isMe = msg.fromAgentId === 'commander'
                   const prev = dmMsgs[i - 1]
                   const grouped = prev && sameGroup(prev, msg)
-                  const color = isMe ? '#5E5CE6' : selectedAgent.color
+                  const color = isMe ? '#6C63FF' : selectedAgent.color
 
                   return (
                     <div key={msg.id} style={{ display: 'flex', flexDirection: isMe ? 'row-reverse' : 'row', gap: 8, marginTop: grouped ? 2 : 10, animation: 'slideUp 0.2s ease' }}>
@@ -304,7 +304,7 @@ export default function AgentsDashboard() {
                         <div
                           className="msg-bubble"
                           style={{
-                            background: isMe ? '#5E5CE6' : color + '18',
+                            background: isMe ? '#6C63FF' : color + '18',
                             border: isMe ? 'none' : `1px solid ${color}30`,
                             borderRadius: isMe
                               ? grouped ? '12px 4px 12px 12px' : '12px 4px 12px 12px'
@@ -384,7 +384,7 @@ export default function AgentsDashboard() {
                   const isDM      = msg.toAgentId !== 'all' && msg.toAgentId !== 'commander'
                   const isAlert   = msg.msgType === 'alert'
                   const isHandoff = msg.msgType === 'handoff'
-                  const color     = isMe ? '#5E5CE6' : (msg.fromColor || '#5E5CE6')
+                  const color     = isMe ? '#6C63FF' : (msg.fromColor || '#6C63FF')
 
                   return (
                     <div key={msg.id} style={{ display: 'flex', flexDirection: isMe ? 'row-reverse' : 'row', gap: 10, marginTop: grouped ? 2 : 12, animation: 'slideUp 0.2s ease' }}>
@@ -405,15 +405,15 @@ export default function AgentsDashboard() {
                               </span>
                             )}
                             <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)' }}>{timeAgo(msg.createdAt)}</span>
-                            {isAlert   && <span style={{ fontSize: 9, fontWeight: 900, color: '#FF453A', background: '#FF453A20', padding: '1px 5px', borderRadius: 4 }}>🚨 alert</span>}
-                            {isHandoff && <span style={{ fontSize: 9, fontWeight: 900, color: '#FFD60A', background: '#FFD60A20', padding: '1px 5px', borderRadius: 4 }}>🤝 handoff</span>}
+                            {isAlert   && <span style={{ fontSize: 9, fontWeight: 900, color: '#EF4444', background: '#EF444420', padding: '1px 5px', borderRadius: 4 }}>🚨 alert</span>}
+                            {isHandoff && <span style={{ fontSize: 9, fontWeight: 900, color: '#F59E0B', background: '#F59E0B20', padding: '1px 5px', borderRadius: 4 }}>🤝 handoff</span>}
                           </div>
                         )}
                         <div
                           className="msg-bubble"
                           style={{
                             display: 'inline-block', maxWidth: '80%',
-                            background: isMe ? '#5E5CE6' : isAlert ? 'rgba(255,69,58,0.1)' : isHandoff ? 'rgba(255,214,10,0.07)' : isDM ? color + '14' : 'rgba(255,255,255,0.05)',
+                            background: isMe ? '#6C63FF' : isAlert ? 'rgba(255,69,58,0.1)' : isHandoff ? 'rgba(255,214,10,0.07)' : isDM ? color + '14' : 'rgba(255,255,255,0.05)',
                             border: isMe ? 'none' : isAlert ? '1px solid rgba(255,69,58,0.25)' : isHandoff ? '1px solid rgba(255,214,10,0.18)' : `1px solid ${color}20`,
                             borderRadius: isMe ? '12px 4px 12px 12px' : '4px 12px 12px 12px',
                             padding: '7px 12px',
@@ -443,13 +443,13 @@ export default function AgentsDashboard() {
                   <div style={{ fontWeight: 800, marginTop: 12 }}>No memories yet</div>
                 </div>
               ) : memories.map(m => (
-                <div key={m.id} style={{ display: 'flex', gap: 10, padding: '10px 12px', background: 'rgba(255,255,255,0.025)', border: `1px solid ${m.agentColor || '#5E5CE6'}20`, borderLeft: `3px solid ${m.agentColor || '#5E5CE6'}`, borderRadius: '0 10px 10px 0', animation: 'slideUp 0.2s ease' }}>
+                <div key={m.id} style={{ display: 'flex', gap: 10, padding: '10px 12px', background: 'rgba(255,255,255,0.025)', border: `1px solid ${m.agentColor || '#6C63FF'}20`, borderLeft: `3px solid ${m.agentColor || '#6C63FF'}`, borderRadius: '0 10px 10px 0', animation: 'slideUp 0.2s ease' }}>
                   <span style={{ fontSize: 20, flexShrink: 0 }}>{m.agentIcon}</span>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                      <span style={{ color: m.agentColor || '#5E5CE6', fontWeight: 800, fontSize: 12 }}>{m.agentName}</span>
+                      <span style={{ color: m.agentColor || '#6C63FF', fontWeight: 800, fontSize: 12 }}>{m.agentName}</span>
                       <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', background: 'var(--app-surface-soft)', padding: '1px 5px', borderRadius: 4 }}>{m.type}</span>
-                      {m.importance >= 3 && <span style={{ fontSize: 9, color: '#FF453A', fontWeight: 900 }}>🔴 critical</span>}
+                      {m.importance >= 3 && <span style={{ fontSize: 9, color: '#EF4444', fontWeight: 900 }}>🔴 critical</span>}
                       <span style={{ marginLeft: 'auto', fontSize: 10, color: 'rgba(255,255,255,0.2)' }}>{timeAgo(m.createdAt)}</span>
                     </div>
                     <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', lineHeight: 1.5 }}>{m.content}</div>
@@ -469,7 +469,7 @@ export default function AgentsDashboard() {
                   <div style={{ fontSize: 12, marginTop: 6 }}>Set GITHUB_TOKEN in Railway to see runs</div>
                 </div>
               ) : runs.map(run => {
-                const color = run.status === 'in_progress' ? '#FFD60A' : run.conclusion === 'success' ? '#30D158' : run.conclusion === 'failure' ? '#FF453A' : '#636366'
+                const color = run.status === 'in_progress' ? '#F59E0B' : run.conclusion === 'success' ? '#2DB854' : run.conclusion === 'failure' ? '#EF4444' : '#636366'
                 const label = run.status === 'in_progress' ? 'Running' : run.conclusion === 'success' ? 'Success' : run.conclusion === 'failure' ? 'Failed' : 'Idle'
                 return (
                   <a key={run.id} href={run.html_url} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, textDecoration: 'none', transition: 'background 0.15s' }}>

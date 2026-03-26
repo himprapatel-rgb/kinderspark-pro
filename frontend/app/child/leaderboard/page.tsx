@@ -14,7 +14,7 @@ const SORT_OPTIONS: { key: SortBy; label: string; icon: string }[] = [
 
 const RANK_MEDALS = ['🥇', '🥈', '🥉']
 const PODIUM_COLORS = [
-  { bg: 'linear-gradient(135deg, #FFD60A, #FF9F0A)', shadow: 'rgba(255,214,10,0.5)', height: 90 },
+  { bg: 'linear-gradient(135deg, #F59E0B, #F97316)', shadow: 'rgba(255,214,10,0.5)', height: 90 },
   { bg: 'linear-gradient(135deg, #8E8E93, #636366)', shadow: 'rgba(142,142,147,0.4)', height: 70 },
   { bg: 'linear-gradient(135deg, #CD7F32, #A0522D)', shadow: 'rgba(205,127,50,0.4)', height: 55 },
 ]
@@ -66,7 +66,7 @@ export default function LeaderboardPage() {
       <div
         className="px-5 pt-12 pb-6 relative overflow-hidden"
         style={{
-          background: 'linear-gradient(145deg, var(--theme-color, #5E5CE6), var(--theme-secondary, #BF5AF2))',
+          background: 'linear-gradient(145deg, var(--theme-color, #6C63FF), var(--theme-secondary, #8B5CF6))',
         }}
       >
         <div className="absolute inset-0 opacity-[0.07]"
@@ -209,7 +209,7 @@ export default function LeaderboardPage() {
                       ⭐ {s.stars} · 🔥 {s.streak}d · 🤖 {s.aiSessions}
                     </p>
                   </div>
-                  <span className="font-black text-sm" style={{ color: isMe ? 'var(--theme-color, #5E5CE6)' : 'var(--app-text-muted)' }}>
+                  <span className="font-black text-sm" style={{ color: isMe ? 'var(--theme-color, #6C63FF)' : 'var(--app-text-muted)' }}>
                     {sortBy === 'stars' ? `⭐ ${val}` : sortBy === 'streak' ? `🔥 ${val}d` : `🤖 ${val}`}
                   </span>
                 </div>

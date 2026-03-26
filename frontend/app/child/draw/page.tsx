@@ -5,8 +5,8 @@ import { useAppStore as useStore } from '@/store/appStore'
 import { updateStudent } from '@/lib/api'
 
 const COLORS = [
-  '#FF453A', '#FF9F0A', '#FFD60A', '#30D158', '#34C759', '#5E5CE6',
-  '#0A84FF', '#BF5AF2', '#FF375F', '#A2845E', '#1C1C1E', '#FFFFFF',
+  '#EF4444', '#F97316', '#F59E0B', '#2DB854', '#34C759', '#6C63FF',
+  '#0A84FF', '#8B5CF6', '#FF375F', '#A2845E', '#1C1C1E', '#FFFFFF',
 ]
 
 export default function DrawPage() {
@@ -17,7 +17,7 @@ export default function DrawPage() {
 
   const student = currentStudent || user
 
-  const [color, setColor] = useState('#5E5CE6')
+  const [color, setColor] = useState('#6C63FF')
   const [size, setSize] = useState(8)
   const [drawing, setDrawing] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -157,7 +157,7 @@ export default function DrawPage() {
         {/* Save button */}
         <button onClick={handleSave} disabled={!hasDrawn}
           className="w-full py-4 rounded-2xl font-black text-white transition-all active:scale-95 disabled:opacity-40 app-pressable"
-          style={{ background: saved ? '#30D158' : 'linear-gradient(135deg, #5E5CE6, #BF5AF2)' }}>
+          style={{ background: saved ? '#2DB854' : 'linear-gradient(135deg, #6C63FF, #8B5CF6)' }}>
           {saved ? '✅ Saved! +5 ⭐' : '💾 Save Drawing (+5 ⭐)'}
         </button>
       </div>

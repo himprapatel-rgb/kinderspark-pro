@@ -3,15 +3,61 @@
 @tailwind utilities;
 
 :root {
+  /* ── Core palette ─────────────────────────────────────────────── */
   --foreground-rgb: 32, 36, 52;
   --background-start-rgb: 246, 248, 255;
-  --app-bg: #f6f8ff;
+
+  /* Surfaces */
+  --app-bg: #f5f7fe;
   --app-surface: #ffffff;
-  --app-surface-soft: #f8faff;
-  --app-border: rgba(120, 120, 140, 0.22);
-  --app-text-muted: rgba(70, 75, 96, 0.78);
-  --app-accent: #5E5CE6;
-  --app-accent-soft: #E9E8FF;
+  --app-surface-soft: #f8f9ff;
+  --app-surface-elevated: #ffffff;
+
+  /* Borders */
+  --app-border: rgba(100, 105, 130, 0.16);
+  --app-border-strong: rgba(100, 105, 130, 0.28);
+
+  /* Text */
+  --app-text-muted: rgba(55, 60, 80, 0.65);
+  --app-text-subtle: rgba(55, 60, 80, 0.45);
+
+  /* Primary accent (indigo-violet) */
+  --app-accent: #6C63FF;
+  --app-accent-hover: #5B52EE;
+  --app-accent-soft: #EEEDFF;
+  --app-accent-glow: rgba(108, 99, 255, 0.35);
+
+  /* Semantic colors */
+  --app-success: #2DB854;
+  --app-success-soft: #E8F8ED;
+  --app-warning: #F5A623;
+  --app-warning-soft: #FFF5E0;
+  --app-danger: #EF4444;
+  --app-danger-soft: #FEF2F2;
+  --app-info: #3B82F6;
+  --app-info-soft: #EFF6FF;
+
+  /* Stars/rewards */
+  --app-gold: #F59E0B;
+  --app-gold-soft: #FEF3C7;
+
+  /* Role accents */
+  --role-child: #F97316;
+  --role-child-soft: #FFF7ED;
+  --role-teacher: #6C63FF;
+  --role-teacher-soft: #EEEDFF;
+  --role-parent: #10B981;
+  --role-parent-soft: #ECFDF5;
+  --role-admin: #8B5CF6;
+  --role-admin-soft: #F5F3FF;
+
+  /* Overlay */
+  --app-overlay: rgba(15, 20, 40, 0.5);
+
+  /* Shadows */
+  --app-shadow-sm: 0 2px 8px rgba(15, 20, 40, 0.06);
+  --app-shadow-md: 0 4px 16px rgba(15, 20, 40, 0.08);
+  --app-shadow-lg: 0 8px 32px rgba(15, 20, 40, 0.12);
 }
 
 /* ── Custom scrollbar ────────────────────────────────────────────────────────── */
@@ -36,7 +82,7 @@ body {
 .app-surface {
   background: var(--app-surface);
   border: 1px solid var(--app-border);
-  box-shadow: 0 8px 24px rgba(20, 25, 45, 0.08);
+  box-shadow: var(--app-shadow-md);
 }
 .app-surface-soft {
   background: var(--app-surface-soft);
@@ -61,10 +107,11 @@ body {
 }
 .app-input::placeholder { color: rgba(70, 75, 96, 0.55); }
 .app-btn-primary {
-  background: linear-gradient(135deg, var(--app-accent), #7B59FF);
+  background: linear-gradient(135deg, var(--app-accent), var(--app-accent-hover));
   color: #fff;
   border-radius: 12px;
   font-weight: 900;
+  box-shadow: 0 4px 14px var(--app-accent-glow);
 }
 
 /* ── Interaction polish ─────────────────────────────────────────────────────── */
@@ -218,19 +265,19 @@ body {
 
 /* ── Gradient text ───────────────────────────────────────────────────────────── */
 .gradient-text {
-  background: linear-gradient(135deg, #FFD60A, #FF9F0A);
+  background: linear-gradient(135deg, var(--app-gold), var(--role-child));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 .gradient-text-purple {
-  background: linear-gradient(135deg, #BF5AF2, #5E5CE6);
+  background: linear-gradient(135deg, var(--role-admin), var(--app-accent));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 .gradient-text-green {
-  background: linear-gradient(135deg, #30D158, #43C6AC);
+  background: linear-gradient(135deg, var(--app-success), #34D399);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -239,31 +286,31 @@ body {
 /* ── Card polish ─────────────────────────────────────────────────────────────── */
 .card-elevated {
   border-radius: 20px;
-  background: var(--app-surface);
+  background: var(--app-surface-elevated);
   border: 1px solid var(--app-border);
-  box-shadow: 0 4px 16px rgba(20, 25, 45, 0.06);
+  box-shadow: var(--app-shadow-sm);
   transition: all 0.25s cubic-bezier(.16,1,.3,1);
 }
 .card-elevated:active { transform: scale(0.98); }
 
 /* ── Glow effects ────────────────────────────────────────────────────────────── */
-.glow-purple { box-shadow: 0 0 30px rgba(94, 92, 230, 0.45); }
-.glow-orange { box-shadow: 0 0 30px rgba(255, 159, 10, 0.45); }
-.glow-green  { box-shadow: 0 0 30px rgba(48, 209, 88, 0.45); }
-.glow-pink   { box-shadow: 0 0 30px rgba(255, 55, 95, 0.45); }
-.glow-blue   { box-shadow: 0 0 30px rgba(10, 132, 255, 0.45); }
+.glow-purple { box-shadow: 0 0 24px rgba(108, 99, 255, 0.35); }
+.glow-orange { box-shadow: 0 0 24px rgba(249, 115, 22, 0.35); }
+.glow-green  { box-shadow: 0 0 24px rgba(45, 184, 84, 0.35); }
+.glow-pink   { box-shadow: 0 0 24px rgba(239, 68, 68, 0.35); }
+.glow-blue   { box-shadow: 0 0 24px rgba(59, 130, 246, 0.35); }
 
 /* ── Button style overrides ──────────────────────────────────────────────────── */
 .btn-primary {
-  background: linear-gradient(135deg, #5E5CE6, #7B59FF);
+  background: linear-gradient(135deg, var(--app-accent), var(--app-accent-hover));
   border: 1px solid rgba(255,255,255,0.18);
-  box-shadow: 0 4px 20px rgba(94,92,230,0.4);
+  box-shadow: 0 4px 16px var(--app-accent-glow);
   color: white;
   font-weight: 900;
   transition: all 0.2s ease;
 }
-.btn-primary:hover  { box-shadow: 0 6px 28px rgba(94,92,230,0.6); transform: translateY(-1px); }
-.btn-primary:active { transform: scale(0.97); box-shadow: 0 2px 12px rgba(94,92,230,0.4); }
+.btn-primary:hover  { box-shadow: 0 6px 24px var(--app-accent-glow); transform: translateY(-1px); }
+.btn-primary:active { transform: scale(0.97); box-shadow: 0 2px 10px var(--app-accent-glow); }
 
 /* ── Tab bar ─────────────────────────────────────────────────────────────────── */
 .tab-bar {
@@ -275,13 +322,13 @@ body {
 
 /* ── Star badge (child dashboard) ───────────────────────────────────────────── */
 .star-badge {
-  background: linear-gradient(135deg, #FFD60A, #FF9F0A);
+  background: linear-gradient(135deg, var(--app-gold), var(--role-child));
   color: #1a0a00;
   font-weight: 900;
   font-size: 12px;
   padding: 3px 10px;
   border-radius: 99px;
-  box-shadow: 0 2px 12px rgba(255,159,10,0.45);
+  box-shadow: 0 2px 10px rgba(245, 158, 11, 0.35);
   border: 1px solid rgba(255,255,255,0.3);
 }
 
@@ -318,9 +365,9 @@ body {
 
 /* ── Modal ───────────────────────────────────────────────────────────────────── */
 .modal-sheet {
-  background: var(--app-surface);
+  background: var(--app-surface-elevated);
   border-top: 1px solid var(--app-border);
-  box-shadow: 0 -12px 40px rgba(20, 25, 45, 0.15);
+  box-shadow: 0 -8px 32px rgba(15, 20, 40, 0.12);
 }
 
 /* ── Input fields ─────────────────────────────────────────────────────────────  */
@@ -357,7 +404,7 @@ html.high-contrast * { border-color: #fff !important; outline-color: #fff !impor
 /* ── Notification dot ─────────────────────────────────────────────────────────── */
 .notif-dot {
   width: 8px; height: 8px;
-  background: #FF453A;
+  background: var(--app-danger);
   border-radius: 50%;
   border: 1.5px solid var(--app-surface);
   animation: glow-pulse 2s ease infinite;
@@ -431,14 +478,14 @@ html.high-contrast * { border-color: #fff !important; outline-color: #fff !impor
   border-color: rgba(120, 120, 140, 0.35);
 }
 .app-btn-danger {
-  background: rgba(255, 69, 58, 0.08);
-  border: 1px solid rgba(255, 69, 58, 0.2);
+  background: var(--app-danger-soft);
+  border: 1px solid rgba(239, 68, 68, 0.2);
   border-radius: 12px;
   font-weight: 800;
-  color: #FF453A;
+  color: var(--app-danger);
 }
 .app-btn-danger:hover {
-  background: rgba(255, 69, 58, 0.14);
+  background: rgba(239, 68, 68, 0.14);
 }
 
 /* ── Badge/chip ───────────────────────────────────────────────────────────── */

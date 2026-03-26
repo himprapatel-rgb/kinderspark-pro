@@ -17,7 +17,7 @@ export default function LessonPage() {
 
   const [items, setItems] = useState<any[]>([])
   const [title, setTitle] = useState('')
-  const [color, setColor] = useState('#5E5CE6')
+  const [color, setColor] = useState('#6C63FF')
   const [icon, setIcon] = useState('📖')
   const [type, setType] = useState<string>('items')
   const [idx, setIdx] = useState(0)
@@ -228,16 +228,16 @@ function LessonCard({ card, type, color, onSpeak }: any) {
 
 function getColorHex(name: string): string {
   const map: Record<string, string> = {
-    Red: '#FF453A', Blue: '#0A84FF', Green: '#30D158', Yellow: '#FFD60A',
-    Orange: '#FF9F0A', Purple: '#BF5AF2', Pink: '#FF375F', Brown: '#A0522D',
+    Red: '#EF4444', Blue: '#0A84FF', Green: '#2DB854', Yellow: '#F59E0B',
+    Orange: '#F97316', Purple: '#8B5CF6', Pink: '#FF375F', Brown: '#A0522D',
     Black: '#1a1a1a', White: '#ffffff',
   }
-  return map[name] || '#5E5CE6'
+  return map[name] || '#6C63FF'
 }
 
 function Confetti() {
   const pieces = Array.from({ length: 30 }, (_, i) => i)
-  const colors = ['#FFD60A', '#FF9F0A', '#5E5CE6', '#30D158', '#BF5AF2', '#FF453A']
+  const colors = ['#F59E0B', '#F97316', '#6C63FF', '#2DB854', '#8B5CF6', '#EF4444']
   return (
     <div className="fixed inset-0 pointer-events-none z-50">
       {pieces.map(i => (

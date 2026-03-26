@@ -93,7 +93,7 @@ export default function TracePage() {
     ctx.lineWidth = 12
     ctx.lineCap = 'round'
     ctx.lineJoin = 'round'
-    ctx.strokeStyle = '#5E5CE6'
+    ctx.strokeStyle = '#6C63FF'
     ctx.lineTo(pos.x, pos.y)
     ctx.stroke()
 
@@ -156,9 +156,9 @@ export default function TracePage() {
               onClick={() => { setCurrentLetter(l); speak(l) }}
               className="w-10 h-10 rounded-xl font-black text-sm flex-shrink-0 transition-all active:scale-90"
               style={{
-                background: currentLetter === l ? '#5E5CE6' : completed.has(l) ? '#30D15840' : 'var(--app-surface)',
-                color: currentLetter === l ? 'white' : completed.has(l) ? '#30D158' : 'rgba(70,75,96,0.75)',
-                border: currentLetter === l ? '2px solid #5E5CE6' : '1px solid var(--app-border)',
+                background: currentLetter === l ? '#6C63FF' : completed.has(l) ? '#2DB85440' : 'var(--app-surface)',
+                color: currentLetter === l ? 'white' : completed.has(l) ? '#2DB854' : 'rgba(70,75,96,0.75)',
+                border: currentLetter === l ? '2px solid #6C63FF' : '1px solid var(--app-border)',
               }}>
               {l}
             </button>
@@ -174,7 +174,7 @@ export default function TracePage() {
         </div>
         <div className="bg-gray-200 rounded-full h-3">
           <div className="h-3 rounded-full transition-all"
-            style={{ width: `${progress}%`, background: progress >= 100 ? '#30D158' : '#5E5CE6' }} />
+            style={{ width: `${progress}%`, background: progress >= 100 ? '#2DB854' : '#6C63FF' }} />
         </div>
         {progress >= 100 && (
           <div className="text-green-400 text-xs font-black text-center mt-1">+3 ⭐ Earned!</div>
@@ -203,12 +203,12 @@ export default function TracePage() {
       <div className="p-4 flex gap-3">
         <button onClick={clearCanvas}
           className="flex-1 py-3 rounded-2xl font-black text-white app-pressable"
-          style={{ background: '#FF453A40', border: '1px solid #FF453A80' }}>
+          style={{ background: '#EF444440', border: '1px solid #EF444480' }}>
           Clear
         </button>
         <button onClick={nextLetter} disabled={LETTERS.indexOf(currentLetter) === LETTERS.length - 1}
           className="flex-1 py-3 rounded-2xl font-black text-white disabled:opacity-40 app-pressable"
-          style={{ background: '#5E5CE6' }}>
+          style={{ background: '#6C63FF' }}>
           Next Letter →
         </button>
       </div>

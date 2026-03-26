@@ -2,9 +2,9 @@
 import { useRef, useEffect, useState, useCallback } from 'react'
 
 const COLORS = [
-  '#FF6B6B', '#FF9F0A', '#FFD60A', '#30D158',
-  '#5AC8FA', '#5E5CE6', '#BF5AF2', '#FF375F',
-  '#1c1c1e', '#ffffff', '#43C6AC', '#FA709A',
+  '#FF6B6B', '#F97316', '#F59E0B', '#2DB854',
+  '#5AC8FA', '#6C63FF', '#8B5CF6', '#FF375F',
+  '#1c1c1e', '#ffffff', '#34D399', '#FA709A',
 ]
 
 interface DrawingCanvasProps {
@@ -154,7 +154,7 @@ export default function DrawingCanvas({ onSave }: DrawingCanvasProps) {
           style={{
             width: 32,
             height: 32,
-            background: isEraser ? '#5E5CE6' : 'rgba(255,255,255,0.15)',
+            background: isEraser ? '#6C63FF' : 'rgba(255,255,255,0.15)',
             border: isEraser ? '3px solid white' : '2px solid rgba(255,255,255,0.2)',
             color: 'white',
           }}
@@ -192,7 +192,7 @@ export default function DrawingCanvas({ onSave }: DrawingCanvasProps) {
         <button
           onClick={handleSave}
           className="flex-1 py-3 rounded-2xl font-black text-sm text-white transition-all active:scale-95"
-          style={{ background: 'linear-gradient(135deg, #5E5CE6, #BF5AF2)' }}
+          style={{ background: 'linear-gradient(135deg, #6C63FF, #8B5CF6)' }}
         >
           💾 Save
         </button>

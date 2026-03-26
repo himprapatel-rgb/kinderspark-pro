@@ -18,16 +18,16 @@ function markChallengeComplete(todayKey: string) {
 }
 
 const BADGE_INFO: Record<string, { emoji: string; label: string; color: string }> = {
-  first_homework: { emoji: '🏅', label: 'First HW',    color: '#FF9F0A' },
-  first_ai:       { emoji: '🤖', label: 'AI Debut',    color: '#5E5CE6' },
-  stars_50:       { emoji: '⭐', label: '50 Stars',    color: '#FFD60A' },
-  stars_100:      { emoji: '🌟', label: '100 Stars',   color: '#FFD60A' },
-  stars_500:      { emoji: '💫', label: '500 Stars',   color: '#FFD60A' },
-  ai_level_3:     { emoji: '🧠', label: 'Lv 3 AI',    color: '#BF5AF2' },
-  ai_level_5:     { emoji: '🏆', label: 'Lv 5 AI',    color: '#BF5AF2' },
-  perfect_score:  { emoji: '🎯', label: 'Perfect!',   color: '#30D158' },
-  streak_3:       { emoji: '🔥', label: '3-Day',       color: '#FF6B35' },
-  streak_7:       { emoji: '🌈', label: '7-Day',       color: '#BF5AF2' },
+  first_homework: { emoji: '🏅', label: 'First HW',    color: '#F97316' },
+  first_ai:       { emoji: '🤖', label: 'AI Debut',    color: '#6C63FF' },
+  stars_50:       { emoji: '⭐', label: '50 Stars',    color: '#F59E0B' },
+  stars_100:      { emoji: '🌟', label: '100 Stars',   color: '#F59E0B' },
+  stars_500:      { emoji: '💫', label: '500 Stars',   color: '#F59E0B' },
+  ai_level_3:     { emoji: '🧠', label: 'Lv 3 AI',    color: '#8B5CF6' },
+  ai_level_5:     { emoji: '🏆', label: 'Lv 5 AI',    color: '#8B5CF6' },
+  perfect_score:  { emoji: '🎯', label: 'Perfect!',   color: '#2DB854' },
+  streak_3:       { emoji: '🔥', label: '3-Day',       color: '#EA580C' },
+  streak_7:       { emoji: '🌈', label: '7-Day',       color: '#8B5CF6' },
 }
 
 export default function ChildPage() {
@@ -118,7 +118,7 @@ export default function ChildPage() {
         <div
           className="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl animate-bounce-subtle"
           style={{
-            background: 'linear-gradient(135deg, var(--theme-color, #5E5CE6), var(--theme-secondary, #BF5AF2))',
+            background: 'linear-gradient(135deg, var(--theme-color, #6C63FF), var(--theme-secondary, #8B5CF6))',
             boxShadow: '0 8px 32px rgba(94,92,230,0.4)',
           }}
         >
@@ -134,8 +134,8 @@ export default function ChildPage() {
     )
   }
 
-  const themeColor = 'var(--theme-color, #5E5CE6)'
-  const themeSecondary = 'var(--theme-secondary, #BF5AF2)'
+  const themeColor = 'var(--theme-color, #6C63FF)'
+  const themeSecondary = 'var(--theme-secondary, #8B5CF6)'
   const streak = student?.streak ?? 0
 
   return (
@@ -147,7 +147,7 @@ export default function ChildPage() {
       <div
         className="relative overflow-hidden"
         style={{
-          background: `linear-gradient(145deg, var(--theme-color, #5E5CE6) 0%, var(--theme-secondary, #BF5AF2) 100%)`,
+          background: `linear-gradient(145deg, var(--theme-color, #6C63FF) 0%, var(--theme-secondary, #8B5CF6) 100%)`,
           paddingBottom: 28,
         }}
       >
@@ -237,7 +237,7 @@ export default function ChildPage() {
                 className="h-full rounded-full relative overflow-hidden transition-all duration-1000"
                 style={{
                   width: `${Math.max(overallPct, 4)}%`,
-                  background: 'linear-gradient(90deg, #FFD60A, #FF9F0A)',
+                  background: 'linear-gradient(90deg, #F59E0B, #F97316)',
                 }}
               >
                 <div className="absolute inset-0 shimmer" />
@@ -252,7 +252,7 @@ export default function ChildPage() {
           <div className="px-5 pb-1">
             <div className="flex gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
               {badges.map((b: any) => {
-                const info = BADGE_INFO[b.type] || { emoji: '🏅', label: b.type, color: '#FFD60A' }
+                const info = BADGE_INFO[b.type] || { emoji: '🏅', label: b.type, color: '#F59E0B' }
                 return (
                   <div
                     key={b.id}
@@ -315,7 +315,7 @@ export default function ChildPage() {
                 </div>
                 <div
                   className="rounded-full px-2.5 py-1 text-xs font-black"
-                  style={{ background: 'rgba(255,159,10,0.25)', color: '#FF9F0A' }}
+                  style={{ background: 'rgba(255,159,10,0.25)', color: '#F97316' }}
                 >
                   {pendingHW.length}
                 </div>
@@ -342,7 +342,7 @@ export default function ChildPage() {
                     disabled={markingDone === hw.id}
                     className="mt-1.5 w-full py-2.5 rounded-2xl text-sm font-black active:scale-[0.97] transition-all disabled:opacity-50 flex items-center justify-center gap-2 app-pressable"
                     style={{
-                      background: 'linear-gradient(135deg, #30D158, #27AE7A)',
+                      background: 'linear-gradient(135deg, #2DB854, #27AE7A)',
                       boxShadow: '0 4px 16px rgba(48,209,88,0.3)',
                     }}
                   >
@@ -369,7 +369,7 @@ export default function ChildPage() {
             background: dailyDone
               ? 'linear-gradient(135deg, #0d2e0d, #0a200a)'
               : `linear-gradient(135deg, ${dailyMod.color}18, ${dailyMod.color}30)`,
-            border: `1.5px solid ${dailyDone ? '#30D15840' : dailyMod.color + '55'}`,
+            border: `1.5px solid ${dailyDone ? '#2DB85440' : dailyMod.color + '55'}`,
             boxShadow: dailyDone ? 'none' : `0 6px 24px ${dailyMod.color}20`,
           }}
         >
@@ -379,7 +379,7 @@ export default function ChildPage() {
               className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
               style={{
                 background: dailyDone ? 'rgba(48,209,88,0.2)' : dailyMod.color + '30',
-                border: `1px solid ${dailyDone ? '#30D15840' : dailyMod.color + '40'}`,
+                border: `1px solid ${dailyDone ? '#2DB85440' : dailyMod.color + '40'}`,
               }}
             >
               {dailyDone ? '✅' : dailyMod.icon}
@@ -387,7 +387,7 @@ export default function ChildPage() {
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-0.5">
                 <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full"
-                  style={{ background: dailyDone ? '#30D15820' : '#FFD60A22', color: dailyDone ? '#30D158' : '#FFD60A' }}>
+                  style={{ background: dailyDone ? '#2DB85420' : '#F59E0B22', color: dailyDone ? '#2DB854' : '#F59E0B' }}>
                   {dailyDone ? '✓ Done' : '⚡ Daily'}
                 </span>
               </div>
@@ -439,7 +439,7 @@ export default function ChildPage() {
             <div
               className="rounded-2xl px-4 py-3 font-black text-sm flex-shrink-0"
               style={{
-                background: 'linear-gradient(135deg, #5E5CE6, #BF5AF2)',
+                background: 'linear-gradient(135deg, #6C63FF, #8B5CF6)',
                 boxShadow: '0 4px 16px rgba(94,92,230,0.5)',
               }}
             >
@@ -455,7 +455,7 @@ export default function ChildPage() {
               <h2 className="font-black text-base">✨ Just For You</h2>
               <span
                 className="text-xs font-black rounded-full px-2.5 py-0.5"
-                style={{ background: 'rgba(191,90,242,0.2)', color: '#BF5AF2', border: '1px solid rgba(191,90,242,0.3)' }}
+                style={{ background: 'rgba(191,90,242,0.2)', color: '#8B5CF6', border: '1px solid rgba(191,90,242,0.3)' }}
               >
                 AI Pick
               </span>
@@ -465,7 +465,7 @@ export default function ChildPage() {
                 const mod = MODS.find(m => m.id === rec.moduleId)
                 const done = progressMap[rec.moduleId] || 0
                 const pct = Math.min(100, Math.round((done / (mod?.items.length || 1)) * 100))
-                const color = mod?.color || '#5E5CE6'
+                const color = mod?.color || '#6C63FF'
                 return (
                   <button className="app-pressable"
                     key={i}
@@ -496,12 +496,12 @@ export default function ChildPage() {
           <h2 className="font-black text-base mb-3">🎮 Activities</h2>
           <div className="grid grid-cols-3 gap-3">
             {[
-              { label: 'Draw',  icon: '🎨', path: '/child/draw',        grad: 'linear-gradient(135deg,#FF453A22,#FF9F0A22)', border: '#FF9F0A40' },
-              { label: 'Trace', icon: '✍️', path: '/child/trace',       grad: 'linear-gradient(135deg,#30D15822,#43C6AC22)', border: '#30D15840' },
-              { label: 'Match', icon: '🔤', path: '/child/match',       grad: 'linear-gradient(135deg,#FF9F0A22,#FF6B3522)', border: '#FF9F0A40' },
-              { label: 'Tutor', icon: '🤖', path: '/child/tutor',       grad: 'linear-gradient(135deg,#5E5CE622,#BF5AF222)', border: '#BF5AF240' },
-              { label: 'Rank',  icon: '🏆', path: '/child/leaderboard', grad: 'linear-gradient(135deg,#FFD60A22,#FF9F0A22)', border: '#FFD60A40' },
-              { label: 'Shop',  icon: '🛍️', path: '/child/shop',        grad: 'linear-gradient(135deg,#BF5AF222,#5E5CE622)', border: '#BF5AF240' },
+              { label: 'Draw',  icon: '🎨', path: '/child/draw',        grad: 'linear-gradient(135deg,#EF444422,#F9731622)', border: '#F9731640' },
+              { label: 'Trace', icon: '✍️', path: '/child/trace',       grad: 'linear-gradient(135deg,#2DB85422,#34D39922)', border: '#2DB85440' },
+              { label: 'Match', icon: '🔤', path: '/child/match',       grad: 'linear-gradient(135deg,#F9731622,#EA580C22)', border: '#F9731640' },
+              { label: 'Tutor', icon: '🤖', path: '/child/tutor',       grad: 'linear-gradient(135deg,#6C63FF22,#8B5CF622)', border: '#8B5CF640' },
+              { label: 'Rank',  icon: '🏆', path: '/child/leaderboard', grad: 'linear-gradient(135deg,#F59E0B22,#F9731622)', border: '#F59E0B40' },
+              { label: 'Shop',  icon: '🛍️', path: '/child/shop',        grad: 'linear-gradient(135deg,#8B5CF622,#6C63FF22)', border: '#8B5CF640' },
             ].map(a => (
               <button className="app-pressable"
                 key={a.label}
@@ -577,7 +577,7 @@ export default function ChildPage() {
                   {complete && (
                     <div
                       className="absolute top-2.5 right-2.5 w-6 h-6 rounded-full flex items-center justify-center text-[11px]"
-                      style={{ background: '#30D158', boxShadow: '0 2px 8px rgba(48,209,88,0.4)' }}
+                      style={{ background: '#2DB854', boxShadow: '0 2px 8px rgba(48,209,88,0.4)' }}
                     >
                       ✓
                     </div>
@@ -588,7 +588,7 @@ export default function ChildPage() {
                   <div className="mt-2.5 h-2 rounded-full overflow-hidden" style={{ background: 'rgba(120,120,140,0.06)' }}>
                     <div
                       className="h-full rounded-full transition-all duration-700"
-                      style={{ width: `${pct}%`, background: complete ? '#30D158' : mod.color }}
+                      style={{ width: `${pct}%`, background: complete ? '#2DB854' : mod.color }}
                     />
                   </div>
                 </button>
@@ -602,7 +602,7 @@ export default function ChildPage() {
       {celebrationBadges.length > 0 && (
         <div
           className="fixed inset-0 z-50 flex items-end justify-center"
-          style={{ background: 'rgba(20, 25, 45, 0.6)', backdropFilter: 'blur(8px)' }}
+          style={{ background: 'var(--app-overlay)', backdropFilter: 'blur(8px)' }}
         >
           <div
             className="w-full max-w-[430px] rounded-t-3xl p-7 text-center animate-slide-up"
@@ -622,7 +622,7 @@ export default function ChildPage() {
 
             <div className="flex flex-wrap justify-center gap-5 mb-7">
               {celebrationBadges.map((b: any, i: number) => {
-                const info = BADGE_INFO[b.type] || { emoji: '🏅', label: b.type, color: '#FFD60A' }
+                const info = BADGE_INFO[b.type] || { emoji: '🏅', label: b.type, color: '#F59E0B' }
                 return (
                   <div key={b.type} className="flex flex-col items-center gap-2 animate-pop" style={{ animationDelay: `${i * 150}ms` }}>
                     <div
@@ -645,7 +645,7 @@ export default function ChildPage() {
               onClick={() => setCelebrationBadges([])}
               className="w-full py-4 rounded-2xl text-black font-black text-base"
               style={{
-                background: 'linear-gradient(135deg, #FFD60A, #FF9F0A)',
+                background: 'linear-gradient(135deg, #F59E0B, #F97316)',
                 boxShadow: '0 6px 24px rgba(255,159,10,0.5)',
               }}
             >

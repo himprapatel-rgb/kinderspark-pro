@@ -8,7 +8,7 @@ const THEME_SECONDARY: Record<string, string> = {
   th_def:    '#8b1cf7',
   th_ocean:  '#5856D6',
   th_forest: '#27AE7A',
-  th_sunset: '#FF6B35',
+  th_sunset: '#EA580C',
   th_rose:   '#FF2D55',
   th_galaxy: '#7B2FBE',
 }

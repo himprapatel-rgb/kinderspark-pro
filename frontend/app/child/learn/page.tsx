@@ -32,7 +32,7 @@ export default function LearnPage() {
 
   function badge(mod: typeof MODS[0]) {
     const cards = progress[mod.id] || 0
-    if (cards >= mod.items.length) return { label: '✅ Done', color: '#30D158' }
+    if (cards >= mod.items.length) return { label: '✅ Done', color: '#2DB854' }
     if (cards > 0) return { label: '▶ Continue', color: mod.color }
     return { label: '🚀 Start', color: mod.color }
   }
@@ -61,7 +61,7 @@ export default function LearnPage() {
               style={{
                 flexShrink: 0, padding: '6px 14px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 900,
                 background: cat === c ? 'rgba(94,92,230,0.18)' : 'rgba(70,75,96,0.06)',
-                color: cat === c ? '#5E5CE6' : 'rgba(70,75,96,0.7)',
+                color: cat === c ? '#6C63FF' : 'rgba(70,75,96,0.7)',
                 boxShadow: cat === c ? '0 0 0 1px rgba(94,92,230,0.4)' : '0 0 0 1px rgba(120,120,140,0.22)',
               }}
             >
@@ -76,9 +76,9 @@ export default function LearnPage() {
         <div style={{ margin: '12px 16px 0', padding: '10px 14px', borderRadius: 16, background: 'rgba(94,92,230,0.05)', border: '1px solid rgba(94,92,230,0.2)', display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ fontSize: 22 }}>🎯</span>
           <div style={{ flex: 1 }}>
-            <p style={{ margin: 0, fontSize: 12, fontWeight: 900, color: '#5E5CE6' }}>{done} of {MODS.length} modules completed</p>
+            <p style={{ margin: 0, fontSize: 12, fontWeight: 900, color: '#6C63FF' }}>{done} of {MODS.length} modules completed</p>
             <div style={{ marginTop: 4, height: 4, borderRadius: 4, background: 'var(--app-surface-soft)' }}>
-              <div style={{ height: '100%', borderRadius: 4, background: '#5E5CE6', width: `${Math.round((done / MODS.length) * 100)}%`, transition: 'width 0.5s' }} />
+              <div style={{ height: '100%', borderRadius: 4, background: '#6C63FF', width: `${Math.round((done / MODS.length) * 100)}%`, transition: 'width 0.5s' }} />
             </div>
           </div>
           <span style={{ fontSize: 12, fontWeight: 900, color: 'rgba(255,255,255,0.4)' }}>{Math.round((done / MODS.length) * 100)}%</span>
