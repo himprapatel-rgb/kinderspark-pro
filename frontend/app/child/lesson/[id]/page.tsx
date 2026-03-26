@@ -141,35 +141,39 @@ export default function LessonPage() {
       </div>
 
       {/* Navigation */}
-      <div className="p-6 flex items-center justify-between">
-        <button onClick={handlePrev} disabled={idx === 0}
-          className="w-12 h-12 rounded-full flex items-center justify-center text-xl disabled:opacity-30 active:scale-95 transition-all app-pressable"
-          style={{ background: 'rgba(120,120,140,0.12)' }}>
-          ←
-        </button>
-
-        <button className="app-pressable" onClick={() => speak(card?.w || '')}
-          className="w-14 h-14 rounded-full flex items-center justify-center text-2xl active:scale-95 transition-all"
-          style={{ background: color + '33', border: `2px solid ${color}66` }}>
-          🔊
-        </button>
-
-        <button onClick={handleNext} disabled={!card}
-          className="w-12 h-12 rounded-full flex items-center justify-center text-xl active:scale-95 transition-all app-pressable"
-          style={{ background: idx === total - 1 ? color : 'rgba(255,255,255,0.1)' }}>
-          {idx === total - 1 ? '✓' : '→'}
-        </button>
-      </div>
-
-      {idx === total - 1 && (
-        <div className="pb-6 px-6">
-          <button onClick={handleNext}
-            className="w-full py-4 rounded-2xl font-black text-lg active:scale-95 transition-all app-pressable"
-            style={{ background: `linear-gradient(135deg, ${color}, ${color}aa)` }}>
-            Finished! 🎉
+      <div className="p-6 space-y-3">
+        {/* Main next/finish button — big and obvious */}
+        {idx < total - 1 ? (
+          <button onClick={handleNext} disabled={!card}
+            className="w-full py-4 rounded-2xl font-black text-base active:scale-95 transition-all disabled:opacity-40 app-pressable flex items-center justify-center gap-2"
+            style={{ background: `linear-gradient(135deg, ${color}, ${color}cc)`, color: '#fff', boxShadow: `0 4px 16px ${color}40` }}>
+            Next Card → <span className="text-xs opacity-70">{idx + 1}/{total}</span>
           </button>
+        ) : (
+          <button onClick={handleNext}
+            className="w-full py-5 rounded-2xl font-black text-lg active:scale-95 transition-all app-pressable flex items-center justify-center gap-2"
+            style={{ background: `linear-gradient(135deg, var(--app-success), #3CC78A)`, color: '#fff', boxShadow: '0 4px 20px rgba(43,165,94,0.35)' }}>
+            🎉 All Done! Earn Stars
+          </button>
+        )}
+
+        {/* Secondary controls row */}
+        <div className="flex items-center justify-between">
+          <button onClick={handlePrev} disabled={idx === 0}
+            className="w-12 h-12 rounded-full flex items-center justify-center text-xl disabled:opacity-20 active:scale-95 transition-all app-pressable"
+            style={{ background: 'rgba(120,120,140,0.08)', color: 'var(--app-text-muted)' }}>
+            ←
+          </button>
+
+          <button onClick={() => speak(card?.w || '')}
+            className="w-14 h-14 rounded-full flex items-center justify-center text-2xl active:scale-95 transition-all app-pressable"
+            style={{ background: color + '18', border: `2px solid ${color}33` }}>
+            🔊
+          </button>
+
+          <div className="w-12 text-center text-xs font-black app-muted">{idx + 1}/{total}</div>
         </div>
-      )}
+      </div>
     </div>
   )
 }

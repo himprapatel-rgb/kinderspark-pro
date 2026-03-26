@@ -708,11 +708,12 @@ export default function TeacherDashboard() {
                 <div className="text-center pt-4">
                   {showDeleteConfirm === selectedClass.id ? (
                     <div className="rounded-2xl p-4" style={{ background: '#DC434322', border: '1px solid #DC434344' }}>
-                      <div className="font-black mb-2">Delete "{selectedClass.name}"?</div>
-                      <div className="text-xs font-bold app-muted mb-4">This removes all students and data in this class.</div>
+                      <div className="text-lg mb-1">⚠️</div>
+                      <div className="font-black mb-1">Delete "{selectedClass.name}"?</div>
+                      <div className="text-xs font-bold app-muted mb-4">This permanently removes all students, homework, and data in this class. This cannot be undone.</div>
                       <div className="flex gap-2">
-                        <button onClick={() => setShowDeleteConfirm(null)} className="flex-1 py-2 rounded-xl font-bold text-sm app-pressable app-muted" style={{ background: 'rgba(120,120,140,0.06)' }}>Cancel</button>
-                        <button onClick={() => handleDeleteClass(selectedClass.id)} disabled={busy} className="flex-1 py-2 rounded-xl font-black text-sm app-pressable" style={{ background: '#DC4343' }}>Delete</button>
+                        <button onClick={() => setShowDeleteConfirm(null)} className="flex-1 py-2.5 rounded-xl font-bold text-sm app-pressable" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}>Cancel</button>
+                        <button onClick={() => handleDeleteClass(selectedClass.id)} disabled={busy} className="flex-1 py-2.5 rounded-xl font-black text-sm text-white app-pressable" style={{ background: 'var(--app-danger)' }}>{busy ? 'Deleting…' : '🗑️ Delete Forever'}</button>
                       </div>
                     </div>
                   ) : (
@@ -820,7 +821,7 @@ export default function TeacherDashboard() {
                           )}
                         </div>
                         <div className="text-xs font-bold app-muted">
-                          PIN: {s.pin} · ⭐{s.stars} · 📚{hwDone}/{homework.length} HW
+                          🔑 PIN set · ⭐{s.stars} · 📚{hwDone}/{homework.length} HW
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -1060,7 +1061,7 @@ export default function TeacherDashboard() {
                 <input
                   value={hwForm.moduleId}
                   onChange={e => setHwForm(p => ({ ...p, moduleId: e.target.value }))}
-                  placeholder="Module ID (e.g. letters, numbers)"
+                  placeholder="Subject area (e.g. letters, numbers, shapes)"
                   className="w-full app-field text-sm"
                 />
                 <div className="flex gap-2">

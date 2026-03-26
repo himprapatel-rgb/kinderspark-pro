@@ -44,8 +44,46 @@ function PinContent() {
   }
 
   function handleKey(idx: number, e: React.KeyboardEvent) {
-    if (e.key === 'Backspace' && !pin[idx] && idx > 0) {
-      refs[idx - 1].current?.focus()
+    if (e.key === 'Backspace') {
+      if (!pin[idx] && idx > 0) {
+        const next = [...pin]
+        next[idx - 1] = ''
+        setPin(next)
+        refs[idx - 1].current?.focus()
+      } else {
+        const next = [...pin]
+        next[idx] = ''
+        setPin(next)
+      }
+    }
+  }
+
+  function handlePaste(e: React.ClipboardEvent) {
+    e.preventDefault()
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4)
+    if (pasted.length === 4) {
+      const next = pasted.split('')
+      setPin(next)
+      setError('')
+      refs[3].current?.focus()
+      submit(pasted)
+    }
+  }
+
+  // On-screen keypad tap (for child role on touch devices)
+  function tapDigit(digit: string) {
+    const emptyIdx = pin.findIndex(d => !d)
+    if (emptyIdx === -1) return
+    handleDigit(emptyIdx, digit)
+  }
+
+  function tapBackspace() {
+    const lastFilled = pin.map((d, i) => d ? i : -1).filter(i => i >= 0).pop()
+    if (lastFilled !== undefined && lastFilled >= 0) {
+      const next = [...pin]
+      next[lastFilled] = ''
+      setPin(next)
+      refs[lastFilled].current?.focus()
     }
   }
 
@@ -89,8 +127,8 @@ function PinContent() {
       {/* Back */}
       <button
         onClick={() => router.back()}
-        className="absolute top-6 left-5 w-10 h-10 rounded-2xl flex items-center justify-center transition-all text-xl font-bold z-10 app-pressable"
-        style={{ color: 'rgba(70, 75, 96, 0.85)' }}
+        className="absolute top-6 left-5 w-11 h-11 rounded-2xl flex items-center justify-center transition-all text-lg font-bold z-10 app-pressable"
+        style={{ color: 'rgb(var(--foreground-rgb))', background: 'var(--app-surface)', border: '1px solid var(--app-border)', boxShadow: 'var(--app-shadow-sm)' }}
       >
         ←
       </button>
@@ -144,6 +182,7 @@ function PinContent() {
               value={d}
               onChange={e => handleDigit(i, e.target.value)}
               onKeyDown={e => handleKey(i, e)}
+              onPaste={handlePaste}
               className="w-16 h-16 rounded-2xl text-center text-2xl font-black transition-all outline-none app-pressable"
               style={{
                 background: d
@@ -206,6 +245,42 @@ function PinContent() {
           />
         ))}
       </div>
+
+      {/* On-screen numeric keypad for child role (touch-friendly) */}
+      {role === 'child' && (
+        <div className="mt-8 w-full max-w-[280px] relative z-10">
+          <div className="grid grid-cols-3 gap-2">
+            {['1','2','3','4','5','6','7','8','9'].map(d => (
+              <button
+                key={d}
+                onClick={() => tapDigit(d)}
+                disabled={loading || success || filled >= 4}
+                className="h-14 rounded-2xl text-2xl font-black active:scale-90 transition-all disabled:opacity-30 app-pressable"
+                style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)', color: 'rgb(var(--foreground-rgb))' }}
+              >
+                {d}
+              </button>
+            ))}
+            <div />
+            <button
+              onClick={() => tapDigit('0')}
+              disabled={loading || success || filled >= 4}
+              className="h-14 rounded-2xl text-2xl font-black active:scale-90 transition-all disabled:opacity-30 app-pressable"
+              style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)', color: 'rgb(var(--foreground-rgb))' }}
+            >
+              0
+            </button>
+            <button
+              onClick={tapBackspace}
+              disabled={loading || success || filled === 0}
+              className="h-14 rounded-2xl text-xl font-black active:scale-90 transition-all disabled:opacity-30 app-pressable"
+              style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)', color: 'var(--app-text-muted)' }}
+            >
+              ⌫
+            </button>
+          </div>
+        </div>
+      )}
 
       <style>{`
         @keyframes glow-pulse {

@@ -333,7 +333,7 @@ export default function ChildPage() {
                     <span className="text-2xl flex-shrink-0">{hw.aiGenerated ? '✨' : '📝'}</span>
                     <div className="flex-1 min-w-0">
                       <p className="font-black text-sm truncate">{hw.title}</p>
-                      <p className="text-xs font-bold app-muted">Due {hw.dueDate} · ⭐ {hw.starsReward} stars</p>
+                      <p className="text-xs font-bold app-muted">Due {hw.dueDate ? new Date(hw.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'soon'} · ⭐ {hw.starsReward} stars</p>
                     </div>
                     <span className="text-white/40 text-lg flex-shrink-0">›</span>
                   </button>

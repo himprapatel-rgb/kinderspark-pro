@@ -378,7 +378,7 @@ export default function ParentPage() {
                           {hw.aiGenerated && <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(94,92,230,0.3)', color: '#A78BFA' }}>✨ AI</span>}
                         </div>
                         {hw.description && <div className="text-xs font-bold app-muted mt-0.5 leading-snug">{hw.description}</div>}
-                        <div className="text-red-400 text-xs font-bold mt-0.5">Due: {hw.dueDate}</div>
+                        <div className="text-red-400 text-xs font-bold mt-0.5">Due: {hw.dueDate ? new Date(hw.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'soon'}</div>
                       </div>
                       <div className="flex flex-col items-end gap-1.5">
                         <div className="text-yellow-400 text-xs font-bold">⭐{hw.starsReward}</div>
@@ -479,7 +479,7 @@ export default function ParentPage() {
                           </div>
                           {hw.description && <div className="text-xs font-bold app-muted mt-0.5 leading-snug">{hw.description}</div>}
                           <div className={`text-xs font-bold ${done ? 'text-green-400' : 'text-orange-400'}`}>
-                            {done ? 'Completed!' : `Due: ${hw.dueDate}`}
+                            {done ? 'Completed!' : `Due: ${hw.dueDate ? new Date(hw.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'soon'}`}
                           </div>
                         </div>
                         <div className="text-yellow-400 text-xs font-bold shrink-0">⭐{hw.starsReward}</div>
