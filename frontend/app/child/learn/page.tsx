@@ -43,7 +43,7 @@ export default function LearnPage() {
       {/* Header */}
       <div style={{ background: 'linear-gradient(135deg, #0d0824, #0a1228)', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '16px 16px 12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-          <button className="app-pressable" onClick={() => router.back()} style={{ background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 12, width: 36, height: 36, color: 'white', fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>←</button>
+          <button className="app-pressable" onClick={() => router.back()} style={{ background: 'var(--app-surface-soft)', border: 'none', borderRadius: 12, width: 36, height: 36, color: 'white', fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>←</button>
           <div>
             <h1 style={{ margin: 0, fontSize: 20, fontWeight: 900 }}>📚 Learn</h1>
             <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)' }}>
@@ -77,7 +77,7 @@ export default function LearnPage() {
           <span style={{ fontSize: 22 }}>🎯</span>
           <div style={{ flex: 1 }}>
             <p style={{ margin: 0, fontSize: 12, fontWeight: 900, color: '#5E5CE6' }}>{done} of {MODS.length} modules completed</p>
-            <div style={{ marginTop: 4, height: 4, borderRadius: 4, background: 'rgba(255,255,255,0.08)' }}>
+            <div style={{ marginTop: 4, height: 4, borderRadius: 4, background: 'var(--app-surface-soft)' }}>
               <div style={{ height: '100%', borderRadius: 4, background: '#5E5CE6', width: `${Math.round((done / MODS.length) * 100)}%`, transition: 'width 0.5s' }} />
             </div>
           </div>
@@ -89,7 +89,7 @@ export default function LearnPage() {
       <div style={{ padding: '12px 16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
         {loading ? (
           Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} style={{ height: 130, borderRadius: 20, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', animation: 'pulse 1.5s infinite' }} />
+            <div key={i} style={{ height: 130, borderRadius: 20, background: 'var(--app-surface-soft)', border: '1px solid rgba(255,255,255,0.06)', animation: 'pulse 1.5s infinite' }} />
           ))
         ) : filtered.map(mod => {
           const cards = progress[mod.id] || 0
@@ -115,7 +115,7 @@ export default function LearnPage() {
               <p style={{ margin: 0, fontSize: 12, fontWeight: 900, color: 'rgb(var(--foreground-rgb))', lineHeight: 1.2 }}>{mod.title}</p>
 
               {/* Progress bar */}
-              <div style={{ height: 3, borderRadius: 3, background: 'rgba(255,255,255,0.08)' }}>
+              <div style={{ height: 3, borderRadius: 3, background: 'var(--app-surface-soft)' }}>
                 <div style={{ height: '100%', borderRadius: 3, background: mod.color, width: `${pct}%`, transition: 'width 0.4s' }} />
               </div>
 

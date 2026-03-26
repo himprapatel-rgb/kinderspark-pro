@@ -106,12 +106,12 @@ export default function LessonPage() {
         </div>
         <div className="flex gap-3">
           <button className="app-pressable" onClick={() => { setDone(false); setIdx(0) }}
-            className="px-6 py-3 rounded-2xl text-white font-black"
+            className="px-6 py-3 rounded-2xl font-black"
             style={{ background: color }}>
             Play Again
           </button>
           <button className="app-pressable" onClick={() => router.push('/child')}
-            className="px-6 py-3 rounded-2xl text-white font-black bg-white/20">
+            className="px-6 py-3 rounded-2xl font-black bg-white/20">
             Home
           </button>
         </div>
@@ -125,7 +125,7 @@ export default function LessonPage() {
       <div className="flex items-center gap-3 p-4">
         <button className="app-pressable" onClick={() => router.push('/child')} className="text-white/60 font-bold">← Back</button>
         <div className="flex-1">
-          <div className="flex justify-between text-white/50 text-xs font-bold mb-1">
+          <div className="flex justify-between text-xs font-bold app-muted mb-1">
             <span>{title}</span>
             <span>{idx + 1}/{total}</span>
           </div>
@@ -164,7 +164,7 @@ export default function LessonPage() {
       {idx === total - 1 && (
         <div className="pb-6 px-6">
           <button onClick={handleNext}
-            className="w-full py-4 rounded-2xl text-white font-black text-lg active:scale-95 transition-all app-pressable"
+            className="w-full py-4 rounded-2xl font-black text-lg active:scale-95 transition-all app-pressable"
             style={{ background: `linear-gradient(135deg, ${color}, ${color}aa)` }}>
             Finished! 🎉
           </button>
@@ -198,7 +198,7 @@ function LessonCard({ card, type, color, onSpeak }: any) {
           <div className="text-3xl font-black text-white mb-3">{card.w}</div>
           <div className="flex gap-2 justify-center mb-3">
             {card.w.split('').map((l: string, i: number) => (
-              <div key={i} className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-black"
+              <div key={i} className="w-8 h-8 rounded-lg flex items-center justify-center font-black"
                 style={{ background: color }}>
                 {l}
               </div>

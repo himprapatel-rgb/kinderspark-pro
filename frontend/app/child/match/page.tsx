@@ -165,7 +165,7 @@ export default function WordMatchPage() {
             <div
               key={i}
               className="rounded-2xl px-3 py-2 flex flex-col items-center gap-1"
-              style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)' }}
+              style={{ background: 'var(--app-surface-soft)', border: '1px solid rgba(255,255,255,0.12)' }}
             >
               <span className="text-xl">{s.icon}</span>
               <span className="text-white/60 text-[11px] font-bold">{s.label}</span>
@@ -174,7 +174,7 @@ export default function WordMatchPage() {
         </div>
         <button
           onClick={startGame}
-          className="w-full max-w-[280px] py-5 rounded-3xl text-white font-black text-xl active:scale-95 transition-all relative overflow-hidden app-pressable"
+          className="w-full max-w-[280px] py-5 rounded-3xl font-black text-xl active:scale-95 transition-all relative overflow-hidden app-pressable"
           style={{
             background: 'linear-gradient(135deg, #FF9F0A, #FF6B35)',
             boxShadow: '0 8px 32px rgba(255,159,10,0.5)',
@@ -203,7 +203,7 @@ export default function WordMatchPage() {
       >
         <div className="text-7xl mb-4 animate-bounce">{accuracy >= 70 ? '🎉' : '💪'}</div>
         <h1 className="text-white text-3xl font-black mb-1">{grade}</h1>
-        <p className="text-white/50 text-sm font-bold mb-8">{score}/{QUESTIONS_PER_ROUND} correct</p>
+        <p className="text-sm font-bold app-muted mb-8">{score}/{QUESTIONS_PER_ROUND} correct</p>
 
         {/* Stats */}
         <div className="w-full max-w-[320px] grid grid-cols-3 gap-3 mb-8">
@@ -218,7 +218,7 @@ export default function WordMatchPage() {
               style={{ background: s.color + '18', border: `1px solid ${s.color}35` }}
             >
               <p className="font-black text-base" style={{ color: s.color }}>{s.value}</p>
-              <p className="text-white/50 text-[10px] font-bold mt-0.5">{s.label}</p>
+              <p className="text-[10px] font-bold app-muted mt-0.5">{s.label}</p>
             </div>
           ))}
         </div>
@@ -237,14 +237,14 @@ export default function WordMatchPage() {
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-white font-black text-2xl">{accuracy}%</span>
-            <span className="text-white/40 text-[10px] font-bold">accuracy</span>
+            <span className="font-black text-2xl">{accuracy}%</span>
+            <span className="text-[10px] app-muted font-bold">accuracy</span>
           </div>
         </div>
 
         <button
           onClick={startGame}
-          className="w-full max-w-[280px] py-4 rounded-2xl text-white font-black text-lg active:scale-95 transition-all mb-3 app-pressable"
+          className="w-full max-w-[280px] py-4 rounded-2xl font-black text-lg active:scale-95 transition-all mb-3 app-pressable"
           style={{ background: 'linear-gradient(135deg, #FF9F0A, #FF6B35)', boxShadow: '0 6px 24px rgba(255,159,10,0.4)' }}
         >
           Play Again 🔄
@@ -252,7 +252,7 @@ export default function WordMatchPage() {
         <button className="app-pressable"
           onClick={() => router.back()}
           className="w-full max-w-[280px] py-3.5 rounded-2xl font-black text-sm active:scale-95 transition-all"
-          style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.6)' }}
+          style={{ background: 'var(--app-surface-soft)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.6)' }}
         >
           ← Back Home
         </button>
@@ -281,7 +281,7 @@ export default function WordMatchPage() {
               <div className="absolute inset-0 shimmer" />
             </div>
           </div>
-          <span className="text-white/60 text-xs font-black w-10 text-right">{current}/{QUESTIONS_PER_ROUND}</span>
+          <span className="text-xs app-muted font-black w-10 text-right">{current}/{QUESTIONS_PER_ROUND}</span>
         </div>
 
         {/* Score & streak row */}

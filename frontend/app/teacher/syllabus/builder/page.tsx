@@ -23,12 +23,12 @@ export default function SyllabusBuilderPage() {
       >
         <button className="app-pressable"
           onClick={() => router.back()}
-          className="text-white/70 text-sm font-bold mb-4 flex items-center gap-1"
+          className="text-sm font-bold mb-4 flex items-center gap-1"
         >
           ← Back
         </button>
-        <h1 className="text-white font-black text-2xl">Syllabus Builder 📖</h1>
-        <p className="text-white/70 text-sm font-bold mt-1">Create custom learning content</p>
+        <h1 className="font-black text-2xl">Syllabus Builder 📖</h1>
+        <p className="text-sm font-bold mt-1">Create custom learning content</p>
       </div>
 
       <div className="p-5">

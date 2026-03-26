@@ -244,7 +244,7 @@ export default function AgentsDashboard() {
                 onChange={e => setTaskInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && sendTask()}
                 placeholder="Dispatch a task..."
-                style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 7, padding: '6px 8px', color: 'white', fontSize: 10, outline: 'none', fontFamily: 'Nunito, sans-serif' }}
+                style={{ flex: 1, background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 7, padding: '6px 8px', color: 'white', fontSize: 10, outline: 'none', fontFamily: 'Nunito, sans-serif' }}
               />
               <button onClick={sendTask} disabled={sending || !taskInput.trim()} style={{ background: sending || !taskInput.trim() ? 'rgba(255,255,255,0.06)' : '#5E5CE6', border: 'none', borderRadius: 7, padding: '6px 9px', color: 'white', fontWeight: 900, fontSize: 11, cursor: sending || !taskInput.trim() ? 'default' : 'pointer', fontFamily: 'Nunito, sans-serif', transition: 'background 0.15s' }}>
                 {sending ? '…' : '→'}
@@ -261,13 +261,13 @@ export default function AgentsDashboard() {
             <>
               {/* DM header */}
               <div style={{ padding: '10px 16px', background: '#16132a', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                <button onClick={() => setSelectedAgent(null)} style={{ background: 'rgba(255,255,255,0.06)', border: 'none', borderRadius: 6, padding: '4px 8px', color: 'rgba(255,255,255,0.5)', fontSize: 11, cursor: 'pointer', fontFamily: 'Nunito, sans-serif' }}>← Back</button>
+                <button onClick={() => setSelectedAgent(null)} style={{ background: 'var(--app-surface-soft)', border: 'none', borderRadius: 6, padding: '4px 8px', color: 'rgba(255,255,255,0.5)', fontSize: 11, cursor: 'pointer', fontFamily: 'Nunito, sans-serif' }}>← Back</button>
                 <div style={{ width: 34, height: 34, borderRadius: 10, background: selectedAgent.color + '25', border: `1.5px solid ${selectedAgent.color}55`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>{selectedAgent.icon}</div>
                 <div>
                   <div style={{ fontWeight: 900, fontSize: 14, color: 'white' }}>{selectedAgent.name}</div>
                   <div style={{ fontSize: 10, color: selectedAgent.color }}>{selectedAgent.desc}</div>
                 </div>
-                <div style={{ marginLeft: 'auto', fontSize: 10, color: 'rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.05)', padding: '3px 8px', borderRadius: 6 }}>{selectedAgent.trigger}</div>
+                <div style={{ marginLeft: 'auto', fontSize: 10, color: 'rgba(255,255,255,0.25)', background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)', padding: '3px 8px', borderRadius: 6 }}>{selectedAgent.trigger}</div>
               </div>
 
               {/* DM messages */}
@@ -339,7 +339,7 @@ export default function AgentsDashboard() {
 
               {/* DM input */}
               <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.06)', background: '#13101f', flexShrink: 0 }}>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', background: 'rgba(255,255,255,0.05)', border: `1px solid ${selectedAgent.color}30`, borderRadius: 12, padding: '4px 4px 4px 12px', transition: 'border-color 0.2s' }}>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)', border: `1px solid ${selectedAgent.color}30`, borderRadius: 12, padding: '4px 4px 4px 12px', transition: 'border-color 0.2s' }}>
                   <span style={{ fontSize: 15 }}>🧑‍💻</span>
                   <input
                     value={dmInput}
@@ -448,7 +448,7 @@ export default function AgentsDashboard() {
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                       <span style={{ color: m.agentColor || '#5E5CE6', fontWeight: 800, fontSize: 12 }}>{m.agentName}</span>
-                      <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.06)', padding: '1px 5px', borderRadius: 4 }}>{m.type}</span>
+                      <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', background: 'var(--app-surface-soft)', padding: '1px 5px', borderRadius: 4 }}>{m.type}</span>
                       {m.importance >= 3 && <span style={{ fontSize: 9, color: '#FF453A', fontWeight: 900 }}>🔴 critical</span>}
                       <span style={{ marginLeft: 'auto', fontSize: 10, color: 'rgba(255,255,255,0.2)' }}>{timeAgo(m.createdAt)}</span>
                     </div>

@@ -190,12 +190,12 @@ function BuilderContent() {
         {/* AI & Template buttons */}
         <div className="flex gap-2 mb-4">
           <button className="app-pressable" onClick={() => setShowAI(true)}
-            className="flex-1 py-2 rounded-xl text-white text-xs font-black"
+            className="flex-1 py-2 rounded-xl text-xs font-black"
             style={{ background: '#BF5AF2' }}>
             🤖 AI Generate
           </button>
           <button className="app-pressable" onClick={() => setShowTemplate(true)}
-            className="flex-1 py-2 rounded-xl text-white text-xs font-black"
+            className="flex-1 py-2 rounded-xl text-xs font-black"
             style={{ background: '#5E5CE6' }}>
             ✨ Templates
           </button>
@@ -228,12 +228,12 @@ function BuilderContent() {
       {/* Bottom buttons */}
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] p-4 border-t flex gap-2" style={{ background: 'rgba(255,255,255,0.94)', borderColor: 'var(--app-border)' }}>
         <button className="app-pressable" onClick={() => handleSave(false)} disabled={saving}
-          className="flex-1 py-3 rounded-xl text-white font-black"
+          className="flex-1 py-3 rounded-xl font-black"
           style={{ background: '#5E5CE6' }}>
           {saving ? 'Saving...' : '💾 Save'}
         </button>
         <button className="app-pressable" onClick={() => handleSave(true)} disabled={saving}
-          className="flex-1 py-3 rounded-xl text-white font-black"
+          className="flex-1 py-3 rounded-xl font-black"
           style={{ background: '#30D158' }}>
           ✓ Publish
         </button>
@@ -257,7 +257,7 @@ function BuilderContent() {
                 className="w-full accent-purple-500" />
             </div>
             <button onClick={handleAIGenerate} disabled={aiLoading || !aiTopic}
-              className="w-full py-3 rounded-xl text-white font-black app-pressable"
+              className="w-full py-3 rounded-xl font-black app-pressable"
               style={{ background: '#BF5AF2', opacity: !aiTopic ? 0.5 : 1 }}>
               {aiLoading ? 'Generating...' : '✨ Generate Cards'}
             </button>

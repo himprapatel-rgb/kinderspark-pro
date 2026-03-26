@@ -116,7 +116,7 @@ export default function ParentHomeworkPage() {
       {/* List */}
       <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
         {loading && Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} style={{ height: 80, borderRadius: 20, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }} />
+          <div key={i} style={{ height: 80, borderRadius: 20, background: 'var(--app-surface-soft)', border: '1px solid rgba(255,255,255,0.06)' }} />
         ))}
 
         {!loading && filtered.length === 0 && (

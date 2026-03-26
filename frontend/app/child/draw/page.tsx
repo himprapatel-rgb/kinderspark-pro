@@ -132,7 +132,7 @@ export default function DrawPage() {
       <div className="p-4 space-y-4">
         {/* Color palette */}
         <div>
-          <div className="text-white/60 text-xs font-bold mb-2">Color</div>
+          <div className="text-xs font-bold app-muted mb-2">Color</div>
           <div className="flex flex-wrap gap-2">
             {COLORS.map(c => (
               <button className="app-pressable" key={c} onClick={() => setColor(c)}
@@ -148,7 +148,7 @@ export default function DrawPage() {
 
         {/* Brush size */}
         <div>
-          <div className="text-white/60 text-xs font-bold mb-2">Brush Size: {size}px</div>
+          <div className="text-xs font-bold app-muted mb-2">Brush Size: {size}px</div>
           <input type="range" min={2} max={30} value={size}
             onChange={e => setSize(parseInt(e.target.value))}
             className="w-full accent-purple-500" />

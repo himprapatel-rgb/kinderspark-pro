@@ -115,7 +115,7 @@ function PinContent() {
         </div>
         <h2
           className="text-3xl font-black mb-1"
-          style={{ color: 'white' }}
+          style={{ color: meta.color }}
         >
           {meta.label} Login
         </h2>
@@ -173,7 +173,7 @@ function PinContent() {
       <button
         onClick={() => submit(pinStr)}
         disabled={pinStr.length < 4 || loading || success}
-        className="w-full max-w-[280px] py-4 rounded-2xl text-white font-black text-base transition-all active:scale-95 disabled:opacity-40 relative z-10 overflow-hidden app-pressable"
+        className="w-full max-w-[280px] py-4 rounded-2xl font-black text-base transition-all active:scale-95 disabled:opacity-40 relative z-10 overflow-hidden app-pressable"
         style={{
           background: meta.grad,
           boxShadow: pinStr.length >= 4 ? `0 6px 28px ${meta.glow}` : 'none',
@@ -200,7 +200,7 @@ function PinContent() {
             key={i}
             className="w-2 h-2 rounded-full transition-all duration-200"
             style={{
-              background: i < filled ? meta.color : 'rgba(255,255,255,0.15)',
+              background: i < filled ? meta.color : 'rgba(120,120,140,0.2)',
               transform: i < filled ? 'scale(1.2)' : 'scale(1)',
             }}
           />

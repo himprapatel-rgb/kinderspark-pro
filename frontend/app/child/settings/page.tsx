@@ -31,7 +31,7 @@ export default function SettingsPage() {
         <button className="app-pressable" onClick={() => router.push('/child')} className="text-white/70 font-bold mb-3 flex items-center gap-1">
           ← Back
         </button>
-        <div className="text-white text-2xl font-black">⚙️ Settings</div>
+        <div className="text-2xl font-black">⚙️ Settings</div>
         <div className="text-white/60 font-bold text-sm mt-1">Accessibility & Preferences</div>
       </div>
 
@@ -107,7 +107,7 @@ export default function SettingsPage() {
             ))}
           </div>
           <div className="mt-3 text-center">
-            <span className="text-white/50 text-xs font-bold">Current limit: </span>
+            <span className="text-xs font-bold app-muted">Current limit: </span>
             <span className="text-purple-400 font-black text-sm">{settings.stLimit} minutes</span>
           </div>
         </div>

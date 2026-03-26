@@ -235,7 +235,7 @@ function MissionControl() {
               🛸
             </div>
             <div>
-              <h1 className="text-white font-black text-lg leading-none">Mission Control</h1>
+              <h1 className="font-black text-lg leading-none">Mission Control</h1>
               <p className="text-white/80 text-xs font-bold">{agents.length} Autonomous Agents · Developer View · KinderSpark Pro</p>
             </div>
           </div>
@@ -305,7 +305,7 @@ function MissionControl() {
                 className="w-full mb-4 px-4 py-2 rounded-xl text-sm font-bold outline-none"
                 style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }} />
               {config === null ? (
-                <div className="text-center py-20 text-white/30 font-bold">Loading agents...</div>
+                <div className="text-center py-20 font-bold app-muted">Loading agents...</div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                   {filteredAgents.map(agent => {
@@ -323,7 +323,7 @@ function MissionControl() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <p className="text-white font-black text-sm truncate">{agent.name}</p>
+                              <p className="font-black text-sm truncate">{agent.name}</p>
                               <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0" style={{ background: sc + '20', color: sc }}>
                                 {isRunning ? '⚡ LIVE' : type === 'success' ? '✅' : type === 'failure' ? '❌' : '⏸'}
                               </span>
@@ -342,7 +342,7 @@ function MissionControl() {
                           {run?.html_url && (
                             <a href={run.html_url} target="_blank" rel="noopener noreferrer"
                               className="px-3 py-1.5 rounded-lg text-[11px] font-black"
-                              style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                              style={{ background: 'var(--app-surface-soft)', color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.1)' }}>
                               Logs →
                             </a>
                           )}
@@ -359,14 +359,14 @@ function MissionControl() {
           {activeTab === 'conversations' && (
             <div>
               <div className="flex items-center justify-between mb-4">
-                <p className="text-white/50 text-sm font-bold">Agent-to-agent messages, handoffs and broadcasts</p>
+                <p className="text-sm font-bold app-muted">Agent-to-agent messages, handoffs and broadcasts</p>
                 <button onClick={fetchTabData} className="text-xs font-black px-3 py-1.5 rounded-xl"
                   style={{ background: 'rgba(94,92,230,0.15)', color: '#5E5CE6', border: '1px solid rgba(94,92,230,0.3)' }}>↻ Refresh</button>
               </div>
               {conversations.length === 0 ? (
                 <div className="text-center py-20">
                   <p className="text-4xl mb-3">💬</p>
-                  <p className="text-white/30 font-bold text-sm">No agent conversations yet</p>
+                  <p className="font-bold app-muted text-sm">No agent conversations yet</p>
                   <p className="text-white/20 text-xs mt-1 font-bold">Agents will message each other when they have dependent work</p>
                 </div>
               ) : (
@@ -380,11 +380,11 @@ function MissionControl() {
                           <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <span className="text-xs font-black" style={{ color: conv.fromColor }}>{conv.fromName}</span>
                             <span className="text-white/30 text-[10px] font-bold">→</span>
-                            <span className="text-white/60 text-xs font-black">{conv.toAgentId === 'all' ? '📢 All Agents' : conv.toName || conv.toAgentId}</span>
-                            <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full ml-auto" style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.4)' }}>{conv.msgType}</span>
+                            <span className="text-xs app-muted font-black">{conv.toAgentId === 'all' ? '📢 All Agents' : conv.toName || conv.toAgentId}</span>
+                            <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full ml-auto" style={{ background: 'var(--app-surface-soft)', color: 'rgba(255,255,255,0.4)' }}>{conv.msgType}</span>
                             {conv.resolved && <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(48,209,88,0.15)', color: '#30D158' }}>✓ resolved</span>}
                           </div>
-                          <p className="text-white/70 text-sm font-bold leading-snug">{conv.message}</p>
+                          <p className="text-sm font-bold leading-snug">{conv.message}</p>
                           <div className="flex items-center gap-3 mt-2">
                             <span className="text-white/25 text-[10px] font-bold">{new Date(conv.createdAt).toLocaleString()}</span>
                             {!conv.resolved && (
@@ -407,14 +407,14 @@ function MissionControl() {
           {activeTab === 'memory' && (
             <div>
               <div className="flex items-center justify-between mb-4">
-                <p className="text-white/50 text-sm font-bold">What every agent has learned and decided</p>
+                <p className="text-sm font-bold app-muted">What every agent has learned and decided</p>
                 <button onClick={fetchTabData} className="text-xs font-black px-3 py-1.5 rounded-xl"
                   style={{ background: 'rgba(94,92,230,0.15)', color: '#5E5CE6', border: '1px solid rgba(94,92,230,0.3)' }}>↻ Refresh</button>
               </div>
               {memories.length === 0 ? (
                 <div className="text-center py-20">
                   <p className="text-4xl mb-3">🧠</p>
-                  <p className="text-white/30 font-bold text-sm">No agent memories yet</p>
+                  <p className="font-bold app-muted text-sm">No agent memories yet</p>
                   <p className="text-white/20 text-xs mt-1 font-bold">Agents write memories after each run to share context</p>
                 </div>
               ) : (
@@ -427,10 +427,10 @@ function MissionControl() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <span className="text-xs font-black" style={{ color: mem.agentColor }}>{mem.agentName}</span>
-                            <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.4)' }}>{mem.type}</span>
+                            <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full" style={{ background: 'var(--app-surface-soft)', color: 'rgba(255,255,255,0.4)' }}>{mem.type}</span>
                             <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full ml-auto" style={{ background: importanceColor(mem.importance) + '20', color: importanceColor(mem.importance) }}>{importanceLabel(mem.importance)}</span>
                           </div>
-                          <p className="text-white/70 text-sm font-bold leading-snug">{mem.content}</p>
+                          <p className="text-sm font-bold leading-snug">{mem.content}</p>
                           <span className="text-white/25 text-[10px] font-bold mt-1 block">{new Date(mem.createdAt).toLocaleString()}</span>
                         </div>
                       </div>
@@ -446,7 +446,7 @@ function MissionControl() {
         <div className="w-80 flex-shrink-0">
           <div className="sticky top-4">
             <div className="rounded-2xl p-4 mb-4" style={{ background: 'rgba(94,92,230,0.08)', border: '1px solid rgba(94,92,230,0.2)' }}>
-              <p className="text-white font-black text-sm mb-2">📋 Send Task to Agent</p>
+              <p className="font-black text-sm mb-2">📋 Send Task to Agent</p>
               <div className="flex gap-2 mb-2">
                 {['frontend', 'backend', 'claude-build'].map(l => (
                   <button key={l} onClick={() => sendIssue(`Task: ${l} improvement`, [l, 'agent-auto'])}
@@ -469,15 +469,15 @@ function MissionControl() {
             </div>
 
             <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
-              <div className="px-4 py-3 flex items-center justify-between" style={{ background: 'rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                <p className="text-white font-black text-sm">🔴 Live Feed</p>
+              <div className="px-4 py-3 flex items-center justify-between" style={{ background: 'var(--app-surface-soft)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <p className="font-black text-sm">🔴 Live Feed</p>
                 <span className="text-white/30 text-[10px] font-bold">{feedMsgs.length} events</span>
               </div>
               <div ref={feedRef} className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 320px)' }}>
                 {feedMsgs.length === 0 && (
                   <div className="p-6 text-center">
                     <p className="text-4xl mb-2">🛸</p>
-                    <p className="text-white/30 text-xs font-bold">Connecting to agent feed...</p>
+                    <p className="text-xs font-bold app-muted">Connecting to agent feed...</p>
                   </div>
                 )}
                 {feedMsgs.map((msg, i) => (
@@ -529,8 +529,8 @@ function MissionControl() {
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl" style={{ background: triggerModal.color + '20', border: `1px solid ${triggerModal.color}40` }}>{triggerModal.icon}</div>
               <div>
-                <p className="text-white font-black">Run {triggerModal.name}</p>
-                <p className="text-white/40 text-xs font-bold">{triggerModal.desc || 'Manually trigger this agent'}</p>
+                <p className="font-black">Run {triggerModal.name}</p>
+                <p className="text-xs font-bold app-muted">{triggerModal.desc || 'Manually trigger this agent'}</p>
               </div>
             </div>
             <textarea value={taskInput} onChange={e => setTaskInput(e.target.value)}

@@ -156,7 +156,7 @@ export default function LoginPage() {
         <h1
           className="text-4xl font-black tracking-tight"
           style={{
-            background: 'linear-gradient(135deg, #fff 30%, rgba(255,255,255,0.6))',
+            background: 'linear-gradient(135deg, #5E5CE6 0%, #BF5AF2 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
@@ -179,7 +179,7 @@ export default function LoginPage() {
             PRO
           </span>
         </h1>
-        <p className="text-white/40 text-sm font-bold mt-1 tracking-wide">
+        <p className="text-sm font-bold mt-1 tracking-wide" style={{ color: 'rgba(70, 75, 96, 0.6)' }}>
           AI-powered kindergarten learning
         </p>
       </div>
@@ -236,7 +236,7 @@ export default function LoginPage() {
             {/* Arrow */}
             <div
               className="relative z-10 w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black transition-all duration-200 group-hover:translate-x-1"
-              style={{ background: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.7)' }}
+              style={{ background: 'rgba(94,92,230,0.1)', color: 'rgba(94,92,230,0.6)' }}
             >
               ›
             </div>
@@ -260,7 +260,7 @@ export default function LoginPage() {
               ].map(link => (
                 <button key={link.path} onClick={() => router.push(link.path)} className="app-pressable" style={{
                   fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 8,
-                  background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+                  background: 'var(--app-surface-soft)', border: '1px solid rgba(255,255,255,0.1)',
                   color: 'rgba(255,255,255,0.7)', cursor: 'pointer', whiteSpace: 'nowrap' as const,
                 }}>{link.label}</button>
               ))}
@@ -308,7 +308,7 @@ export default function LoginPage() {
             <span key={i} className="text-sm opacity-40">{icon}</span>
           ))}
         </div>
-        <p className="text-white/20 text-xs font-semibold">Safe & AI-powered learning · © 2025 KinderSpark Pro</p>
+        <p className="text-xs font-semibold" style={{ color: 'rgba(70, 75, 96, 0.4)' }}>Safe & AI-powered learning · © 2025 KinderSpark Pro</p>
       </div>
 
       <style>{`

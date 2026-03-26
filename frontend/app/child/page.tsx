@@ -126,7 +126,7 @@ export default function ChildPage() {
         </div>
         <div className="space-y-2 w-48">
           {[80, 60, 90].map((w, i) => (
-            <div key={i} className="h-2 rounded-full shimmer" style={{ width: `${w}%`, background: 'rgba(255,255,255,0.1)' }} />
+            <div key={i} className="h-2 rounded-full shimmer" style={{ width: `${w}%`, background: 'rgba(120,120,140,0.06)' }} />
           ))}
         </div>
         <p className="text-sm font-bold" style={{ color: 'rgba(70, 75, 96, 0.85)' }}>Loading your world…</p>
@@ -173,8 +173,8 @@ export default function ChildPage() {
                 {student?.avatar || '🧒'}
               </div>
               <div>
-                <p className="text-white/70 text-xs font-bold uppercase tracking-widest">Welcome back</p>
-                <h1 className="text-white text-2xl font-black leading-tight">{student?.name}!</h1>
+                <p className="text-xs app-muted font-bold uppercase tracking-widest">Welcome back</p>
+                <h1 className="text-2xl font-black leading-tight">{student?.name}!</h1>
               </div>
             </div>
             <div className="flex flex-col gap-1.5 items-end">
@@ -194,7 +194,7 @@ export default function ChildPage() {
               <span className="text-xl">⭐</span>
               <div>
                 <p className="text-yellow-200 font-black text-base leading-none">{(student?.stars ?? 0).toLocaleString()}</p>
-                <p className="text-white/50 text-[10px] font-bold">Stars</p>
+                <p className="text-[10px] font-bold app-muted">Stars</p>
               </div>
             </div>
 
@@ -208,8 +208,8 @@ export default function ChildPage() {
             >
               <span className="text-xl">{streak > 0 ? '🔥' : '💤'}</span>
               <div>
-                <p className="text-white font-black text-base leading-none">{streak}d</p>
-                <p className="text-white/50 text-[10px] font-bold">Streak</p>
+                <p className="font-black text-base leading-none">{streak}d</p>
+                <p className="text-[10px] font-bold app-muted">Streak</p>
               </div>
             </div>
 
@@ -220,8 +220,8 @@ export default function ChildPage() {
             >
               <span className="text-xl">🏆</span>
               <div>
-                <p className="text-white font-black text-base leading-none">Lv {student?.aiBestLevel ?? 1}</p>
-                <p className="text-white/50 text-[10px] font-bold">Level</p>
+                <p className="font-black text-base leading-none">Lv {student?.aiBestLevel ?? 1}</p>
+                <p className="text-[10px] font-bold app-muted">Level</p>
               </div>
             </div>
           </div>
@@ -230,7 +230,7 @@ export default function ChildPage() {
           <div>
             <div className="flex justify-between items-center mb-2">
               <span className="text-white/80 text-xs font-black uppercase tracking-wide">Overall Progress</span>
-              <span className="text-white font-black text-xs">{overallPct}%</span>
+              <span className="font-black text-xs">{overallPct}%</span>
             </div>
             <div className="h-4 rounded-full overflow-hidden" style={{ background: 'rgba(0,0,0,0.25)' }}>
               <div
@@ -243,7 +243,7 @@ export default function ChildPage() {
                 <div className="absolute inset-0 shimmer" />
               </div>
             </div>
-            <p className="text-white/40 text-[10px] font-bold mt-1">{doneCards} of {totalCards} cards completed</p>
+            <p className="text-[10px] app-muted font-bold mt-1">{doneCards} of {totalCards} cards completed</p>
           </div>
         </div>
 
@@ -286,8 +286,8 @@ export default function ChildPage() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-white text-[11px] font-black uppercase tracking-wider mb-1">Start Today</p>
-              <p className="text-white font-black text-sm truncate">{startTodayTitle}</p>
-              <p className="text-white/60 text-xs font-bold mt-0.5">
+              <p className="font-black text-sm truncate">{startTodayTitle}</p>
+              <p className="text-xs font-bold app-muted mt-0.5">
                 {startTodayHomework ? 'Finish your top pending task first' : 'Quick daily learning challenge'}
               </p>
             </div>
@@ -310,8 +310,8 @@ export default function ChildPage() {
                 <div className="w-8 h-8 rounded-xl flex items-center justify-center text-lg"
                   style={{ background: 'rgba(255,159,10,0.2)' }}>📚</div>
                 <div className="flex-1">
-                  <p className="text-white font-black text-sm">Homework Due!</p>
-                  <p className="text-white/50 text-xs font-bold">{pendingHW.length} assignment{pendingHW.length > 1 ? 's' : ''} waiting</p>
+                  <p className="font-black text-sm">Homework Due!</p>
+                  <p className="text-xs font-bold app-muted">{pendingHW.length} assignment{pendingHW.length > 1 ? 's' : ''} waiting</p>
                 </div>
                 <div
                   className="rounded-full px-2.5 py-1 text-xs font-black"
@@ -332,8 +332,8 @@ export default function ChildPage() {
                   >
                     <span className="text-2xl flex-shrink-0">{hw.aiGenerated ? '✨' : '📝'}</span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-white font-black text-sm truncate">{hw.title}</p>
-                      <p className="text-white/50 text-xs font-bold">Due {hw.dueDate} · ⭐ {hw.starsReward} stars</p>
+                      <p className="font-black text-sm truncate">{hw.title}</p>
+                      <p className="text-xs font-bold app-muted">Due {hw.dueDate} · ⭐ {hw.starsReward} stars</p>
                     </div>
                     <span className="text-white/40 text-lg flex-shrink-0">›</span>
                   </button>
@@ -391,7 +391,7 @@ export default function ChildPage() {
                   {dailyDone ? '✓ Done' : '⚡ Daily'}
                 </span>
               </div>
-              <p className="text-white font-black text-sm leading-tight">
+              <p className="font-black text-sm leading-tight">
                 {dailyDone ? 'Challenge Complete!' : `Today: ${dailyMod.title}`}
               </p>
               <p className="text-white/45 text-xs font-bold mt-0.5">
@@ -428,8 +428,8 @@ export default function ChildPage() {
               🤖
             </div>
             <div className="flex-1">
-              <p className="text-white font-black text-lg leading-tight">AI Tutor Sparkle</p>
-              <p className="text-white/60 text-sm font-bold">Practice topics &amp; earn stars!</p>
+              <p className="font-black text-lg leading-tight">AI Tutor Sparkle</p>
+              <p className="text-sm app-muted font-bold">Practice topics &amp; earn stars!</p>
               {(student?.aiSessions ?? 0) > 0 && (
                 <p className="text-purple-400 text-xs font-bold mt-0.5">
                   {student?.aiSessions} sessions · Best Level {student?.aiBestLevel}
@@ -437,7 +437,7 @@ export default function ChildPage() {
               )}
             </div>
             <div
-              className="rounded-2xl px-4 py-3 text-white font-black text-sm flex-shrink-0"
+              className="rounded-2xl px-4 py-3 font-black text-sm flex-shrink-0"
               style={{
                 background: 'linear-gradient(135deg, #5E5CE6, #BF5AF2)',
                 boxShadow: '0 4px 16px rgba(94,92,230,0.5)',
@@ -452,7 +452,7 @@ export default function ChildPage() {
         {recommendations.length > 0 && (
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <h2 className="text-white font-black text-base">✨ Just For You</h2>
+              <h2 className="font-black text-base">✨ Just For You</h2>
               <span
                 className="text-xs font-black rounded-full px-2.5 py-0.5"
                 style={{ background: 'rgba(191,90,242,0.2)', color: '#BF5AF2', border: '1px solid rgba(191,90,242,0.3)' }}
@@ -478,10 +478,10 @@ export default function ChildPage() {
                     }}
                   >
                     <div className="text-3xl mb-2">{mod?.icon || '📚'}</div>
-                    <p className="text-white font-black text-xs mb-0.5 leading-tight">{rec.title}</p>
+                    <p className="font-black text-xs mb-0.5 leading-tight">{rec.title}</p>
                     <p className="text-white/45 text-[10px] font-bold leading-tight line-clamp-2">{rec.reason}</p>
                     {/* Mini progress */}
-                    <div className="mt-2.5 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                    <div className="mt-2.5 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(120,120,140,0.06)' }}>
                       <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
                     </div>
                   </button>
@@ -493,7 +493,7 @@ export default function ChildPage() {
 
         {/* ── Activities ── */}
         <div>
-          <h2 className="text-white font-black text-base mb-3">🎮 Activities</h2>
+          <h2 className="font-black text-base mb-3">🎮 Activities</h2>
           <div className="grid grid-cols-3 gap-3">
             {[
               { label: 'Draw',  icon: '🎨', path: '/child/draw',        grad: 'linear-gradient(135deg,#FF453A22,#FF9F0A22)', border: '#FF9F0A40' },
@@ -510,7 +510,7 @@ export default function ChildPage() {
                 style={{ background: a.grad, border: `1.5px solid ${a.border}` }}
               >
                 <span className="text-3xl">{a.icon}</span>
-                <span className="text-white font-black text-xs">{a.label}</span>
+                <span className="font-black text-xs">{a.label}</span>
               </button>
             ))}
           </div>
@@ -519,7 +519,7 @@ export default function ChildPage() {
         {/* ── My Lessons (syllabus) ── */}
         {syllabuses.length > 0 && (
           <div>
-            <h2 className="text-white font-black text-base mb-3">📖 My Lessons</h2>
+            <h2 className="font-black text-base mb-3">📖 My Lessons</h2>
             <div className="grid grid-cols-2 gap-3">
               {syllabuses.map(syl => {
                 const done = progressMap[`syl_${syl.id}`] || 0
@@ -536,9 +536,9 @@ export default function ChildPage() {
                     }}
                   >
                     <div className="text-3xl mb-2">{syl.icon}</div>
-                    <p className="text-white font-black text-xs leading-tight">{syl.title}</p>
+                    <p className="font-black text-xs leading-tight">{syl.title}</p>
                     <p className="text-white/45 text-[10px] font-bold mt-0.5">{total} cards</p>
-                    <div className="mt-2.5 h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                    <div className="mt-2.5 h-2 rounded-full overflow-hidden" style={{ background: 'rgba(120,120,140,0.06)' }}>
                       <div
                         className="h-full rounded-full transition-all duration-700 relative overflow-hidden"
                         style={{ width: `${pct}%`, background: syl.color }}
@@ -558,7 +558,7 @@ export default function ChildPage() {
 
         {/* ── All Lessons grid ── */}
         <div>
-          <h2 className="text-white font-black text-base mb-3">📚 All Lessons</h2>
+          <h2 className="font-black text-base mb-3">📚 All Lessons</h2>
           <div className="grid grid-cols-2 gap-3">
             {MODS.map(mod => {
               const done = progressMap[mod.id] || 0
@@ -583,9 +583,9 @@ export default function ChildPage() {
                     </div>
                   )}
                   <div className="text-3xl mb-2">{mod.icon}</div>
-                  <p className="text-white font-black text-xs leading-tight">{mod.title}</p>
-                  <p className="text-white/40 text-[10px] font-bold mt-0.5">{done}/{mod.items.length}</p>
-                  <div className="mt-2.5 h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                  <p className="font-black text-xs leading-tight">{mod.title}</p>
+                  <p className="text-[10px] app-muted font-bold mt-0.5">{done}/{mod.items.length}</p>
+                  <div className="mt-2.5 h-2 rounded-full overflow-hidden" style={{ background: 'rgba(120,120,140,0.06)' }}>
                     <div
                       className="h-full rounded-full transition-all duration-700"
                       style={{ width: `${pct}%`, background: complete ? '#30D158' : mod.color }}
@@ -615,10 +615,10 @@ export default function ChildPage() {
           >
             {/* Confetti-style header */}
             <div className="text-5xl mb-2 animate-bounce">🎉</div>
-            <h2 className="text-white font-black text-2xl mb-1">
+            <h2 className="font-black text-2xl mb-1">
               {celebrationBadges.length > 1 ? 'New Badges!' : 'New Badge!'}
             </h2>
-            <p className="text-white/50 text-sm font-bold mb-6">You earned something special!</p>
+            <p className="text-sm font-bold app-muted mb-6">You earned something special!</p>
 
             <div className="flex flex-wrap justify-center gap-5 mb-7">
               {celebrationBadges.map((b: any, i: number) => {

@@ -81,15 +81,15 @@ export default function LeaderboardPage() {
             ←
           </button>
           <div>
-            <h1 className="text-white text-2xl font-black">Class Ranking</h1>
-            <p className="text-white/50 text-xs font-bold">{students.length} students competing</p>
+            <h1 className="text-2xl font-black">Class Ranking</h1>
+            <p className="text-xs font-bold app-muted">{students.length} students competing</p>
           </div>
           {myRank > 0 && (
             <div
               className="ml-auto rounded-2xl px-3 py-2 text-center"
               style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.25)' }}
             >
-              <p className="text-white font-black text-lg leading-none">#{myRank}</p>
+              <p className="font-black text-lg leading-none">#{myRank}</p>
               <p className="text-white/60 text-[10px] font-bold">Your rank</p>
             </div>
           )}
@@ -118,7 +118,7 @@ export default function LeaderboardPage() {
         {/* Podium */}
         {top3.length >= 2 && (
           <div>
-            <p className="text-white/40 text-xs font-black uppercase tracking-widest mb-4 text-center">Top 3</p>
+            <p className="text-xs app-muted font-black uppercase tracking-widest mb-4 text-center">Top 3</p>
             <div className="flex items-end justify-center gap-3 mb-2">
               {podiumOrder.map((s, vi) => {
                 if (!s) return <div key={vi} className="w-24" />
@@ -152,7 +152,7 @@ export default function LeaderboardPage() {
                       {isMe ? 'You' : s.name}
                     </p>
                     {/* Value */}
-                    <p className="text-white/50 text-[10px] font-bold">
+                    <p className="text-[10px] font-bold app-muted">
                       {sortBy === 'stars' ? `⭐ ${val}` : sortBy === 'streak' ? `🔥 ${val}d` : `🤖 ${val}`}
                     </p>
                     {/* Podium block */}
@@ -176,7 +176,7 @@ export default function LeaderboardPage() {
         {/* Ranked list (4th onwards) */}
         {rest.length > 0 && (
           <div className="space-y-2">
-            <p className="text-white/40 text-xs font-black uppercase tracking-widest mb-3">Rankings</p>
+            <p className="text-xs app-muted font-black uppercase tracking-widest mb-3">Rankings</p>
             {rest.map((s, i) => {
               const rank = i + 4
               const val = s[sortBy] ?? 0
@@ -197,7 +197,7 @@ export default function LeaderboardPage() {
                   <span className="text-white/40 font-black text-sm w-6 text-center">#{rank}</span>
                   <div
                     className="w-10 h-10 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
-                    style={{ background: 'rgba(255,255,255,0.08)' }}
+                    style={{ background: 'var(--app-surface-soft)' }}
                   >
                     {s.avatar}
                   </div>
@@ -205,7 +205,7 @@ export default function LeaderboardPage() {
                     <p className={`font-black text-sm truncate ${isMe ? 'text-white' : 'text-white/80'}`}>
                       {isMe ? `${s.name} (You)` : s.name}
                     </p>
-                    <p className="text-white/40 text-[10px] font-bold">
+                    <p className="text-[10px] app-muted font-bold">
                       ⭐ {s.stars} · 🔥 {s.streak}d · 🤖 {s.aiSessions}
                     </p>
                   </div>

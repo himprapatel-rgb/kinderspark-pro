@@ -126,7 +126,7 @@ export default function TutorPage() {
         <div className="px-5 pb-10">
           <div className="text-center mb-8">
             <div className="text-6xl mb-3">🤖</div>
-            <div className="text-white text-2xl font-black">AI Tutor Sparkle</div>
+            <div className="text-2xl font-black">AI Tutor Sparkle</div>
             <div className="text-white/60 font-bold">Choose a topic to practice!</div>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -162,15 +162,15 @@ export default function TutorPage() {
           <div className="grid grid-cols-3 gap-4 mb-4">
             <div className="text-center">
               <div className="text-yellow-400 text-2xl font-black">{correct}/{TOTAL_Q}</div>
-              <div className="text-white/50 text-xs font-bold">Score</div>
+              <div className="text-xs font-bold app-muted">Score</div>
             </div>
             <div className="text-center">
               <div className="text-green-400 text-2xl font-black">{accuracy}%</div>
-              <div className="text-white/50 text-xs font-bold">Accuracy</div>
+              <div className="text-xs font-bold app-muted">Accuracy</div>
             </div>
             <div className="text-center">
               <div className="text-purple-400 text-2xl font-black">Lvl {maxLevel}</div>
-              <div className="text-white/50 text-xs font-bold">Max Level</div>
+              <div className="text-xs font-bold app-muted">Max Level</div>
             </div>
           </div>
           <div className="flex justify-center gap-2 mb-4">
@@ -179,7 +179,7 @@ export default function TutorPage() {
             ))}
           </div>
           {loadingFeedback ? (
-            <div className="text-white/50 text-sm font-bold text-center">Getting AI feedback...</div>
+            <div className="text-sm font-bold app-muted text-center">Getting AI feedback...</div>
           ) : (
             <div className="bg-white/5 rounded-xl p-3 text-white/80 text-sm font-bold text-center leading-relaxed">
               {aiFeedback}
@@ -189,7 +189,7 @@ export default function TutorPage() {
 
         {newBadges.length > 0 && (
           <div className="w-full rounded-2xl p-4 mb-4" style={{ background: 'linear-gradient(135deg, rgba(255,214,10,0.15), rgba(255,159,10,0.15))', border: '1px solid rgba(255,214,10,0.3)' }}>
-            <div className="text-center text-white font-black text-sm mb-3">🎉 New Badge{newBadges.length > 1 ? 's' : ''} Unlocked!</div>
+            <div className="text-center font-black text-sm mb-3">🎉 New Badge{newBadges.length > 1 ? 's' : ''} Unlocked!</div>
             <div className="flex flex-wrap justify-center gap-3">
               {newBadges.map((b: any) => (
                 <div key={b.type} className="flex flex-col items-center gap-1">
@@ -203,12 +203,12 @@ export default function TutorPage() {
 
         <div className="flex gap-3 w-full">
           <button className="app-pressable" onClick={() => startQuiz(topic)}
-            className="flex-1 py-3 rounded-2xl text-white font-black"
+            className="flex-1 py-3 rounded-2xl font-black"
             style={{ background: '#5E5CE6' }}>
             Play Again
           </button>
           <button className="app-pressable" onClick={() => router.push('/child')}
-            className="flex-1 py-3 rounded-2xl text-white font-black bg-white/20">
+            className="flex-1 py-3 rounded-2xl font-black bg-white/20">
             Home
           </button>
         </div>
@@ -227,20 +227,20 @@ export default function TutorPage() {
           <button className="app-pressable" onClick={() => setPhase('topics')} className="font-bold" style={{ color: 'rgba(70, 75, 96, 0.85)' }}>✕</button>
         <div className="flex-1 flex gap-4 justify-center">
           <div className="text-center">
-            <div className="text-white font-black text-sm">{qIdx + 1}/{TOTAL_Q}</div>
-            <div className="text-white/40 text-xs">Q</div>
+            <div className="font-black text-sm">{qIdx + 1}/{TOTAL_Q}</div>
+            <div className="text-xs app-muted">Q</div>
           </div>
           <div className="text-center">
             <div className="text-green-400 font-black text-sm">{correct}</div>
-            <div className="text-white/40 text-xs">✓</div>
+            <div className="text-xs app-muted">✓</div>
           </div>
           <div className="text-center">
             <div className="text-orange-400 font-black text-sm">🔥 {streak}</div>
-            <div className="text-white/40 text-xs">Streak</div>
+            <div className="text-xs app-muted">Streak</div>
           </div>
           <div className="text-center">
             <div className="text-purple-400 font-black text-sm">Lvl {level}</div>
-            <div className="text-white/40 text-xs">Level</div>
+            <div className="text-xs app-muted">Level</div>
           </div>
         </div>
       </div>
@@ -310,7 +310,7 @@ export default function TutorPage() {
       {answered && (
         <div className="p-4">
           <button onClick={handleNext}
-            className="w-full py-4 rounded-2xl text-white font-black text-lg active:scale-95 transition-all app-pressable"
+            className="w-full py-4 rounded-2xl font-black text-lg active:scale-95 transition-all app-pressable"
             style={{ background: topicInfo?.color || '#5E5CE6' }}>
             {qIdx === TOTAL_Q - 1 ? 'See Results! 🎉' : 'Next Question →'}
           </button>
