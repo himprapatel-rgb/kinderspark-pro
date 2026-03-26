@@ -2,6 +2,7 @@
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
+import { Bell, Eye, Globe, Monitor, Settings, Timer } from 'lucide-react'
 
 const LANGS = [
   { code: 'en', label: 'English', flag: '🇬🇧' },
@@ -31,7 +32,7 @@ export default function SettingsPage() {
         <button onClick={() => router.push('/child')} className="text-white/80 font-bold mb-3 flex items-center gap-1 app-pressable">
           ← Back
         </button>
-        <div className="text-2xl font-black text-white">⚙️ Settings</div>
+        <div className="text-2xl font-black text-white flex items-center gap-2"><Settings size={22} /> Settings</div>
         <div className="text-white/80 font-bold text-sm mt-1">Accessibility & Preferences</div>
       </div>
 
@@ -39,7 +40,7 @@ export default function SettingsPage() {
 
         {/* Display */}
         <div className="rounded-2xl p-4 space-y-4" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
-          <div className="font-black text-base">🖥️ Display</div>
+          <div className="font-black text-base flex items-center gap-2"><Monitor size={16} /> Display</div>
 
           {/* Large Text */}
           <div className="flex items-center justify-between">
@@ -86,7 +87,7 @@ export default function SettingsPage() {
 
         {/* Session Limit */}
         <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
-          <div className="font-black text-base mb-3">⏱️ Daily Screen Limit</div>
+          <div className="font-black text-base mb-3 flex items-center gap-2"><Timer size={16} /> Daily Screen Limit</div>
           <div className="text-xs font-bold mb-3 app-muted">Maximum minutes per session</div>
           <div className="flex flex-wrap gap-2">
             {SESSION_LIMITS.map(mins => (
@@ -111,7 +112,7 @@ export default function SettingsPage() {
 
         {/* Language */}
         <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
-          <div className="font-black text-base mb-3">🌍 Language</div>
+          <div className="font-black text-base mb-3 flex items-center gap-2"><Globe size={16} /> Language</div>
           <div className="grid grid-cols-3 gap-2">
             {LANGS.map(lang => (
               <button
@@ -132,7 +133,7 @@ export default function SettingsPage() {
 
         {/* Preview */}
         <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
-          <div className="font-black text-base mb-3">👁️ Preview</div>
+          <div className="font-black text-base mb-3 flex items-center gap-2"><Eye size={16} /> Preview</div>
           <div
             className="rounded-xl p-4 text-center"
             style={{
@@ -162,7 +163,7 @@ export default function SettingsPage() {
 
         {/* Notifications */}
         <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
-          <div className="font-black text-base mb-3">🔔 Notifications</div>
+          <div className="font-black text-base mb-3 flex items-center gap-2"><Bell size={16} /> Notifications</div>
           <div className="flex items-center justify-between">
             <div>
               <div className={`font-bold ${acc}`}>Homework Reminders</div>
@@ -190,7 +191,7 @@ export default function SettingsPage() {
         {/* About */}
         <div className="rounded-2xl p-4 text-center" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
           <div className="text-xs font-bold app-muted">KinderSpark Pro • v1.1</div>
-          <div className="text-xs font-bold mt-1 app-muted">AI-powered learning for every child 🌍</div>
+          <div className="text-xs font-bold mt-1 app-muted">AI-powered learning for every child</div>
         </div>
       </div>
     </div>

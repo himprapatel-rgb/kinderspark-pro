@@ -6,6 +6,7 @@ import { Loading, InlineEmpty } from '@/components/UIStates'
 import DashboardSidebar from '@/components/DashboardSidebar'
 import TopBarActions from '@/components/TopBarActions'
 import { getAdminStats, getAdminLeaderboard, getClasses, getClassAnalytics } from '@/lib/api'
+import { BarChart3, BookOpen, GraduationCap, Settings, Sparkles, Trophy, UserRound, Users } from 'lucide-react'
 
 export default function AdminPage() {
   const router = useRouter()
@@ -44,9 +45,14 @@ export default function AdminPage() {
     }
   }
 
-  if (loading) return <Loading emoji="⚙️" text="Loading admin panel…" />
+  if (loading) return <Loading emoji="✨" text="Loading admin panel…" />
 
-  const TABS = ['📊 Overview', '🏆 Leaderboard', '🏫 Classes', '📈 AI Stats']
+  const TABS = [
+    { label: 'Overview', icon: <BarChart3 size={14} /> },
+    { label: 'Leaderboard', icon: <Trophy size={14} /> },
+    { label: 'Classes', icon: <GraduationCap size={14} /> },
+    { label: 'AI Stats', icon: <Sparkles size={14} /> },
+  ]
   const medals = ['🥇', '🥈', '🥉']
   const needsAttention = classAnalytics
     .map((ca: any) => {
@@ -77,7 +83,7 @@ export default function AdminPage() {
           <div className="flex justify-between items-start">
             <div>
               <div className="text-xs font-bold app-muted mb-1">ADMIN PANEL</div>
-              <div className="text-2xl font-black">⚙️ {user?.name}</div>
+              <div className="text-2xl font-black flex items-center gap-2 text-white"><Settings size={20} /> {user?.name}</div>
               <div className="text-sm font-bold app-muted">KinderSpark Pro Dashboard</div>
             </div>
             <TopBarActions variant="light" />
@@ -86,13 +92,13 @@ export default function AdminPage() {
           {stats && (
             <div className="grid grid-cols-4 gap-2 mt-5">
               {[
-                { label: 'Classes', value: stats.totalClasses, icon: '🏫', color: '#5B7FE8' },
-                { label: 'Students', value: stats.totalStudents, icon: '🧒', color: '#4CAF6A' },
-                { label: 'Stars', value: (stats.totalStars || 0).toLocaleString(), icon: '⭐', color: '#F5A623' },
-                { label: 'Lessons', value: stats.totalSyllabuses, icon: '📚', color: '#8B6CC1' },
+                { label: 'Classes', value: stats.totalClasses, icon: <GraduationCap size={16} />, color: '#5B7FE8' },
+                { label: 'Students', value: stats.totalStudents, icon: <Users size={16} />, color: '#4CAF6A' },
+                { label: 'Stars', value: (stats.totalStars || 0).toLocaleString(), icon: <Sparkles size={16} />, color: '#F5A623' },
+                { label: 'Lessons', value: stats.totalSyllabuses, icon: <BookOpen size={16} />, color: '#8B6CC1' },
               ].map(s => (
                 <div key={s.label} className="rounded-2xl p-3 text-center" style={{ background: s.color + '22', border: `1px solid ${s.color}33` }}>
-                  <div className="text-xl">{s.icon}</div>
+                  <div className="text-xl inline-flex justify-center">{s.icon}</div>
                   <div className="font-black text-lg leading-none mt-1">{s.value}</div>
                   <div className="text-xs font-bold app-muted mt-0.5">{s.label}</div>
                 </div>
@@ -109,7 +115,7 @@ export default function AdminPage() {
             <button key={i} onClick={() => setTab(i)}
               className={`flex-1 py-3 text-xs font-black transition-colors app-pressable ${tab === i ? 'border-b-2' : ''}`}
               style={{ color: tab === i ? 'var(--app-accent)' : 'rgba(70, 75, 96, 0.6)', borderColor: tab === i ? 'var(--app-accent)' : 'transparent' }}>
-              {t}
+              <span className="inline-flex items-center gap-1.5">{t.icon}<span>{t.label}</span></span>
             </button>
           ))}
         </div>

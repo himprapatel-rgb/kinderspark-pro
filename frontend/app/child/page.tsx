@@ -5,6 +5,7 @@ import { useAppStore as useStore } from '@/store/appStore'
 import { getHomework, getSyllabuses, getProgress, getRecommendations, getStudentBadges, completeHomework } from '@/lib/api'
 import TopBarActions from '@/components/TopBarActions'
 import { MODS } from '@/lib/modules'
+import { ShoppingBag } from 'lucide-react'
 
 // ── Daily Challenge helper ─────────────────────────────────────────────────────
 function getDailyChallenge() {
@@ -188,7 +189,7 @@ export default function ChildPage() {
                   onClick={() => router.push('/child/shop')}
                   className="flex items-center justify-center rounded-xl h-10 px-3 gap-1.5 text-sm font-bold active:scale-95 transition-all app-pressable app-btn-glass"
                 >
-                  🛍️ <span className="text-xs">Shop</span>
+                  <ShoppingBag size={15} /> <span className="text-xs">Shop</span>
                 </button>
               }
             />

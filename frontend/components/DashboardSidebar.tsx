@@ -1,6 +1,7 @@
 'use client'
 import { usePathname, useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
+import { BarChart3, BookOpen, DoorOpen, GraduationCap, Home, Sparkles, Trophy, Users } from 'lucide-react'
 
 interface NavItem {
   icon: string
@@ -23,6 +24,18 @@ export default function DashboardSidebar({ role, items, userName }: DashboardSid
   const roleColor = role === 'teacher' ? 'var(--role-teacher)' : 'var(--role-admin)'
   const roleLabel = role === 'teacher' ? 'Teacher' : 'Admin'
 
+  const renderIcon = (icon: string) => {
+    switch (icon) {
+      case '🏠': return <Home size={16} />
+      case '👥': return <Users size={16} />
+      case '📚': return <BookOpen size={16} />
+      case '📊': return <BarChart3 size={16} />
+      case '🏆': return <Trophy size={16} />
+      case '🏫': return <GraduationCap size={16} />
+      default: return <Sparkles size={16} />
+    }
+  }
+
   return (
     <aside className="hidden lg:flex w-64 h-screen sticky top-0 flex-col border-r" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)' }}>
       {/* Logo */}
@@ -31,7 +44,7 @@ export default function DashboardSidebar({ role, items, userName }: DashboardSid
           className="w-10 h-10 rounded-xl flex items-center justify-center text-xl font-black text-white"
           style={{ background: `linear-gradient(135deg, var(--app-accent), ${roleColor})` }}
         >
-          ⭐
+          <Sparkles size={18} />
         </div>
         <div>
           <div className="text-sm font-black" style={{ color: 'rgb(var(--foreground-rgb))' }}>
@@ -79,7 +92,7 @@ export default function DashboardSidebar({ role, items, userName }: DashboardSid
                 boxShadow: active ? 'var(--app-shadow-sm)' : 'none',
               }}
             >
-              <span className="text-base">{item.icon}</span>
+              <span className="text-base">{renderIcon(item.icon)}</span>
               <span className="flex-1">{item.label}</span>
               {item.badge && item.badge > 0 && (
                 <span
@@ -104,7 +117,7 @@ export default function DashboardSidebar({ role, items, userName }: DashboardSid
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all app-pressable"
           style={{ color: 'var(--app-danger)', fontSize: '13px', fontWeight: 600 }}
         >
-          <span className="text-base">🚪</span>
+          <span className="text-base"><DoorOpen size={16} /></span>
           <span>Sign Out</span>
         </button>
       </div>

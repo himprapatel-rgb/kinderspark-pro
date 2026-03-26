@@ -5,6 +5,7 @@ import { useAppStore } from '@/store/appStore'
 import { Loading, InlineEmpty } from '@/components/UIStates'
 import DashboardSidebar from '@/components/DashboardSidebar'
 import TopBarActions from '@/components/TopBarActions'
+import { BarChart3, Bell, Bot, BookOpen, Users } from 'lucide-react'
 import {
   getClasses, getStudents, getHomework, getSyllabuses, getMessages,
   createClass, createStudent, deleteStudent, createHomework, deleteHomework,
@@ -456,7 +457,7 @@ export default function TeacherDashboard() {
                 onClick={() => router.push('/teacher/reports')}
                 className="flex items-center justify-center rounded-xl h-10 px-3 gap-1.5 text-sm font-bold active:scale-95 transition-all app-pressable app-btn-glass"
               >
-                📊 <span className="hidden sm:inline text-xs">Report</span>
+                <BarChart3 size={15} /> <span className="hidden sm:inline text-xs">Report</span>
               </button>
             }
           />
@@ -551,13 +552,13 @@ export default function TeacherDashboard() {
                 {/* Rich Stats Row */}
                 <div className="grid grid-cols-2 gap-3 tablet:grid-cols-4">
                   {[
-                    { label: 'Students', value: classStats?.totalStudents ?? students.length, emoji: '👥', color: '#5B7FE8' },
-                    { label: 'HW Done', value: `${classStats?.avgHwCompletion ?? 0}%`, emoji: '📚', color: '#F5A623' },
-                    { label: 'Total Stars', value: classStats?.totalStars ?? students.reduce((a: number, s: any) => a + s.stars, 0), emoji: '⭐', color: '#F5B731' },
-                    { label: 'AI Sessions', value: classStats?.totalAISessions ?? 0, emoji: '🤖', color: '#8B6CC1' },
+                    { label: 'Students', value: classStats?.totalStudents ?? students.length, icon: <Users size={14} />, color: '#5B7FE8' },
+                    { label: 'HW Done', value: `${classStats?.avgHwCompletion ?? 0}%`, icon: <BookOpen size={14} />, color: '#F5A623' },
+                    { label: 'Total Stars', value: classStats?.totalStars ?? students.reduce((a: number, s: any) => a + s.stars, 0), icon: <BarChart3 size={14} />, color: '#F5B731' },
+                    { label: 'AI Sessions', value: classStats?.totalAISessions ?? 0, icon: <Bot size={14} />, color: '#8B6CC1' },
                   ].map(s => (
                     <div key={s.label} className="rounded-2xl p-4" style={{ background: s.color + '18', border: `1px solid ${s.color}33` }}>
-                      <div className="text-2xl mb-1">{s.emoji}</div>
+                      <div className="text-2xl mb-1">{s.icon}</div>
                       <div className="font-black text-2xl">{s.value}</div>
                       <div className="text-xs font-bold app-muted">{s.label}</div>
                     </div>
@@ -680,13 +681,13 @@ export default function TeacherDashboard() {
                                 onClick={async () => {
                                   try {
                                     await sendHomeworkReminders(selectedClass?.id)
-                                    showToast(`🔔 Reminder sent for ${s.name}`)
+                                    showToast(`Reminder sent for ${s.name}`)
                                   } catch { showToast('Failed to send reminder') }
                                 }}
                                 className="text-xs font-black px-3 py-1.5 rounded-xl app-pressable"
                                 style={{ background: 'rgba(255,159,10,0.15)', color: '#F5A623', border: '1px solid rgba(255,159,10,0.3)', cursor: 'pointer' }}
                               >
-                                🔔 Remind
+                                <span className="inline-flex items-center gap-1"><Bell size={13} /> Remind</span>
                               </button>
                             </div>
                           )

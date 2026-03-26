@@ -6,6 +6,7 @@ import { Loading, InlineEmpty } from '@/components/UIStates'
 import TopBarActions from '@/components/TopBarActions'
 import { getHomework, getMessages, sendMessage, getAISessions, getAttendanceSummary, markAllMessagesRead, completeHomework, createMessageStream } from '@/lib/api'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
+import { BarChart3, Bell, Home, Users } from 'lucide-react'
 
 // SVG ring component for circular progress
 function Ring({ pct, color, size = 80, stroke = 8 }: { pct: number; color: string; size?: number; stroke?: number }) {
@@ -204,12 +205,12 @@ export default function ParentPage() {
     } catch (e: any) { alert(e.message) }
   }
 
-  if (loading) return <Loading emoji="👪" text="Loading your child's data…" />
+  if (loading) return <Loading emoji="✨" text="Loading your child's data…" />
 
   const TABS = [
-    { label: '🏠 Home', idx: 0 },
-    { label: '📊 Progress', idx: 1 },
-    { label: '💬 Messages', idx: 2 },
+    { label: 'Home', idx: 0, icon: <Home size={14} /> },
+    { label: 'Progress', idx: 1, icon: <BarChart3 size={14} /> },
+    { label: 'Messages', idx: 2, icon: <Users size={14} /> },
   ]
 
   return (
@@ -221,7 +222,7 @@ export default function ParentPage() {
             <button key={t.idx} onClick={() => setTab(t.idx)}
               className={`flex-1 py-3 text-xs font-black transition-colors relative ${tab === t.idx ? 'border-b-2' : ''}`}
               style={{ color: tab === t.idx ? 'var(--app-accent)' : 'rgba(70, 75, 96, 0.8)', borderColor: tab === t.idx ? 'var(--app-accent)' : 'transparent' }}>
-              {t.label}
+              <span className="inline-flex items-center gap-1.5">{t.icon}<span>{t.label}</span></span>
               {t.idx === 2 && unreadMsgs > 0 && (
                 <span className="absolute top-1 right-2 bg-red-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center app-pressable">
                   {unreadMsgs > 9 ? '9+' : unreadMsgs}
@@ -242,7 +243,7 @@ export default function ParentPage() {
               <div className="absolute right-8 bottom-0 w-24 h-24 rounded-full bg-white/3 translate-y-8" />
               <div className="flex justify-between items-start relative">
                 <div>
-                  <div className="text-xs font-bold app-muted mb-1">👪 Parent View</div>
+                  <div className="text-xs font-bold app-muted mb-1 inline-flex items-center gap-1"><Users size={12} /> Parent View</div>
                   <div className="text-2xl font-black">{student?.avatar} {student?.name}</div>
                   <div className="flex gap-2 mt-2 flex-wrap">
                     <span className="bg-yellow-400/20 text-yellow-300 rounded-full px-3 py-0.5 text-xs font-black">⭐ {student?.stars} stars</span>
@@ -347,7 +348,7 @@ export default function ParentPage() {
             {/* Push notification opt-in banner */}
             {notifPermission !== 'granted' && notifPermission !== 'denied' && (
               <div className="mx-3 mb-4 rounded-2xl p-4 flex items-center gap-3" style={{ background: 'linear-gradient(135deg, rgba(48,209,88,0.06), rgba(67,198,172,0.04))', border: '1px solid #4CAF6A40' }}>
-                <div className="text-2xl shrink-0">🔔</div>
+                <div className="text-2xl shrink-0"><Bell size={20} style={{ color: 'var(--app-success)' }} /></div>
                 <div className="flex-1 min-w-0">
                   <div className="font-black text-sm">Enable Homework Alerts</div>
                   <div className="text-xs font-bold app-muted">Get notified when homework is due</div>
@@ -420,7 +421,7 @@ export default function ParentPage() {
         {/* ── PROGRESS TAB ──────────────────────────────────────── */}
         {tab === 1 && (
           <div className="px-3 pt-2">
-            <h2 className="font-black text-lg mb-4">📊 Learning Progress</h2>
+            <h2 className="font-black text-lg mb-4 inline-flex items-center gap-2"><BarChart3 size={18} /> Learning Progress</h2>
 
             {/* Summary bar */}
             <div className="rounded-2xl p-4 mb-4" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>

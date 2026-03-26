@@ -1,6 +1,7 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
+import { LogOut, Settings } from 'lucide-react'
 
 /**
  * Consistent top-right action buttons for all role headers.
@@ -40,7 +41,7 @@ export default function TopBarActions({
           className={`${btnClass} w-10 h-10`}
           title="Settings"
         >
-          ⚙️
+          <Settings size={16} />
         </button>
       )}
 
@@ -49,7 +50,7 @@ export default function TopBarActions({
         className={`${btnClass} h-10 px-3 gap-1.5`}
         title="Sign out"
       >
-        <span>🚪</span>
+        <LogOut size={15} />
         <span className="hidden sm:inline text-xs font-bold">Logout</span>
       </button>
     </div>
