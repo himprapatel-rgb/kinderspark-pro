@@ -514,7 +514,7 @@ export default function ChildPage() {
         {syllabuses.length > 0 && (
           <div>
             <h2 className="font-black text-base mb-3 inline-flex items-center gap-2"><BookOpen size={16} /> My Lessons</h2>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 tablet:grid-cols-2 lg:grid-cols-3 gap-3">
               {syllabuses.map(syl => {
                 const done = progressMap[`syl_${syl.id}`] || 0
                 const total = syl.items?.length || 1
@@ -530,8 +530,8 @@ export default function ChildPage() {
                     }}
                   >
                     <div className="text-3xl mb-2">{syl.icon}</div>
-                    <p className="font-black text-xs leading-tight">{syl.title}</p>
-                    <p className="text-white/45 text-[10px] font-bold mt-0.5">{total} cards</p>
+                    <p className="font-black text-sm leading-tight">{syl.title}</p>
+                    <p className="text-[10px] app-muted font-bold mt-0.5">Syllabus pack · {total} cards</p>
                     <div className="mt-2.5 h-2 rounded-full overflow-hidden" style={{ background: 'rgba(120,120,140,0.06)' }}>
                       <div
                         className="h-full rounded-full transition-all duration-700 relative overflow-hidden"
@@ -543,6 +543,13 @@ export default function ChildPage() {
                     {pct === 100 && (
                       <div className="absolute top-2 right-2 text-sm">✅</div>
                     )}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); router.push(`/child/lesson/syl_${syl.id}`) }}
+                      className="mt-3 w-full rounded-lg py-2 text-[11px] font-black app-pressable"
+                      style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)', color: 'rgb(var(--foreground-rgb))' }}
+                    >
+                      {pct === 100 ? 'Review Again' : 'Continue'}
+                    </button>
                   </button>
                 )
               })}
@@ -562,7 +569,7 @@ export default function ChildPage() {
               {showAllMods ? 'Show Less' : `Show All (${MODS.length})`}
             </button>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 tablet:grid-cols-2 lg:grid-cols-3 gap-3">
             {(showAllMods ? MODS : MODS.slice(0, 6)).map(mod => {
               const done = progressMap[mod.id] || 0
               const pct = Math.min(100, Math.round((done / mod.items.length) * 100))
@@ -586,14 +593,25 @@ export default function ChildPage() {
                     </div>
                   )}
                   <div className="text-3xl mb-2">{mod.icon}</div>
-                  <p className="font-black text-xs leading-tight">{mod.title}</p>
-                  <p className="text-[10px] app-muted font-bold mt-0.5">{done}/{mod.items.length}</p>
+                  <p className="font-black text-sm leading-tight">{mod.title}</p>
+                  <p className="text-[10px] app-muted font-bold mt-0.5">Core lesson · {done}/{mod.items.length}</p>
                   <div className="mt-2.5 h-2 rounded-full overflow-hidden" style={{ background: 'rgba(120,120,140,0.06)' }}>
                     <div
                       className="h-full rounded-full transition-all duration-700"
                       style={{ width: `${pct}%`, background: complete ? '#4CAF6A' : mod.color }}
                     />
                   </div>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); router.push(`/child/lesson/${mod.id}`) }}
+                    className="mt-3 w-full rounded-lg py-2 text-[11px] font-black app-pressable"
+                    style={{
+                      background: complete ? 'var(--app-success-soft)' : 'var(--app-surface-soft)',
+                      border: `1px solid ${complete ? 'rgba(76,175,106,0.35)' : 'var(--app-border)'}`,
+                      color: complete ? 'var(--app-success)' : 'rgb(var(--foreground-rgb))',
+                    }}
+                  >
+                    {complete ? 'Replay' : 'Start'}
+                  </button>
                 </button>
               )
             })}
