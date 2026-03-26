@@ -32,6 +32,17 @@ Verify a PIN and receive a JWT token.
 { "error": "Wrong PIN" }
 ```
 
+### POST /auth/refresh
+Refreshes access token and rotates refresh token.
+
+- Accepts `refreshToken` in request body **or** `kinderspark_refresh` httpOnly cookie.
+- Returns fresh `token` + rotated `refreshToken`.
+
+### POST /auth/logout
+Revokes refresh token and clears auth cookies.
+
+- Accepts `refreshToken` in request body **or** `kinderspark_refresh` cookie.
+
 ---
 
 ## Students

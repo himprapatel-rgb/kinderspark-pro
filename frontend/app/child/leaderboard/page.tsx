@@ -74,7 +74,7 @@ export default function LeaderboardPage() {
         <div className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-white/10" />
 
         <div className="relative flex items-center gap-3 mb-4">
-          <button
+          <button className="app-pressable"
             onClick={() => router.back()}
             className="w-9 h-9 rounded-2xl flex items-center justify-center text-white/60 hover:bg-white/15 transition-all text-lg font-bold"
           >
@@ -98,7 +98,7 @@ export default function LeaderboardPage() {
         {/* Sort tabs */}
         <div className="flex gap-2">
           {SORT_OPTIONS.map(opt => (
-            <button
+            <button className="app-pressable"
               key={opt.key}
               onClick={() => setSortBy(opt.key)}
               className="flex-1 py-2 rounded-2xl text-xs font-black transition-all flex items-center justify-center gap-1.5"

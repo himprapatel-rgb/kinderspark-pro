@@ -305,6 +305,31 @@ User selects role → enters PIN → POST /api/auth/pin
 | Child 2 | `2222` |
 | Child 3 | `3333` |
 
+### Route Security Matrix (Current)
+
+| Area | Route(s) | Auth | Allowed Roles | Scope Rule |
+|------|----------|------|---------------|------------|
+| Auth | `/api/auth/pin` | Public | All | PIN + role validation + auth rate limit |
+| Auth | `/api/auth/refresh`, `/api/auth/logout` | Refresh token required | Token owner | Accepts body or cookie refresh token |
+| Admin | `/api/admin/*` | Required | `admin` | Global |
+| Teacher | `/api/teacher/*` | Required | `teacher`, `admin` | Class-level operations |
+| Classes | `/api/classes/*` | Required | `teacher`, `admin` | Global/class-level management |
+| Students | `/api/students/*` | Required | Mixed | List/create/delete restricted to `teacher/admin`; profile/update paths require auth |
+| Homework | `/api/homework/*` | Required | Mixed | Create/delete/reminders restricted to `teacher/admin`; complete allowed for authenticated users |
+| Syllabus | `/api/syllabuses/*` | Required | Mixed | Read requires auth; write/publish/assign restricted to `teacher/admin` |
+| Messages | `/api/messages/*` | Required | Mixed | Child/parent enforced to own class + own student context on read/read-all/unread/SSE |
+| Progress | `/api/progress/:studentId/*` | Required | Mixed | Child/parent only for `studentId === req.user.id`; teacher/admin can access class data |
+| Attendance | `/api/attendance/*` | Required | Mixed | Mark/read class attendance is `teacher/admin`; summary allows child/parent only for own class |
+| AI Sessions | `/api/ai-sessions/*` | Required | Mixed | Child/parent only for own student id; teacher/admin broader visibility |
+| Feedback | `/api/feedback/*` | Required | Mixed | Write restricted to `teacher/admin`; read requires auth |
+| AI | `/api/ai/*` | Required | Mixed | Sensitive generation/report routes restricted to `teacher/admin`; learner feedback/recommendations require auth |
+
+### Additional Enforcement Notes
+
+- Production startup now fails if `JWT_SECRET` is left at default.
+- `authenticate` is global middleware; sensitive routes add explicit `requireAuth` / `requireRole`.
+- Ownership checks are enforced server-side for child/parent routes; client query params are not trusted for scope.
+
 ---
 
 ## Frontend Architecture
@@ -316,7 +341,7 @@ appStore
 ├── role: string | null        — teacher | parent | child | admin
 ├── token: string | null       — JWT
 ├── currentStudent: Student | null  — for parent view
-└── settings: Settings         — dark, large, hc, dys, lang, stLimit
+└── settings: Settings         — dark, accent, large, hc, dys, lang, stLimit
 ```
 
 ### Page Data Flow

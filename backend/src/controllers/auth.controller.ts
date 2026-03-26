@@ -92,7 +92,7 @@ export async function verifyPin(req: Request, res: Response) {
 }
 
 export async function refreshAccessToken(req: Request, res: Response) {
-  const { refreshToken } = req.body
+  const refreshToken = req.body?.refreshToken || req.cookies?.kinderspark_refresh
   if (!refreshToken) return res.status(400).json({ error: 'refreshToken required' })
 
   try {
@@ -117,16 +117,16 @@ export async function refreshAccessToken(req: Request, res: Response) {
 }
 
 export async function revokeRefreshToken(req: Request, res: Response) {
-  const { refreshToken } = req.body
+  const refreshToken = req.body?.refreshToken || req.cookies?.kinderspark_refresh
   if (!refreshToken) return res.status(400).json({ error: 'refreshToken required' })
   try {
     await prisma.refreshToken.deleteMany({ where: { token: refreshToken } })
     res.clearCookie('kinderspark_token')
-    res.clearCookie('kinderspark_refresh')
+    res.clearCookie('kinderspark_refresh', { path: '/api/auth/refresh' })
     return res.json({ success: true })
   } catch {
     res.clearCookie('kinderspark_token')
-    res.clearCookie('kinderspark_refresh')
+    res.clearCookie('kinderspark_refresh', { path: '/api/auth/refresh' })
     return res.json({ success: true })
   }
 }

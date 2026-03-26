@@ -25,10 +25,10 @@ export default function SettingsPage() {
   const { permission, subscribe } = usePushNotifications(student?.id)
 
   return (
-    <div className="min-h-screen pb-10" style={{ background: 'linear-gradient(180deg, #1a0a2e 0%, #0f0f1a 100%)' }}>
+    <div className="min-h-screen pb-10" style={{ background: 'var(--app-bg)' }}>
       {/* Header */}
       <div className="p-5 pt-10" style={{ background: 'linear-gradient(135deg, #5E5CE6, #BF5AF2)' }}>
-        <button onClick={() => router.push('/child')} className="text-white/70 font-bold mb-3 flex items-center gap-1">
+        <button className="app-pressable" onClick={() => router.push('/child')} className="text-white/70 font-bold mb-3 flex items-center gap-1">
           ← Back
         </button>
         <div className="text-white text-2xl font-black">⚙️ Settings</div>
@@ -38,16 +38,16 @@ export default function SettingsPage() {
       <div className="px-4 py-5 space-y-4">
 
         {/* Display */}
-        <div className="rounded-2xl p-4 space-y-4" style={{ background: '#1a1a2e' }}>
-          <div className="text-white font-black text-base">🖥️ Display</div>
+        <div className="rounded-2xl p-4 space-y-4" style={{ background: 'var(--app-surface)', border: '1px solid rgba(120,120,140,0.2)' }}>
+          <div className="font-black text-base" style={{ color: 'rgb(32,36,52)' }}>🖥️ Display</div>
 
           {/* Large Text */}
           <div className="flex items-center justify-between">
             <div>
-              <div className={`text-white font-bold ${acc}`}>Large Text</div>
-              <div className="text-white/50 text-xs font-bold">Bigger letters for easier reading</div>
+              <div className={`font-bold ${acc}`} style={{ color: 'rgb(32,36,52)' }}>Large Text</div>
+              <div className="text-xs font-bold" style={{ color: 'rgba(70, 75, 96, 0.75)' }}>Bigger letters for easier reading</div>
             </div>
-            <button
+            <button className="app-pressable"
               onClick={() => updateSettings({ large: !settings.large })}
               className="w-12 h-6 rounded-full transition-all relative"
               style={{ background: settings.large ? '#30D158' : '#333' }}>
@@ -59,10 +59,10 @@ export default function SettingsPage() {
           {/* High Contrast */}
           <div className="flex items-center justify-between">
             <div>
-              <div className={`text-white font-bold ${acc}`}>High Contrast</div>
-              <div className="text-white/50 text-xs font-bold">Stronger color contrast for visibility</div>
+              <div className={`font-bold ${acc}`} style={{ color: 'rgb(32,36,52)' }}>High Contrast</div>
+              <div className="text-xs font-bold" style={{ color: 'rgba(70, 75, 96, 0.75)' }}>Stronger color contrast for visibility</div>
             </div>
-            <button
+            <button className="app-pressable"
               onClick={() => updateSettings({ hc: !settings.hc })}
               className="w-12 h-6 rounded-full transition-all relative"
               style={{ background: settings.hc ? '#30D158' : '#333' }}>
@@ -74,10 +74,10 @@ export default function SettingsPage() {
           {/* Dyslexia Font */}
           <div className="flex items-center justify-between">
             <div>
-              <div className={`text-white font-bold ${acc}`}>Dyslexia-Friendly Font</div>
-              <div className="text-white/50 text-xs font-bold">Uses Comic Sans for easier letter recognition</div>
+              <div className={`font-bold ${acc}`} style={{ color: 'rgb(32,36,52)' }}>Dyslexia-Friendly Font</div>
+              <div className="text-xs font-bold" style={{ color: 'rgba(70, 75, 96, 0.75)' }}>Uses Comic Sans for easier letter recognition</div>
             </div>
-            <button
+            <button className="app-pressable"
               onClick={() => updateSettings({ dys: !settings.dys })}
               className="w-12 h-6 rounded-full transition-all relative"
               style={{ background: settings.dys ? '#30D158' : '#333' }}>
@@ -88,12 +88,12 @@ export default function SettingsPage() {
         </div>
 
         {/* Session Limit */}
-        <div className="rounded-2xl p-4" style={{ background: '#1a1a2e' }}>
-          <div className="text-white font-black text-base mb-3">⏱️ Daily Screen Limit</div>
-          <div className="text-white/60 text-xs font-bold mb-3">Maximum minutes per session</div>
+        <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface)', border: '1px solid rgba(120,120,140,0.2)' }}>
+          <div className="font-black text-base mb-3" style={{ color: 'rgb(32,36,52)' }}>⏱️ Daily Screen Limit</div>
+          <div className="text-xs font-bold mb-3" style={{ color: 'rgba(70, 75, 96, 0.75)' }}>Maximum minutes per session</div>
           <div className="flex flex-wrap gap-2">
             {SESSION_LIMITS.map(mins => (
-              <button
+              <button className="app-pressable"
                 key={mins}
                 onClick={() => updateSettings({ stLimit: mins })}
                 className="px-4 py-2 rounded-xl font-black text-sm transition-all"
@@ -113,11 +113,11 @@ export default function SettingsPage() {
         </div>
 
         {/* Language */}
-        <div className="rounded-2xl p-4" style={{ background: '#1a1a2e' }}>
-          <div className="text-white font-black text-base mb-3">🌍 Language</div>
+        <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface)', border: '1px solid rgba(120,120,140,0.2)' }}>
+          <div className="font-black text-base mb-3" style={{ color: 'rgb(32,36,52)' }}>🌍 Language</div>
           <div className="grid grid-cols-3 gap-2">
             {LANGS.map(lang => (
-              <button
+              <button className="app-pressable"
                 key={lang.code}
                 onClick={() => updateSettings({ lang: lang.code })}
                 className="py-3 rounded-xl font-black text-xs flex flex-col items-center gap-1 transition-all"
@@ -134,8 +134,8 @@ export default function SettingsPage() {
         </div>
 
         {/* Preview */}
-        <div className="rounded-2xl p-4" style={{ background: '#1a1a2e' }}>
-          <div className="text-white font-black text-base mb-3">👁️ Preview</div>
+        <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface)', border: '1px solid rgba(120,120,140,0.2)' }}>
+          <div className="font-black text-base mb-3" style={{ color: 'rgb(32,36,52)' }}>👁️ Preview</div>
           <div
             className="rounded-xl p-4 text-center"
             style={{
@@ -164,12 +164,12 @@ export default function SettingsPage() {
         </div>
 
         {/* Notifications */}
-        <div className="rounded-2xl p-4" style={{ background: '#1a1a2e' }}>
-          <div className="text-white font-black text-base mb-3">🔔 Notifications</div>
+        <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface)', border: '1px solid rgba(120,120,140,0.2)' }}>
+          <div className="font-black text-base mb-3" style={{ color: 'rgb(32,36,52)' }}>🔔 Notifications</div>
           <div className="flex items-center justify-between">
             <div>
-              <div className={`text-white font-bold ${acc}`}>Homework Reminders</div>
-              <div className="text-white/50 text-xs font-bold">
+              <div className={`font-bold ${acc}`} style={{ color: 'rgb(32,36,52)' }}>Homework Reminders</div>
+              <div className="text-xs font-bold" style={{ color: 'rgba(70, 75, 96, 0.75)' }}>
                 {permission === 'granted' ? 'Notifications are on' : permission === 'denied' ? 'Blocked in browser settings' : 'Get alerts when homework is due'}
               </div>
             </div>
@@ -181,7 +181,7 @@ export default function SettingsPage() {
               <button
                 onClick={subscribe}
                 disabled={permission === 'denied'}
-                className="px-3 py-1.5 rounded-xl text-xs font-black transition-all active:scale-95"
+                className="px-3 py-1.5 rounded-xl text-xs font-black transition-all active:scale-95 app-pressable"
                 style={{ background: permission === 'denied' ? '#333' : '#5E5CE6', color: permission === 'denied' ? 'rgba(255,255,255,0.3)' : '#fff' }}
               >
                 {permission === 'denied' ? 'Blocked' : 'Enable'}
@@ -191,9 +191,9 @@ export default function SettingsPage() {
         </div>
 
         {/* About */}
-        <div className="rounded-2xl p-4 text-center" style={{ background: '#1a1a2e' }}>
-          <div className="text-white/40 text-xs font-bold">KinderSpark Pro • v1.1</div>
-          <div className="text-white/25 text-xs font-bold mt-1">AI-powered learning for every child 🌍</div>
+        <div className="rounded-2xl p-4 text-center" style={{ background: 'var(--app-surface)', border: '1px solid rgba(120,120,140,0.2)' }}>
+          <div className="text-xs font-bold" style={{ color: 'rgba(70, 75, 96, 0.75)' }}>KinderSpark Pro • v1.1</div>
+          <div className="text-xs font-bold mt-1" style={{ color: 'rgba(70, 75, 96, 0.6)' }}>AI-powered learning for every child 🌍</div>
         </div>
       </div>
     </div>

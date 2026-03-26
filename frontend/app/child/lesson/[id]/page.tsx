@@ -88,7 +88,7 @@ export default function LessonPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#0f0f1a' }}>
+      <div className="min-h-screen flex items-center justify-center app-page">
         <div className="text-6xl animate-bounce">{icon}</div>
       </div>
     )
@@ -97,20 +97,20 @@ export default function LessonPage() {
   if (done) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-6"
-        style={{ background: 'linear-gradient(135deg, #1a0a2e, #0f0f1a)' }}>
+        style={{ background: 'var(--app-bg)' }}>
         {confetti && <Confetti />}
         <div className="text-7xl mb-4 animate-bounce">🎉</div>
-        <div className="text-white text-3xl font-black mb-2">Amazing!</div>
+        <div className="text-3xl font-black mb-2" style={{ color: 'rgb(var(--foreground-rgb))' }}>Amazing!</div>
         <div className="text-white/70 font-bold text-center mb-6">
           You completed {title}!<br />+10 ⭐ stars earned!
         </div>
         <div className="flex gap-3">
-          <button onClick={() => { setDone(false); setIdx(0) }}
+          <button className="app-pressable" onClick={() => { setDone(false); setIdx(0) }}
             className="px-6 py-3 rounded-2xl text-white font-black"
             style={{ background: color }}>
             Play Again
           </button>
-          <button onClick={() => router.push('/child')}
+          <button className="app-pressable" onClick={() => router.push('/child')}
             className="px-6 py-3 rounded-2xl text-white font-black bg-white/20">
             Home
           </button>
@@ -120,10 +120,10 @@ export default function LessonPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#0f0f1a' }}>
+    <div className="min-h-screen flex flex-col app-page">
       {/* Header */}
       <div className="flex items-center gap-3 p-4">
-        <button onClick={() => router.push('/child')} className="text-white/60 font-bold">← Back</button>
+        <button className="app-pressable" onClick={() => router.push('/child')} className="text-white/60 font-bold">← Back</button>
         <div className="flex-1">
           <div className="flex justify-between text-white/50 text-xs font-bold mb-1">
             <span>{title}</span>
@@ -143,19 +143,19 @@ export default function LessonPage() {
       {/* Navigation */}
       <div className="p-6 flex items-center justify-between">
         <button onClick={handlePrev} disabled={idx === 0}
-          className="w-12 h-12 rounded-full flex items-center justify-center text-xl disabled:opacity-30 active:scale-95 transition-all"
+          className="w-12 h-12 rounded-full flex items-center justify-center text-xl disabled:opacity-30 active:scale-95 transition-all app-pressable"
           style={{ background: 'rgba(255,255,255,0.1)' }}>
           ←
         </button>
 
-        <button onClick={() => speak(card?.w || '')}
+        <button className="app-pressable" onClick={() => speak(card?.w || '')}
           className="w-14 h-14 rounded-full flex items-center justify-center text-2xl active:scale-95 transition-all"
           style={{ background: color + '33', border: `2px solid ${color}66` }}>
           🔊
         </button>
 
         <button onClick={handleNext} disabled={!card}
-          className="w-12 h-12 rounded-full flex items-center justify-center text-xl active:scale-95 transition-all"
+          className="w-12 h-12 rounded-full flex items-center justify-center text-xl active:scale-95 transition-all app-pressable"
           style={{ background: idx === total - 1 ? color : 'rgba(255,255,255,0.1)' }}>
           {idx === total - 1 ? '✓' : '→'}
         </button>
@@ -164,7 +164,7 @@ export default function LessonPage() {
       {idx === total - 1 && (
         <div className="pb-6 px-6">
           <button onClick={handleNext}
-            className="w-full py-4 rounded-2xl text-white font-black text-lg active:scale-95 transition-all"
+            className="w-full py-4 rounded-2xl text-white font-black text-lg active:scale-95 transition-all app-pressable"
             style={{ background: `linear-gradient(135deg, ${color}, ${color}aa)` }}>
             Finished! 🎉
           </button>

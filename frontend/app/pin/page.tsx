@@ -78,7 +78,7 @@ function PinContent() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center px-5 relative overflow-hidden"
-      style={{ background: 'linear-gradient(160deg, #0a0a18 0%, #12102a 60%, #0f0f1a 100%)' }}
+      style={{ background: 'linear-gradient(160deg, #eef3ff 0%, #f6f8ff 60%, #f3f8ff 100%)' }}
     >
       {/* Background orb matching role color */}
       <div
@@ -89,7 +89,8 @@ function PinContent() {
       {/* Back */}
       <button
         onClick={() => router.back()}
-        className="absolute top-6 left-5 w-10 h-10 rounded-2xl flex items-center justify-center text-white/50 hover:text-white transition-all hover:bg-white/10 text-xl font-bold z-10"
+        className="absolute top-6 left-5 w-10 h-10 rounded-2xl flex items-center justify-center transition-all text-xl font-bold z-10 app-pressable"
+        style={{ color: 'rgba(70, 75, 96, 0.85)' }}
       >
         ←
       </button>
@@ -118,7 +119,7 @@ function PinContent() {
         >
           {meta.label} Login
         </h2>
-        <p className="text-white/40 text-sm font-semibold">Enter your 4-digit PIN</p>
+        <p className="text-sm font-semibold" style={{ color: 'rgba(70, 75, 96, 0.85)' }}>Enter your 4-digit PIN</p>
       </div>
 
       {/* PIN boxes */}
@@ -143,12 +144,13 @@ function PinContent() {
               value={d}
               onChange={e => handleDigit(i, e.target.value)}
               onKeyDown={e => handleKey(i, e)}
-              className="w-16 h-16 rounded-2xl text-center text-2xl font-black text-white transition-all outline-none"
+              className="w-16 h-16 rounded-2xl text-center text-2xl font-black transition-all outline-none app-pressable"
               style={{
                 background: d
                   ? `linear-gradient(135deg, ${meta.color}22, ${meta.color}44)`
-                  : 'rgba(255,255,255,0.07)',
-                border: `2px solid ${d ? meta.color : 'rgba(255,255,255,0.12)'}`,
+                  : 'rgba(255,255,255,0.9)',
+                color: d ? '#1f2233' : '#1f2233',
+                border: `2px solid ${d ? meta.color : 'rgba(120,120,140,0.28)'}`,
                 boxShadow: d ? `0 4px 20px ${meta.glow}` : 'none',
                 transform: d ? 'scale(1.05)' : 'scale(1)',
               }}
@@ -171,7 +173,7 @@ function PinContent() {
       <button
         onClick={() => submit(pinStr)}
         disabled={pinStr.length < 4 || loading || success}
-        className="w-full max-w-[280px] py-4 rounded-2xl text-white font-black text-base transition-all active:scale-95 disabled:opacity-40 relative z-10 overflow-hidden"
+        className="w-full max-w-[280px] py-4 rounded-2xl text-white font-black text-base transition-all active:scale-95 disabled:opacity-40 relative z-10 overflow-hidden app-pressable"
         style={{
           background: meta.grad,
           boxShadow: pinStr.length >= 4 ? `0 6px 28px ${meta.glow}` : 'none',
@@ -225,8 +227,8 @@ function PinContent() {
 export default function PinPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(180deg, #0f0f1a 0%, #1a1a2e 100%)' }}>
-        <div className="w-8 h-8 border-2 border-white/20 border-t-white/70 rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--app-bg)' }}>
+        <div className="w-8 h-8 border-2 rounded-full animate-spin" style={{ borderColor: 'rgba(120,120,140,0.3)', borderTopColor: 'var(--app-accent)' }} />
       </div>
     }>
       <PinContent />

@@ -104,7 +104,7 @@ export default function ChildPage() {
     return (
       <div
         className="min-h-screen flex flex-col items-center justify-center gap-5"
-        style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #1a0a2e) 0%, #0f0f1a 100%)' }}
+        style={{ background: 'var(--app-bg)' }}
       >
         <div
           className="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl animate-bounce-subtle"
@@ -120,7 +120,7 @@ export default function ChildPage() {
             <div key={i} className="h-2 rounded-full shimmer" style={{ width: `${w}%`, background: 'rgba(255,255,255,0.1)' }} />
           ))}
         </div>
-        <p className="text-white/40 text-sm font-bold">Loading your world…</p>
+        <p className="text-sm font-bold" style={{ color: 'rgba(70, 75, 96, 0.85)' }}>Loading your world…</p>
       </div>
     )
   }
@@ -132,7 +132,7 @@ export default function ChildPage() {
   return (
     <div
       className="min-h-screen pb-28"
-      style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #1a0a2e) 0%, #0d0d1a 100%)' }}
+      style={{ background: 'var(--app-bg)' }}
     >
       {/* ── HERO HEADER ── */}
       <div
@@ -169,11 +169,11 @@ export default function ChildPage() {
               </div>
             </div>
             <div className="flex flex-col gap-1.5 items-end">
-              <button onClick={() => router.push('/child/shop')}
+              <button className="app-pressable" onClick={() => router.push('/child/shop')}
                 className="glass-btn">🛍️ Shop</button>
-              <button onClick={() => router.push('/child/settings')}
+              <button className="app-pressable" onClick={() => router.push('/child/settings')}
                 className="glass-btn">⚙️</button>
-              <button onClick={() => { logout(); router.push('/') }}
+              <button className="app-pressable" onClick={() => { logout(); router.push('/') }}
                 className="text-white/30 text-[10px] font-bold mt-0.5">Logout</button>
             </div>
           </div>
@@ -296,7 +296,7 @@ export default function ChildPage() {
               </div>
               {pendingHW.slice(0, 2).map(hw => (
                 <div key={hw.id} className="mb-2 last:mb-0">
-                  <button
+                  <button className="app-pressable"
                     onClick={() => hw.moduleId && router.push(hw.aiGenerated ? `/child/tutor?topic=${encodeURIComponent(hw.moduleId)}` : `/child/lesson/${hw.moduleId}`)}
                     className="w-full rounded-2xl p-3 flex items-center gap-3 active:scale-[0.98] transition-all text-left"
                     style={{
@@ -311,7 +311,7 @@ export default function ChildPage() {
                     </div>
                     <span className="text-white/40 text-lg flex-shrink-0">›</span>
                   </button>
-                  <button
+                  <button className="app-pressable"
                     onClick={() => handleMarkDone(hw.id)}
                     disabled={markingDone === hw.id}
                     className="mt-1.5 w-full py-2.5 rounded-2xl text-sm font-black active:scale-[0.97] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
@@ -332,7 +332,7 @@ export default function ChildPage() {
         )}
 
         {/* ── Daily Challenge ── */}
-        <button
+        <button className="app-pressable"
           onClick={() => {
             markChallengeComplete(todayKey)
             setDailyDone(true)
@@ -379,7 +379,7 @@ export default function ChildPage() {
         </button>
 
         {/* ── AI Tutor CTA (Duolingo-style big button) ── */}
-        <button
+        <button className="app-pressable"
           onClick={() => router.push('/child/tutor')}
           className="w-full rounded-3xl p-5 text-left active:scale-[0.97] transition-all relative overflow-hidden"
           style={{
@@ -441,7 +441,7 @@ export default function ChildPage() {
                 const pct = Math.min(100, Math.round((done / (mod?.items.length || 1)) * 100))
                 const color = mod?.color || '#5E5CE6'
                 return (
-                  <button
+                  <button className="app-pressable"
                     key={i}
                     onClick={() => router.push(`/child/lesson/${rec.moduleId}`)}
                     className="flex-shrink-0 w-36 rounded-2xl p-3.5 text-left active:scale-[0.97] transition-all"
@@ -477,7 +477,7 @@ export default function ChildPage() {
               { label: 'Rank',  icon: '🏆', path: '/child/leaderboard', grad: 'linear-gradient(135deg,#FFD60A22,#FF9F0A22)', border: '#FFD60A40' },
               { label: 'Shop',  icon: '🛍️', path: '/child/shop',        grad: 'linear-gradient(135deg,#BF5AF222,#5E5CE622)', border: '#BF5AF240' },
             ].map(a => (
-              <button
+              <button className="app-pressable"
                 key={a.label}
                 onClick={() => router.push(a.path)}
                 className="rounded-2xl p-4 flex flex-col items-center gap-2 active:scale-[0.94] transition-all"
@@ -500,7 +500,7 @@ export default function ChildPage() {
                 const total = syl.items?.length || 1
                 const pct = Math.min(100, Math.round((done / total) * 100))
                 return (
-                  <button
+                  <button className="app-pressable"
                     key={syl.id}
                     onClick={() => router.push(`/child/lesson/syl_${syl.id}`)}
                     className="rounded-2xl p-4 text-left active:scale-[0.97] transition-all relative overflow-hidden"
@@ -539,7 +539,7 @@ export default function ChildPage() {
               const pct = Math.min(100, Math.round((done / mod.items.length) * 100))
               const complete = pct === 100
               return (
-                <button
+                <button className="app-pressable"
                   key={mod.id}
                   onClick={() => router.push(`/child/lesson/${mod.id}`)}
                   className="rounded-2xl p-4 text-left active:scale-[0.97] transition-all relative"
@@ -615,7 +615,7 @@ export default function ChildPage() {
               })}
             </div>
 
-            <button
+            <button className="app-pressable"
               onClick={() => setCelebrationBadges([])}
               className="w-full py-4 rounded-2xl text-black font-black text-base"
               style={{

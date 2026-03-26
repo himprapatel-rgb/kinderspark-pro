@@ -14,15 +14,14 @@ export default function SyllabusBuilderPage() {
 
   return (
     <div
-      className="min-h-screen pb-8"
-      style={{ background: 'linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%)' }}
+      className="min-h-screen pb-8 app-page"
     >
       {/* Header */}
       <div
         className="p-5 pt-10"
         style={{ background: 'linear-gradient(135deg, #30D158, #43C6AC)' }}
       >
-        <button
+        <button className="app-pressable"
           onClick={() => router.back()}
           className="text-white/70 text-sm font-bold mb-4 flex items-center gap-1"
         >

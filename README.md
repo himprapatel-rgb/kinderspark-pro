@@ -80,7 +80,8 @@ KinderSpark Pro is a full-stack educational platform built for kindergarten clas
 - Top students leaderboard by stars
 
 ### ⚙️ Accessibility & Settings
-- 🌙 Dark Mode
+- ☀️ Light-first default theme (dark mode optional)
+- 🎨 User theme customization (light/dark + accent colors)
 - 🔡 Large Text Mode
 - 🔲 High Contrast Mode
 - 📖 Dyslexia-friendly Font (Comic Sans)
@@ -538,7 +539,9 @@ KinderSpark Pro is designed for all learners:
 
 | Feature | Description |
 |---------|-------------|
-| 🌙 **Dark Mode** | Reduces eye strain for evening use |
+| ☀️ **Light-First Theme** | Calm, readable default for classroom/daytime use |
+| 🎨 **Theme Picker** | User-selectable light/dark mode and accent palette |
+| 🌙 **Dark Mode** | Optional mode for low-light environments |
 | 🔡 **Large Text** | 115% font scale applied globally |
 | 🔲 **High Contrast** | Black background, white text |
 | 📖 **Dyslexia Font** | Comic Sans for improved letter recognition |

@@ -1,11 +1,13 @@
 import { Router, Request, Response } from 'express'
 import bcrypt from 'bcryptjs'
 import prisma from '../prisma/client'
+import { requireAuth, requireRole } from '../middleware/auth.middleware'
 
 const router = Router()
+router.use(requireAuth)
 
 // GET /api/students?classId=
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', requireRole('teacher', 'admin'), async (req: Request, res: Response) => {
   try {
     const { classId } = req.query
     const where = classId ? { classId: String(classId) } : {}
@@ -44,7 +46,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 })
 
 // POST /api/students
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', requireRole('teacher', 'admin'), async (req: Request, res: Response) => {
   try {
     const { name, age, avatar, pin, classId, stars, streak } = req.body
     if (!name || !pin || !classId) {
@@ -105,7 +107,7 @@ router.put('/:id', async (req: Request, res: Response) => {
 })
 
 // DELETE /api/students/:id
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', requireRole('teacher', 'admin'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params
     await prisma.student.delete({ where: { id } })

@@ -1,12 +1,17 @@
 import { Router, Request, Response } from 'express'
 import prisma from '../prisma/client'
+import { requireAuth } from '../middleware/auth.middleware'
 
 const router = Router()
+router.use(requireAuth)
 
 // GET /api/progress/:studentId
 router.get('/:studentId', async (req: Request, res: Response) => {
   try {
     const { studentId } = req.params
+    if ((req.user?.role === 'child' || req.user?.role === 'parent') && req.user.id !== studentId) {
+      return res.status(403).json({ error: 'Insufficient permissions' })
+    }
     const progress = await prisma.progress.findMany({
       where: { studentId },
       orderBy: { updatedAt: 'desc' },
@@ -22,6 +27,9 @@ router.get('/:studentId', async (req: Request, res: Response) => {
 router.put('/:studentId/:moduleId', async (req: Request, res: Response) => {
   try {
     const { studentId, moduleId } = req.params
+    if ((req.user?.role === 'child' || req.user?.role === 'parent') && req.user.id !== studentId) {
+      return res.status(403).json({ error: 'Insufficient permissions' })
+    }
     const { cards } = req.body
     if (cards === undefined) return res.status(400).json({ error: 'cards required' })
 

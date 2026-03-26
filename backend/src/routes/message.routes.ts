@@ -8,6 +8,14 @@ const router = Router()
 
 const JWT_SECRET = process.env.JWT_SECRET || 'kinderspark-secret'
 
+async function getRequesterClassId(userId: string): Promise<string | null> {
+  const student = await prisma.student.findUnique({
+    where: { id: userId },
+    select: { classId: true },
+  })
+  return student?.classId || null
+}
+
 // ── SSE client store ──────────────────────────────────────────────────────────
 // Map<classId, Set<Response>>
 const sseClients = new Map<string, Set<Response>>()
@@ -58,6 +66,13 @@ router.get('/stream', async (req: Request, res: Response) => {
     const decoded = jwt.verify(token, JWT_SECRET) as AuthUser
     // Attach so downstream code could use it if needed
     req.user = decoded
+    if (decoded.role === 'child' || decoded.role === 'parent') {
+      const ownClassId = await getRequesterClassId(decoded.id)
+      if (!ownClassId || ownClassId !== classId) {
+        res.status(403).json({ error: 'Insufficient permissions' })
+        return
+      }
+    }
   } catch {
     res.status(401).json({ error: 'Invalid or expired token' })
     return
@@ -103,9 +118,13 @@ router.get('/stream', async (req: Request, res: Response) => {
 })
 
 // ── GET /api/messages?classId=&studentId= ────────────────────────────────────
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', requireAuth, async (req: Request, res: Response) => {
   try {
-    const { classId, studentId } = req.query
+    let { classId, studentId } = req.query
+    if (req.user?.role === 'child' || req.user?.role === 'parent') {
+      studentId = req.user.id
+      classId = await getRequesterClassId(req.user.id)
+    }
     const where: Record<string, unknown> = {}
     if (classId) where.classId = String(classId)
     if (studentId) {
@@ -127,9 +146,13 @@ router.get('/', async (req: Request, res: Response) => {
 })
 
 // ── GET /api/messages/unread-count?classId=&studentId= ───────────────────────
-router.get('/unread-count', async (req: Request, res: Response) => {
+router.get('/unread-count', requireAuth, async (req: Request, res: Response) => {
   try {
-    const { classId, studentId } = req.query
+    let { classId, studentId } = req.query
+    if (req.user?.role === 'child' || req.user?.role === 'parent') {
+      studentId = req.user.id
+      classId = await getRequesterClassId(req.user.id)
+    }
     const where: Record<string, unknown> = { read: false }
     if (classId) where.classId = String(classId)
     if (studentId) {
@@ -152,9 +175,14 @@ router.get('/unread-count', async (req: Request, res: Response) => {
 // ── POST /api/messages ────────────────────────────────────────────────────────
 router.post('/', requireAuth, async (req: Request, res: Response) => {
   try {
-    const { from, to, subject, body, classId } = req.body
+    let { from, to, subject, body, classId } = req.body
     if (!from || !to || !subject || !body) {
       return res.status(400).json({ error: 'from, to, subject, and body are required' })
+    }
+    if (req.user?.role === 'child' || req.user?.role === 'parent') {
+      const ownClassId = await getRequesterClassId(req.user.id)
+      if (!ownClassId) return res.status(403).json({ error: 'Insufficient permissions' })
+      classId = ownClassId
     }
     // Always use the authenticated user's id — never trust client-supplied fromId
     const message = await prisma.message.create({
@@ -181,8 +209,18 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
 })
 
 // ── PUT /api/messages/:id/read ────────────────────────────────────────────────
-router.put('/:id/read', async (req: Request, res: Response) => {
+router.put('/:id/read', requireAuth, async (req: Request, res: Response) => {
   try {
+    if (req.user?.role === 'child' || req.user?.role === 'parent') {
+      const ownClassId = await getRequesterClassId(req.user.id)
+      const target = await prisma.message.findUnique({
+        where: { id: req.params.id },
+        select: { classId: true, to: true, fromId: true },
+      })
+      if (!target || target.classId !== ownClassId) {
+        return res.status(403).json({ error: 'Insufficient permissions' })
+      }
+    }
     const msg = await prisma.message.update({
       where: { id: req.params.id },
       data: { read: true },
@@ -195,9 +233,13 @@ router.put('/:id/read', async (req: Request, res: Response) => {
 })
 
 // ── PUT /api/messages/read-all — mark all in a class as read ─────────────────
-router.put('/read-all', async (req: Request, res: Response) => {
+router.put('/read-all', requireAuth, async (req: Request, res: Response) => {
   try {
-    const { classId, studentId } = req.body
+    let { classId, studentId } = req.body
+    if (req.user?.role === 'child' || req.user?.role === 'parent') {
+      classId = await getRequesterClassId(req.user.id)
+      studentId = req.user.id
+    }
     const where: Record<string, unknown> = { read: false }
     if (classId) where.classId = String(classId)
     if (studentId) where.fromId = { not: String(studentId) }

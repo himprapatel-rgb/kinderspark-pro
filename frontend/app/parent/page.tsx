@@ -198,10 +198,10 @@ export default function ParentPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#0a1a0a' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--app-bg)' }}>
         <div className="flex flex-col items-center gap-3">
           <div className="text-4xl animate-bounce">👪</div>
-          <div className="text-white/60 font-bold">Loading...</div>
+          <div className="font-bold" style={{ color: 'rgba(70, 75, 96, 0.85)' }}>Loading...</div>
         </div>
       </div>
     )
@@ -210,17 +210,18 @@ export default function ParentPage() {
   const TABS = [
     { label: '🏠 Home', idx: 0 },
     { label: '📊 Progress', idx: 1 },
-    { label: `💬 Messages${unreadMsgs > 0 ? ` (${unreadMsgs})` : ''}`, idx: 2 },
+    { label: '💬 Messages', idx: 2 },
   ]
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(180deg, #0a1a0a 0%, #060f06 100%)' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--app-bg)' }}>
       {/* Fixed tab bar */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-50 bg-black/90 backdrop-blur border-b border-white/10">
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-50 backdrop-blur border-b" style={{ background: 'rgba(255,255,255,0.9)', borderColor: 'rgba(120,120,140,0.2)' }}>
         <div className="flex">
           {TABS.map(t => (
-            <button key={t.idx} onClick={() => setTab(t.idx)}
-              className={`flex-1 py-3 text-xs font-black transition-colors relative ${tab === t.idx ? 'text-green-400 border-b-2 border-green-400' : 'text-white/50'}`}>
+            <button className="app-pressable" key={t.idx} onClick={() => setTab(t.idx)}
+              className={`flex-1 py-3 text-xs font-black transition-colors relative ${tab === t.idx ? 'border-b-2' : ''}`}
+              style={{ color: tab === t.idx ? 'var(--app-accent)' : 'rgba(70, 75, 96, 0.8)', borderColor: tab === t.idx ? 'var(--app-accent)' : 'transparent' }}>
               {t.label}
               {t.idx === 2 && unreadMsgs > 0 && (
                 <span className="absolute top-1 right-2 bg-red-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center">
@@ -252,7 +253,7 @@ export default function ParentPage() {
                     <span className="bg-purple-400/20 text-purple-300 rounded-full px-3 py-0.5 text-xs font-black">🤖 Lv {student?.aiBestLevel}</span>
                   </div>
                 </div>
-                <button onClick={() => { logout(); router.push('/') }}
+                <button className="app-pressable" onClick={() => { logout(); router.push('/') }}
                   className="text-white/50 text-xs font-bold border border-white/30 rounded-full px-3 py-1.5 shrink-0">
                   Logout
                 </button>
@@ -326,7 +327,7 @@ export default function ParentPage() {
                 </div>
                 <button
                   onClick={subscribeNotif}
-                  className="px-3 py-2 rounded-xl text-xs font-black shrink-0 active:scale-95 transition-all"
+                  className="px-3 py-2 rounded-xl text-xs font-black shrink-0 active:scale-95 transition-all app-pressable"
                   style={{ background: '#30D158', color: '#fff' }}
                 >
                   Enable
@@ -352,7 +353,7 @@ export default function ParentPage() {
                       </div>
                       <div className="flex flex-col items-end gap-1.5">
                         <div className="text-yellow-400 text-xs font-bold">⭐{hw.starsReward}</div>
-                        <button
+                        <button className="app-pressable"
                           onClick={() => handleMarkDone(hw.id)}
                           disabled={markingDone === hw.id}
                           className="text-[10px] font-black px-2 py-1 rounded-lg active:scale-95 transition-all"
@@ -383,7 +384,7 @@ export default function ParentPage() {
                     <div className="text-white/50 text-xs font-bold">From: {msg.from}</div>
                   </div>
                 ))}
-                <button onClick={() => setTab(2)} className="text-green-400 text-sm font-bold">View all →</button>
+                <button className="app-pressable" onClick={() => setTab(2)} className="text-green-400 text-sm font-bold">View all →</button>
               </div>
             )}
           </div>
@@ -483,7 +484,7 @@ export default function ParentPage() {
                   </div>
                   <div className="text-white/60 text-xs font-bold mb-2">From: {msg.from}</div>
                   <div className="text-white/70 text-xs leading-relaxed mb-3">{msg.body}</div>
-                  <button onClick={() => setShowReply(msg)}
+                  <button className="app-pressable" onClick={() => setShowReply(msg)}
                     className="px-3 py-1.5 rounded-lg text-xs font-bold text-green-400"
                     style={{ background: '#30D15820' }}>
                     ↩ Reply
@@ -504,14 +505,14 @@ export default function ParentPage() {
           <div className="w-full max-w-[430px] rounded-t-3xl p-5 pb-10" style={{ background: '#1a2a1a' }}>
             <div className="flex justify-between items-center mb-3">
               <h3 className="text-white font-black">Reply</h3>
-              <button onClick={() => setShowReply(null)} className="text-white/50 text-2xl leading-none">×</button>
+              <button className="app-pressable" onClick={() => setShowReply(null)} className="text-white/50 text-2xl leading-none">×</button>
             </div>
             <div className="text-white/50 text-xs font-bold mb-3">Re: {showReply.subject}</div>
             <textarea placeholder="Your message..." value={replyBody} rows={5}
               onChange={e => setReplyBody(e.target.value)}
               className="w-full bg-white/10 border border-white/20 rounded-xl p-3 text-white font-bold text-sm resize-none outline-none mb-3" />
             <button onClick={handleReply}
-              className="w-full py-3 rounded-xl text-white font-black"
+              className="w-full py-3 rounded-xl text-white font-black app-pressable"
               style={{ background: '#30D158' }}>
               Send Reply
             </button>
