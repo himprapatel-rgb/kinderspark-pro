@@ -33,7 +33,7 @@ export default function TracePage() {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
     ctx.clearRect(0, 0, canvas.width, canvas.height)
-    ctx.fillStyle = '#1a1a2e'
+    ctx.fillStyle = '#f0f2f8'
     ctx.fillRect(0, 0, canvas.width, canvas.height)
 
     // Draw faint letter guide
@@ -168,7 +168,7 @@ export default function TracePage() {
 
       {/* Progress bar */}
       <div className="px-4 mb-3">
-        <div className="flex justify-between text-xs font-bold text-white/50 mb-1">
+        <div className="flex justify-between text-xs font-bold app-muted mb-1">
           <span>Tracing {currentLetter}</span>
           <span>{progress}%</span>
         </div>
@@ -188,6 +188,7 @@ export default function TracePage() {
           width={370}
           height={320}
           className="rounded-2xl w-full touch-none"
+          style={{ maxHeight: '50vh', background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}
           onMouseDown={startDraw}
           onMouseMove={draw}
           onMouseUp={endDraw}

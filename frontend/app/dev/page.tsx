@@ -458,7 +458,7 @@ function MissionControl() {
               </div>
               <input placeholder="Type a task for any agent..."
                 className="w-full px-3 py-2 rounded-xl text-xs font-bold outline-none mb-2"
-                style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: 'white' }}
+                style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid var(--app-border)', color: 'white' }}
                 onKeyDown={e => {
                   if (e.key === 'Enter') {
                     const val = (e.target as HTMLInputElement).value.trim()
@@ -489,7 +489,7 @@ function MissionControl() {
                           <span className="text-[11px] font-black truncate" style={{ color: msg.agentColor }}>{msg.agentName}</span>
                           <span className="w-1 h-1 rounded-full flex-shrink-0" style={{ background: msgColor(msg.type) }} />
                         </div>
-                        <p className="text-white/60 text-[11px] font-bold leading-tight">{msg.message}</p>
+                        <p className="text-[11px] font-bold app-muted leading-tight">{msg.message}</p>
                         <div className="flex items-center gap-2 mt-1">
                           <span className="text-white/25 text-[10px] font-bold">{new Date(msg.ts).toLocaleTimeString()}</span>
                           {msg.url && <a href={msg.url} target="_blank" rel="noopener noreferrer" className="text-[10px] font-bold" style={{ color: msg.agentColor + '80' }}>View →</a>}
@@ -558,7 +558,7 @@ function MissionControl() {
 // ── Export with gate ──────────────────────────────────────────────────────────
 export default function DevPage() {
   return (
-    <Suspense fallback={<div style={{ background: '#080614', minHeight: '100vh' }} />}>
+    <Suspense fallback={<div style={{ background: 'var(--app-bg)', minHeight: '100vh' }} />}>
       <KeyGate>
         <MissionControl />
       </KeyGate>

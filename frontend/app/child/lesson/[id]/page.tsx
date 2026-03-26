@@ -144,7 +144,7 @@ export default function LessonPage() {
       <div className="p-6 flex items-center justify-between">
         <button onClick={handlePrev} disabled={idx === 0}
           className="w-12 h-12 rounded-full flex items-center justify-center text-xl disabled:opacity-30 active:scale-95 transition-all app-pressable"
-          style={{ background: 'rgba(255,255,255,0.1)' }}>
+          style={{ background: 'rgba(120,120,140,0.12)' }}>
           ←
         </button>
 

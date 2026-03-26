@@ -152,7 +152,7 @@ export default function TutorPage() {
         <div className="text-7xl mb-3 animate-bounce">
           {accuracy >= 80 ? '🏆' : accuracy >= 60 ? '🌟' : '💪'}
         </div>
-        <div className="text-white text-3xl font-black mb-1">
+        <div className="text-3xl font-black mb-1">
           {accuracy >= 80 ? 'Excellent!' : accuracy >= 60 ? 'Good Job!' : 'Keep Trying!'}
         </div>
         <div className="text-white/60 font-bold mb-6">{topicInfo?.label} Quiz Complete</div>

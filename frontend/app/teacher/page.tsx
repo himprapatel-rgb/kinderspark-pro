@@ -469,7 +469,7 @@ export default function TeacherDashboard() {
           <button
             onClick={() => setTab('home')}
             className="flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-black app-pressable"
-            style={{ background: 'rgba(120,120,140,0.06)', color: 'rgba(255,255,255,0.6)' }}
+            style={{ background: 'rgba(120,120,140,0.06)', color: 'var(--app-text-muted)' }}
           >
             + New
           </button>
@@ -504,7 +504,7 @@ export default function TeacherDashboard() {
             {selectedClass ? (
               <>
                 {/* Priority actions (top workflow shortcuts) */}
-                <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)' }}>
+                <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid var(--app-border)' }}>
                   <div className="flex items-center justify-between mb-3">
                     <div className="font-black text-sm">Priority Actions</div>
                     <div className="text-white/40 text-[11px] font-bold">Daily workflow</div>
@@ -1384,7 +1384,7 @@ export default function TeacherDashboard() {
         const fb = feedbacks[s.id]
         const grade = fb?.grade || s.grade || null
         return (
-          <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: 'rgba(0,0,0,0.75)' }} onClick={() => setDeepDiveStudent(null)}>
+          <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: 'rgba(20, 25, 45, 0.6)' }} onClick={() => setDeepDiveStudent(null)}>
             <div className="w-full max-w-[430px] rounded-t-3xl pb-10 overflow-hidden" style={{ background: 'var(--app-surface)' }} onClick={e => e.stopPropagation()}>
               {/* Header */}
               <div className="p-5 flex items-center gap-4" style={{ background: 'linear-gradient(135deg, rgba(94,92,230,0.08), rgba(191,90,242,0.06))' }}>

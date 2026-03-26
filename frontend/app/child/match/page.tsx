@@ -141,7 +141,7 @@ export default function WordMatchPage() {
     return (
       <div
         className="min-h-screen flex flex-col items-center justify-center px-5 pb-24"
-        style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #1a0a2e) 0%, #0d0d1a 100%)' }}
+        style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #f0eeff), var(--app-bg))' }}
       >
         <div
           className="w-24 h-24 rounded-3xl flex items-center justify-center text-5xl mb-6 animate-bounce-subtle"
@@ -152,8 +152,8 @@ export default function WordMatchPage() {
         >
           🔤
         </div>
-        <h1 className="text-white text-3xl font-black mb-2">Word Match</h1>
-        <p className="text-white/50 text-base font-bold mb-2 text-center">
+        <h1 className="text-3xl font-black mb-2">Word Match</h1>
+        <p className="text-base font-bold app-muted mb-2 text-center">
           Match the emoji to the correct word!
         </p>
         <div className="flex gap-4 mb-10 mt-4">
@@ -165,10 +165,10 @@ export default function WordMatchPage() {
             <div
               key={i}
               className="rounded-2xl px-3 py-2 flex flex-col items-center gap-1"
-              style={{ background: 'var(--app-surface-soft)', border: '1px solid rgba(255,255,255,0.12)' }}
+              style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}
             >
               <span className="text-xl">{s.icon}</span>
-              <span className="text-white/60 text-[11px] font-bold">{s.label}</span>
+              <span className="text-[11px] font-bold app-muted">{s.label}</span>
             </div>
           ))}
         </div>
@@ -185,7 +185,7 @@ export default function WordMatchPage() {
         </button>
         <button className="app-pressable"
           onClick={() => router.back()}
-          className="mt-5 text-white/30 text-sm font-bold"
+          className="mt-5 text-sm font-bold app-muted"
         >
           ← Back
         </button>
@@ -199,10 +199,10 @@ export default function WordMatchPage() {
     return (
       <div
         className="min-h-screen flex flex-col items-center justify-center px-5 pb-24"
-        style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #1a0a2e) 0%, #0d0d1a 100%)' }}
+        style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #f0eeff), var(--app-bg))' }}
       >
         <div className="text-7xl mb-4 animate-bounce">{accuracy >= 70 ? '🎉' : '💪'}</div>
-        <h1 className="text-white text-3xl font-black mb-1">{grade}</h1>
+        <h1 className="text-3xl font-black mb-1">{grade}</h1>
         <p className="text-sm font-bold app-muted mb-8">{score}/{QUESTIONS_PER_ROUND} correct</p>
 
         {/* Stats */}
@@ -226,7 +226,7 @@ export default function WordMatchPage() {
         {/* Accuracy ring */}
         <div className="relative mb-8">
           <svg width="120" height="120">
-            <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="10" />
+            <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(120,120,140,0.12)" strokeWidth="10" />
             <circle
               cx="60" cy="60" r="50" fill="none"
               stroke={accuracy >= 70 ? '#30D158' : '#FF9F0A'} strokeWidth="10"
@@ -252,7 +252,7 @@ export default function WordMatchPage() {
         <button className="app-pressable"
           onClick={() => router.back()}
           className="w-full max-w-[280px] py-3.5 rounded-2xl font-black text-sm active:scale-95 transition-all"
-          style={{ background: 'var(--app-surface-soft)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.6)' }}
+          style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)', color: 'var(--app-text-muted)' }}
         >
           ← Back Home
         </button>
@@ -267,13 +267,13 @@ export default function WordMatchPage() {
   return (
     <div
       className="min-h-screen flex flex-col pb-24"
-      style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #1a0a2e) 0%, #0d0d1a 100%)' }}
+      style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #f0eeff), var(--app-bg))' }}
     >
       {/* Header */}
       <div className="px-5 pt-10 pb-4">
         <div className="flex items-center gap-3 mb-4">
-          <button className="app-pressable" onClick={() => setScreen('ready')} className="text-white/40 text-xl font-bold w-8">←</button>
-          <div className="flex-1 h-3 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
+          <button className="app-pressable" onClick={() => setScreen('ready')} className="text-xl font-bold app-muted w-8">←</button>
+          <div className="flex-1 h-3 rounded-full overflow-hidden" style={{ background: 'rgba(120,120,140,0.12)' }}>
             <div
               className="h-full rounded-full transition-all duration-500 relative overflow-hidden"
               style={{ width: `${progress}%`, background: 'linear-gradient(90deg, #FFD60A, #FF9F0A)' }}
@@ -321,19 +321,19 @@ export default function WordMatchPage() {
         </div>
 
         {q.hint && (
-          <p className="text-white/40 text-sm font-bold text-center italic">"{q.hint}"</p>
+          <p className="text-sm font-bold app-muted text-center italic">"{q.hint}"</p>
         )}
 
-        <p className="text-white/70 text-base font-black uppercase tracking-widest">What's this?</p>
+        <p className="text-base font-black app-muted uppercase tracking-widest">What's this?</p>
 
         {/* Choices */}
         <div className="w-full max-w-[360px] grid grid-cols-2 gap-3">
           {q.choices.map((choice) => {
             const isSelected = selected === choice
             const isCorrect = choice === q.correct
-            let bg = 'rgba(255,255,255,0.07)'
-            let border = 'rgba(255,255,255,0.12)'
-            let textColor = 'white'
+            let bg = 'rgba(70,75,96,0.06)'
+            let border = 'var(--app-border)'
+            let textColor = 'rgb(var(--foreground-rgb))'
 
             if (isSelected && feedback === 'correct') { bg = 'rgba(48,209,88,0.25)'; border = '#30D158'; textColor = '#30D158' }
             else if (isSelected && feedback === 'wrong') { bg = 'rgba(255,69,58,0.25)'; border = '#FF453A'; textColor = '#FF453A' }

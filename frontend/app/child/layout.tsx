@@ -105,7 +105,7 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
         }}>
           <div style={{ fontSize: 72, marginBottom: 16, animation: 'bounce 1s infinite' }}>🌟</div>
           <h1 style={{ color: 'white', fontWeight: 900, fontSize: 28, margin: '0 0 12px' }}>Great learning today!</h1>
-          <p style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 700, fontSize: 16, margin: '0 0 8px' }}>
+          <p style={{ color: 'var(--app-text-muted)', fontWeight: 700, fontSize: 16, margin: '0 0 8px' }}>
             You've used your {limitMin} minutes for today.
           </p>
           <p style={{ color: 'rgba(255,255,255,0.4)', fontWeight: 700, fontSize: 14, margin: 0 }}>

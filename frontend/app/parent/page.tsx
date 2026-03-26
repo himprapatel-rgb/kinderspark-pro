@@ -13,7 +13,7 @@ function Ring({ pct, color, size = 80, stroke = 8 }: { pct: number; color: strin
   const dash = (pct / 100) * circ
   return (
     <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth={stroke} />
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(120,120,140,0.15)" strokeWidth={stroke} />
       <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={stroke}
         strokeDasharray={`${dash} ${circ}`} strokeLinecap="round" style={{ transition: 'stroke-dasharray 0.6s ease' }} />
     </svg>
@@ -526,7 +526,7 @@ export default function ParentPage() {
 
       {/* Reply modal */}
       {showReply && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: 'rgba(0,0,0,0.7)' }}>
+        <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: 'rgba(20, 25, 45, 0.55)' }}>
           <div className="w-full max-w-[430px] rounded-t-3xl p-5 pb-10" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
             <div className="flex justify-between items-center mb-3">
               <h3 className="font-black">Reply</h3>

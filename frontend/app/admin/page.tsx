@@ -188,7 +188,7 @@ export default function AdminPage() {
             <div className="text-xs font-bold app-muted mt-4">🏆 TOP 3 PERFORMERS</div>
             {leaderboard.slice(0, 3).map((s, i) => (
               <div key={s.id} className="rounded-2xl p-4 flex items-center gap-3"
-                style={{ background: i === 0 ? '#2a1f0a' : '#1a1a2e', border: i === 0 ? '1px solid #FFD60A50' : i === 1 ? '1px solid #C0C0C030' : i === 2 ? '1px solid #CD7F3230' : 'none' }}>
+                style={{ background: i === 0 ? 'rgba(255,215,10,0.06)' : 'var(--app-surface)', border: i === 0 ? '1px solid rgba(255,215,10,0.2)' : i === 1 ? '1px solid rgba(192,192,192,0.2)' : i === 2 ? '1px solid rgba(205,127,50,0.2)' : '1px solid var(--app-border)' }}>
                 <div className="text-2xl">{medals[i] || `#${i+1}`}</div>
                 <div className="text-2xl">{s.avatar}</div>
                 <div className="flex-1 min-w-0">
@@ -208,8 +208,8 @@ export default function AdminPage() {
           <div className="space-y-3">
             {leaderboard.map((s, i) => (
               <div key={s.id} className="rounded-2xl p-4 flex items-center gap-3"
-                style={{ background: i < 3 ? '#1a1a2e' : '#111', border: i === 0 ? '1px solid #FFD60A40' : i === 1 ? '1px solid #C0C0C040' : i === 2 ? '1px solid #CD7F3240' : 'none' }}>
-                <div className="w-8 text-center font-black text-white/60">{i < 3 ? medals[i] : `#${i+1}`}</div>
+                style={{ background: i < 3 ? 'var(--app-surface)' : 'var(--app-surface-soft)', border: i === 0 ? '1px solid rgba(255,215,10,0.2)' : i === 1 ? '1px solid rgba(192,192,192,0.2)' : i === 2 ? '1px solid rgba(205,127,50,0.2)' : '1px solid var(--app-border)' }}>
+                <div className="w-8 text-center font-black app-muted">{i < 3 ? medals[i] : `#${i+1}`}</div>
                 <div className="text-2xl">{s.avatar}</div>
                 <div className="flex-1">
                   <div className="font-black text-sm">{s.name}</div>
@@ -258,7 +258,7 @@ export default function AdminPage() {
                   </div>
                   {ca && (
                     <div className="mt-2">
-                      <div className="flex justify-between text-xs font-bold text-white/40 mb-1">
+                      <div className="flex justify-between text-xs font-bold app-muted mb-1">
                         <span>HW completion</span><span>{ca.hwCompletionRate}%</span>
                       </div>
                       <div className="bg-gray-200 rounded-full h-1.5">

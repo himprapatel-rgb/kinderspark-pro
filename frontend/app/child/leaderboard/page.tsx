@@ -50,7 +50,7 @@ export default function LeaderboardPage() {
     return (
       <div
         className="min-h-screen flex items-center justify-center"
-        style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #1a0a2e) 0%, #0d0d1a 100%)' }}
+        style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #f0eeff), var(--app-bg))' }}
       >
         <div className="text-5xl animate-bounce-subtle">🏆</div>
       </div>
@@ -60,7 +60,7 @@ export default function LeaderboardPage() {
   return (
     <div
       className="min-h-screen pb-28 app-container"
-      style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #1a0a2e) 0%, #0d0d1a 100%)' }}
+      style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #f0eeff), var(--app-bg))' }}
     >
       {/* Header */}
       <div

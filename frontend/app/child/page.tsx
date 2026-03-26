@@ -602,13 +602,13 @@ export default function ChildPage() {
       {celebrationBadges.length > 0 && (
         <div
           className="fixed inset-0 z-50 flex items-end justify-center"
-          style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' }}
+          style={{ background: 'rgba(20, 25, 45, 0.6)', backdropFilter: 'blur(8px)' }}
         >
           <div
             className="w-full max-w-[430px] rounded-t-3xl p-7 text-center animate-slide-up"
             style={{
               background: 'linear-gradient(180deg, #1e0a40 0%, #140730 100%)',
-              border: '1px solid rgba(255,255,255,0.12)',
+              border: '1px solid var(--app-border)',
               borderBottom: 'none',
               boxShadow: '0 -24px 80px rgba(94,92,230,0.3)',
             }}

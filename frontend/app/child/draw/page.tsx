@@ -29,7 +29,7 @@ export default function DrawPage() {
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
-    ctx.fillStyle = '#1a1a2e'
+    ctx.fillStyle = '#f0f2f8'
     ctx.fillRect(0, 0, canvas.width, canvas.height)
   }, [student, router])
 
@@ -84,7 +84,7 @@ export default function DrawPage() {
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
-    ctx.fillStyle = '#1a1a2e'
+    ctx.fillStyle = '#f0f2f8'
     ctx.fillRect(0, 0, canvas.width, canvas.height)
     setHasDrawn(false)
   }
@@ -139,8 +139,8 @@ export default function DrawPage() {
                 className="w-8 h-8 rounded-full transition-all active:scale-90"
                 style={{
                   background: c,
-                  border: color === c ? '3px solid white' : '2px solid rgba(255,255,255,0.2)',
-                  boxShadow: color === c ? '0 0 8px rgba(255,255,255,0.5)' : 'none',
+                  border: color === c ? '3px solid var(--app-accent)' : '2px solid var(--app-border)',
+                  boxShadow: color === c ? '0 0 8px rgba(94,92,230,0.4)' : 'none',
                 }} />
             ))}
           </div>

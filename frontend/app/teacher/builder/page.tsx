@@ -241,7 +241,7 @@ function BuilderContent() {
 
       {/* AI Generate Modal */}
       {showAI && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: 'rgba(0,0,0,0.7)' }}>
+        <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: 'rgba(20, 25, 45, 0.55)' }}>
           <div className="w-full max-w-[430px] rounded-t-3xl p-5 pb-10 app-surface">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-black text-lg" style={{ color: 'rgb(var(--foreground-rgb))' }}>🤖 AI Generate</h3>
@@ -267,7 +267,7 @@ function BuilderContent() {
 
       {/* Template Picker */}
       {showTemplate && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: 'rgba(0,0,0,0.7)' }}>
+        <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: 'rgba(20, 25, 45, 0.55)' }}>
           <div className="w-full max-w-[430px] rounded-t-3xl p-5 pb-10 app-surface">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-black text-lg" style={{ color: 'rgb(var(--foreground-rgb))' }}>✨ Templates</h3>
