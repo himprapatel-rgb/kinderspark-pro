@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
 import { Loading, InlineEmpty } from '@/components/UIStates'
+import DashboardSidebar from '@/components/DashboardSidebar'
 import {
   getClasses, getStudents, getHomework, getSyllabuses, getMessages,
   createClass, createStudent, deleteStudent, createHomework, deleteHomework,
@@ -419,8 +420,20 @@ export default function TeacherDashboard() {
     setReportLoading(false)
   }
 
+  const SIDEBAR_ITEMS = [
+    { icon: '🏠', label: 'Dashboard', href: '/teacher' },
+    { icon: '👥', label: 'Students', href: '/teacher/class' },
+    { icon: '📚', label: 'Homework', href: '/teacher/homework' },
+    { icon: '📖', label: 'Syllabus', href: '/teacher/syllabus/builder' },
+    { icon: '💬', label: 'Messages', href: '/teacher/messages', badge: unreadCount },
+    { icon: '📊', label: 'Reports', href: '/teacher/reports' },
+    { icon: '✏️', label: 'Builder', href: '/teacher/builder' },
+  ]
+
   return (
-    <div className="min-h-screen flex flex-col app-container" style={{ background: 'var(--app-bg)' }}>
+    <div className="min-h-screen flex" style={{ background: 'var(--app-bg)' }}>
+      <DashboardSidebar role="teacher" items={SIDEBAR_ITEMS} userName={user?.name} />
+      <div className="flex-1 min-h-screen flex flex-col app-container">
       {/* Toast */}
       {toast && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-white text-black font-black text-sm px-5 py-3 rounded-full shadow-xl">
@@ -1442,6 +1455,7 @@ export default function TeacherDashboard() {
           </div>
         )
       })()}
+    </div>
     </div>
   )
 }

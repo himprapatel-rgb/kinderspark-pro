@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore as useStore } from '@/store/appStore'
 import { Loading, InlineEmpty } from '@/components/UIStates'
+import DashboardSidebar from '@/components/DashboardSidebar'
 import { getAdminStats, getAdminLeaderboard, getClasses, getClassAnalytics } from '@/lib/api'
 
 export default function AdminPage() {
@@ -57,8 +58,17 @@ export default function AdminPage() {
     .filter((ca: any) => ca.reasons.length > 0)
     .slice(0, 4)
 
+  const SIDEBAR_ITEMS = [
+    { icon: '📊', label: 'Overview', href: '/admin' },
+    { icon: '🏆', label: 'Leaderboard', href: '/admin/leaderboard' },
+    { icon: '🏫', label: 'Classes', href: '/admin/classes' },
+    { icon: '📈', label: 'AI Stats', href: '/admin/stats' },
+  ]
+
   return (
-    <div className="min-h-screen pb-20 app-container" style={{ background: 'var(--app-bg)' }}>
+    <div className="min-h-screen flex" style={{ background: 'var(--app-bg)' }}>
+      <DashboardSidebar role="admin" items={SIDEBAR_ITEMS} userName={user?.name} />
+      <div className="flex-1 min-h-screen pb-20 app-container">
       {/* Header */}
       <div className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, var(--app-accent), #3E5AD9)' }}>
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '25px 25px' }} />
@@ -343,6 +353,7 @@ export default function AdminPage() {
           </div>
         )}
       </div>
+    </div>
     </div>
   )
 }
