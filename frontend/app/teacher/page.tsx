@@ -442,7 +442,7 @@ export default function TeacherDashboard() {
       )}
 
       {/* Header */}
-      <div style={{ background: 'linear-gradient(135deg,var(--app-accent),#3E5AD9)' }} className="p-5 pt-10">
+      <div style={{ background: 'linear-gradient(135deg,var(--app-accent),#4A6ED0)' }} className="p-5 pt-10">
         <div className="flex justify-between items-start">
           <div>
             <div className="text-xs app-muted font-bold uppercase tracking-wider">Teacher Portal</div>
@@ -473,7 +473,7 @@ export default function TeacherDashboard() {
               className="flex-shrink-0 rounded-full px-4 py-1.5 text-xs font-black transition-all app-pressable"
               style={{
                 background: selectedClass?.id === cls.id ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.15)',
-                color: selectedClass?.id === cls.id ? '#4F6BED' : 'white',
+                color: selectedClass?.id === cls.id ? '#5B7FE8' : 'white',
               }}
             >
               {cls.name}
@@ -553,10 +553,10 @@ export default function TeacherDashboard() {
                 {/* Rich Stats Row */}
                 <div className="grid grid-cols-2 gap-3 tablet:grid-cols-4">
                   {[
-                    { label: 'Students', value: classStats?.totalStudents ?? students.length, emoji: '👥', color: '#4F6BED' },
-                    { label: 'HW Done', value: `${classStats?.avgHwCompletion ?? 0}%`, emoji: '📚', color: '#E8753A' },
-                    { label: 'Total Stars', value: classStats?.totalStars ?? students.reduce((a: number, s: any) => a + s.stars, 0), emoji: '⭐', color: '#E5982A' },
-                    { label: 'AI Sessions', value: classStats?.totalAISessions ?? 0, emoji: '🤖', color: '#7C5BBF' },
+                    { label: 'Students', value: classStats?.totalStudents ?? students.length, emoji: '👥', color: '#5B7FE8' },
+                    { label: 'HW Done', value: `${classStats?.avgHwCompletion ?? 0}%`, emoji: '📚', color: '#F5A623' },
+                    { label: 'Total Stars', value: classStats?.totalStars ?? students.reduce((a: number, s: any) => a + s.stars, 0), emoji: '⭐', color: '#F5B731' },
+                    { label: 'AI Sessions', value: classStats?.totalAISessions ?? 0, emoji: '🤖', color: '#8B6CC1' },
                   ].map(s => (
                     <div key={s.label} className="rounded-2xl p-4" style={{ background: s.color + '18', border: `1px solid ${s.color}33` }}>
                       <div className="text-2xl mb-1">{s.emoji}</div>
@@ -576,7 +576,7 @@ export default function TeacherDashboard() {
                     <div className="bg-gray-200 rounded-full h-3">
                       <div
                         className="h-3 rounded-full transition-all"
-                        style={{ width: `${classStats.avgHwCompletion}%`, background: classStats.avgHwCompletion >= 80 ? '#2BA55E' : classStats.avgHwCompletion >= 50 ? '#E8753A' : '#DC4343' }}
+                        style={{ width: `${classStats.avgHwCompletion}%`, background: classStats.avgHwCompletion >= 80 ? '#4CAF6A' : classStats.avgHwCompletion >= 50 ? '#F5A623' : '#E05252' }}
                       />
                     </div>
                     <div className="flex justify-between mt-2 text-xs font-bold app-muted">
@@ -590,21 +590,21 @@ export default function TeacherDashboard() {
                 <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}>
                   <div className="font-black mb-3">More Tools</div>
                   <div className="grid grid-cols-2 gap-2 tablet:grid-cols-3">
-                    <button onClick={() => setTab('students')} className="rounded-xl p-3 text-left app-pressable" style={{ background: '#4F6BED22' }}>
+                    <button onClick={() => setTab('students')} className="rounded-xl p-3 text-left app-pressable" style={{ background: '#5B7FE822' }}>
                       <div className="text-xl mb-1">👥</div>
                       <div className="text-xs font-black">Manage Students</div>
                     </button>
-                    <button onClick={() => setTab('homework')} className="rounded-xl p-3 text-left app-pressable" style={{ background: '#E8753A22' }}>
+                    <button onClick={() => setTab('homework')} className="rounded-xl p-3 text-left app-pressable" style={{ background: '#F5A62322' }}>
                       <div className="text-xl mb-1">📚</div>
                       <div className="text-xs font-black">Assign Homework</div>
                     </button>
-                    <button onClick={() => router.push('/teacher/syllabus/builder')} className="rounded-xl p-3 text-left app-pressable" style={{ background: '#2BA55E22' }}>
+                    <button onClick={() => router.push('/teacher/syllabus/builder')} className="rounded-xl p-3 text-left app-pressable" style={{ background: '#4CAF6A22' }}>
                       <div className="text-xl mb-1">📖</div>
                       <div className="text-xs font-black">Build Syllabus</div>
                     </button>
                     <button
                       onClick={() => router.push(`/teacher/reports?classId=${selectedClass.id}`)}
-                      className="rounded-xl p-3 text-left app-pressable" style={{ background: '#7C5BBF22' }}
+                      className="rounded-xl p-3 text-left app-pressable" style={{ background: '#8B6CC122' }}
                     >
                       <div className="text-xl mb-1">📊</div>
                       <div className="text-xs font-black">AI Report</div>
@@ -638,7 +638,7 @@ export default function TeacherDashboard() {
                         .map((s: any, i: number) => (
                         <div key={s.id} className="flex items-center gap-3">
                           <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-black"
-                            style={{ background: i === 0 ? '#E5982A' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : 'rgba(255,255,255,0.1)', color: i < 3 ? '#000' : '#fff' }}>
+                            style={{ background: i === 0 ? '#F5B731' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : 'rgba(255,255,255,0.1)', color: i < 3 ? '#000' : '#fff' }}>
                             {i + 1}
                           </div>
                           <div className="text-xl">{s.avatar || '🧒'}</div>
@@ -661,7 +661,7 @@ export default function TeacherDashboard() {
                     <div className="rounded-2xl p-4" style={{ background: 'rgba(255,69,58,0.06)', border: '1px solid rgba(255,69,58,0.25)' }}>
                       <div className="flex items-center justify-between mb-3">
                         <div className="font-black text-sm">⚠️ At Risk Students</div>
-                        <span className="text-xs font-black px-2 py-0.5 rounded-full" style={{ background: 'rgba(255,69,58,0.2)', color: '#DC4343' }}>{atRisk.length}</span>
+                        <span className="text-xs font-black px-2 py-0.5 rounded-full" style={{ background: 'rgba(255,69,58,0.2)', color: '#E05252' }}>{atRisk.length}</span>
                       </div>
                       <p className="text-xs font-bold app-muted mb-3">No activity in 7+ days</p>
                       <div className="space-y-2">
@@ -686,7 +686,7 @@ export default function TeacherDashboard() {
                                   } catch { showToast('Failed to send reminder') }
                                 }}
                                 className="text-xs font-black px-3 py-1.5 rounded-xl app-pressable"
-                                style={{ background: 'rgba(255,159,10,0.15)', color: '#E8753A', border: '1px solid rgba(255,159,10,0.3)', cursor: 'pointer' }}
+                                style={{ background: 'rgba(255,159,10,0.15)', color: '#F5A623', border: '1px solid rgba(255,159,10,0.3)', cursor: 'pointer' }}
                               >
                                 🔔 Remind
                               </button>
@@ -720,7 +720,7 @@ export default function TeacherDashboard() {
                 {/* Delete class */}
                 <div className="text-center pt-4">
                   {showDeleteConfirm === selectedClass.id ? (
-                    <div className="rounded-2xl p-4" style={{ background: '#DC434322', border: '1px solid #DC434344' }}>
+                    <div className="rounded-2xl p-4" style={{ background: '#E0525222', border: '1px solid #E0525244' }}>
                       <div className="text-lg mb-1">⚠️</div>
                       <div className="font-black mb-1">Delete "{selectedClass.name}"?</div>
                       <div className="text-xs font-bold app-muted mb-4">This permanently removes all students, homework, and data in this class. This cannot be undone.</div>
@@ -757,7 +757,7 @@ export default function TeacherDashboard() {
                   onClick={handleCreateClass}
                   disabled={busy || !newClassName.trim()}
                   className="px-4 py-2 rounded-xl font-black text-sm app-pressable"
-                  style={{ background: '#4F6BED' }}
+                  style={{ background: '#5B7FE8' }}
                 >
                   Create
                 </button>
@@ -794,7 +794,7 @@ export default function TeacherDashboard() {
                         key={av}
                         onClick={() => setNewStudent(p => ({ ...p, avatar: av }))}
                         className="text-2xl rounded-lg p-1 transition-all app-pressable"
-                        style={{ background: newStudent.avatar === av ? 'rgba(94,92,230,0.4)' : 'rgba(255,255,255,0.05)', outline: newStudent.avatar === av ? '2px solid #4F6BED' : 'none' }}
+                        style={{ background: newStudent.avatar === av ? 'rgba(94,92,230,0.4)' : 'rgba(255,255,255,0.05)', outline: newStudent.avatar === av ? '2px solid #5B7FE8' : 'none' }}
                       >
                         {av}
                       </button>
@@ -805,7 +805,7 @@ export default function TeacherDashboard() {
                   onClick={handleAddStudent}
                   disabled={busy || !newStudent.name || newStudent.pin.length !== 4 || !selectedClass}
                   className="w-full py-3 rounded-xl font-black text-sm app-pressable"
-                  style={{ background: '#4F6BED', opacity: (!newStudent.name || newStudent.pin.length !== 4) ? 0.5 : 1 }}
+                  style={{ background: '#5B7FE8', opacity: (!newStudent.name || newStudent.pin.length !== 4) ? 0.5 : 1 }}
                 >
                   Add Student
                 </button>
@@ -819,7 +819,7 @@ export default function TeacherDashboard() {
                 const fb = feedbacks[s.id]
                 const grade = fb?.grade || s.grade || null
                 const isGrading = gradingStudentId === s.id
-                const GRADE_COLORS: Record<string, string> = { 'A+': '#2BA55E', A: '#2BA55E', B: '#E8753A', C: '#C4611F', D: '#DC4343' }
+                const GRADE_COLORS: Record<string, string> = { 'A+': '#4CAF6A', A: '#4CAF6A', B: '#F5A623', C: '#D4881A', D: '#E05252' }
                 return (
                   <div key={s.id} className="rounded-2xl overflow-hidden" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}>
                     <div className="p-4 flex items-center gap-3">
@@ -828,7 +828,7 @@ export default function TeacherDashboard() {
                         <div className="flex items-center gap-2">
                           <button className="font-black hover:text-purple-300 transition-colors app-pressable" onClick={() => setDeepDiveStudent(s)}>{s.name}</button>
                           {grade && (
-                            <span className="text-xs font-black px-2 py-0.5 rounded-full" style={{ background: (GRADE_COLORS[grade] || '#4F6BED') + '30', color: GRADE_COLORS[grade] || '#4F6BED' }}>
+                            <span className="text-xs font-black px-2 py-0.5 rounded-full" style={{ background: (GRADE_COLORS[grade] || '#5B7FE8') + '30', color: GRADE_COLORS[grade] || '#5B7FE8' }}>
                               {grade}
                             </span>
                           )}
@@ -841,7 +841,7 @@ export default function TeacherDashboard() {
                         <button
                           onClick={() => isGrading ? setGradingStudentId(null) : openGrading(s.id)}
                           className="text-xs font-black px-3 py-1.5 rounded-full transition-all app-pressable"
-                          style={{ background: isGrading ? '#4F6BED' : 'rgba(94,92,230,0.2)', color: isGrading ? '#fff' : '#4F6BED' }}
+                          style={{ background: isGrading ? '#5B7FE8' : 'rgba(94,92,230,0.2)', color: isGrading ? '#fff' : '#5B7FE8' }}
                         >
                           📝 Grade
                         </button>
@@ -888,7 +888,7 @@ export default function TeacherDashboard() {
                             onClick={() => handleSaveGrade(s.id)}
                             disabled={gradeBusy}
                             className="flex-1 py-2 rounded-xl font-black text-xs app-pressable"
-                            style={{ background: '#4F6BED', opacity: gradeBusy ? 0.6 : 1 }}
+                            style={{ background: '#5B7FE8', opacity: gradeBusy ? 0.6 : 1 }}
                           >
                             {gradeBusy ? 'Saving...' : '✓ Save Grade'}
                           </button>
@@ -911,7 +911,7 @@ export default function TeacherDashboard() {
             <button
               onClick={() => { setShowWizard(v => !v); setWizardResult(null); setWizardTopic('') }}
               className="w-full rounded-2xl p-4 flex items-center gap-4 active:scale-95 transition-all app-pressable"
-              style={{ background: 'linear-gradient(135deg, #4F6BED, #7C5BBF)', boxShadow: '0 8px 24px rgba(94,92,230,0.35)' }}
+              style={{ background: 'linear-gradient(135deg, #5B7FE8, #8B6CC1)', boxShadow: '0 8px 24px rgba(94,92,230,0.35)' }}
             >
               <div className="text-4xl">✨</div>
               <div className="flex-1 text-left">
@@ -935,7 +935,7 @@ export default function TeacherDashboard() {
                         style={{
                           background: wizardTopic === t ? 'rgba(94,92,230,0.6)' : 'rgba(255,255,255,0.08)',
                           color: wizardTopic === t ? '#fff' : 'rgba(255,255,255,0.6)',
-                          border: `1px solid ${wizardTopic === t ? '#4F6BED' : 'transparent'}`,
+                          border: `1px solid ${wizardTopic === t ? '#5B7FE8' : 'transparent'}`,
                         }}
                       >
                         {t}
@@ -954,7 +954,7 @@ export default function TeacherDashboard() {
                       onClick={handleWizardGenerate}
                       disabled={wizardLoading || !wizardTopic.trim()}
                       className="px-4 py-2.5 rounded-xl font-black text-sm flex items-center gap-1.5 app-pressable"
-                      style={{ background: '#4F6BED', opacity: (!wizardTopic.trim() || wizardLoading) ? 0.5 : 1 }}
+                      style={{ background: '#5B7FE8', opacity: (!wizardTopic.trim() || wizardLoading) ? 0.5 : 1 }}
                     >
                       {wizardLoading ? (
                         <>
@@ -1050,7 +1050,7 @@ export default function TeacherDashboard() {
                           onClick={handleWizardAssign}
                           disabled={busy || !wizardDueDate}
                           className="flex-1 py-2.5 rounded-xl font-black text-xs app-pressable"
-                          style={{ background: 'linear-gradient(135deg, #4F6BED, #7C5BBF)', opacity: busy ? 0.6 : 1 }}
+                          style={{ background: 'linear-gradient(135deg, #5B7FE8, #8B6CC1)', opacity: busy ? 0.6 : 1 }}
                         >
                           🚀 Push to All
                         </button>
@@ -1102,7 +1102,7 @@ export default function TeacherDashboard() {
                   onClick={handleCreateHomework}
                   disabled={busy || !hwForm.title || !hwForm.dueDate}
                   className="w-full py-3 rounded-xl font-black text-sm app-pressable"
-                  style={{ background: '#E8753A', opacity: (!hwForm.title || !hwForm.dueDate) ? 0.5 : 1 }}
+                  style={{ background: '#F5A623', opacity: (!hwForm.title || !hwForm.dueDate) ? 0.5 : 1 }}
                 >
                   Assign Homework
                 </button>
@@ -1133,7 +1133,7 @@ export default function TeacherDashboard() {
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="flex-1 bg-gray-200 rounded-full h-1.5">
-                        <div className="h-1.5 rounded-full transition-all" style={{ width: `${pct}%`, background: pct >= 80 ? '#2BA55E' : '#E8753A' }} />
+                        <div className="h-1.5 rounded-full transition-all" style={{ width: `${pct}%`, background: pct >= 80 ? '#4CAF6A' : '#F5A623' }} />
                       </div>
                       <div className="text-xs font-bold app-muted">{done}/{total}</div>
                     </div>
@@ -1206,7 +1206,7 @@ export default function TeacherDashboard() {
                     }}
                     disabled={aiSylLoading || !aiSylTopic.trim()}
                     className="w-full py-3 rounded-xl font-black text-sm active:scale-95 transition-all app-pressable"
-                    style={{ background: 'linear-gradient(135deg,#7C5BBF,#4F6BED)', opacity: (!aiSylTopic.trim() || aiSylLoading) ? 0.5 : 1 }}
+                    style={{ background: 'linear-gradient(135deg,#8B6CC1,#5B7FE8)', opacity: (!aiSylTopic.trim() || aiSylLoading) ? 0.5 : 1 }}
                   >
                     {aiSylLoading ? '✨ Building…' : '✨ Auto-Build Syllabus'}
                   </button>
@@ -1217,7 +1217,7 @@ export default function TeacherDashboard() {
             <button
               onClick={() => router.push('/teacher/syllabus/builder')}
               className="w-full rounded-2xl p-5 flex items-center gap-4 active:scale-95 transition-all app-pressable"
-              style={{ background: 'linear-gradient(135deg,#2BA55E,#3CC78A)' }}
+              style={{ background: 'linear-gradient(135deg,#4CAF6A,#5FBF7F)' }}
             >
               <div className="text-4xl">✏️</div>
               <div>
@@ -1244,7 +1244,7 @@ export default function TeacherDashboard() {
                         } catch (e: any) { showToast(e.message) }
                       }}
                       className="text-xs font-black px-3 py-1 rounded-full app-pressable"
-                      style={{ background: '#2BA55E30', color: '#2BA55E' }}
+                      style={{ background: '#4CAF6A30', color: '#4CAF6A' }}
                     >
                       Publish
                     </button>
@@ -1280,7 +1280,7 @@ export default function TeacherDashboard() {
                   onClick={handleSendMessage}
                   disabled={busy || !msgForm.subject || !msgForm.body}
                   className="w-full py-3 rounded-xl font-black text-sm app-pressable"
-                  style={{ background: '#2BA55E', opacity: (!msgForm.subject || !msgForm.body) ? 0.5 : 1 }}
+                  style={{ background: '#4CAF6A', opacity: (!msgForm.subject || !msgForm.body) ? 0.5 : 1 }}
                 >
                   Send Message
                 </button>
@@ -1290,7 +1290,7 @@ export default function TeacherDashboard() {
             {/* Message list */}
             <div className="space-y-2">
               {messages.map(msg => (
-                <div key={msg.id} className="rounded-2xl p-4" style={{ background: msg.read === false ? 'rgba(94,92,230,0.12)' : 'rgba(255,255,255,0.05)', border: msg.read === false ? '1px solid #4F6BED30' : '1px solid transparent' }}>
+                <div key={msg.id} className="rounded-2xl p-4" style={{ background: msg.read === false ? 'rgba(94,92,230,0.12)' : 'rgba(255,255,255,0.05)', border: msg.read === false ? '1px solid #5B7FE830' : '1px solid transparent' }}>
                   <div className="flex justify-between items-start mb-1">
                     <div className="flex items-center gap-2">
                       {msg.read === false && <div className="w-2 h-2 rounded-full bg-indigo-400 flex-shrink-0" />}
@@ -1323,7 +1323,7 @@ export default function TeacherDashboard() {
                   />
                   <button onClick={saveAttendanceHandler} disabled={busy}
                     className="px-4 py-2.5 rounded-xl font-black text-sm app-pressable"
-                    style={{ background: '#2BA55E', opacity: busy ? 0.6 : 1 }}>
+                    style={{ background: '#4CAF6A', opacity: busy ? 0.6 : 1 }}>
                     Save
                   </button>
                 </div>
@@ -1355,7 +1355,7 @@ export default function TeacherDashboard() {
                         <button key={s.id}
                           onClick={() => setAttendanceRecords(prev => ({ ...prev, [s.id]: !present }))}
                           className="w-full flex items-center gap-3 rounded-2xl p-3 transition-all active:scale-95 app-pressable"
-                          style={{ background: present ? 'rgba(48,209,88,0.15)' : 'rgba(255,69,58,0.15)', border: `1.5px solid ${present ? '#2BA55E40' : '#DC434340'}` }}>
+                          style={{ background: present ? 'rgba(48,209,88,0.15)' : 'rgba(255,69,58,0.15)', border: `1.5px solid ${present ? '#4CAF6A40' : '#E0525240'}` }}>
                           <div className="text-2xl">{s.avatar}</div>
                           <div className="flex-1 text-left">
                             <div className="font-black text-sm">{s.name}</div>
@@ -1370,12 +1370,12 @@ export default function TeacherDashboard() {
                 )}
 
                 {/* AI Weekly Report */}
-                <div className="rounded-2xl p-4 mt-4" style={{ background: 'rgba(94,92,230,0.1)', border: '1px solid #4F6BED30' }}>
+                <div className="rounded-2xl p-4 mt-4" style={{ background: 'rgba(94,92,230,0.1)', border: '1px solid #5B7FE830' }}>
                   <div className="flex justify-between items-center mb-3">
                     <div className="font-black text-sm">🤖 AI Weekly Report</div>
                     <button onClick={generateReportHandler} disabled={reportLoading}
                       className="px-3 py-1.5 rounded-xl font-black text-xs app-pressable"
-                      style={{ background: '#4F6BED', opacity: reportLoading ? 0.6 : 1 }}>
+                      style={{ background: '#5B7FE8', opacity: reportLoading ? 0.6 : 1 }}>
                       {reportLoading ? 'Generating...' : 'Generate'}
                     </button>
                   </div>

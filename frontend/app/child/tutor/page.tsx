@@ -204,7 +204,7 @@ export default function TutorPage() {
         <div className="flex gap-3 w-full">
           <button className="app-pressable" onClick={() => startQuiz(topic)}
             className="flex-1 py-3 rounded-2xl font-black"
-            style={{ background: '#4F6BED' }}>
+            style={{ background: '#5B7FE8' }}>
             Play Again
           </button>
           <button className="app-pressable" onClick={() => router.push('/child')}
@@ -250,7 +250,7 @@ export default function TutorPage() {
         <div className="flex gap-1">
           {[1,2,3,4,5].map(l => (
             <div key={l} className="flex-1 h-1.5 rounded-full transition-all"
-              style={{ background: l <= level ? topicInfo?.color || '#4F6BED' : 'rgba(255,255,255,0.1)' }} />
+              style={{ background: l <= level ? topicInfo?.color || '#5B7FE8' : 'rgba(255,255,255,0.1)' }} />
           ))}
         </div>
       </div>
@@ -259,7 +259,7 @@ export default function TutorPage() {
       <div className="px-4 mb-4">
         <div className="bg-gray-200 rounded-full h-2">
           <div className="h-2 rounded-full transition-all"
-            style={{ width: `${(qIdx / TOTAL_Q) * 100}%`, background: topicInfo?.color || '#4F6BED' }} />
+            style={{ width: `${(qIdx / TOTAL_Q) * 100}%`, background: topicInfo?.color || '#5B7FE8' }} />
         </div>
       </div>
 
@@ -290,8 +290,8 @@ export default function TutorPage() {
             let bg = 'var(--app-surface)'
             let border = 'rgba(120,120,140,0.22)'
             if (answered) {
-              if (choice === currentQ.a) { bg = '#2BA55E40'; border = '#2BA55E' }
-              else if (choice === selected) { bg = '#DC434340'; border = '#DC4343' }
+              if (choice === currentQ.a) { bg = '#4CAF6A40'; border = '#4CAF6A' }
+              else if (choice === selected) { bg = '#E0525240'; border = '#E05252' }
             }
             return (
               <button className="app-pressable" key={choice}
@@ -311,7 +311,7 @@ export default function TutorPage() {
         <div className="p-4">
           <button onClick={handleNext}
             className="w-full py-4 rounded-2xl font-black text-lg active:scale-95 transition-all app-pressable"
-            style={{ background: topicInfo?.color || '#4F6BED' }}>
+            style={{ background: topicInfo?.color || '#5B7FE8' }}>
             {qIdx === TOTAL_Q - 1 ? 'See Results! 🎉' : 'Next Question →'}
           </button>
         </div>

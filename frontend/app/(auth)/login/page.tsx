@@ -10,8 +10,8 @@ const ROLES = [
     emoji: '🧒',
     label: "I'm a Kid",
     sub: 'Learn, play & earn stars!',
-    color: '#E8753A',
-    grad: 'linear-gradient(135deg,#E8753A 0%,#C4611F 100%)',
+    color: '#F5A623',
+    grad: 'linear-gradient(135deg,#F5A623 0%,#D4881A 100%)',
     glow: 'rgba(255,159,10,0.4)',
     icon: '⭐',
   },
@@ -20,8 +20,8 @@ const ROLES = [
     emoji: '👩‍🏫',
     label: "I'm a Teacher",
     sub: 'Manage your class & lessons',
-    color: '#4F6BED',
-    grad: 'linear-gradient(135deg,#4F6BED 0%,#7C5BBF 100%)',
+    color: '#5B7FE8',
+    grad: 'linear-gradient(135deg,#5B7FE8 0%,#8B6CC1 100%)',
     glow: 'rgba(94,92,230,0.4)',
     icon: '📚',
   },
@@ -30,8 +30,8 @@ const ROLES = [
     emoji: '👨‍👩‍👧',
     label: "I'm a Parent",
     sub: "Track your child's progress",
-    color: '#2BA55E',
-    grad: 'linear-gradient(135deg,#2BA55E 0%,#3CC78A 100%)',
+    color: '#4CAF6A',
+    grad: 'linear-gradient(135deg,#4CAF6A 0%,#5FBF7F 100%)',
     glow: 'rgba(48,209,88,0.4)',
     icon: '💚',
   },
@@ -40,8 +40,8 @@ const ROLES = [
     emoji: '⚙️',
     label: 'Admin',
     sub: 'School overview & settings',
-    color: '#7C5BBF',
-    grad: 'linear-gradient(135deg,#7C5BBF 0%,#4F6BED 100%)',
+    color: '#8B6CC1',
+    grad: 'linear-gradient(135deg,#8B6CC1 0%,#5B7FE8 100%)',
     glow: 'rgba(191,90,242,0.4)',
     icon: '🏫',
   },
@@ -64,10 +64,10 @@ const STARS = [
 ]
 
 const DEV_LOGINS = [
-  { label: 'Admin',   emoji: '⚙️',  role: 'admin',   pin: '9999', color: '#7C5BBF' },
-  { label: 'Teacher', emoji: '👩‍🏫', role: 'teacher', pin: '1234', color: '#4F6BED' },
-  { label: 'Parent',  emoji: '👨‍👩‍👧', role: 'parent',  pin: '1111', color: '#2BA55E' },
-  { label: 'Kid',     emoji: '🧒',  role: 'child',   pin: '1111', color: '#E8753A' },
+  { label: 'Admin',   emoji: '⚙️',  role: 'admin',   pin: '9999', color: '#8B6CC1' },
+  { label: 'Teacher', emoji: '👩‍🏫', role: 'teacher', pin: '1234', color: '#5B7FE8' },
+  { label: 'Parent',  emoji: '👨‍👩‍👧', role: 'parent',  pin: '1111', color: '#4CAF6A' },
+  { label: 'Kid',     emoji: '🧒',  role: 'child',   pin: '1111', color: '#F5A623' },
 ]
 
 const IS_DEV = process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_SHOW_DEV_TOOLS === 'true'
@@ -122,15 +122,15 @@ export default function LoginPage() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center px-5 py-12 relative overflow-hidden"
-      style={{ background: 'linear-gradient(160deg, #F8F7F4 0%, #FAF9F6 40%, #F4F7F0 100%)' }}
+      style={{ background: 'linear-gradient(160deg, #FFFCF5 0%, #FFF9EE 40%, #F5FAF0 100%)' }}
     >
       {/* ── Background orbs ── */}
       <div className="orb w-80 h-80 top-[-80px] left-[-80px] opacity-30"
-        style={{ background: '#4F6BED', animationDelay: '0s' }} />
+        style={{ background: '#5B7FE8', animationDelay: '0s' }} />
       <div className="orb w-72 h-72 bottom-[-60px] right-[-60px] opacity-25"
-        style={{ background: '#2BA55E', animationDelay: '2s', filter: 'blur(70px)' }} />
+        style={{ background: '#4CAF6A', animationDelay: '2s', filter: 'blur(70px)' }} />
       <div className="orb w-48 h-48 top-[40%] right-[5%] opacity-20"
-        style={{ background: '#7C5BBF', filter: 'blur(50px)' }} />
+        style={{ background: '#8B6CC1', filter: 'blur(50px)' }} />
 
       {/* ── Twinkling stars ── */}
       {STARS.map((s, i) => (
@@ -158,7 +158,7 @@ export default function LoginPage() {
           <div
             className="absolute inset-0 rounded-3xl opacity-60"
             style={{
-              background: 'linear-gradient(135deg, #4F6BED, #7C5BBF)',
+              background: 'linear-gradient(135deg, #5B7FE8, #8B6CC1)',
               filter: 'blur(14px)',
               animation: 'glow-pulse 2.5s ease-in-out infinite',
             }}
@@ -166,7 +166,7 @@ export default function LoginPage() {
           <div
             className="relative z-10 w-full h-full rounded-3xl flex items-center justify-center text-5xl"
             style={{
-              background: 'linear-gradient(135deg, #4F6BED, #7C5BBF)',
+              background: 'linear-gradient(135deg, #5B7FE8, #8B6CC1)',
               boxShadow: '0 8px 32px rgba(94,92,230,0.5), inset 0 1px 0 rgba(255,255,255,0.25)',
             }}
           >
@@ -176,7 +176,7 @@ export default function LoginPage() {
         <h1
           className="text-4xl font-black tracking-tight"
           style={{
-            background: 'linear-gradient(135deg, #4F6BED 0%, #7C5BBF 100%)',
+            background: 'linear-gradient(135deg, #5B7FE8 0%, #8B6CC1 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
@@ -187,7 +187,7 @@ export default function LoginPage() {
             style={{
               display: 'block',
               fontSize: '1rem',
-              background: 'linear-gradient(135deg, #7C5BBF, #4F6BED)',
+              background: 'linear-gradient(135deg, #8B6CC1, #5B7FE8)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',

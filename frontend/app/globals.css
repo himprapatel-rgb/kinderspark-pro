@@ -3,61 +3,61 @@
 @tailwind utilities;
 
 :root {
-  /* ── "Bright Bloom" palette — warm premium educational ─────────── */
-  --foreground-rgb: 38, 35, 30;
-  --background-start-rgb: 248, 247, 244;
+  /* ── "Sunny Classroom" palette — child psychology-informed ─────── */
+  --foreground-rgb: 36, 32, 48;
+  --background-start-rgb: 252, 250, 245;
 
-  /* Surfaces */
-  --app-bg: #F8F7F4;
+  /* Surfaces — warm cream like a sunlit classroom */
+  --app-bg: #FFFCF5;
   --app-surface: #FFFFFF;
-  --app-surface-soft: #FAF9F6;
+  --app-surface-soft: #FFF9EE;
   --app-surface-elevated: #FFFFFF;
 
-  /* Borders */
-  --app-border: rgba(120, 110, 95, 0.14);
-  --app-border-strong: rgba(120, 110, 95, 0.26);
+  /* Borders — warm and gentle */
+  --app-border: rgba(180, 160, 120, 0.16);
+  --app-border-strong: rgba(180, 160, 120, 0.28);
 
-  /* Text */
-  --app-text-muted: rgba(60, 55, 45, 0.60);
-  --app-text-subtle: rgba(60, 55, 45, 0.38);
+  /* Text — warm dark, never pure black */
+  --app-text-muted: rgba(60, 50, 40, 0.58);
+  --app-text-subtle: rgba(60, 50, 40, 0.36);
 
-  /* Primary accent — cornflower blue */
-  --app-accent: #4F6BED;
-  --app-accent-hover: #3E5AD9;
-  --app-accent-soft: #ECF0FF;
-  --app-accent-glow: rgba(79, 107, 237, 0.28);
+  /* Primary accent — friendly sky blue (trust + focus) */
+  --app-accent: #4DAADF;
+  --app-accent-hover: #3D94C8;
+  --app-accent-soft: #E8F4FC;
+  --app-accent-glow: rgba(77, 170, 223, 0.30);
 
-  /* Semantic colors */
-  --app-success: #2BA55E;
-  --app-success-soft: #E6F9EE;
-  --app-warning: #E5982A;
-  --app-warning-soft: #FFF6E8;
-  --app-danger: #DC4343;
-  --app-danger-soft: #FDF1F1;
-  --app-info: #3A8BDE;
-  --app-info-soft: #EDF5FF;
+  /* Semantic colors — clear and soft */
+  --app-success: #4CAF6A;
+  --app-success-soft: #E8F8ED;
+  --app-warning: #F5A623;
+  --app-warning-soft: #FFF7E6;
+  --app-danger: #E05252;
+  --app-danger-soft: #FDF0F0;
+  --app-info: #4DAADF;
+  --app-info-soft: #E8F4FC;
 
-  /* Stars / rewards */
-  --app-gold: #E5982A;
-  --app-gold-soft: #FFF6E8;
+  /* Stars / rewards — warm golden spark ⭐ */
+  --app-gold: #F5B731;
+  --app-gold-soft: #FFF8E1;
 
-  /* Role accents */
-  --role-child: #E8753A;
-  --role-child-soft: #FFF3EB;
-  --role-teacher: #4F6BED;
-  --role-teacher-soft: #ECF0FF;
-  --role-parent: #2BA55E;
-  --role-parent-soft: #E6F9EE;
-  --role-admin: #7C5BBF;
-  --role-admin-soft: #F3F0FA;
+  /* Role accents — each clearly distinct + psychologically appropriate */
+  --role-child: #F5A623;
+  --role-child-soft: #FFF7E6;
+  --role-teacher: #5B7FE8;
+  --role-teacher-soft: #EDF2FF;
+  --role-parent: #4CAF6A;
+  --role-parent-soft: #E8F8ED;
+  --role-admin: #8B6CC1;
+  --role-admin-soft: #F2EEFA;
 
   /* Overlay */
-  --app-overlay: rgba(25, 22, 18, 0.45);
+  --app-overlay: rgba(30, 25, 20, 0.42);
 
-  /* Shadows */
-  --app-shadow-sm: 0 2px 8px rgba(25, 22, 18, 0.05);
-  --app-shadow-md: 0 4px 16px rgba(25, 22, 18, 0.07);
-  --app-shadow-lg: 0 8px 28px rgba(25, 22, 18, 0.10);
+  /* Shadows — warm-toned */
+  --app-shadow-sm: 0 2px 8px rgba(40, 30, 15, 0.06);
+  --app-shadow-md: 0 4px 16px rgba(40, 30, 15, 0.08);
+  --app-shadow-lg: 0 8px 28px rgba(40, 30, 15, 0.12);
 }
 
 /* ── Custom scrollbar ────────────────────────────────────────────────────────── */
@@ -310,11 +310,11 @@ body {
 .card-elevated:active { transform: scale(0.98); }
 
 /* ── Glow effects ────────────────────────────────────────────────────────────── */
-.glow-purple { box-shadow: 0 0 22px rgba(124, 91, 191, 0.30); }
-.glow-orange { box-shadow: 0 0 22px rgba(232, 117, 58, 0.30); }
-.glow-green  { box-shadow: 0 0 22px rgba(43, 165, 94, 0.30); }
-.glow-pink   { box-shadow: 0 0 22px rgba(220, 67, 67, 0.30); }
-.glow-blue   { box-shadow: 0 0 22px rgba(58, 139, 222, 0.30); }
+.glow-purple { box-shadow: 0 0 20px rgba(139, 108, 193, 0.28); }
+.glow-orange { box-shadow: 0 0 20px rgba(245, 166, 35, 0.30); }
+.glow-green  { box-shadow: 0 0 20px rgba(76, 175, 106, 0.28); }
+.glow-pink   { box-shadow: 0 0 20px rgba(224, 82, 82, 0.28); }
+.glow-blue   { box-shadow: 0 0 20px rgba(77, 170, 223, 0.28); }
 
 /* ── Button style overrides ──────────────────────────────────────────────────── */
 .btn-primary {

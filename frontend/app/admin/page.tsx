@@ -70,7 +70,7 @@ export default function AdminPage() {
       <DashboardSidebar role="admin" items={SIDEBAR_ITEMS} userName={user?.name} />
       <div className="flex-1 min-h-screen pb-20 app-container">
       {/* Header */}
-      <div className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, var(--app-accent), #3E5AD9)' }}>
+      <div className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, var(--app-accent), #4A6ED0)' }}>
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '25px 25px' }} />
         <div className="relative p-5 pt-10">
           <div className="flex justify-between items-start">
@@ -88,10 +88,10 @@ export default function AdminPage() {
           {stats && (
             <div className="grid grid-cols-4 gap-2 mt-5">
               {[
-                { label: 'Classes', value: stats.totalClasses, icon: '🏫', color: '#4F6BED' },
-                { label: 'Students', value: stats.totalStudents, icon: '🧒', color: '#2BA55E' },
-                { label: 'Stars', value: (stats.totalStars || 0).toLocaleString(), icon: '⭐', color: '#E8753A' },
-                { label: 'Lessons', value: stats.totalSyllabuses, icon: '📚', color: '#7C5BBF' },
+                { label: 'Classes', value: stats.totalClasses, icon: '🏫', color: '#5B7FE8' },
+                { label: 'Students', value: stats.totalStudents, icon: '🧒', color: '#4CAF6A' },
+                { label: 'Stars', value: (stats.totalStars || 0).toLocaleString(), icon: '⭐', color: '#F5A623' },
+                { label: 'Lessons', value: stats.totalSyllabuses, icon: '📚', color: '#8B6CC1' },
               ].map(s => (
                 <div key={s.label} className="rounded-2xl p-3 text-center" style={{ background: s.color + '22', border: `1px solid ${s.color}33` }}>
                   <div className="text-xl">{s.icon}</div>
@@ -164,7 +164,7 @@ export default function AdminPage() {
                       <div className="bg-gray-200 rounded-full h-4">
                         <div className="h-4 rounded-full transition-all" style={{
                           width: `${healthScore}%`,
-                          background: healthScore >= 70 ? '#2BA55E' : healthScore >= 40 ? '#E8753A' : '#DC4343'
+                          background: healthScore >= 70 ? '#4CAF6A' : healthScore >= 40 ? '#F5A623' : '#E05252'
                         }} />
                       </div>
                       <div className="text-xs font-bold app-muted mt-1">out of 100</div>
@@ -177,10 +177,10 @@ export default function AdminPage() {
             <div className="text-xs font-bold app-muted">PLATFORM METRICS</div>
             <div className="space-y-3">
               {[
-                { label: 'Avg Stars / Student', value: stats.totalStudents ? Math.round(stats.totalStars / stats.totalStudents) : 0, icon: '⭐', max: 500, color: '#E5982A' },
-                { label: 'Syllabuses Created', value: stats.totalSyllabuses, icon: '📚', max: 30, color: '#7C5BBF' },
-                { label: 'Total Students Enrolled', value: stats.totalStudents, icon: '🧒', max: 100, color: '#2BA55E' },
-                { label: 'Total Classes', value: stats.totalClasses, icon: '🏫', max: 20, color: '#4F6BED' },
+                { label: 'Avg Stars / Student', value: stats.totalStudents ? Math.round(stats.totalStars / stats.totalStudents) : 0, icon: '⭐', max: 500, color: '#F5B731' },
+                { label: 'Syllabuses Created', value: stats.totalSyllabuses, icon: '📚', max: 30, color: '#8B6CC1' },
+                { label: 'Total Students Enrolled', value: stats.totalStudents, icon: '🧒', max: 100, color: '#4CAF6A' },
+                { label: 'Total Classes', value: stats.totalClasses, icon: '🏫', max: 20, color: '#5B7FE8' },
               ].map(m => (
                 <div key={m.label} className="rounded-2xl p-4" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
                   <div className="flex justify-between items-center mb-2">
@@ -272,7 +272,7 @@ export default function AdminPage() {
                         <span>HW completion</span><span>{ca.hwCompletionRate}%</span>
                       </div>
                       <div className="bg-gray-200 rounded-full h-1.5">
-                        <div className="h-1.5 rounded-full" style={{ width: `${ca.hwCompletionRate}%`, background: ca.hwCompletionRate >= 70 ? '#2BA55E' : '#E8753A' }} />
+                        <div className="h-1.5 rounded-full" style={{ width: `${ca.hwCompletionRate}%`, background: ca.hwCompletionRate >= 70 ? '#4CAF6A' : '#F5A623' }} />
                       </div>
                       {ca.aiHomeworkCount > 0 && (
                         <div className="text-[10px] text-purple-400 font-bold mt-1">✨ {ca.aiHomeworkCount} AI-generated homework</div>
@@ -344,7 +344,7 @@ export default function AdminPage() {
                 {/* HW completion bar */}
                 <div className="mt-3">
                   <div className="bg-gray-200 rounded-full h-2">
-                    <div className="h-2 rounded-full transition-all" style={{ width: `${ca.hwCompletionRate}%`, background: ca.hwCompletionRate >= 70 ? '#2BA55E' : '#E8753A' }} />
+                    <div className="h-2 rounded-full transition-all" style={{ width: `${ca.hwCompletionRate}%`, background: ca.hwCompletionRate >= 70 ? '#4CAF6A' : '#F5A623' }} />
                   </div>
                 </div>
               </div>

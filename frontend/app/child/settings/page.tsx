@@ -27,7 +27,7 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen pb-10 app-container" style={{ background: 'var(--app-bg)' }}>
       {/* Header */}
-      <div className="p-5 pt-10" style={{ background: 'linear-gradient(135deg, #4F6BED, #7C5BBF)' }}>
+      <div className="p-5 pt-10" style={{ background: 'linear-gradient(135deg, #5B7FE8, #8B6CC1)' }}>
         <button className="app-pressable" onClick={() => router.push('/child')} className="text-white/70 font-bold mb-3 flex items-center gap-1">
           ← Back
         </button>
@@ -50,7 +50,7 @@ export default function SettingsPage() {
             <button className="app-pressable"
               onClick={() => updateSettings({ large: !settings.large })}
               className="w-12 h-6 rounded-full transition-all relative"
-              style={{ background: settings.large ? '#2BA55E' : '#333' }}>
+              style={{ background: settings.large ? '#4CAF6A' : '#333' }}>
               <div className="absolute top-0.5 w-5 h-5 bg-white rounded-full transition-all shadow"
                 style={{ left: settings.large ? '1.625rem' : '0.125rem' }} />
             </button>
@@ -65,7 +65,7 @@ export default function SettingsPage() {
             <button className="app-pressable"
               onClick={() => updateSettings({ hc: !settings.hc })}
               className="w-12 h-6 rounded-full transition-all relative"
-              style={{ background: settings.hc ? '#2BA55E' : '#333' }}>
+              style={{ background: settings.hc ? '#4CAF6A' : '#333' }}>
               <div className="absolute top-0.5 w-5 h-5 bg-white rounded-full transition-all shadow"
                 style={{ left: settings.hc ? '1.625rem' : '0.125rem' }} />
             </button>
@@ -80,7 +80,7 @@ export default function SettingsPage() {
             <button className="app-pressable"
               onClick={() => updateSettings({ dys: !settings.dys })}
               className="w-12 h-6 rounded-full transition-all relative"
-              style={{ background: settings.dys ? '#2BA55E' : '#333' }}>
+              style={{ background: settings.dys ? '#4CAF6A' : '#333' }}>
               <div className="absolute top-0.5 w-5 h-5 bg-white rounded-full transition-all shadow"
                 style={{ left: settings.dys ? '1.625rem' : '0.125rem' }} />
             </button>
@@ -98,7 +98,7 @@ export default function SettingsPage() {
                 onClick={() => updateSettings({ stLimit: mins })}
                 className="px-4 py-2 rounded-xl font-black text-sm transition-all"
                 style={{
-                  background: settings.stLimit === mins ? '#4F6BED' : '#2a2a4e',
+                  background: settings.stLimit === mins ? '#5B7FE8' : '#2a2a4e',
                   color: settings.stLimit === mins ? '#fff' : 'rgba(255,255,255,0.5)',
                   border: settings.stLimit === mins ? '2px solid #7a78f0' : '2px solid transparent',
                 }}>
@@ -122,7 +122,7 @@ export default function SettingsPage() {
                 onClick={() => updateSettings({ lang: lang.code })}
                 className="py-3 rounded-xl font-black text-xs flex flex-col items-center gap-1 transition-all"
                 style={{
-                  background: settings.lang === lang.code ? '#4F6BED' : '#2a2a4e',
+                  background: settings.lang === lang.code ? '#5B7FE8' : '#2a2a4e',
                   border: settings.lang === lang.code ? '2px solid #7a78f0' : '2px solid transparent',
                   color: settings.lang === lang.code ? '#fff' : 'rgba(255,255,255,0.5)',
                 }}>
@@ -174,7 +174,7 @@ export default function SettingsPage() {
               </div>
             </div>
             {permission === 'granted' ? (
-              <div className="w-12 h-6 rounded-full relative" style={{ background: '#2BA55E' }}>
+              <div className="w-12 h-6 rounded-full relative" style={{ background: '#4CAF6A' }}>
                 <div className="absolute top-0.5 right-0.5 w-5 h-5 bg-white rounded-full shadow" />
               </div>
             ) : (
@@ -182,7 +182,7 @@ export default function SettingsPage() {
                 onClick={subscribe}
                 disabled={permission === 'denied'}
                 className="px-3 py-1.5 rounded-xl text-xs font-black transition-all active:scale-95 app-pressable"
-                style={{ background: permission === 'denied' ? '#333' : '#4F6BED', color: permission === 'denied' ? 'rgba(255,255,255,0.3)' : '#fff' }}
+                style={{ background: permission === 'denied' ? '#333' : '#5B7FE8', color: permission === 'denied' ? 'rgba(255,255,255,0.3)' : '#fff' }}
               >
                 {permission === 'denied' ? 'Blocked' : 'Enable'}
               </button>

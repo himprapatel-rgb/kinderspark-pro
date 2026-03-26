@@ -8,18 +8,18 @@ const THEME_SECONDARY: Record<string, string> = {
   th_def:    '#8b1cf7',
   th_ocean:  '#5856D6',
   th_forest: '#27AE7A',
-  th_sunset: '#C4611F',
+  th_sunset: '#D4881A',
   th_rose:   '#FF2D55',
   th_galaxy: '#7B2FBE',
 }
 
 const THEME_BG_TINT: Record<string, string> = {
-  th_def:    '#ECF0FF',
-  th_ocean:  '#E8F0FA',
-  th_forest: '#E6F9EE',
-  th_sunset: '#FFF3EB',
-  th_rose:   '#FDF1F1',
-  th_galaxy: '#F3F0FA',
+  th_def:    '#EDF2FF',
+  th_ocean:  '#E8F4FC',
+  th_forest: '#E8F8ED',
+  th_sunset: '#FFF7E6',
+  th_rose:   '#FDF0F0',
+  th_galaxy: '#F2EEFA',
 }
 
 const NAV_TABS = [
@@ -77,7 +77,7 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
   const themeId = (student as any)?.selectedTheme || 'th_def'
   const theme = SHOP_THS.find(t => t.id === themeId) || SHOP_THS[0]
   const secondary = THEME_SECONDARY[themeId] || '#8b1cf7'
-  const bgTint = THEME_BG_TINT[themeId] || '#ECF0FF'
+  const bgTint = THEME_BG_TINT[themeId] || '#EDF2FF'
 
   // Determine active tab (exact match for /child, prefix match otherwise)
   const activeIdx = NAV_TABS.findIndex(t =>

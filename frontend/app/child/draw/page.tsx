@@ -5,8 +5,8 @@ import { useAppStore as useStore } from '@/store/appStore'
 import { updateStudent } from '@/lib/api'
 
 const COLORS = [
-  '#DC4343', '#E8753A', '#E5982A', '#2BA55E', '#34C759', '#4F6BED',
-  '#0A84FF', '#7C5BBF', '#FF375F', '#A2845E', '#1C1C1E', '#FFFFFF',
+  '#E05252', '#F5A623', '#F5B731', '#4CAF6A', '#34C759', '#5B7FE8',
+  '#0A84FF', '#8B6CC1', '#FF375F', '#A2845E', '#1C1C1E', '#FFFFFF',
 ]
 
 export default function DrawPage() {
@@ -17,7 +17,7 @@ export default function DrawPage() {
 
   const student = currentStudent || user
 
-  const [color, setColor] = useState('#4F6BED')
+  const [color, setColor] = useState('#5B7FE8')
   const [size, setSize] = useState(8)
   const [drawing, setDrawing] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -29,7 +29,7 @@ export default function DrawPage() {
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
-    ctx.fillStyle = '#F4F3F0'
+    ctx.fillStyle = '#FFF9EE'
     ctx.fillRect(0, 0, canvas.width, canvas.height)
   }, [student, router])
 
@@ -84,7 +84,7 @@ export default function DrawPage() {
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
-    ctx.fillStyle = '#F4F3F0'
+    ctx.fillStyle = '#FFF9EE'
     ctx.fillRect(0, 0, canvas.width, canvas.height)
     setHasDrawn(false)
   }
@@ -157,7 +157,7 @@ export default function DrawPage() {
         {/* Save button */}
         <button onClick={handleSave} disabled={!hasDrawn}
           className="w-full py-4 rounded-2xl font-black text-white transition-all active:scale-95 disabled:opacity-40 app-pressable"
-          style={{ background: saved ? '#2BA55E' : 'linear-gradient(135deg, #4F6BED, #7C5BBF)' }}>
+          style={{ background: saved ? '#4CAF6A' : 'linear-gradient(135deg, #5B7FE8, #8B6CC1)' }}>
           {saved ? '✅ Saved! +5 ⭐' : '💾 Save Drawing (+5 ⭐)'}
         </button>
       </div>

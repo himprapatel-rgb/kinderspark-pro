@@ -17,7 +17,7 @@ export default function LessonPage() {
 
   const [items, setItems] = useState<any[]>([])
   const [title, setTitle] = useState('')
-  const [color, setColor] = useState('#4F6BED')
+  const [color, setColor] = useState('#5B7FE8')
   const [icon, setIcon] = useState('📖')
   const [type, setType] = useState<string>('items')
   const [idx, setIdx] = useState(0)
@@ -152,7 +152,7 @@ export default function LessonPage() {
         ) : (
           <button onClick={handleNext}
             className="w-full py-5 rounded-2xl font-black text-lg active:scale-95 transition-all app-pressable flex items-center justify-center gap-2"
-            style={{ background: `linear-gradient(135deg, var(--app-success), #3CC78A)`, color: '#fff', boxShadow: '0 4px 20px rgba(43,165,94,0.35)' }}>
+            style={{ background: `linear-gradient(135deg, var(--app-success), #5FBF7F)`, color: '#fff', boxShadow: '0 4px 20px rgba(43,165,94,0.35)' }}>
             🎉 All Done! Earn Stars
           </button>
         )}
@@ -232,16 +232,16 @@ function LessonCard({ card, type, color, onSpeak }: any) {
 
 function getColorHex(name: string): string {
   const map: Record<string, string> = {
-    Red: '#DC4343', Blue: '#0A84FF', Green: '#2BA55E', Yellow: '#E5982A',
-    Orange: '#E8753A', Purple: '#7C5BBF', Pink: '#FF375F', Brown: '#A0522D',
+    Red: '#E05252', Blue: '#0A84FF', Green: '#4CAF6A', Yellow: '#F5B731',
+    Orange: '#F5A623', Purple: '#8B6CC1', Pink: '#FF375F', Brown: '#A0522D',
     Black: '#1a1a1a', White: '#ffffff',
   }
-  return map[name] || '#4F6BED'
+  return map[name] || '#5B7FE8'
 }
 
 function Confetti() {
   const pieces = Array.from({ length: 30 }, (_, i) => i)
-  const colors = ['#E5982A', '#E8753A', '#4F6BED', '#2BA55E', '#7C5BBF', '#DC4343']
+  const colors = ['#F5B731', '#F5A623', '#5B7FE8', '#4CAF6A', '#8B6CC1', '#E05252']
   return (
     <div className="fixed inset-0 pointer-events-none z-50">
       {pieces.map(i => (

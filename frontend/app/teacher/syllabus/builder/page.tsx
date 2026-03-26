@@ -19,7 +19,7 @@ export default function SyllabusBuilderPage() {
       {/* Header */}
       <div
         className="p-5 pt-10"
-        style={{ background: 'linear-gradient(135deg, #2BA55E, #3CC78A)' }}
+        style={{ background: 'linear-gradient(135deg, #4CAF6A, #5FBF7F)' }}
       >
         <button className="app-pressable"
           onClick={() => router.back()}

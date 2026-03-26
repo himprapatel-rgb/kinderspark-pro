@@ -7,7 +7,7 @@ import { TEMPLATES } from '@/lib/modules'
 import { generateLesson } from '@/lib/api'
 
 const ICONS = ['📖','🌟','🔢','🔤','🎨','🐾','🍎','🚗','⛅','🔷','👁️','👨‍👩‍👧','🏠','🎵','🌍','🧩','💡','🎯']
-const COLORS = ['#4F6BED','#7C5BBF','#2BA55E','#DC4343','#E8753A','#0A84FF','#FF375F','#32D74B']
+const COLORS = ['#5B7FE8','#8B6CC1','#4CAF6A','#E05252','#F5A623','#0A84FF','#FF375F','#32D74B']
 
 function BuilderContent() {
   const params = useSearchParams()
@@ -19,7 +19,7 @@ function BuilderContent() {
   const [meta, setMeta] = useState({
     title: '',
     icon: '📖',
-    color: '#4F6BED',
+    color: '#5B7FE8',
     grade: 'all',
     type: 'custom',
     description: '',
@@ -191,12 +191,12 @@ function BuilderContent() {
         <div className="flex gap-2 mb-4">
           <button className="app-pressable" onClick={() => setShowAI(true)}
             className="flex-1 py-2 rounded-xl text-xs font-black"
-            style={{ background: '#7C5BBF' }}>
+            style={{ background: '#8B6CC1' }}>
             🤖 AI Generate
           </button>
           <button className="app-pressable" onClick={() => setShowTemplate(true)}
             className="flex-1 py-2 rounded-xl text-xs font-black"
-            style={{ background: '#4F6BED' }}>
+            style={{ background: '#5B7FE8' }}>
             ✨ Templates
           </button>
         </div>
@@ -229,12 +229,12 @@ function BuilderContent() {
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] p-4 border-t flex gap-2" style={{ background: 'rgba(255,255,255,0.94)', borderColor: 'var(--app-border)' }}>
         <button className="app-pressable" onClick={() => handleSave(false)} disabled={saving}
           className="flex-1 py-3 rounded-xl font-black"
-          style={{ background: '#4F6BED' }}>
+          style={{ background: '#5B7FE8' }}>
           {saving ? 'Saving...' : '💾 Save'}
         </button>
         <button className="app-pressable" onClick={() => handleSave(true)} disabled={saving}
           className="flex-1 py-3 rounded-xl font-black"
-          style={{ background: '#2BA55E' }}>
+          style={{ background: '#4CAF6A' }}>
           ✓ Publish
         </button>
       </div>
@@ -258,7 +258,7 @@ function BuilderContent() {
             </div>
             <button onClick={handleAIGenerate} disabled={aiLoading || !aiTopic}
               className="w-full py-3 rounded-xl font-black app-pressable"
-              style={{ background: '#7C5BBF', opacity: !aiTopic ? 0.5 : 1 }}>
+              style={{ background: '#8B6CC1', opacity: !aiTopic ? 0.5 : 1 }}>
               {aiLoading ? 'Generating...' : '✨ Generate Cards'}
             </button>
           </div>

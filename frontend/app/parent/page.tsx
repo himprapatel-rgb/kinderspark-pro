@@ -296,7 +296,7 @@ export default function ParentPage() {
                 {/* Homework ring */}
                 <div className="rounded-2xl p-3 flex flex-col items-center" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
                   <div className="relative">
-                    <Ring pct={hwPct} color="#2BA55E" size={72} stroke={7} />
+                    <Ring pct={hwPct} color="#4CAF6A" size={72} stroke={7} />
                     <div className="absolute inset-0 flex items-center justify-center">
                       <span className="font-black text-sm">{hwPct}%</span>
                     </div>
@@ -308,7 +308,7 @@ export default function ParentPage() {
                 {/* Attendance ring */}
                 <div className="rounded-2xl p-3 flex flex-col items-center" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
                   <div className="relative">
-                    <Ring pct={attPct} color={attPct >= 80 ? '#2BA55E' : '#E8753A'} size={72} stroke={7} />
+                    <Ring pct={attPct} color={attPct >= 80 ? '#4CAF6A' : '#F5A623'} size={72} stroke={7} />
                     <div className="absolute inset-0 flex items-center justify-center">
                       <span className="font-black text-sm">{attendance ? `${attPct}%` : '--'}</span>
                     </div>
@@ -322,7 +322,7 @@ export default function ParentPage() {
                 {/* AI accuracy ring */}
                 <div className="rounded-2xl p-3 flex flex-col items-center" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
                   <div className="relative">
-                    <Ring pct={totalAccuracy} color="#7C5BBF" size={72} stroke={7} />
+                    <Ring pct={totalAccuracy} color="#8B6CC1" size={72} stroke={7} />
                     <div className="absolute inset-0 flex items-center justify-center">
                       <span className="font-black text-sm">{totalAccuracy}%</span>
                     </div>
@@ -348,7 +348,7 @@ export default function ParentPage() {
 
             {/* Push notification opt-in banner */}
             {notifPermission !== 'granted' && notifPermission !== 'denied' && (
-              <div className="mx-3 mb-4 rounded-2xl p-4 flex items-center gap-3" style={{ background: 'linear-gradient(135deg, rgba(48,209,88,0.06), rgba(67,198,172,0.04))', border: '1px solid #2BA55E40' }}>
+              <div className="mx-3 mb-4 rounded-2xl p-4 flex items-center gap-3" style={{ background: 'linear-gradient(135deg, rgba(48,209,88,0.06), rgba(67,198,172,0.04))', border: '1px solid #4CAF6A40' }}>
                 <div className="text-2xl shrink-0">🔔</div>
                 <div className="flex-1 min-w-0">
                   <div className="font-black text-sm">Enable Homework Alerts</div>
@@ -357,7 +357,7 @@ export default function ParentPage() {
                 <button
                   onClick={subscribeNotif}
                   className="px-3 py-2 rounded-xl text-xs font-black shrink-0 active:scale-95 transition-all app-pressable"
-                  style={{ background: '#2BA55E', color: '#fff' }}
+                  style={{ background: '#4CAF6A', color: '#fff' }}
                 >
                   Enable
                 </button>
@@ -370,7 +370,7 @@ export default function ParentPage() {
                 <div className="text-orange-400 font-black text-sm mb-2">⚠️ Pending ({pendingHW.length})</div>
                 <div className="space-y-2">
                   {pendingHW.map(hw => (
-                    <div key={hw.id} className="rounded-xl p-3 flex items-center gap-3" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)', border: hw.aiGenerated ? '1px solid rgba(94,92,230,0.35)' : '1px solid #E8753A30' }}>
+                    <div key={hw.id} className="rounded-xl p-3 flex items-center gap-3" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)', border: hw.aiGenerated ? '1px solid rgba(94,92,230,0.35)' : '1px solid #F5A62330' }}>
                       <div className="text-2xl">{hw.aiGenerated ? '✨' : '📝'}</div>
                       <div className="flex-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
@@ -386,7 +386,7 @@ export default function ParentPage() {
                           onClick={() => handleMarkDone(hw.id)}
                           disabled={markingDone === hw.id}
                           className="text-[10px] font-black px-2 py-1 rounded-lg active:scale-95 transition-all app-pressable"
-                          style={{ background: '#2BA55E20', color: '#2BA55E', opacity: markingDone === hw.id ? 0.5 : 1 }}
+                          style={{ background: '#4CAF6A20', color: '#4CAF6A', opacity: markingDone === hw.id ? 0.5 : 1 }}
                         >
                           {markingDone === hw.id ? '…' : 'Mark Done ✅'}
                         </button>
@@ -405,7 +405,7 @@ export default function ParentPage() {
                   {unreadMsgs > 0 && <div className="bg-red-500 text-xs font-black rounded-full px-2 py-0.5">{unreadMsgs} new</div>}
                 </div>
                 {messages.slice(0, 2).map(msg => (
-                  <div key={msg.id} className="rounded-xl p-3 mb-2" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)', border: !msg.read ? '1px solid #2BA55E40' : 'none' }}>
+                  <div key={msg.id} className="rounded-xl p-3 mb-2" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)', border: !msg.read ? '1px solid #4CAF6A40' : 'none' }}>
                     <div className="flex items-center gap-2">
                       {!msg.read && <div className="w-2 h-2 rounded-full bg-green-400 shrink-0" />}
                       <div className="font-black text-sm">{msg.subject}</div>
@@ -431,7 +431,7 @@ export default function ParentPage() {
                 <div className="font-black">{hwPct}%</div>
               </div>
               <div className="bg-gray-200 rounded-full h-3">
-                <div className="h-3 rounded-full transition-all" style={{ width: `${hwPct}%`, background: hwPct >= 80 ? '#2BA55E' : hwPct >= 50 ? '#E8753A' : '#DC4343' }} />
+                <div className="h-3 rounded-full transition-all" style={{ width: `${hwPct}%`, background: hwPct >= 80 ? '#4CAF6A' : hwPct >= 50 ? '#F5A623' : '#E05252' }} />
               </div>
               <div className="text-xs font-bold app-muted mt-1">{completedHW.length} done · {pendingHW.length} pending</div>
             </div>
@@ -468,7 +468,7 @@ export default function ParentPage() {
                     const done = hw.completions?.some((c: any) => c.studentId === student?.id && c.done)
                     return (
                       <div key={hw.id} className="rounded-2xl p-3 flex items-center gap-3"
-                        style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)', border: `1px solid ${done ? '#2BA55E30' : hw.aiGenerated ? 'rgba(94,92,230,0.3)' : '#E8753A30'}` }}>
+                        style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)', border: `1px solid ${done ? '#4CAF6A30' : hw.aiGenerated ? 'rgba(94,92,230,0.3)' : '#F5A62330'}` }}>
                         <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0 ${done ? 'bg-green-500/20' : 'bg-orange-500/20'}`}>
                           {done ? '✅' : hw.aiGenerated ? '✨' : '⏰'}
                         </div>
@@ -501,7 +501,7 @@ export default function ParentPage() {
             <div className="space-y-3">
               {messages.map(msg => (
                 <div key={msg.id} className="rounded-2xl p-4"
-                  style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)', border: !msg.read ? '1px solid #2BA55E40' : '1px solid transparent' }}>
+                  style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)', border: !msg.read ? '1px solid #4CAF6A40' : '1px solid transparent' }}>
                   <div className="flex justify-between items-start mb-1">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       {!msg.read && <div className="w-2 h-2 rounded-full bg-green-400 shrink-0" />}
@@ -513,7 +513,7 @@ export default function ParentPage() {
                   <div className="text-xs app-muted leading-relaxed mb-3">{msg.body}</div>
                   <button onClick={() => setShowReply(msg)}
                     className="px-3 py-1.5 rounded-lg text-xs font-bold text-green-400 app-pressable"
-                    style={{ background: '#2BA55E20' }}>
+                    style={{ background: '#4CAF6A20' }}>
                     ↩ Reply
                   </button>
                 </div>
@@ -538,7 +538,7 @@ export default function ParentPage() {
               className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 font-bold text-sm resize-none outline-none mb-3" />
             <button onClick={handleReply}
               className="w-full py-3 rounded-xl font-black app-pressable"
-              style={{ background: '#2BA55E' }}>
+              style={{ background: '#4CAF6A' }}>
               Send Reply
             </button>
           </div>
