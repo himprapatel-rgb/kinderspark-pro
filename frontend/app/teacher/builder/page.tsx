@@ -102,7 +102,7 @@ function BuilderContent() {
   if (preview) {
     const card = cards[previewIdx]
     return (
-      <div className="min-h-screen flex flex-col app-page" style={{ background: `linear-gradient(180deg, ${meta.color}22, var(--app-bg))` }}>
+      <div className="min-h-screen flex flex-col app-page app-container" style={{ background: `linear-gradient(180deg, ${meta.color}22, var(--app-bg))` }}>
         <div className="flex items-center gap-3 p-4">
           <button className="app-pressable" onClick={() => setPreview(false)} className="app-muted font-bold">← Back</button>
           <div className="font-black" style={{ color: 'rgb(var(--foreground-rgb))' }}>Preview: {meta.title}</div>
@@ -124,7 +124,7 @@ function BuilderContent() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col app-page">
+    <div className="min-h-screen flex flex-col app-page app-container">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: 'var(--app-border)', background: 'rgba(255,255,255,0.82)' }}>
         <button className="app-pressable" onClick={() => router.back()} className="app-muted font-bold">← Back</button>

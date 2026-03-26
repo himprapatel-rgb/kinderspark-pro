@@ -420,7 +420,7 @@ export default function TeacherDashboard() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'var(--app-bg)' }}>
+    <div className="min-h-screen flex flex-col app-container" style={{ background: 'var(--app-bg)' }}>
       {/* Toast */}
       {toast && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-white text-black font-black text-sm px-5 py-3 rounded-full shadow-xl">
@@ -477,16 +477,16 @@ export default function TeacherDashboard() {
       </div>
 
       {/* Tab bar */}
-      <div className="flex border-b backdrop-blur" style={{ borderColor: 'rgba(120,120,140,0.2)', background: 'rgba(255,255,255,0.9)' }}>
+      <div className="flex border-b backdrop-blur sticky top-0 z-30" style={{ borderColor: 'var(--app-border)', background: 'rgba(255,255,255,0.92)' }}>
         {TABS.map(t => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`flex-1 py-3 text-xs font-black transition-colors flex flex-col items-center gap-0.5 relative ${tab === t.id ? 'border-t-2' : ''}`}
-            style={{ color: tab === t.id ? 'var(--app-accent)' : 'rgba(70, 75, 96, 0.8)', borderColor: tab === t.id ? 'var(--app-accent)' : 'transparent' }}
+            className={`flex-1 py-3 text-xs font-black transition-colors flex items-center justify-center gap-1.5 relative app-pressable ${tab === t.id ? 'border-b-2' : ''}`}
+            style={{ color: tab === t.id ? 'var(--app-accent)' : 'rgba(70, 75, 96, 0.6)', borderColor: tab === t.id ? 'var(--app-accent)' : 'transparent' }}
           >
             <span>{t.emoji}</span>
-            <span>{t.label}</span>
+            <span className="hidden sm:inline">{t.label}</span>
             {t.id === 'messages' && unreadCount > 0 && (
               <span className="absolute top-1.5 right-1/4 bg-red-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center app-pressable">
                 {unreadCount > 9 ? '9+' : unreadCount}
@@ -538,7 +538,7 @@ export default function TeacherDashboard() {
                 </div>
 
                 {/* Rich Stats Row */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3 tablet:grid-cols-4">
                   {[
                     { label: 'Students', value: classStats?.totalStudents ?? students.length, emoji: '👥', color: '#5E5CE6' },
                     { label: 'HW Done', value: `${classStats?.avgHwCompletion ?? 0}%`, emoji: '📚', color: '#FF9F0A' },
@@ -576,7 +576,7 @@ export default function TeacherDashboard() {
                 {/* More tools */}
                 <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}>
                   <div className="font-black mb-3">More Tools</div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-2 tablet:grid-cols-3">
                     <button onClick={() => setTab('students')} className="rounded-xl p-3 text-left app-pressable" style={{ background: '#5E5CE622' }}>
                       <div className="text-xl mb-1">👥</div>
                       <div className="text-xs font-black">Manage Students</div>
@@ -737,7 +737,7 @@ export default function TeacherDashboard() {
                   onChange={e => setNewClassName(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleCreateClass()}
                   placeholder="Class name (e.g. Sunflowers)"
-                  className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 font-bold text-sm outline-none placeholder:text-gray-400"
+                  className="flex-1 app-field text-sm"
                 />
                 <button
                   onClick={handleCreateClass}
@@ -763,14 +763,14 @@ export default function TeacherDashboard() {
                   value={newStudent.name}
                   onChange={e => setNewStudent(p => ({ ...p, name: e.target.value }))}
                   placeholder="Student name"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 font-bold text-sm outline-none placeholder:text-gray-400"
+                  className="w-full app-field text-sm"
                 />
                 <input
                   value={newStudent.pin}
                   onChange={e => setNewStudent(p => ({ ...p, pin: e.target.value.replace(/\D/g, '').slice(0, 4) }))}
                   placeholder="4-digit PIN"
                   maxLength={4}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 font-bold text-sm outline-none placeholder:text-gray-400"
+                  className="w-full app-field text-sm"
                 />
                 <div>
                   <div className="text-xs font-bold app-muted mb-1">Avatar</div>
@@ -860,7 +860,7 @@ export default function TeacherDashboard() {
                           onChange={e => setGradeForm(p => ({ ...p, note: e.target.value }))}
                           placeholder="Teacher note (optional)..."
                           rows={2}
-                          className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 font-bold text-xs outline-none resize-none placeholder:text-gray-400 mb-2"
+                          className="w-full app-field text-xs resize-none mb-2"
                         />
                         <div className="flex gap-2">
                           <button
@@ -934,7 +934,7 @@ export default function TeacherDashboard() {
                       onChange={e => setWizardTopic(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && handleWizardGenerate()}
                       placeholder="Or type your own topic..."
-                      className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 font-bold text-sm outline-none placeholder:text-gray-400"
+                      className="flex-1 app-field text-sm"
                     />
                     <button
                       onClick={handleWizardGenerate}
@@ -995,7 +995,7 @@ export default function TeacherDashboard() {
                               type="date"
                               value={wizardDueDate}
                               onChange={e => setWizardDueDate(e.target.value)}
-                              className="w-full bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5 font-bold text-xs outline-none"
+                              className="w-full app-field text-xs"
                             />
                           </div>
                           <div>
@@ -1005,7 +1005,7 @@ export default function TeacherDashboard() {
                               min={1} max={20}
                               value={wizardStars}
                               onChange={e => setWizardStars(Number(e.target.value))}
-                              className="w-16 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5 font-bold text-xs outline-none text-center"
+                              className="w-16 app-field text-xs text-center"
                             />
                           </div>
                           <div className="text-xs font-bold app-muted text-center">
@@ -1055,13 +1055,13 @@ export default function TeacherDashboard() {
                   value={hwForm.title}
                   onChange={e => setHwForm(p => ({ ...p, title: e.target.value }))}
                   placeholder="Homework title"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 font-bold text-sm outline-none placeholder:text-gray-400"
+                  className="w-full app-field text-sm"
                 />
                 <input
                   value={hwForm.moduleId}
                   onChange={e => setHwForm(p => ({ ...p, moduleId: e.target.value }))}
                   placeholder="Module ID (e.g. letters, numbers)"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 font-bold text-sm outline-none placeholder:text-gray-400"
+                  className="w-full app-field text-sm"
                 />
                 <div className="flex gap-2">
                   <div className="flex-1">
@@ -1070,7 +1070,7 @@ export default function TeacherDashboard() {
                       type="date"
                       value={hwForm.dueDate}
                       onChange={e => setHwForm(p => ({ ...p, dueDate: e.target.value }))}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 font-bold text-sm outline-none"
+                      className="w-full app-field text-sm"
                     />
                   </div>
                   <div>
@@ -1080,7 +1080,7 @@ export default function TeacherDashboard() {
                       min={1} max={20}
                       value={hwForm.starsReward}
                       onChange={e => setHwForm(p => ({ ...p, starsReward: Number(e.target.value) }))}
-                      className="w-20 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 font-bold text-sm outline-none text-center"
+                      className="w-20 app-field text-sm text-center"
                     />
                   </div>
                 </div>
@@ -1175,7 +1175,7 @@ export default function TeacherDashboard() {
                     value={aiSylTopic}
                     onChange={e => setAiSylTopic(e.target.value)}
                     placeholder="e.g. Animals, Colors, Numbers 1-20, Shapes..."
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 font-bold text-sm outline-none placeholder:text-gray-400"
+                    className="w-full app-field text-sm"
                   />
                   <button
                     onClick={async () => {
@@ -1253,14 +1253,14 @@ export default function TeacherDashboard() {
                   value={msgForm.subject}
                   onChange={e => setMsgForm(p => ({ ...p, subject: e.target.value }))}
                   placeholder="Subject"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 font-bold text-sm outline-none placeholder:text-gray-400"
+                  className="w-full app-field text-sm"
                 />
                 <textarea
                   value={msgForm.body}
                   onChange={e => setMsgForm(p => ({ ...p, body: e.target.value }))}
                   placeholder="Your message..."
                   rows={4}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 font-bold text-sm outline-none resize-none placeholder:text-gray-400"
+                  className="w-full app-field text-sm resize-none placeholder:text-gray-400"
                 />
                 <button
                   onClick={handleSendMessage}
@@ -1305,7 +1305,7 @@ export default function TeacherDashboard() {
                     type="date"
                     value={attendanceDate}
                     onChange={e => setAttendanceDate(e.target.value)}
-                    className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 font-bold text-sm outline-none"
+                    className="flex-1 app-field text-sm"
                   />
                   <button onClick={saveAttendanceHandler} disabled={busy}
                     className="px-4 py-2.5 rounded-xl font-black text-sm app-pressable"

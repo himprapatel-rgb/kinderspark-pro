@@ -102,7 +102,7 @@ export default function DrawPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col app-page">
+    <div className="min-h-screen flex flex-col app-page app-container">
       {/* Header */}
       <div className="flex items-center justify-between p-4">
         <button className="app-pressable" onClick={() => router.push('/child')} className="app-muted font-bold">← Back</button>

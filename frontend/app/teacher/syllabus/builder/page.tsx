@@ -14,7 +14,7 @@ export default function SyllabusBuilderPage() {
 
   return (
     <div
-      className="min-h-screen pb-8 app-page"
+      className="min-h-screen pb-8 app-page app-container"
     >
       {/* Header */}
       <div

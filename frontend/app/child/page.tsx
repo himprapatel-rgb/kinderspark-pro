@@ -140,7 +140,7 @@ export default function ChildPage() {
 
   return (
     <div
-      className="min-h-screen pb-28"
+      className="min-h-screen pb-28 app-container"
       style={{ background: 'var(--app-bg)' }}
     >
       {/* ── HERO HEADER ── */}

@@ -14,12 +14,12 @@ const THEME_SECONDARY: Record<string, string> = {
 }
 
 const THEME_BG_TINT: Record<string, string> = {
-  th_def:    '#1a0a2e',
-  th_ocean:  '#0a1a2e',
-  th_forest: '#0a1e12',
-  th_sunset: '#1e100a',
-  th_rose:   '#1e0a12',
-  th_galaxy: '#120a1e',
+  th_def:    '#f0eeff',
+  th_ocean:  '#eef0ff',
+  th_forest: '#eefff4',
+  th_sunset: '#fff5ee',
+  th_rose:   '#ffeeef',
+  th_galaxy: '#f3eeff',
 }
 
 const NAV_TABS = [
@@ -100,7 +100,7 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
         <div style={{
           position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', flexDirection: 'column',
           alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 32,
-          background: 'linear-gradient(135deg, #0d0824, #080614)',
+          background: 'linear-gradient(135deg, rgba(94,92,230,0.95), rgba(191,90,242,0.9))',
           fontFamily: 'Nunito, sans-serif',
         }}>
           <div style={{ fontSize: 72, marginBottom: 16, animation: 'bounce 1s infinite' }}>🌟</div>
@@ -140,24 +140,24 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
         )}
       </div>
       <div
-        className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto flex items-center justify-around z-40"
+        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[960px] flex items-center justify-around z-40 rounded-t-2xl"
         style={{
-          background: 'rgba(255,255,255,0.94)',
+          background: 'rgba(255,255,255,0.95)',
           backdropFilter: 'blur(24px)',
           WebkitBackdropFilter: 'blur(24px)',
-          borderTop: '1px solid rgba(120,120,140,0.2)',
+          borderTop: '1px solid var(--app-border)',
           paddingBottom: 'max(14px, env(safe-area-inset-bottom))',
           paddingTop: 10,
-          boxShadow: '0 -8px 28px rgba(20,25,45,0.14)',
+          boxShadow: '0 -4px 20px rgba(20,25,45,0.08)',
         }}
       >
         {NAV_TABS.map((tab, i) => {
           const active = i === activeIdx
           return (
-            <button className="app-pressable"
+            <button
               key={tab.path}
               onClick={() => router.push(tab.path)}
-              className="flex flex-col items-center gap-1 transition-all duration-200"
+              className="flex flex-col items-center gap-1 transition-all duration-200 app-pressable"
               style={{ minWidth: 52 }}
             >
               <div

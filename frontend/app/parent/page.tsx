@@ -212,9 +212,9 @@ export default function ParentPage() {
   ]
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'var(--app-bg)' }}>
+    <div className="min-h-screen flex flex-col app-container" style={{ background: 'var(--app-bg)' }}>
       {/* Fixed tab bar */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-50 backdrop-blur border-b" style={{ background: 'rgba(255,255,255,0.9)', borderColor: 'rgba(120,120,140,0.2)' }}>
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[960px] z-50 backdrop-blur border-b rounded-b-xl" style={{ background: 'rgba(255,255,255,0.92)', borderColor: 'var(--app-border)' }}>
         <div className="flex">
           {TABS.map(t => (
             <button key={t.idx} onClick={() => setTab(t.idx)}

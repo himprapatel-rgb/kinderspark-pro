@@ -119,7 +119,7 @@ export default function TutorPage() {
 
   if (phase === 'topics') {
     return (
-      <div className="min-h-screen flex flex-col" style={{ background: 'var(--app-bg)' }}>
+      <div className="min-h-screen flex flex-col app-container" style={{ background: 'var(--app-bg)' }}>
         <div className="flex items-center gap-3 p-5">
           <button className="app-pressable" onClick={() => router.push('/child')} className="font-bold" style={{ color: 'rgba(70, 75, 96, 0.85)' }}>← Back</button>
         </div>
@@ -221,7 +221,7 @@ export default function TutorPage() {
   const choices = currentQ?.choices || []
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'var(--app-bg)' }}>
+    <div className="min-h-screen flex flex-col app-container" style={{ background: 'var(--app-bg)' }}>
       {/* HUD */}
       <div className="p-4 flex items-center gap-3">
           <button className="app-pressable" onClick={() => setPhase('topics')} className="font-bold" style={{ color: 'rgba(70, 75, 96, 0.85)' }}>✕</button>

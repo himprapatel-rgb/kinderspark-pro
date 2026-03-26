@@ -62,7 +62,7 @@ export default function ShopPage() {
   }
 
   return (
-    <div className="min-h-screen pb-8 app-page">
+    <div className="min-h-screen pb-8 app-page app-container">
       {/* Header */}
       <div className="m-3 rounded-3xl p-5" style={{ background: 'linear-gradient(135deg, #FF9F0A, #FF453A)' }}>
         <button className="app-pressable" onClick={() => router.push('/child')} className="text-white/70 font-bold text-sm mb-3">← Back</button>

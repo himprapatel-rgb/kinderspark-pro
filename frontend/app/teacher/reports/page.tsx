@@ -32,7 +32,7 @@ function ReportsContent() {
   }
 
   return (
-    <div className="min-h-screen pb-8" style={{ background: 'var(--app-bg)' }}>
+    <div className="min-h-screen pb-8 app-container" style={{ background: 'var(--app-bg)' }}>
       <div className="p-5 pt-10" style={{ background: 'linear-gradient(135deg, var(--app-accent), #7B59FF)' }}>
         <button className="app-pressable" onClick={() => router.back()} className="text-sm font-bold mb-4 flex items-center gap-1">← Back</button>
         <h1 className="font-black text-2xl">Weekly Report 📊</h1>

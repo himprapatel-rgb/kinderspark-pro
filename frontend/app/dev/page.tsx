@@ -224,7 +224,7 @@ function MissionControl() {
   ]
 
   return (
-    <div className="min-h-screen app-page" style={{ fontFamily: 'Nunito, sans-serif' }}>
+    <div className="min-h-screen app-page app-container" style={{ fontFamily: 'Nunito, sans-serif' }}>
 
       {/* Header */}
       <div style={{ background: 'linear-gradient(135deg, var(--app-accent), #7B59FF)', borderBottom: '1px solid rgba(120,120,140,0.2)' }}>

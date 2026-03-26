@@ -25,7 +25,7 @@ export default function SettingsPage() {
   const { permission, subscribe } = usePushNotifications(student?.id)
 
   return (
-    <div className="min-h-screen pb-10" style={{ background: 'var(--app-bg)' }}>
+    <div className="min-h-screen pb-10 app-container" style={{ background: 'var(--app-bg)' }}>
       {/* Header */}
       <div className="p-5 pt-10" style={{ background: 'linear-gradient(135deg, #5E5CE6, #BF5AF2)' }}>
         <button className="app-pressable" onClick={() => router.push('/child')} className="text-white/70 font-bold mb-3 flex items-center gap-1">

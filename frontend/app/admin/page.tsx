@@ -58,7 +58,7 @@ export default function AdminPage() {
     .slice(0, 4)
 
   return (
-    <div className="min-h-screen pb-20" style={{ background: 'var(--app-bg)' }}>
+    <div className="min-h-screen pb-20 app-container" style={{ background: 'var(--app-bg)' }}>
       {/* Header */}
       <div className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, var(--app-accent), #7B59FF)' }}>
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '25px 25px' }} />
@@ -95,12 +95,12 @@ export default function AdminPage() {
       </div>
 
       {/* Tab bar */}
-      <div className="sticky top-0 z-40 backdrop-blur border-b" style={{ background: 'rgba(255,255,255,0.9)', borderColor: 'rgba(120,120,140,0.2)' }}>
+      <div className="sticky top-0 z-40 backdrop-blur border-b" style={{ background: 'rgba(255,255,255,0.92)', borderColor: 'var(--app-border)' }}>
         <div className="flex">
           {TABS.map((t, i) => (
-            <button className="app-pressable" key={i} onClick={() => setTab(i)}
-              className={`flex-1 py-3 text-xs font-black transition-colors ${tab === i ? 'border-b-2' : ''}`}
-              style={{ color: tab === i ? 'var(--app-accent)' : 'rgba(70, 75, 96, 0.8)', borderColor: tab === i ? 'var(--app-accent)' : 'transparent' }}>
+            <button key={i} onClick={() => setTab(i)}
+              className={`flex-1 py-3 text-xs font-black transition-colors app-pressable ${tab === i ? 'border-b-2' : ''}`}
+              style={{ color: tab === i ? 'var(--app-accent)' : 'rgba(70, 75, 96, 0.6)', borderColor: tab === i ? 'var(--app-accent)' : 'transparent' }}>
               {t}
             </button>
           ))}

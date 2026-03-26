@@ -59,7 +59,7 @@ export default function LeaderboardPage() {
 
   return (
     <div
-      className="min-h-screen pb-28"
+      className="min-h-screen pb-28 app-container"
       style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #1a0a2e) 0%, #0d0d1a 100%)' }}
     >
       {/* Header */}

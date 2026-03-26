@@ -120,7 +120,7 @@ export default function LessonPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col app-page">
+    <div className="min-h-screen flex flex-col app-page app-container">
       {/* Header */}
       <div className="flex items-center gap-3 p-4">
         <button className="app-pressable" onClick={() => router.push('/child')} className="text-white/60 font-bold">← Back</button>
