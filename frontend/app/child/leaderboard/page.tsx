@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
 import { getStudents } from '@/lib/api'
+import { Bot, Flame, Star, Trophy } from 'lucide-react'
 
 type SortBy = 'stars' | 'streak' | 'aiSessions'
 
@@ -74,9 +75,9 @@ export default function LeaderboardPage() {
         <div className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-white/10" />
 
         <div className="relative flex items-center gap-3 mb-4">
-          <button className="app-pressable"
+          <button
             onClick={() => router.back()}
-            className="w-9 h-9 rounded-2xl flex items-center justify-center text-white/60 hover:bg-white/15 transition-all text-lg font-bold"
+            className="w-9 h-9 rounded-2xl flex items-center justify-center text-white/60 hover:bg-white/15 transition-all text-lg font-bold app-pressable sticker-bubble"
           >
             ←
           </button>
@@ -108,7 +109,7 @@ export default function LeaderboardPage() {
                 color: sortBy === opt.key ? 'white' : 'rgba(255,255,255,0.55)',
               }}
             >
-              <span>{opt.icon}</span> {opt.label}
+              <span className="sticker-bubble w-6 h-6 flex items-center justify-center text-xs" style={{ transform: 'rotate(-6deg)' }}>{opt.icon}</span> {opt.label}
             </button>
           ))}
         </div>
@@ -205,8 +206,10 @@ export default function LeaderboardPage() {
                     <p className={`font-black text-sm truncate ${isMe ? '' : ''}`}>
                       {isMe ? `${s.name} (You)` : s.name}
                     </p>
-                    <p className="text-[10px] app-muted font-bold">
-                      ⭐ {s.stars} · 🔥 {s.streak}d · 🤖 {s.aiSessions}
+                    <p className="text-[10px] app-muted font-bold inline-flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1"><Star size={11} /> {s.stars}</span>
+                      <span className="inline-flex items-center gap-1"><Flame size={11} /> {s.streak}d</span>
+                      <span className="inline-flex items-center gap-1"><Bot size={11} /> {s.aiSessions}</span>
                     </p>
                   </div>
                   <span className="font-black text-sm" style={{ color: isMe ? 'var(--theme-color, #5B7FE8)' : 'var(--app-text-muted)' }}>
@@ -220,7 +223,7 @@ export default function LeaderboardPage() {
 
         {students.length === 0 && (
           <div className="text-center py-16">
-            <div className="text-5xl mb-3">🏆</div>
+            <div className="text-5xl mb-3 inline-flex items-center justify-center sticker-bubble w-16 h-16"><Trophy size={30} color="var(--app-accent)" /></div>
             <p className="app-muted font-bold">No students yet</p>
           </div>
         )}

@@ -5,6 +5,7 @@ import { useAppStore as useStore } from '@/store/appStore'
 import { saveAISession, getTutorFeedback, updateStudent } from '@/lib/api'
 import { TUTOR_TOPICS, QB } from '@/lib/modules'
 import { speak } from '@/lib/speech'
+import { Bot, Home, RotateCcw, Volume2, X } from 'lucide-react'
 
 type Phase = 'topics' | 'quiz' | 'results'
 
@@ -120,21 +121,21 @@ export default function TutorPage() {
   if (phase === 'topics') {
     return (
       <div className="min-h-screen flex flex-col app-container" style={{ background: 'var(--app-bg)' }}>
-        <div className="flex items-center gap-3 p-5">
-          <button className="app-pressable" onClick={() => router.push('/child')} className="font-bold" style={{ color: 'rgba(70, 75, 96, 0.85)' }}>← Back</button>
+        <div className="flex items-center gap-3 p-5 doodle-surface">
+          <button onClick={() => router.push('/child')} className="font-bold app-pressable sticker-bubble px-3 py-1.5" style={{ color: 'rgb(var(--foreground-rgb))' }}>← Back</button>
         </div>
         <div className="px-5 pb-10">
           <div className="text-center mb-8">
-            <div className="text-6xl mb-3">🤖</div>
+            <div className="text-6xl mb-3 inline-flex items-center justify-center w-20 h-20 sticker-bubble"><Bot size={38} color="var(--app-accent)" /></div>
             <div className="text-2xl font-black">AI Tutor Sparkle</div>
-            <div className="text-white/60 font-bold">Choose a topic to practice!</div>
+            <div className="app-muted font-bold">Choose a topic to practice!</div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             {TUTOR_TOPICS.map(t => (
               <button className="app-pressable" key={t.id} onClick={() => startQuiz(t.id)}
                 className="rounded-2xl p-5 flex flex-col items-center gap-2 active:scale-95 transition-all"
                 style={{ background: t.color + '22', border: `2px solid ${t.color}44` }}>
-                <div className="text-4xl">{t.emoji}</div>
+                <div className="text-4xl sticker-bubble w-14 h-14 flex items-center justify-center" style={{ transform: 'rotate(-4deg)' }}>{t.emoji}</div>
                 <div className="font-black text-sm" style={{ color: 'rgb(32,36,52)' }}>{t.label}</div>
               </button>
             ))}
@@ -202,14 +203,14 @@ export default function TutorPage() {
         )}
 
         <div className="flex gap-3 w-full">
-          <button className="app-pressable" onClick={() => startQuiz(topic)}
-            className="flex-1 py-3 rounded-2xl font-black"
-            style={{ background: '#5B7FE8' }}>
-            Play Again
+          <button onClick={() => startQuiz(topic)}
+            className="flex-1 py-3 rounded-2xl font-black inline-flex items-center justify-center gap-2 app-pressable"
+            style={{ background: '#5B7FE8', color: '#fff' }}>
+            <RotateCcw size={16} /> Play Again
           </button>
-          <button className="app-pressable" onClick={() => router.push('/child')}
-            className="flex-1 py-3 rounded-2xl font-black bg-white/20">
-            Home
+          <button onClick={() => router.push('/child')}
+            className="flex-1 py-3 rounded-2xl font-black bg-white/20 inline-flex items-center justify-center gap-2 app-pressable">
+            <Home size={16} /> Home
           </button>
         </div>
       </div>
@@ -224,7 +225,7 @@ export default function TutorPage() {
     <div className="min-h-screen flex flex-col app-container" style={{ background: 'var(--app-bg)' }}>
       {/* HUD */}
       <div className="p-4 flex items-center gap-3">
-          <button className="app-pressable" onClick={() => setPhase('topics')} className="font-bold" style={{ color: 'rgba(70, 75, 96, 0.85)' }}>✕</button>
+          <button onClick={() => setPhase('topics')} className="font-bold app-pressable sticker-bubble w-9 h-9 flex items-center justify-center" style={{ color: 'rgb(var(--foreground-rgb))' }}><X size={16} /></button>
         <div className="flex-1 flex gap-4 justify-center">
           <div className="text-center">
             <div className="font-black text-sm">{qIdx + 1}/{TOTAL_Q}</div>
@@ -265,7 +266,7 @@ export default function TutorPage() {
 
       {/* Sparkle speech bubble */}
       <div className="px-4 mb-4 flex gap-3 items-start">
-        <div className="text-4xl">🤖</div>
+        <div className="text-4xl sticker-bubble w-12 h-12 flex items-center justify-center"><Bot size={24} color="var(--app-accent)" /></div>
         <div className="flex-1 rounded-2xl rounded-tl-none p-3" style={{ background: 'var(--app-surface)', border: '1px solid rgba(120,120,140,0.2)' }}>
           <div className="font-bold text-sm" style={{ color: 'rgba(32,36,52,0.9)' }}>
             {answered
@@ -311,7 +312,7 @@ export default function TutorPage() {
         <div className="p-4">
           <button onClick={handleNext}
             className="w-full py-4 rounded-2xl font-black text-lg active:scale-95 transition-all app-pressable"
-            style={{ background: topicInfo?.color || '#5B7FE8' }}>
+            style={{ background: topicInfo?.color || '#5B7FE8', color: '#fff' }}>
             {qIdx === TOTAL_Q - 1 ? 'See Results! 🎉' : 'Next Question →'}
           </button>
         </div>

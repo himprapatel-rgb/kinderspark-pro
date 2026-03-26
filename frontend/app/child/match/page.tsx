@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
 import { MODS } from '@/lib/modules'
 import { updateProgress, saveAISession } from '@/lib/api'
+import { BookOpen, RefreshCw, Target } from 'lucide-react'
 
 const QUESTIONS_PER_ROUND = 10
 const STARS_PER_CORRECT = 3
@@ -144,7 +145,7 @@ export default function WordMatchPage() {
         style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #EDF2FF), var(--app-bg))' }}
       >
         <div
-          className="w-24 h-24 rounded-3xl flex items-center justify-center text-5xl mb-6 animate-bounce-subtle"
+          className="w-24 h-24 rounded-3xl flex items-center justify-center text-5xl mb-6 animate-bounce-subtle sticker-bubble"
           style={{
             background: 'linear-gradient(135deg, #F5A623, #D4881A)',
             boxShadow: '0 8px 32px rgba(255,159,10,0.45)',
@@ -157,17 +158,17 @@ export default function WordMatchPage() {
           Match the emoji to the correct word!
         </p>
         <div className="flex gap-4 mb-10 mt-4">
-          {[
-            { label: `${QUESTIONS_PER_ROUND} rounds`, icon: '🎯' },
-            { label: `${STARS_PER_CORRECT}⭐ per hit`, icon: '⭐' },
-            { label: 'All topics', icon: '📚' },
+            {[
+            { label: `${QUESTIONS_PER_ROUND} rounds`, icon: <Target size={18} color="var(--app-accent)" /> },
+            { label: `${STARS_PER_CORRECT}⭐ per hit`, icon: <span style={{ fontSize: 18 }}>⭐</span> },
+            { label: 'All topics', icon: <BookOpen size={18} color="var(--app-accent)" /> },
           ].map((s, i) => (
             <div
               key={i}
               className="rounded-2xl px-3 py-2 flex flex-col items-center gap-1"
               style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}
             >
-              <span className="text-xl">{s.icon}</span>
+              <span className="text-xl sticker-bubble w-9 h-9 flex items-center justify-center" style={{ transform: 'rotate(-4deg)' }}>{s.icon}</span>
               <span className="text-[11px] font-bold app-muted">{s.label}</span>
             </div>
           ))}
@@ -183,9 +184,9 @@ export default function WordMatchPage() {
           <div className="absolute inset-0 shimmer" />
           <span className="relative">Play ▶</span>
         </button>
-        <button className="app-pressable"
+        <button
           onClick={() => router.back()}
-          className="mt-5 text-sm font-bold app-muted"
+          className="mt-5 text-sm font-bold app-muted app-pressable"
         >
           ← Back
         </button>
@@ -244,14 +245,14 @@ export default function WordMatchPage() {
 
         <button
           onClick={startGame}
-          className="w-full max-w-[280px] py-4 rounded-2xl font-black text-lg active:scale-95 transition-all mb-3 app-pressable"
+          className="w-full max-w-[280px] py-4 rounded-2xl font-black text-lg active:scale-95 transition-all mb-3 app-pressable inline-flex items-center justify-center gap-2"
           style={{ background: 'linear-gradient(135deg, #F5A623, #D4881A)', boxShadow: '0 6px 24px rgba(255,159,10,0.4)' }}
         >
-          Play Again 🔄
+          <RefreshCw size={16} /> Play Again
         </button>
-        <button className="app-pressable"
+        <button
           onClick={() => router.back()}
-          className="w-full max-w-[280px] py-3.5 rounded-2xl font-black text-sm active:scale-95 transition-all"
+          className="w-full max-w-[280px] py-3.5 rounded-2xl font-black text-sm active:scale-95 transition-all app-pressable"
           style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)', color: 'var(--app-text-muted)' }}
         >
           ← Back Home
@@ -272,7 +273,7 @@ export default function WordMatchPage() {
       {/* Header */}
       <div className="px-5 pt-10 pb-4">
         <div className="flex items-center gap-3 mb-4">
-          <button className="app-pressable" onClick={() => setScreen('ready')} className="text-xl font-bold app-muted w-8">←</button>
+          <button onClick={() => setScreen('ready')} className="text-xl font-bold app-muted w-8 app-pressable">←</button>
           <div className="flex-1 h-3 rounded-full overflow-hidden" style={{ background: 'rgba(120,120,140,0.12)' }}>
             <div
               className="h-full rounded-full transition-all duration-500 relative overflow-hidden"
