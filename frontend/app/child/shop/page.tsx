@@ -119,7 +119,7 @@ export default function ShopPage() {
                   disabled={buying === item.id}
                   className="rounded-2xl p-4 flex items-center gap-3 active:scale-95 transition-all"
                   style={{
-                    background: active ? item.color + '30' : owned ? '#1a2a1a' : 'var(--app-surface)',
+                    background: active ? item.color + '30' : owned ? 'rgba(48,209,88,0.06)' : 'var(--app-surface)',
                     border: `2px solid ${active ? item.color : owned ? '#30D158' : 'var(--app-border)'}`,
                   }}>
                   <div className="w-8 h-8 rounded-full flex-shrink-0" style={{ background: item.color }} />

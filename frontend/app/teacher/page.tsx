@@ -507,7 +507,7 @@ export default function TeacherDashboard() {
                 <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid var(--app-border)' }}>
                   <div className="flex items-center justify-between mb-3">
                     <div className="font-black text-sm">Priority Actions</div>
-                    <div className="text-white/40 text-[11px] font-bold">Daily workflow</div>
+                    <div className="text-[11px] font-bold app-muted">Daily workflow</div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <button
@@ -695,7 +695,7 @@ export default function TeacherDashboard() {
                           <span className="text-lg">{item.studentAvatar || '🧒'}</span>
                           <div className="flex-1 min-w-0">
                             <span className="font-bold text-xs">{item.studentName} </span>
-                            <span className="text-white/50 text-xs">{item.text}</span>
+                            <span className="text-xs app-muted">{item.text}</span>
                           </div>
                           <span className="text-lg shrink-0">{item.emoji}</span>
                         </div>
@@ -711,7 +711,7 @@ export default function TeacherDashboard() {
                       <div className="font-black mb-2">Delete "{selectedClass.name}"?</div>
                       <div className="text-xs font-bold app-muted mb-4">This removes all students and data in this class.</div>
                       <div className="flex gap-2">
-                        <button onClick={() => setShowDeleteConfirm(null)} className="flex-1 py-2 rounded-xl text-white/60 font-bold text-sm app-pressable" style={{ background: 'rgba(120,120,140,0.06)' }}>Cancel</button>
+                        <button onClick={() => setShowDeleteConfirm(null)} className="flex-1 py-2 rounded-xl font-bold text-sm app-pressable app-muted" style={{ background: 'rgba(120,120,140,0.06)' }}>Cancel</button>
                         <button onClick={() => handleDeleteClass(selectedClass.id)} disabled={busy} className="flex-1 py-2 rounded-xl font-black text-sm app-pressable" style={{ background: '#FF453A' }}>Delete</button>
                       </div>
                     </div>
@@ -865,7 +865,7 @@ export default function TeacherDashboard() {
                         <div className="flex gap-2">
                           <button
                             onClick={() => setGradingStudentId(null)}
-                            className="flex-1 py-2 rounded-xl text-white/50 font-bold text-xs app-pressable"
+                            className="flex-1 py-2 rounded-xl font-bold text-xs app-pressable app-muted"
                             style={{ background: 'var(--app-surface-soft)' }}
                           >
                             Cancel
@@ -904,7 +904,7 @@ export default function TeacherDashboard() {
                 <div className="font-black text-base">AI Homework Wizard</div>
                 <div className="text-xs app-muted font-bold">Describe a topic → AI builds homework → push to all kids</div>
               </div>
-              <div className="text-white/60 text-lg">{showWizard ? '▲' : '▼'}</div>
+              <div className="text-lg app-muted">{showWizard ? '▲' : '▼'}</div>
             </button>
 
             {/* Wizard panel */}
@@ -980,7 +980,7 @@ export default function TeacherDashboard() {
                         {/* Activities */}
                         <div className="space-y-1.5 mb-3">
                           {wizardResult.activities?.map((act: any, i: number) => (
-                            <div key={i} className="flex items-center gap-2 text-xs text-white/70 font-bold">
+                            <div key={i} className="flex items-center gap-2 text-xs font-bold app-muted">
                               <span className="text-base">{act.emoji}</span>
                               <span>{act.instruction}</span>
                             </div>

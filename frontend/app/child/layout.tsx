@@ -77,7 +77,7 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
   const themeId = (student as any)?.selectedTheme || 'th_def'
   const theme = SHOP_THS.find(t => t.id === themeId) || SHOP_THS[0]
   const secondary = THEME_SECONDARY[themeId] || '#8b1cf7'
-  const bgTint = THEME_BG_TINT[themeId] || '#1a0a2e'
+  const bgTint = THEME_BG_TINT[themeId] || '#f0eeff'
 
   // Determine active tab (exact match for /child, prefix match otherwise)
   const activeIdx = NAV_TABS.findIndex(t =>

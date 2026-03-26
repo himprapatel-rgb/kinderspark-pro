@@ -148,7 +148,7 @@ export default function LeaderboardPage() {
                       <div className="absolute -top-2 -right-2 text-xl">{RANK_MEDALS[rankIdx]}</div>
                     </div>
                     {/* Name */}
-                    <p className={`text-xs font-black truncate w-full text-center ${isMe ? 'text-white' : 'text-white/70'}`}>
+                    <p className="text-xs font-black truncate w-full text-center" style={{ color: isMe ? 'white' : 'rgba(255,255,255,0.85)' }}>
                       {isMe ? 'You' : s.name}
                     </p>
                     {/* Value */}
@@ -187,14 +187,14 @@ export default function LeaderboardPage() {
                   className="flex items-center gap-3 rounded-2xl px-4 py-3 transition-all"
                   style={{
                     background: isMe
-                      ? 'linear-gradient(135deg, rgba(94,92,230,0.2), rgba(191,90,242,0.2))'
-                      : 'rgba(255,255,255,0.05)',
+                      ? 'linear-gradient(135deg, rgba(94,92,230,0.1), rgba(191,90,242,0.08))'
+                      : 'var(--app-surface)',
                     border: isMe
-                      ? '1.5px solid rgba(94,92,230,0.45)'
-                      : '1px solid rgba(255,255,255,0.08)',
+                      ? '1.5px solid rgba(94,92,230,0.35)'
+                      : '1px solid var(--app-border)',
                   }}
                 >
-                  <span className="text-white/40 font-black text-sm w-6 text-center">#{rank}</span>
+                  <span className="app-muted font-black text-sm w-6 text-center">#{rank}</span>
                   <div
                     className="w-10 h-10 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
                     style={{ background: 'var(--app-surface-soft)' }}
@@ -202,14 +202,14 @@ export default function LeaderboardPage() {
                     {s.avatar}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={`font-black text-sm truncate ${isMe ? 'text-white' : 'text-white/80'}`}>
+                    <p className={`font-black text-sm truncate ${isMe ? '' : ''}`}>
                       {isMe ? `${s.name} (You)` : s.name}
                     </p>
                     <p className="text-[10px] app-muted font-bold">
                       ⭐ {s.stars} · 🔥 {s.streak}d · 🤖 {s.aiSessions}
                     </p>
                   </div>
-                  <span className="font-black text-sm" style={{ color: isMe ? 'var(--theme-color, #5E5CE6)' : 'rgba(255,255,255,0.5)' }}>
+                  <span className="font-black text-sm" style={{ color: isMe ? 'var(--theme-color, #5E5CE6)' : 'var(--app-text-muted)' }}>
                     {sortBy === 'stars' ? `⭐ ${val}` : sortBy === 'streak' ? `🔥 ${val}d` : `🤖 ${val}`}
                   </span>
                 </div>
@@ -221,7 +221,7 @@ export default function LeaderboardPage() {
         {students.length === 0 && (
           <div className="text-center py-16">
             <div className="text-5xl mb-3">🏆</div>
-            <p className="text-white/40 font-bold">No students yet</p>
+            <p className="app-muted font-bold">No students yet</p>
           </div>
         )}
       </div>
