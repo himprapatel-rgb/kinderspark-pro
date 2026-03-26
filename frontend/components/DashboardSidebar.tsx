@@ -70,7 +70,7 @@ export default function DashboardSidebar({ role, items, userName }: DashboardSid
             <button
               key={item.href}
               onClick={() => router.push(item.href)}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all app-pressable"
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all duration-200 app-pressable ${active ? 'translate-x-0.5' : 'hover:bg-gray-50'}`}
               style={{
                 background: active ? `var(--app-accent)` : 'transparent',
                 color: active ? '#fff' : 'var(--app-text-muted)',

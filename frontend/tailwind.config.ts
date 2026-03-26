@@ -15,9 +15,15 @@ const config: Config = {
         brand: {
           dark: '#1E1B2E',
           primary: '#4F6BED',
+          light: '#ECF0FF',
           spark: '#E5982A',
           surface: '#F8F7F4',
           muted: '#64607A',
+        },
+        spark: {
+          amber: '#E5982A',
+          teal: '#2BA55E',
+          rose: '#DC4343',
         },
       },
       fontFamily: {
@@ -31,6 +37,7 @@ const config: Config = {
       boxShadow: {
         'soft': '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
         'soft-lg': '0 4px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 15px -5px rgba(0, 0, 0, 0.04)',
+        'hover': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
       },
       animation: {
         'bounce-subtle': 'bounce-subtle 2s ease-in-out infinite',
