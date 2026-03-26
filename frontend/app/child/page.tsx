@@ -5,7 +5,7 @@ import { useAppStore as useStore } from '@/store/appStore'
 import { getHomework, getSyllabuses, getProgress, getRecommendations, getStudentBadges, completeHomework } from '@/lib/api'
 import TopBarActions from '@/components/TopBarActions'
 import { MODS } from '@/lib/modules'
-import { ShoppingBag } from 'lucide-react'
+import { ArrowRight, BookOpen, PlayCircle, ShoppingBag, Sparkles, Trophy } from 'lucide-react'
 
 // ── Daily Challenge helper ─────────────────────────────────────────────────────
 function getDailyChallenge() {
@@ -100,6 +100,9 @@ export default function ChildPage() {
   const startTodayTitle = startTodayHomework
     ? `Start with: ${startTodayHomework.title}`
     : `Start today's challenge: ${dailyMod.title}`
+  const nextTaskMeta = startTodayHomework
+    ? `Homework · ${startTodayHomework.dueDate ? new Date(startTodayHomework.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Due soon'}`
+    : `Daily Challenge · ${dailyMod.items.length} cards`
 
   const handleMarkDone = async (hwId: string) => {
     if (!student || markingDone) return
@@ -195,8 +198,8 @@ export default function ChildPage() {
             />
           </div>
 
-          {/* ── XP / Stats Row ── */}
-          <div className="flex gap-2.5 mb-5">
+          {/* ── Top summary row ── */}
+          <div className="grid grid-cols-3 gap-2.5 mb-4">
             {/* Stars */}
             <div
               className="flex-1 rounded-2xl py-2.5 px-3 flex items-center gap-2"
@@ -237,8 +240,8 @@ export default function ChildPage() {
             </div>
           </div>
 
-          {/* ── Overall XP bar ── */}
-          <div>
+          {/* ── Overall progress + main CTA ── */}
+          <div className="rounded-2xl p-3.5" style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)' }}>
             <div className="flex justify-between items-center mb-2">
               <span className="text-white/80 text-xs font-black uppercase tracking-wide">Overall Progress</span>
               <span className="font-black text-xs">{overallPct}%</span>
@@ -255,56 +258,32 @@ export default function ChildPage() {
               </div>
             </div>
             <p className="text-[10px] app-muted font-bold mt-1">{doneCards} of {totalCards} cards completed</p>
+            <button
+              onClick={() => router.push(startTodayHref)}
+              className="mt-3 w-full rounded-xl py-3 px-3 font-black text-sm flex items-center justify-center gap-2 app-pressable"
+              style={{ background: 'linear-gradient(135deg, var(--app-gold), var(--app-warning))', color: '#2B1F10' }}
+            >
+              <PlayCircle size={16} />
+              Continue Learning
+            </button>
+            <div className="mt-2 rounded-xl px-3 py-2 flex items-center justify-between" style={{ background: 'rgba(255,255,255,0.14)' }}>
+              <div className="min-w-0">
+                <p className="text-[10px] text-white/80 font-black uppercase tracking-wide">Next task</p>
+                <p className="text-xs font-black truncate">{startTodayTitle}</p>
+                <p className="text-[10px] app-muted font-bold">{nextTaskMeta}</p>
+              </div>
+              <ArrowRight size={14} className="text-white/85 shrink-0" />
+            </div>
           </div>
         </div>
 
-        {/* ── Badge shelf ── */}
-        {badges.length > 0 && (
-          <div className="px-5 pb-1">
-            <div className="flex gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-              {badges.map((b: any) => {
-                const info = BADGE_INFO[b.type] || { emoji: '🏅', label: b.type, color: '#F5B731' }
-                return (
-                  <div
-                    key={b.id}
-                    className="flex-shrink-0 flex flex-col items-center gap-0.5 rounded-2xl px-3 py-2"
-                    style={{
-                      background: info.color + '22',
-                      border: `1px solid ${info.color}44`,
-                    }}
-                  >
-                    <span className="text-xl">{info.emoji}</span>
-                    <span className="text-[9px] font-black whitespace-nowrap" style={{ color: info.color }}>{info.label}</span>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* ── CONTENT ── */}
-      <div className="px-4 pt-5 space-y-4">
-        {/* ── Start Today (guided primary action) ── */}
-        <button
-          onClick={() => router.push(startTodayHref)}
-          className="w-full rounded-3xl p-4 text-left app-pressable"
-          style={{ background: 'linear-gradient(135deg, rgba(94,92,230,0.25), rgba(191,90,242,0.22))', border: '1.5px solid rgba(94,92,230,0.45)' }}
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl" style={{ background: 'rgba(255,255,255,0.18)' }}>
-              🚀
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-white text-[11px] font-black uppercase tracking-wider mb-1">Start Today</p>
-              <p className="font-black text-sm truncate">{startTodayTitle}</p>
-              <p className="text-xs font-bold app-muted mt-0.5">
-                {startTodayHomework ? 'Finish your top pending task first' : 'Quick daily learning challenge'}
-              </p>
-            </div>
-            <span className="text-white/70 text-xl">›</span>
-          </div>
-        </button>
+      <div className="px-4 pt-5 space-y-6">
+        {/* ── Today zone ── */}
+        <div>
+          <h2 className="font-black text-base mb-3 inline-flex items-center gap-2"><Sparkles size={16} /> Today&apos;s Next Task</h2>
 
         {/* ── Homework Alert ── */}
         {pendingHW.length > 0 && (
@@ -368,7 +347,7 @@ export default function ChildPage() {
           </div>
         )}
 
-        {/* ── Daily Challenge ── */}
+        {/* ── Daily challenge ── */}
         <button
           onClick={() => {
             markChallengeComplete(todayKey)
@@ -415,14 +394,14 @@ export default function ChildPage() {
           </div>
         </button>
 
-        {/* ── AI Tutor CTA (Duolingo-style big button) ── */}
-        <button className="app-pressable"
+        {/* ── AI tutor ── */}
+        <button
           onClick={() => router.push('/child/tutor')}
-          className="w-full rounded-3xl p-5 text-left active:scale-[0.97] transition-all relative overflow-hidden"
+          className="w-full rounded-3xl p-5 text-left active:scale-[0.97] transition-all relative overflow-hidden app-pressable"
           style={{
-            background: 'linear-gradient(135deg, #1a0a3a 0%, #2d1b69 100%)',
-            border: '1.5px solid rgba(94,92,230,0.4)',
-            boxShadow: '0 8px 32px rgba(94,92,230,0.25)',
+            background: 'linear-gradient(135deg, color-mix(in srgb, var(--app-accent) 22%, white 78%), color-mix(in srgb, var(--role-admin) 20%, white 80%))',
+            border: '1.5px solid color-mix(in srgb, var(--app-accent) 44%, white 56%)',
+            boxShadow: 'var(--app-shadow-md)',
           }}
         >
           {/* Shimmer overlay */}
@@ -439,7 +418,7 @@ export default function ChildPage() {
               🤖
             </div>
             <div className="flex-1">
-              <p className="font-black text-lg leading-tight">AI Tutor Sparkle</p>
+              <p className="font-black text-lg leading-tight inline-flex items-center gap-2"><BookOpen size={18} /> AI Tutor Sparkle</p>
               <p className="text-sm app-muted font-bold">Practice topics &amp; earn stars!</p>
               {(student?.aiSessions ?? 0) > 0 && (
                 <p className="text-purple-400 text-xs font-bold mt-0.5">
@@ -459,6 +438,10 @@ export default function ChildPage() {
           </div>
         </button>
 
+        </div>
+
+        {/* ── Explore zone ── */}
+        <div className="space-y-6">
         {/* ── AI Recommendations ── */}
         {recommendations.length > 0 && (
           <div>
@@ -504,8 +487,8 @@ export default function ChildPage() {
 
         {/* ── Activities ── */}
         <div>
-          <h2 className="font-black text-base mb-3">🎮 Activities</h2>
-          <div className="grid grid-cols-3 gap-3">
+          <h2 className="font-black text-base mb-3 inline-flex items-center gap-2"><PlayCircle size={16} /> Quick Activities</h2>
+          <div className="grid grid-cols-3 tablet:grid-cols-6 gap-3">
             {[
               { label: 'Draw',  icon: '🎨', path: '/child/draw',        grad: 'linear-gradient(135deg,#E0525222,#F5A62322)', border: '#F5A62340' },
               { label: 'Trace', icon: '✍️', path: '/child/trace',       grad: 'linear-gradient(135deg,#4CAF6A22,#5FBF7F22)', border: '#4CAF6A40' },
@@ -530,7 +513,7 @@ export default function ChildPage() {
         {/* ── My Lessons (syllabus) ── */}
         {syllabuses.length > 0 && (
           <div>
-            <h2 className="font-black text-base mb-3">📖 My Lessons</h2>
+            <h2 className="font-black text-base mb-3 inline-flex items-center gap-2"><BookOpen size={16} /> My Lessons</h2>
             <div className="grid grid-cols-2 gap-3">
               {syllabuses.map(syl => {
                 const done = progressMap[`syl_${syl.id}`] || 0
@@ -570,7 +553,7 @@ export default function ChildPage() {
         {/* ── All Lessons grid ── */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-black text-base">📚 All Lessons</h2>
+            <h2 className="font-black text-base inline-flex items-center gap-2"><BookOpen size={16} /> Lessons Library</h2>
             <button
               onClick={() => setShowAllMods(v => !v)}
               className="text-xs font-bold app-pressable px-3 py-1 rounded-full"
@@ -616,6 +599,28 @@ export default function ChildPage() {
             })}
           </div>
         </div>
+        </div>
+
+        {/* ── Rewards zone ── */}
+        {badges.length > 0 && (
+          <div>
+            <h2 className="font-black text-base mb-3 inline-flex items-center gap-2"><Trophy size={16} /> Achievements</h2>
+            <div className="rounded-2xl p-3.5" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+              <p className="text-xs font-bold app-muted mb-2">You have earned {badges.length} badge{badges.length > 1 ? 's' : ''}. Keep going!</p>
+              <div className="flex gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+                {badges.map((b: any) => {
+                  const info = BADGE_INFO[b.type] || { emoji: '🏅', label: b.type, color: '#F5B731' }
+                  return (
+                    <div key={b.id} className="flex-shrink-0 rounded-xl px-2.5 py-2 text-center" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}>
+                      <div className="text-lg leading-none">{info.emoji}</div>
+                      <div className="text-[10px] font-black mt-1" style={{ color: info.color }}>{info.label}</div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Badge Celebration Modal ── */}
