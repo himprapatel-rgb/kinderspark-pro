@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useAppStore as useStore } from '@/store/appStore'
 import { getHomework, getSyllabuses, getProgress, getRecommendations, getStudentBadges, completeHomework } from '@/lib/api'
 import TopBarActions from '@/components/TopBarActions'
+import WeatherChip from '@/components/WeatherChip'
 import { MODS } from '@/lib/modules'
 import { ArrowRight, BookOpen, Bot, Flame, Palette, PencilLine, PlayCircle, Shapes, ShoppingBag, Sparkles, Star, Trophy } from 'lucide-react'
 
@@ -192,19 +193,22 @@ export default function ChildPage() {
                 <h1 className="text-2xl font-black leading-tight">{student?.name}!</h1>
               </div>
             </div>
-            <TopBarActions
-              variant="light"
-              showSettings
-              settingsHref="/child/settings"
-              extra={
-                <button
-                  onClick={() => router.push('/child/shop')}
-                  className="flex items-center justify-center rounded-xl h-10 px-3 gap-1.5 text-sm font-bold active:scale-95 transition-all app-pressable app-btn-glass"
-                >
-                  <ShoppingBag size={15} /> <span className="text-xs">Shop</span>
-                </button>
-              }
-            />
+            <div className="flex flex-col items-end gap-2">
+              <WeatherChip variant="light" />
+              <TopBarActions
+                variant="light"
+                showSettings
+                settingsHref="/child/settings"
+                extra={
+                  <button
+                    onClick={() => router.push('/child/shop')}
+                    className="flex items-center justify-center rounded-xl h-10 px-3 gap-1.5 text-sm font-bold active:scale-95 transition-all app-pressable app-btn-glass"
+                  >
+                    <ShoppingBag size={15} /> <span className="text-xs">Shop</span>
+                  </button>
+                }
+              />
+            </div>
           </div>
 
           {/* ── Top summary row ── */}

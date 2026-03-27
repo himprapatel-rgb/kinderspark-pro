@@ -5,6 +5,7 @@ import { useAppStore as useStore } from '@/store/appStore'
 import { Loading, InlineEmpty } from '@/components/UIStates'
 import DashboardSidebar from '@/components/DashboardSidebar'
 import TopBarActions from '@/components/TopBarActions'
+import WeatherChip from '@/components/WeatherChip'
 import { getAdminStats, getAdminLeaderboard, getClasses, getClassAnalytics } from '@/lib/api'
 import { BarChart3, BookOpen, GraduationCap, Settings, Sparkles, Trophy, UserRound, Users } from 'lucide-react'
 
@@ -86,7 +87,10 @@ export default function AdminPage() {
               <div className="text-2xl font-black flex items-center gap-2 text-white"><Settings size={20} /> {user?.name}</div>
               <div className="text-sm font-bold app-muted">KinderSpark Pro Dashboard</div>
             </div>
-            <TopBarActions variant="light" />
+            <div className="flex flex-col items-end gap-2">
+              <WeatherChip variant="light" />
+              <TopBarActions variant="light" />
+            </div>
           </div>
 
           {stats && (

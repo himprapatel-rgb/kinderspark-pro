@@ -5,6 +5,7 @@ import { useAppStore } from '@/store/appStore'
 import { Loading, InlineEmpty } from '@/components/UIStates'
 import DashboardSidebar from '@/components/DashboardSidebar'
 import TopBarActions from '@/components/TopBarActions'
+import WeatherChip from '@/components/WeatherChip'
 import { BarChart3, Bell, Bot, BookOpen, Users, Home, MessageSquare, ClipboardList, CheckSquare } from 'lucide-react'
 import {
   getClasses, getStudents, getHomework, getSyllabuses, getMessages,
@@ -450,17 +451,20 @@ export default function TeacherDashboard() {
             <div className="text-xs app-muted font-bold uppercase tracking-wider">Teacher Portal</div>
             <div className="text-white text-xl font-black mt-0.5">{user?.name || 'Teacher'}</div>
           </div>
-          <TopBarActions
-            variant="light"
-            extra={
-              <button
-                onClick={() => router.push('/teacher/reports')}
-                className="flex items-center justify-center rounded-xl h-10 px-3 gap-1.5 text-sm font-bold active:scale-95 transition-all app-pressable app-btn-glass"
-              >
-                <BarChart3 size={15} /> <span className="hidden sm:inline text-xs">Report</span>
-              </button>
-            }
-          />
+          <div className="flex flex-col items-end gap-2">
+            <WeatherChip variant="light" />
+            <TopBarActions
+              variant="light"
+              extra={
+                <button
+                  onClick={() => router.push('/teacher/reports')}
+                  className="flex items-center justify-center rounded-xl h-10 px-3 gap-1.5 text-sm font-bold active:scale-95 transition-all app-pressable app-btn-glass"
+                >
+                  <BarChart3 size={15} /> <span className="hidden sm:inline text-xs">Report</span>
+                </button>
+              }
+            />
+          </div>
         </div>
 
         {/* Class selector */}

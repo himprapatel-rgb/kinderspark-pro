@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useAppStore as useStore } from '@/store/appStore'
 import { Loading, InlineEmpty } from '@/components/UIStates'
 import TopBarActions from '@/components/TopBarActions'
+import WeatherChip from '@/components/WeatherChip'
 import { getHomework, getMessages, sendMessage, getAISessions, getAttendanceSummary, markAllMessagesRead, completeHomework, createMessageStream } from '@/lib/api'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { BarChart3, Bell, Home, Users, MessageSquare } from 'lucide-react'
@@ -253,7 +254,10 @@ export default function ParentPage() {
                     <span className="bg-purple-400/20 text-purple-300 rounded-full px-3 py-0.5 text-xs font-black">🤖 Lv {student?.aiBestLevel}</span>
                   </div>
                 </div>
-                <TopBarActions variant="light" />
+                <div className="flex flex-col items-end gap-2">
+                  <WeatherChip variant="light" />
+                  <TopBarActions variant="light" />
+                </div>
               </div>
             </div>
 
