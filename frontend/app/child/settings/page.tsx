@@ -51,6 +51,9 @@ export default function SettingsPage() {
             <button
               onClick={() => updateSettings({ large: !settings.large })}
               className="app-toggle app-pressable"
+              role="switch"
+              aria-checked={settings.large}
+              aria-label="Large Text"
               data-on={settings.large}>
               <div className="app-toggle-knob" data-on={settings.large} />
             </button>
@@ -65,6 +68,9 @@ export default function SettingsPage() {
             <button
               onClick={() => updateSettings({ hc: !settings.hc })}
               className="app-toggle app-pressable"
+              role="switch"
+              aria-checked={settings.hc}
+              aria-label="High Contrast"
               data-on={settings.hc}>
               <div className="app-toggle-knob" data-on={settings.hc} />
             </button>
@@ -79,6 +85,9 @@ export default function SettingsPage() {
             <button
               onClick={() => updateSettings({ dys: !settings.dys })}
               className="app-toggle app-pressable"
+              role="switch"
+              aria-checked={settings.dys}
+              aria-label="Dyslexia-Friendly Font"
               data-on={settings.dys}>
               <div className="app-toggle-knob" data-on={settings.dys} />
             </button>

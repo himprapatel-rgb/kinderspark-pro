@@ -16,6 +16,7 @@ import {
   generateHomeworkAI, sendParentReports,
   getClassActivity, sendHomeworkReminders, autoSyllabus, getTeacherInterventions,
   createMessageStream, getMyProfile,
+  getMessageThreads, getThreadMessages, createMessageThread, sendThreadMessage,
 } from '@/lib/api'
 
 // ─── tiny helpers ─────────────────────────────────────────────────────────────
@@ -24,6 +25,23 @@ const fmt = (d: string) => new Date(d).toLocaleDateString('en-US', { month: 'sho
 const AVATARS = ['🦁', '🐼', '🐨', '🦊', '🐸', '🦋', '🐙', '🦄', '🐳', '🦉']
 
 type Tab = 'home' | 'students' | 'homework' | 'syllabus' | 'messages' | 'attendance'
+
+function mapThreadMessageToLegacy(msg: any) {
+  const raw = String(msg?.body || '')
+  const lines = raw.split('\n')
+  const subjectLine = lines[0]?.startsWith('Subject: ') ? lines[0].replace('Subject: ', '').trim() : ''
+  const cleanBody = subjectLine ? lines.slice(2).join('\n').trim() : raw
+  return {
+    id: msg.id,
+    from: msg.senderUser?.displayName || 'Teacher',
+    fromId: msg.senderUserId,
+    to: 'class',
+    subject: subjectLine || (msg.kind === 'class_update' ? 'Class Update' : 'Message'),
+    body: cleanBody,
+    createdAt: msg.sentAt,
+    read: !!msg.receipts?.[0]?.seenAt,
+  }
+}
 
 export default function TeacherDashboard() {
   const router = useRouter()
@@ -41,6 +59,8 @@ export default function TeacherDashboard() {
   const [homework, setHomework] = useState<any[]>([])
   const [syllabuses, setSyllabuses] = useState<any[]>([])
   const [messages, setMessages] = useState<any[]>([])
+  const [threadMode, setThreadMode] = useState<{ enabled: boolean; threadId?: string }>({ enabled: false })
+  const [classGroupByLegacyId, setClassGroupByLegacyId] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
   const [classStats, setClassStats] = useState<any>(null)
   const [unreadCount, setUnreadCount] = useState(0)
@@ -97,6 +117,12 @@ export default function TeacherDashboard() {
   useEffect(() => {
     if (selectedClass) loadClassData(selectedClass.id)
   }, [selectedClass])
+
+  useEffect(() => {
+    if (selectedClass && classGroupByLegacyId[selectedClass.id] && !threadMode.enabled) {
+      loadClassData(selectedClass.id)
+    }
+  }, [classGroupByLegacyId, selectedClass])
 
   useEffect(() => {
     if (tab === 'attendance' && selectedClass) loadAttendance()
@@ -194,6 +220,13 @@ export default function TeacherDashboard() {
       const assignedIds = (profile?.teacherProfile?.assignments || [])
         .map((a: any) => a.classGroup?.legacyClassId)
         .filter(Boolean)
+      const classGroupMap: Record<string, string> = {}
+      ;(profile?.teacherProfile?.assignments || []).forEach((a: any) => {
+        const legacyId = a?.classGroup?.legacyClassId
+        const classGroupId = a?.classGroup?.id
+        if (legacyId && classGroupId) classGroupMap[String(legacyId)] = String(classGroupId)
+      })
+      setClassGroupByLegacyId(classGroupMap)
       const filtered = assignedIds.length > 0
         ? cls.filter((c: any) => assignedIds.includes(c.id))
         : cls
@@ -203,16 +236,36 @@ export default function TeacherDashboard() {
     finally { setLoading(false) }
   }
 
+  const loadMessagesWithFallback = async (classId: string) => {
+    const classGroupId = classGroupByLegacyId[classId]
+    if (classGroupId) {
+      try {
+        const threads = await getMessageThreads({ scopeType: 'classGroup', classGroupId })
+        const thread = Array.isArray(threads) ? threads[0] : null
+        if (thread?.id) {
+          const rows = await getThreadMessages(thread.id)
+          setThreadMode({ enabled: true, threadId: thread.id })
+          setUnreadCount(0)
+          return rows.map(mapThreadMessageToLegacy)
+        }
+      } catch {
+        // fallback to legacy route during rollout
+      }
+    }
+    setThreadMode({ enabled: false, threadId: undefined })
+    return getMessages({ classId })
+  }
+
   const loadClassData = async (classId: string) => {
     try {
-      const [stu, hw, syl, msg, stats, unread] = await Promise.all([
+      const [stu, hw, syl, stats, unread] = await Promise.all([
         getStudents(classId),
         getHomework(classId),
         getSyllabuses(classId),
-        getMessages({ classId }),
         getClassStats(classId).catch(() => null),
         getUnreadCount({ classId }).catch(() => ({ count: 0 })),
       ])
+      const msg = await loadMessagesWithFallback(classId)
       setStudents(stu)
       setHomework(hw)
       setSyllabuses(syl)
@@ -264,6 +317,7 @@ export default function TeacherDashboard() {
   }
 
   const handleDeleteStudent = async (id: string) => {
+    if (!window.confirm('Remove this student from the class? Their progress data will be lost.')) return
     setBusy(true)
     try {
       await deleteStudent(id)
@@ -290,6 +344,7 @@ export default function TeacherDashboard() {
   }
 
   const handleDeleteHomework = async (id: string) => {
+    if (!window.confirm('Remove this homework? Students will no longer see it.')) return
     setBusy(true)
     try {
       await deleteHomework(id)
@@ -347,14 +402,48 @@ export default function TeacherDashboard() {
     if (!msgForm.subject || !msgForm.body || !selectedClass) return
     setBusy(true)
     try {
-      await sendMessage({
-        from: user?.name || 'Teacher',
-        fromId: user?.id,
-        to: 'class',
-        subject: msgForm.subject,
-        body: msgForm.body,
-        classId: selectedClass.id,
-      })
+      const payloadBody = `Subject: ${msgForm.subject}\n\n${msgForm.body}`
+      if (threadMode.enabled && threadMode.threadId) {
+        await sendThreadMessage(threadMode.threadId, {
+          body: payloadBody,
+          kind: 'class_update',
+          priority: 'normal',
+        })
+      } else {
+        const classGroupId = classGroupByLegacyId[selectedClass.id]
+        if (classGroupId) {
+          try {
+            const existing = await getMessageThreads({ scopeType: 'classGroup', classGroupId })
+            let thread = Array.isArray(existing) ? existing[0] : null
+            if (!thread) thread = await createMessageThread({ scopeType: 'classGroup', classGroupId })
+            if (!thread?.id) throw new Error('Thread create failed')
+            await sendThreadMessage(thread.id, {
+              body: payloadBody,
+              kind: 'class_update',
+              priority: 'normal',
+            })
+            setThreadMode({ enabled: true, threadId: thread.id })
+          } catch {
+            await sendMessage({
+              from: user?.name || 'Teacher',
+              fromId: user?.id,
+              to: 'class',
+              subject: msgForm.subject,
+              body: msgForm.body,
+              classId: selectedClass.id,
+            })
+          }
+        } else {
+          await sendMessage({
+            from: user?.name || 'Teacher',
+            fromId: user?.id,
+            to: 'class',
+            subject: msgForm.subject,
+            body: msgForm.body,
+            classId: selectedClass.id,
+          })
+        }
+      }
       await loadClassData(selectedClass.id)
       setMsgForm({ subject: '', body: '' })
       showToast('Message sent!')
@@ -549,25 +638,25 @@ export default function TeacherDashboard() {
     setReportLoading(false)
   }
 
+  const TAB_ORDER: Tab[] = ['home', 'students', 'homework', 'attendance', 'syllabus', 'messages']
   const SIDEBAR_ITEMS = [
     { icon: '🏠', label: 'Dashboard', href: '/teacher' },
-    { icon: '👥', label: 'Students', href: '/teacher/class' },
+    { icon: '👥', label: 'Students', href: '/teacher/students' },
     { icon: '📚', label: 'Homework', href: '/teacher/homework' },
-    { icon: '📖', label: 'Syllabus', href: '/teacher/syllabus/builder' },
+    { icon: '📋', label: 'Attendance', href: '/teacher/attendance' },
+    { icon: '📖', label: 'Syllabus', href: '/teacher/syllabus' },
     { icon: '💬', label: 'Messages', href: '/teacher/messages', badge: unreadCount },
-    { icon: '📊', label: 'Reports', href: '/teacher/reports' },
-    { icon: '✏️', label: 'Builder', href: '/teacher/builder' },
   ]
 
   return (
     <div className="min-h-screen flex" style={{ background: 'var(--app-bg)' }}>
-      <DashboardSidebar role="teacher" items={SIDEBAR_ITEMS} userName={user?.name} />
+      <DashboardSidebar role="teacher" items={SIDEBAR_ITEMS} userName={user?.name} onItemClick={(idx) => setTab(TAB_ORDER[idx])} activeIndex={TAB_ORDER.indexOf(tab)} />
       <div className="flex-1 min-h-screen flex flex-col app-container">
       {/* Toast */}
       {toast && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-white text-black font-black text-sm px-5 py-3 rounded-full shadow-xl">
           {toast}
-        </div>
+      </div>
       )}
 
       {/* Header */}
@@ -576,7 +665,7 @@ export default function TeacherDashboard() {
           <div>
             <div className="text-xs app-muted font-bold uppercase tracking-wider">Teacher Portal</div>
             <div className="text-white text-xl font-black mt-0.5">{user?.name || 'Teacher'}</div>
-          </div>
+    </div>
           <div className="flex flex-col items-end gap-2">
             <WeatherChip variant="light" />
             <TopBarActions
@@ -1053,7 +1142,7 @@ export default function TeacherDashboard() {
         {/* ── HOMEWORK TAB ─────────────────────────────────────────────────── */}
         {tab === 'homework' && (
           <div className="space-y-4">
-            {(() => {
+            {(process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_SHOW_DEV_TOOLS === 'true') && (() => {
               const since = Date.now() - 7 * 24 * 60 * 60 * 1000
               const events = kpiEvents.filter((e: any) => new Date(e.at).getTime() >= since)
               const shown = events.filter((e: any) => e.name === 'teacher_smart_recommendations_shown').length
@@ -1129,9 +1218,9 @@ export default function TeacherDashboard() {
                         onClick={() => setWizardTopic(t)}
                         className="text-xs font-black px-3 py-1.5 rounded-full transition-all app-pressable"
                         style={{
-                          background: wizardTopic === t ? 'rgba(94,92,230,0.6)' : 'rgba(255,255,255,0.08)',
-                          color: wizardTopic === t ? '#fff' : 'rgba(255,255,255,0.6)',
-                          border: `1px solid ${wizardTopic === t ? '#5B7FE8' : 'transparent'}`,
+                          background: wizardTopic === t ? 'rgba(94,92,230,0.6)' : 'var(--app-surface-soft)',
+                          color: wizardTopic === t ? '#fff' : 'var(--app-text-muted)',
+                          border: `1px solid ${wizardTopic === t ? '#5B7FE8' : 'var(--app-border)'}`,
                         }}
                       >
                         {t}
@@ -1229,8 +1318,8 @@ export default function TeacherDashboard() {
                       <div className="flex gap-2">
                         <button
                           onClick={() => { setWizardResult(null); setWizardTopic('') }}
-                          className="flex-1 py-2.5 rounded-xl text-white/50 font-bold text-xs app-pressable"
-                          style={{ background: 'var(--app-surface-soft)' }}
+                          className="flex-1 py-2.5 rounded-xl font-bold text-xs app-pressable"
+                          style={{ background: 'var(--app-surface-soft)', color: 'var(--app-text-muted)' }}
                         >
                           ↩ Start Over
                         </button>

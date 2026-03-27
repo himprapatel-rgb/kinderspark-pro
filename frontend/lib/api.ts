@@ -239,6 +239,58 @@ export async function markAllMessagesRead(classId?: string, studentId?: string) 
   })
 }
 
+// ── Threaded messaging APIs (Phase 2) ────────────────────────────────────────
+export type ThreadScope = 'school' | 'classGroup' | 'student' | 'direct'
+export type ThreadPriority = 'normal' | 'important' | 'urgent'
+export type ThreadMessageKind = 'school_announcement' | 'class_update' | 'direct_message'
+
+export async function getMessageThreads(params?: {
+  scopeType?: ThreadScope
+  schoolId?: string
+  classGroupId?: string
+  studentProfileId?: string
+}) {
+  const query = new URLSearchParams()
+  if (params?.scopeType) query.set('scopeType', params.scopeType)
+  if (params?.schoolId) query.set('schoolId', params.schoolId)
+  if (params?.classGroupId) query.set('classGroupId', params.classGroupId)
+  if (params?.studentProfileId) query.set('studentProfileId', params.studentProfileId)
+  const suffix = query.toString() ? `?${query.toString()}` : ''
+  return req(`/messages/threads${suffix}`)
+}
+
+export async function createMessageThread(data: {
+  scopeType: ThreadScope
+  schoolId?: string
+  classGroupId?: string
+  studentProfileId?: string
+  participantUserIds?: string[]
+}) {
+  return req('/messages/threads', { method: 'POST', body: JSON.stringify(data) })
+}
+
+export async function getThreadMessages(threadId: string) {
+  return req(`/messages/threads/${encodeURIComponent(threadId)}/messages`)
+}
+
+export async function sendThreadMessage(threadId: string, data: {
+  body: string
+  kind: ThreadMessageKind
+  priority?: ThreadPriority
+  expiresAt?: string
+}) {
+  return req(`/messages/threads/${encodeURIComponent(threadId)}/messages`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export async function markThreadRead(threadId: string) {
+  return req(`/messages/threads/${encodeURIComponent(threadId)}/read`, {
+    method: 'POST',
+  })
+}
+
 export async function getProgress(studentId: string) {
   return req(`/progress/${studentId}`)
 }
@@ -430,6 +482,31 @@ export async function enrollStudentInClass(data: { studentProfileId: string; cla
   return req('/assignments/student-enrollment', {
     method: 'POST',
     body: JSON.stringify(data),
+  })
+}
+
+export async function assignTeacherStudentOverride(data: {
+  teacherProfileId: string
+  studentProfileId: string
+  subject?: string
+  reason?: string
+  startDate?: string
+  endDate?: string
+  isActive?: boolean
+}) {
+  return req('/assignments/teacher-student-override', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export async function getStudentTeacherOverrides(studentProfileId: string) {
+  return req(`/assignments/student/${encodeURIComponent(studentProfileId)}/teacher-overrides`)
+}
+
+export async function deleteTeacherStudentOverride(id: string) {
+  return req(`/assignments/teacher-student-override/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
   })
 }
 

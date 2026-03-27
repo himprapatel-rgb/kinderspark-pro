@@ -11,7 +11,18 @@ datasource db {
 model School {
   id        String   @id @default(cuid())
   name      String
+  status    String   @default("active")
+  timezone  String   @default("UTC")
+  locale    String   @default("en")
   classes   Class[]
+  roleAssignments RoleAssignment[]
+  teacherProfiles  TeacherProfile[]
+  parentProfiles   ParentProfile[]
+  studentProfiles  StudentProfile[]
+  principalProfiles PrincipalProfile[]
+  gradeLevels       GradeLevel[]
+  classGroups       ClassGroup[]
+  messageThreads    MessageThread[]
   createdAt DateTime @default(now())
 }
 
@@ -237,6 +248,10 @@ model User {
   parentProfile  ParentProfile?
   studentProfile StudentProfile?
   principalProfile PrincipalProfile?
+  adminProfile   AdminProfile?
+  createdMessageThreads MessageThread[] @relation("ThreadCreatedBy")
+  threadParticipants   ThreadParticipant[]
+  sentThreadMessages   ThreadMessage[]    @relation("ThreadMessageSender")
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
 
@@ -281,6 +296,18 @@ model PrincipalProfile {
   @@index([schoolId])
 }
 
+model AdminProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  schoolId  String?
+  school    School?  @relation(fields: [schoolId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([schoolId])
+}
+
 model TeacherProfile {
   id              String                  @id @default(cuid())
   userId           String                  @unique
@@ -289,6 +316,7 @@ model TeacherProfile {
   school           School                  @relation(fields: [schoolId], references: [id])
   legacyTeacherId  String?                 @unique
   assignments      TeacherClassAssignment[]
+  studentOverrides TeacherStudentAssignment[]
   createdAt        DateTime                @default(now())
   updatedAt        DateTime                @updatedAt
 
@@ -318,6 +346,8 @@ model StudentProfile {
   legacyStudentId  String?                  @unique
   enrollments      StudentClassEnrollment[]
   parentLinks      ParentChildLink[]
+  teacherOverrides TeacherStudentAssignment[]
+  messageThreads   MessageThread[]
   createdAt        DateTime                 @default(now())
   updatedAt        DateTime                 @updatedAt
 
@@ -350,6 +380,7 @@ model ClassGroup {
   legacyClassId String?                  @unique
   studentEnrollments StudentClassEnrollment[]
   teacherAssignments TeacherClassAssignment[]
+  messageThreads      MessageThread[]
   createdAt     DateTime                 @default(now())
   updatedAt     DateTime                 @updatedAt
 
@@ -369,6 +400,24 @@ model TeacherClassAssignment {
 
   @@unique([teacherProfileId, classGroupId, subject])
   @@index([classGroupId])
+}
+
+model TeacherStudentAssignment {
+  id               String         @id @default(cuid())
+  teacherProfileId String
+  teacherProfile   TeacherProfile @relation(fields: [teacherProfileId], references: [id], onDelete: Cascade)
+  studentProfileId String
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  subject          String?
+  reason           String?
+  startDate        DateTime       @default(now())
+  endDate          DateTime?
+  isActive         Boolean        @default(true)
+  createdAt        DateTime       @default(now())
+
+  @@unique([teacherProfileId, studentProfileId, subject])
+  @@index([studentProfileId, isActive])
+  @@index([teacherProfileId, isActive])
 }
 
 model StudentClassEnrollment {
@@ -398,6 +447,90 @@ model ParentChildLink {
 
   @@unique([parentProfileId, studentProfileId])
   @@index([studentProfileId])
+}
+
+enum ThreadScope {
+  school
+  classGroup
+  student
+  direct
+}
+
+enum MessagePriority {
+  normal
+  important
+  urgent
+}
+
+enum MessageKind {
+  school_announcement
+  class_update
+  direct_message
+}
+
+model MessageThread {
+  id               String            @id @default(cuid())
+  scopeType        ThreadScope
+  schoolId         String?
+  school           School?           @relation(fields: [schoolId], references: [id], onDelete: SetNull)
+  classGroupId     String?
+  classGroup       ClassGroup?       @relation(fields: [classGroupId], references: [id], onDelete: SetNull)
+  studentProfileId String?
+  studentProfile   StudentProfile?   @relation(fields: [studentProfileId], references: [id], onDelete: SetNull)
+  createdByUserId  String
+  createdByUser    User              @relation("ThreadCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  participants     ThreadParticipant[]
+  messages         ThreadMessage[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@index([scopeType, schoolId])
+  @@index([scopeType, classGroupId])
+  @@index([scopeType, studentProfileId])
+}
+
+model ThreadParticipant {
+  id         String        @id @default(cuid())
+  threadId   String
+  thread     MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roleAtJoin String?
+  muted      Boolean       @default(false)
+  createdAt  DateTime      @default(now())
+
+  @@unique([threadId, userId])
+  @@index([userId])
+}
+
+model ThreadMessage {
+  id           String          @id @default(cuid())
+  threadId     String
+  thread       MessageThread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  senderUserId String
+  senderUser   User            @relation("ThreadMessageSender", fields: [senderUserId], references: [id], onDelete: Restrict)
+  kind         MessageKind
+  priority     MessagePriority @default(normal)
+  body         String          @db.Text
+  expiresAt    DateTime?
+  sentAt       DateTime        @default(now())
+  receipts     MessageReceipt[]
+
+  @@index([threadId, sentAt])
+  @@index([priority, sentAt])
+}
+
+model MessageReceipt {
+  id        String        @id @default(cuid())
+  messageId String
+  message   ThreadMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  seenAt    DateTime?
+  ackAt     DateTime?
+
+  @@unique([messageId, userId])
+  @@index([userId, seenAt])
 }
 
 // ── Agent Memory System ──────────────────────────────────────────────────────

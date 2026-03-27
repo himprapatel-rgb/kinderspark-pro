@@ -101,7 +101,12 @@ export const useAppStore = create<AppStore>()(
             : [role as any],
         }),
 
-      logout: () =>
+      logout: () => {
+        // Clear persisted store from localStorage
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('kinderspark-store')
+          localStorage.removeItem('token')
+        }
         set({
           user: null,
           role: null,
@@ -112,7 +117,9 @@ export const useAppStore = create<AppStore>()(
           schoolContext: null,
           children: [],
           teachingClasses: [],
-        }),
+          dailyMission: null,
+        })
+      },
 
       setCurrentStudent: (student) => set({ currentStudent: student }),
       setAvailableRoles: (availableRoles) => set({ availableRoles }),

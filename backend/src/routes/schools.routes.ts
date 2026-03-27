@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express'
 import prisma from '../prisma/client'
 import { requireAuth, requireRole } from '../middleware/auth.middleware'
+import { canUserAccessSchool } from '../utils/accessControl'
 
 const router = Router()
 router.use(requireAuth)
@@ -9,6 +10,8 @@ router.use(requireAuth)
 router.get('/:schoolId/overview', requireRole('admin', 'principal'), async (req: Request, res: Response) => {
   try {
     const { schoolId } = req.params
+    const allowed = await canUserAccessSchool(req.user!.id, req.user!.role, schoolId)
+    if (!allowed) return res.status(403).json({ error: 'Insufficient permissions' })
     const [school, classes, teachers, students] = await Promise.all([
       prisma.school.findUnique({ where: { id: schoolId } }),
       prisma.classGroup.count({ where: { schoolId } }),
@@ -32,6 +35,8 @@ router.get('/:schoolId/overview', requireRole('admin', 'principal'), async (req:
 // GET /api/schools/:schoolId/grades
 router.get('/:schoolId/grades', requireRole('admin', 'principal', 'teacher'), async (req: Request, res: Response) => {
   try {
+    const allowed = await canUserAccessSchool(req.user!.id, req.user!.role, req.params.schoolId)
+    if (!allowed) return res.status(403).json({ error: 'Insufficient permissions' })
     const grades = await prisma.gradeLevel.findMany({
       where: { schoolId: req.params.schoolId },
       include: { classGroups: true },
@@ -48,6 +53,8 @@ router.get('/:schoolId/grades', requireRole('admin', 'principal', 'teacher'), as
 router.get('/:schoolId/graph', requireRole('admin', 'principal'), async (req: Request, res: Response) => {
   try {
     const schoolId = req.params.schoolId
+    const allowed = await canUserAccessSchool(req.user!.id, req.user!.role, schoolId)
+    if (!allowed) return res.status(403).json({ error: 'Insufficient permissions' })
     const grades = await prisma.gradeLevel.findMany({
       where: { schoolId },
       include: {

@@ -78,7 +78,7 @@ export default function TopBarActions({
       )}
 
       <button
-        onClick={() => { logout(); router.push('/') }}
+        onClick={() => { logout(); window.location.href = '/login' }}
         className={`${btnClass} h-10 px-3 gap-1.5`}
         title="Sign out"
       >

@@ -79,3 +79,29 @@ export function InlineEmpty({ emoji = '📭', text = 'Nothing here yet' }: { emo
     </div>
   )
 }
+
+// ── Skeleton block ──────────────────────────────────────────────────────────
+export function Skeleton({ className = '', style }: { className?: string; style?: React.CSSProperties }) {
+  return (
+    <div
+      className={`animate-pulse rounded-xl ${className}`}
+      style={{ background: 'var(--app-surface-soft)', ...style }}
+    />
+  )
+}
+
+// ── Tab content skeleton — shows a few placeholder blocks ───────────────────
+export function TabSkeleton({ rows = 3 }: { rows?: number }) {
+  return (
+    <div className="space-y-4 p-4">
+      <Skeleton className="h-6 w-40" />
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className="rounded-2xl p-4 space-y-3" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-3 w-1/2" />
+          <Skeleton className="h-2 w-full" />
+        </div>
+      ))}
+    </div>
+  )
+}

@@ -3,11 +3,9 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore as useStore } from '@/store/appStore'
 import { getHomework, getSyllabuses, getProgress, getRecommendations, getStudentBadges, completeHomework, getDailyMission } from '@/lib/api'
-import TopBarActions from '@/components/TopBarActions'
-import WeatherChip from '@/components/WeatherChip'
 import { MODS } from '@/lib/modules'
 import { selectAdaptiveMission } from '@/lib/missionEngine'
-import { ArrowRight, BookOpen, Bot, Flame, Palette, PencilLine, PlayCircle, Shapes, ShoppingBag, Sparkles, Star, Trophy } from 'lucide-react'
+import { ArrowRight, BookOpen, Bot, Flame, Palette, PencilLine, PlayCircle, Settings, Shapes, ShoppingBag, Sparkles, Star, Trophy } from 'lucide-react'
 
 // ── Daily Challenge helper ─────────────────────────────────────────────────────
 function getDailyChallenge() {
@@ -209,25 +207,24 @@ export default function ChildPage() {
                 {student?.avatar || '🧒'}
               </div>
               <div>
-                <p className="text-xs app-muted font-bold uppercase tracking-widest">Welcome back</p>
-                <h1 className="text-2xl font-black leading-tight">{student?.name}!</h1>
+                <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.7)' }}>Welcome back</p>
+                <h1 className="text-2xl font-black leading-tight text-white">{student?.name}!</h1>
               </div>
             </div>
-            <div className="flex flex-col items-end gap-2">
-              <WeatherChip variant="light" />
-              <TopBarActions
-                variant="light"
-                showSettings
-                settingsHref="/child/settings"
-                extra={
-                  <button
-                    onClick={() => router.push('/child/shop')}
-                    className="flex items-center justify-center rounded-xl h-10 px-3 gap-1.5 text-sm font-bold active:scale-95 transition-all app-pressable app-btn-glass"
-                  >
-                    <ShoppingBag size={15} /> <span className="text-xs">Shop</span>
-                  </button>
-                }
-              />
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => router.push('/child/shop')}
+                className="flex items-center justify-center rounded-xl h-10 px-3 gap-1.5 text-sm font-bold active:scale-95 transition-all app-pressable app-btn-glass"
+              >
+                <ShoppingBag size={15} /> <span className="text-xs">Shop</span>
+              </button>
+              <button
+                onClick={() => router.push('/child/settings')}
+                className="flex items-center justify-center rounded-xl w-10 h-10 text-sm font-bold active:scale-95 transition-all app-pressable app-btn-glass"
+                title="Settings"
+              >
+                <Settings size={16} />
+              </button>
             </div>
           </div>
 
@@ -257,8 +254,8 @@ export default function ChildPage() {
                 <Flame size={16} style={{ color: streak > 0 ? '#E05252' : '#7C8296' }} />
               </span>
               <div>
-                <p className="font-black text-base leading-none">{streak}d</p>
-                <p className="text-[10px] font-bold app-muted">Streak</p>
+                <p className="font-black text-base leading-none">{streak}</p>
+                <p className="text-[10px] font-bold app-muted">{streak === 1 ? 'day' : 'days'}</p>
               </div>
             </div>
 
@@ -292,7 +289,7 @@ export default function ChildPage() {
                 <div className="absolute inset-0 shimmer" />
               </div>
             </div>
-            <p className="text-[10px] app-muted font-bold mt-1">{doneCards} of {totalCards} cards completed</p>
+            <p className="text-[10px] app-muted font-bold mt-1">{doneCards} cards done — keep going!</p>
             <button
               onClick={() => {
                 trackKpiEvent({ category: 'engagement', name: 'child_continue_learning_click' })

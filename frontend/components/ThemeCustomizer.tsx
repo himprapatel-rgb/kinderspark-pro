@@ -15,6 +15,10 @@ export default function ThemeCustomizer() {
   const settings = useAppStore((s) => s.settings)
   const updateSettings = useAppStore((s) => s.updateSettings)
 
+  // Only show in development or when explicitly enabled
+  const isDev = process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_SHOW_DEV_TOOLS === 'true'
+  if (!isDev) return null
+
   return (
     <div style={{ position: 'fixed', right: 12, bottom: 14, zIndex: 60 }}>
       {open && (

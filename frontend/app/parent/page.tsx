@@ -5,7 +5,12 @@ import { useAppStore as useStore } from '@/store/appStore'
 import { Loading, InlineEmpty } from '@/components/UIStates'
 import TopBarActions from '@/components/TopBarActions'
 import WeatherChip from '@/components/WeatherChip'
-import { getHomework, getMessages, sendMessage, getAISessions, getAttendanceSummary, markAllMessagesRead, completeHomework, createMessageStream, getMyProfile } from '@/lib/api'
+import ParentSidebar from '@/components/ParentSidebar'
+import {
+  getHomework, getMessages, sendMessage, getAISessions, getAttendanceSummary, markAllMessagesRead,
+  completeHomework, createMessageStream, getMyProfile,
+  getMessageThreads, getThreadMessages, createMessageThread, sendThreadMessage,
+} from '@/lib/api'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { BarChart3, Bell, Home, Users, MessageSquare } from 'lucide-react'
 
@@ -29,6 +34,23 @@ function Ring({ pct, color, size = 80, stroke = 8 }: { pct: number; color: strin
   )
 }
 
+function mapThreadMessageToLegacy(msg: any) {
+  const raw = String(msg?.body || '')
+  const lines = raw.split('\n')
+  const subjectLine = lines[0]?.startsWith('Subject: ') ? lines[0].replace('Subject: ', '').trim() : ''
+  const cleanBody = subjectLine ? lines.slice(2).join('\n').trim() : raw
+  return {
+    id: msg.id,
+    from: msg.senderUser?.displayName || 'Teacher',
+    fromId: msg.senderUserId,
+    to: 'parent',
+    subject: subjectLine || (msg.kind === 'class_update' ? 'Class Update' : 'Message'),
+    body: cleanBody,
+    createdAt: msg.sentAt,
+    read: !!msg.receipts?.[0]?.seenAt,
+  }
+}
+
 export default function ParentPage() {
   const router = useRouter()
   const user = useStore(s => s.user)
@@ -41,6 +63,7 @@ export default function ParentPage() {
   const [children, setChildren] = useState<Array<{ id: string; name: string; avatar?: string; classId?: string }>>([])
   const [homework, setHomework] = useState<any[]>([])
   const [messages, setMessages] = useState<any[]>([])
+  const [threadMode, setThreadMode] = useState<{ enabled: boolean; threadId?: string }>({ enabled: false })
   const [aiSessions, setAiSessions] = useState<any[]>([])
   const [attendance, setAttendance] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -68,6 +91,7 @@ export default function ParentPage() {
               name: sp?.user?.displayName || 'Child',
               avatar: sp?.user?.avatar || '🧒',
               classId: activeEnrollment?.classGroup?.legacyClassId || user.classId,
+              classGroupId: activeEnrollment?.classGroup?.id || null,
             }
           })
           .filter((c: any) => c.id)
@@ -180,11 +204,31 @@ export default function ParentPage() {
 
   const loadData = async (u: any) => {
     try {
-      const [hw, msgs, sessions] = await Promise.all([
+      const [hw, sessions] = await Promise.all([
         getHomework(u.classId),
-        getMessages({ classId: u.classId }),
         getAISessions(u.id),
       ])
+      let msgs: any[] = []
+      if (u.classGroupId) {
+        try {
+          const threads = await getMessageThreads({ scopeType: 'classGroup', classGroupId: u.classGroupId })
+          const thread = Array.isArray(threads) ? threads[0] : null
+          if (thread?.id) {
+            const rows = await getThreadMessages(thread.id)
+            setThreadMode({ enabled: true, threadId: thread.id })
+            msgs = rows.map(mapThreadMessageToLegacy)
+          } else {
+            setThreadMode({ enabled: false, threadId: undefined })
+            msgs = await getMessages({ classId: u.classId })
+          }
+        } catch {
+          setThreadMode({ enabled: false, threadId: undefined })
+          msgs = await getMessages({ classId: u.classId })
+        }
+      } else {
+        setThreadMode({ enabled: false, threadId: undefined })
+        msgs = await getMessages({ classId: u.classId })
+      }
       setHomework(hw)
       setMessages(msgs)
       setAiSessions(sessions || [])
@@ -244,6 +288,8 @@ export default function ParentPage() {
 
   const handleMarkDone = async (hwId: string) => {
     if (!student || markingDone) return
+    const confirmed = window.confirm('Are you sure your child has completed this homework? This will notify the teacher.')
+    if (!confirmed) return
     setMarkingDone(hwId)
     try {
       await completeHomework(hwId, student.id)
@@ -255,14 +301,45 @@ export default function ParentPage() {
   const handleReply = async () => {
     if (!showReply || !replyBody) return
     try {
-      await sendMessage({
-        from: `${student?.name}'s Parent`,
-        fromId: student?.id,
-        to: showReply.fromId || 'teacher',
-        subject: `Re: ${showReply.subject}`,
-        body: replyBody,
-        classId: student?.classId,
-      })
+      const payloadBody = `Subject: Re: ${showReply.subject}\n\n${replyBody}`
+      if (threadMode.enabled && threadMode.threadId) {
+        await sendThreadMessage(threadMode.threadId, {
+          body: payloadBody,
+          kind: 'direct_message',
+          priority: 'normal',
+        })
+      } else if (student?.classGroupId) {
+        try {
+          const existing = await getMessageThreads({ scopeType: 'classGroup', classGroupId: student.classGroupId })
+          let thread = Array.isArray(existing) ? existing[0] : null
+          if (!thread) thread = await createMessageThread({ scopeType: 'classGroup', classGroupId: student.classGroupId })
+          if (!thread?.id) throw new Error('thread unavailable')
+          await sendThreadMessage(thread.id, {
+            body: payloadBody,
+            kind: 'direct_message',
+            priority: 'normal',
+          })
+          setThreadMode({ enabled: true, threadId: thread.id })
+        } catch {
+          await sendMessage({
+            from: `${student?.name}'s Parent`,
+            fromId: student?.id,
+            to: showReply.fromId || 'teacher',
+            subject: `Re: ${showReply.subject}`,
+            body: replyBody,
+            classId: student?.classId,
+          })
+        }
+      } else {
+        await sendMessage({
+          from: `${student?.name}'s Parent`,
+          fromId: student?.id,
+          to: showReply.fromId || 'teacher',
+          subject: `Re: ${showReply.subject}`,
+          body: replyBody,
+          classId: student?.classId,
+        })
+      }
       setShowReply(null)
       setReplyBody('')
       loadData(user)
@@ -286,9 +363,17 @@ export default function ParentPage() {
   ]
 
   return (
-    <div className="min-h-screen flex flex-col app-container" style={{ background: 'var(--app-bg)' }}>
+    <div className="min-h-screen flex" style={{ background: 'var(--app-bg)' }}>
+      <ParentSidebar
+        userName={user?.name || student?.name}
+        childName={student?.name}
+        activeIndex={tab}
+        onItemClick={(idx) => setTab(idx)}
+        unreadCount={unreadMsgs}
+      />
+    <div className="flex-1 min-h-screen flex flex-col app-container">
       {/* Fixed tab bar */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[960px] z-50 backdrop-blur border-b rounded-b-xl" style={{ background: 'rgba(255,255,255,0.92)', borderColor: 'var(--app-border)' }}>
+      <div className="lg:hidden fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[960px] z-50 backdrop-blur border-b rounded-b-xl" style={{ background: 'rgba(255,255,255,0.92)', borderColor: 'var(--app-border)' }}>
         <div className="flex">
           {TABS.map(t => (
             <button key={t.idx} onClick={() => setTab(t.idx)}
@@ -305,7 +390,7 @@ export default function ParentPage() {
         </div>
       </div>
 
-      <div className="pt-12 pb-20">
+      <div className="pt-12 lg:pt-4 pb-20">
         {/* ── HOME TAB ──────────────────────────────────────────── */}
         {tab === 0 && (
           <div>
@@ -526,7 +611,7 @@ export default function ParentPage() {
                 <div className="text-orange-400 font-black text-sm mb-2">⚠️ Pending ({pendingHW.length})</div>
                 <div className="space-y-2">
                   {pendingHW.map(hw => (
-                    <div key={hw.id} className="rounded-xl p-3 flex items-center gap-3" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)', border: hw.aiGenerated ? '1px solid rgba(94,92,230,0.35)' : '1px solid #F5A62330' }}>
+                    <div key={hw.id} className="rounded-xl p-3 flex items-center gap-3" style={{ background: 'var(--app-surface)', border: hw.aiGenerated ? '1px solid rgba(94,92,230,0.35)' : '1px solid #F5A62330' }}>
                       <div className="text-2xl">{hw.aiGenerated ? '✨' : '📝'}</div>
                       <div className="flex-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
@@ -561,7 +646,7 @@ export default function ParentPage() {
                   {unreadMsgs > 0 && <div className="bg-red-500 text-xs font-black rounded-full px-2 py-0.5">{unreadMsgs} new</div>}
                 </div>
                 {messages.slice(0, 2).map(msg => (
-                  <div key={msg.id} className="rounded-xl p-3 mb-2" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)', border: !msg.read ? '1px solid #4CAF6A40' : 'none' }}>
+                  <div key={msg.id} className="rounded-xl p-3 mb-2" style={{ background: 'var(--app-surface)', border: !msg.read ? '1px solid #4CAF6A40' : '1px solid var(--app-border)' }}>
                     <div className="flex items-center gap-2">
                       {!msg.read && <div className="w-2 h-2 rounded-full bg-green-400 shrink-0" />}
                       <div className="font-black text-sm">{msg.subject}</div>
@@ -624,7 +709,7 @@ export default function ParentPage() {
                     const done = hw.completions?.some((c: any) => c.studentId === student?.id && c.done)
                     return (
                       <div key={hw.id} className="rounded-2xl p-3 flex items-center gap-3"
-                        style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)', border: `1px solid ${done ? '#4CAF6A30' : hw.aiGenerated ? 'rgba(94,92,230,0.3)' : '#F5A62330'}` }}>
+                        style={{ background: 'var(--app-surface)', border: `1px solid ${done ? '#4CAF6A30' : hw.aiGenerated ? 'rgba(94,92,230,0.3)' : '#F5A62330'}` }}>
                         <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0 ${done ? 'bg-green-500/20' : 'bg-orange-500/20'}`}>
                           {done ? '✅' : hw.aiGenerated ? '✨' : '⏰'}
                         </div>
@@ -657,7 +742,7 @@ export default function ParentPage() {
             <div className="space-y-3">
               {messages.map(msg => (
                 <div key={msg.id} className="rounded-2xl p-4"
-                  style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)', border: !msg.read ? '1px solid #4CAF6A40' : '1px solid transparent' }}>
+                  style={{ background: 'var(--app-surface)', border: !msg.read ? '1px solid #4CAF6A40' : '1px solid var(--app-border)' }}>
                   <div className="flex justify-between items-start mb-1">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       {!msg.read && <div className="w-2 h-2 rounded-full bg-green-400 shrink-0" />}
@@ -712,6 +797,7 @@ export default function ParentPage() {
           </div>
         </div>
       )}
+    </div>
     </div>
   )
 }

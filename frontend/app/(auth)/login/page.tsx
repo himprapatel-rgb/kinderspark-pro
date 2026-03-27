@@ -328,7 +328,7 @@ export default function LoginPage() {
             <span key={i} className="text-sm opacity-40">{icon}</span>
           ))}
         </div>
-        <p className="text-xs font-semibold" style={{ color: 'rgba(70, 75, 96, 0.4)' }}>Safe & AI-powered learning · © 2025 KinderSpark Pro</p>
+        <p className="text-xs font-semibold" style={{ color: 'rgba(70, 75, 96, 0.4)' }}>Safe & AI-powered learning · © 2026 KinderSpark Pro</p>
       </div>
 
       <style>{`

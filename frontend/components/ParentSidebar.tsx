@@ -1,47 +1,25 @@
 'use client'
-import { usePathname, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
-import { BarChart3, BookOpen, DoorOpen, GraduationCap, Home, Sparkles, Trophy, Users, MessageSquare, ClipboardList } from 'lucide-react'
+import { BarChart3, DoorOpen, Home, Heart, MessageSquare, Sparkles } from 'lucide-react'
 
-interface NavItem {
-  icon: string
-  label: string
-  href: string
-  badge?: number
-}
-
-interface DashboardSidebarProps {
-  role: 'teacher' | 'admin'
-  items: NavItem[]
+interface ParentSidebarProps {
   userName?: string
-  /** When provided, sidebar clicks call this instead of router.push */
-  onItemClick?: (index: number) => void
-  /** Index of the currently active tab (used with onItemClick) */
-  activeIndex?: number
+  childName?: string
+  activeIndex: number
+  onItemClick: (index: number) => void
+  unreadCount?: number
 }
 
-export default function DashboardSidebar({ role, items, userName, onItemClick, activeIndex }: DashboardSidebarProps) {
-  const pathname = usePathname()
+const ITEMS = [
+  { icon: Home, label: 'Home' },
+  { icon: BarChart3, label: 'Progress' },
+  { icon: MessageSquare, label: 'Messages' },
+]
+
+export default function ParentSidebar({ userName, childName, activeIndex, onItemClick, unreadCount = 0 }: ParentSidebarProps) {
   const router = useRouter()
   const logout = useAppStore(s => s.logout)
-
-  const roleColor = role === 'teacher' ? 'var(--role-teacher)' : 'var(--role-admin)'
-  const roleLabel = role === 'teacher' ? 'Teacher' : 'Admin'
-
-  const renderIcon = (icon: string) => {
-    switch (icon) {
-      case '🏠': return <Home size={16} />
-      case '👥': return <Users size={16} />
-      case '📚': return <BookOpen size={16} />
-      case '📊': return <BarChart3 size={16} />
-      case '🏆': return <Trophy size={16} />
-      case '🏫': return <GraduationCap size={16} />
-      case '💬': return <MessageSquare size={16} />
-      case '📋': return <ClipboardList size={16} />
-      case '📈': return <BarChart3 size={16} />
-      default: return <Sparkles size={16} />
-    }
-  }
 
   return (
     <aside className="hidden lg:flex w-64 h-screen sticky top-0 flex-col border-r" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)' }}>
@@ -49,15 +27,15 @@ export default function DashboardSidebar({ role, items, userName, onItemClick, a
       <div className="flex items-center gap-3 px-5 py-6 border-b" style={{ borderColor: 'var(--app-border)' }}>
         <div
           className="w-10 h-10 rounded-xl flex items-center justify-center text-xl font-black text-white"
-          style={{ background: `linear-gradient(135deg, var(--app-accent), ${roleColor})` }}
+          style={{ background: 'linear-gradient(135deg, #4CAF6A, #5FBF7F)' }}
         >
-          <Sparkles size={18} />
+          <Heart size={18} />
         </div>
         <div>
           <div className="text-sm font-black" style={{ color: 'rgb(var(--foreground-rgb))' }}>
             Kinder<span style={{ color: 'var(--app-accent)' }}>Spark</span>
           </div>
-          <div className="text-[10px] font-bold" style={{ color: 'var(--app-text-muted)' }}>{roleLabel} Portal</div>
+          <div className="text-[10px] font-bold" style={{ color: 'var(--app-text-muted)' }}>Parent Portal</div>
         </div>
       </div>
 
@@ -67,13 +45,13 @@ export default function DashboardSidebar({ role, items, userName, onItemClick, a
           <div className="flex items-center gap-3">
             <div
               className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-black text-white"
-              style={{ background: roleColor }}
+              style={{ background: '#4CAF6A' }}
             >
               {userName.charAt(0).toUpperCase()}
             </div>
             <div>
               <div className="text-sm font-bold" style={{ color: 'rgb(var(--foreground-rgb))' }}>{userName}</div>
-              <div className="text-[10px] font-bold" style={{ color: 'var(--app-text-muted)' }}>{roleLabel}</div>
+              {childName && <div className="text-[10px] font-bold" style={{ color: 'var(--app-text-muted)' }}>Parent of {childName}</div>}
             </div>
           </div>
         </div>
@@ -81,29 +59,24 @@ export default function DashboardSidebar({ role, items, userName, onItemClick, a
 
       {/* Nav items */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {items.map((item, idx) => {
-          const active = activeIndex !== undefined
-            ? idx === activeIndex
-            : item.href === `/${role}`
-              ? pathname === `/${role}`
-              : pathname.startsWith(item.href)
-
+        {ITEMS.map((item, idx) => {
+          const active = idx === activeIndex
           return (
             <button
-              key={item.href + idx}
-              onClick={() => onItemClick ? onItemClick(idx) : router.push(item.href)}
+              key={item.label}
+              onClick={() => onItemClick(idx)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all duration-200 app-pressable ${active ? 'translate-x-0.5' : 'hover:bg-gray-50'}`}
               style={{
-                background: active ? `var(--app-accent)` : 'transparent',
+                background: active ? 'var(--app-accent)' : 'transparent',
                 color: active ? '#fff' : 'var(--app-text-muted)',
                 fontWeight: active ? 800 : 600,
                 fontSize: '13px',
                 boxShadow: active ? 'var(--app-shadow-sm)' : 'none',
               }}
             >
-              <span className="text-base">{renderIcon(item.icon)}</span>
+              <item.icon size={16} />
               <span className="flex-1">{item.label}</span>
-              {item.badge && item.badge > 0 && (
+              {item.label === 'Messages' && unreadCount > 0 && (
                 <span
                   className="text-[10px] font-black px-1.5 py-0.5 rounded-full"
                   style={{
@@ -111,7 +84,7 @@ export default function DashboardSidebar({ role, items, userName, onItemClick, a
                     color: '#fff',
                   }}
                 >
-                  {item.badge > 9 ? '9+' : item.badge}
+                  {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
             </button>
@@ -126,7 +99,7 @@ export default function DashboardSidebar({ role, items, userName, onItemClick, a
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all app-pressable"
           style={{ color: 'var(--app-danger)', fontSize: '13px', fontWeight: 600 }}
         >
-          <span className="text-base"><DoorOpen size={16} /></span>
+          <DoorOpen size={16} />
           <span>Sign Out</span>
         </button>
       </div>

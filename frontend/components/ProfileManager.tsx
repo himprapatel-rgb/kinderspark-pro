@@ -24,6 +24,14 @@ export default function ProfileManager({ roleLabel }: { roleLabel: string }) {
           avatar: profile?.avatar || user.avatar || '',
         })
         setRoles((profile?.roleAssignments || []).map((r: any) => String(r.role)))
+      } catch {
+        // Profile endpoint unavailable — fall back to local user data
+        setForm({
+          displayName: user.name || '',
+          email: '',
+          avatar: user.avatar || '',
+        })
+        setRoles([(user as any)?.role || 'user'])
       } finally {
         setLoading(false)
       }
@@ -49,6 +57,7 @@ export default function ProfileManager({ roleLabel }: { roleLabel: string }) {
 
   return (
     <div className="min-h-screen app-container app-content">
+      <button onClick={() => router.back()} className="text-sm font-bold app-muted mb-4 app-pressable flex items-center gap-1">← Back</button>
       <div className="rounded-2xl p-5" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
         <h1 className="font-black text-xl mb-1">{roleLabel} Profile</h1>
         <p className="text-xs font-bold app-muted mb-4">Manage your account and role identity.</p>
