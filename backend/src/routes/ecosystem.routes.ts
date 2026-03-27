@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express'
 import prisma from '../prisma/client'
 import { requireAuth, requireRole } from '../middleware/auth.middleware'
+import { canParentAccessStudent, canTeacherAccessClass } from '../utils/accessControl'
 
 const router = Router()
 
@@ -105,6 +106,10 @@ router.get('/teacher-interventions', requireRole('teacher', 'admin'), async (req
   try {
     const classId = (req.query.classId as string) || ''
     if (!classId) return res.status(400).json({ error: 'classId required' })
+    if (req.user?.role === 'teacher') {
+      const ok = await canTeacherAccessClass(req.user.id, classId)
+      if (!ok) return res.status(403).json({ error: 'Insufficient permissions' })
+    }
 
     const students = await prisma.student.findMany({
       where: { classId },
@@ -150,7 +155,10 @@ router.post('/daily-mission', async (req: Request, res: Response) => {
     const { studentId, classId } = req.body || {}
     if (!studentId || !classId) return res.status(400).json({ error: 'studentId and classId required' })
 
-    if ((req.user?.role === 'child' || req.user?.role === 'parent') && req.user.id !== studentId) {
+    if (req.user?.role === 'child' && req.user.id !== studentId) {
+      return res.status(403).json({ error: 'Insufficient permissions' })
+    }
+    if (req.user?.role === 'parent' && !(await canParentAccessStudent(req.user.id, studentId))) {
       return res.status(403).json({ error: 'Insufficient permissions' })
     }
 

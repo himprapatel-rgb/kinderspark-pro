@@ -1,6 +1,7 @@
 import prisma from '../prisma/client'
 import { Router, Request, Response } from 'express'
 import { requireAuth, requireRole } from '../middleware/auth.middleware'
+import { canParentAccessStudent } from '../utils/accessControl'
 
 
 const router = Router()
@@ -11,10 +12,10 @@ router.use(requireAuth)
 router.get('/:studentId', async (req: Request, res: Response) => {
   try {
     const { studentId } = req.params
-    if (
-      (req.user?.role === 'child' || req.user?.role === 'parent') &&
-      req.user.id !== studentId
-    ) {
+    if (req.user?.role === 'child' && req.user.id !== studentId) {
+      return res.status(403).json({ error: 'Insufficient permissions' })
+    }
+    if (req.user?.role === 'parent' && !(await canParentAccessStudent(req.user.id, studentId))) {
       return res.status(403).json({ error: 'Insufficient permissions' })
     }
 

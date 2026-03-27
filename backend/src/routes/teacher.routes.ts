@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express'
 import prisma from '../prisma/client'
 import { requireRole } from '../middleware/auth.middleware'
+import { canTeacherAccessClass } from '../utils/accessControl'
 
 const router = Router()
 router.use(requireRole('teacher', 'admin'))
@@ -27,6 +28,10 @@ router.get('/me', async (req: Request, res: Response) => {
 router.get('/class/:classId/stats', async (req: Request, res: Response) => {
   try {
     const { classId } = req.params
+    if (req.user?.role === 'teacher') {
+      const ok = await canTeacherAccessClass(req.user.id, classId)
+      if (!ok) return res.status(403).json({ error: 'Insufficient permissions' })
+    }
 
     const [students, homework, syllabuses] = await Promise.all([
       prisma.student.findMany({

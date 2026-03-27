@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken'
 import prisma from '../prisma/client'
 import type { AuthUser } from '../middleware/auth.middleware'
 import { requireAuth } from '../middleware/auth.middleware'
+import { canParentAccessStudent } from '../utils/accessControl'
 
 const router = Router()
 
@@ -11,6 +12,14 @@ const JWT_SECRET = process.env.JWT_SECRET || 'kinderspark-secret'
 async function getRequesterClassId(userId: string): Promise<string | null> {
   const student = await prisma.student.findUnique({
     where: { id: userId },
+    select: { classId: true },
+  })
+  return student?.classId || null
+}
+
+async function resolveStudentClassId(studentId: string): Promise<string | null> {
+  const student = await prisma.student.findUnique({
+    where: { id: studentId },
     select: { classId: true },
   })
   return student?.classId || null
@@ -66,7 +75,7 @@ router.get('/stream', async (req: Request, res: Response) => {
     const decoded = jwt.verify(token, JWT_SECRET) as AuthUser
     // Attach so downstream code could use it if needed
     req.user = decoded
-    if (decoded.role === 'child' || decoded.role === 'parent') {
+    if (decoded.role === 'child') {
       const ownClassId = await getRequesterClassId(decoded.id)
       if (!ownClassId || ownClassId !== classId) {
         res.status(403).json({ error: 'Insufficient permissions' })
@@ -121,9 +130,17 @@ router.get('/stream', async (req: Request, res: Response) => {
 router.get('/', requireAuth, async (req: Request, res: Response) => {
   try {
     let { classId, studentId } = req.query
-    if (req.user?.role === 'child' || req.user?.role === 'parent') {
+    if (req.user?.role === 'child') {
       studentId = req.user.id
       classId = await getRequesterClassId(req.user.id)
+    }
+    if (req.user?.role === 'parent') {
+      const requestedStudentId = String(studentId || '')
+      if (!requestedStudentId || !(await canParentAccessStudent(req.user.id, requestedStudentId))) {
+        return res.status(403).json({ error: 'Insufficient permissions' })
+      }
+      studentId = requestedStudentId
+      classId = await resolveStudentClassId(requestedStudentId)
     }
     const where: Record<string, unknown> = {}
     if (classId) where.classId = String(classId)
@@ -149,9 +166,17 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
 router.get('/unread-count', requireAuth, async (req: Request, res: Response) => {
   try {
     let { classId, studentId } = req.query
-    if (req.user?.role === 'child' || req.user?.role === 'parent') {
+    if (req.user?.role === 'child') {
       studentId = req.user.id
       classId = await getRequesterClassId(req.user.id)
+    }
+    if (req.user?.role === 'parent') {
+      const requestedStudentId = String(studentId || '')
+      if (!requestedStudentId || !(await canParentAccessStudent(req.user.id, requestedStudentId))) {
+        return res.status(403).json({ error: 'Insufficient permissions' })
+      }
+      studentId = requestedStudentId
+      classId = await resolveStudentClassId(requestedStudentId)
     }
     const where: Record<string, unknown> = { read: false }
     if (classId) where.classId = String(classId)
@@ -179,10 +204,18 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
     if (!from || !to || !subject || !body) {
       return res.status(400).json({ error: 'from, to, subject, and body are required' })
     }
-    if (req.user?.role === 'child' || req.user?.role === 'parent') {
+    if (req.user?.role === 'child') {
       const ownClassId = await getRequesterClassId(req.user.id)
       if (!ownClassId) return res.status(403).json({ error: 'Insufficient permissions' })
       classId = ownClassId
+    }
+    if (req.user?.role === 'parent') {
+      const targetStudentId = String(to || '')
+      if (!targetStudentId || !(await canParentAccessStudent(req.user.id, targetStudentId))) {
+        return res.status(403).json({ error: 'Insufficient permissions' })
+      }
+      classId = await resolveStudentClassId(targetStudentId)
+      if (!classId) return res.status(403).json({ error: 'Insufficient permissions' })
     }
     // Always use the authenticated user's id — never trust client-supplied fromId
     const message = await prisma.message.create({
@@ -217,7 +250,14 @@ router.put('/:id/read', requireAuth, async (req: Request, res: Response) => {
         where: { id: req.params.id },
         select: { classId: true, to: true, fromId: true },
       })
-      if (!target || target.classId !== ownClassId) {
+      if (req.user.role === 'child' && (!target || target.classId !== ownClassId)) {
+        return res.status(403).json({ error: 'Insufficient permissions' })
+      }
+      if (req.user.role === 'parent') {
+        const linked = target?.to ? await canParentAccessStudent(req.user.id, String(target.to)) : false
+        if (!target || !linked) return res.status(403).json({ error: 'Insufficient permissions' })
+      }
+      if (!target) {
         return res.status(403).json({ error: 'Insufficient permissions' })
       }
     }
@@ -236,9 +276,17 @@ router.put('/:id/read', requireAuth, async (req: Request, res: Response) => {
 router.put('/read-all', requireAuth, async (req: Request, res: Response) => {
   try {
     let { classId, studentId } = req.body
-    if (req.user?.role === 'child' || req.user?.role === 'parent') {
+    if (req.user?.role === 'child') {
       classId = await getRequesterClassId(req.user.id)
       studentId = req.user.id
+    }
+    if (req.user?.role === 'parent') {
+      const requestedStudentId = String(studentId || '')
+      if (!requestedStudentId || !(await canParentAccessStudent(req.user.id, requestedStudentId))) {
+        return res.status(403).json({ error: 'Insufficient permissions' })
+      }
+      studentId = requestedStudentId
+      classId = await resolveStudentClassId(requestedStudentId)
     }
     const where: Record<string, unknown> = { read: false }
     if (classId) where.classId = String(classId)

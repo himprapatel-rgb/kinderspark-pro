@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express'
 import bcrypt from 'bcryptjs'
 import prisma from '../prisma/client'
 import { requireAuth, requireRole } from '../middleware/auth.middleware'
+import { canParentAccessStudent, canTeacherAccessClass } from '../utils/accessControl'
 
 const router = Router()
 router.use(requireAuth)
@@ -14,6 +15,10 @@ function canAccessOwnStudent(req: Request, studentId: string) {
 router.get('/', requireRole('teacher', 'admin'), async (req: Request, res: Response) => {
   try {
     const { classId } = req.query
+    if (req.user?.role === 'teacher' && classId) {
+      const ok = await canTeacherAccessClass(req.user.id, String(classId))
+      if (!ok) return res.status(403).json({ error: 'Insufficient permissions' })
+    }
     const where = classId ? { classId: String(classId) } : {}
     const students = await prisma.student.findMany({
       where,
@@ -38,6 +43,9 @@ router.get('/:id', async (req: Request, res: Response) => {
     ) {
       return res.status(403).json({ error: 'Insufficient permissions' })
     }
+    if (req.user?.role === 'parent' && !(await canParentAccessStudent(req.user.id, id))) {
+      return res.status(403).json({ error: 'Insufficient permissions' })
+    }
     const student = await prisma.student.findUnique({
       where: { id },
       include: {
@@ -60,6 +68,10 @@ router.get('/:id', async (req: Request, res: Response) => {
 router.post('/', requireRole('teacher', 'admin'), async (req: Request, res: Response) => {
   try {
     const { name, age, avatar, pin, classId, stars, streak } = req.body
+    if (req.user?.role === 'teacher') {
+      const ok = await canTeacherAccessClass(req.user.id, String(classId))
+      if (!ok) return res.status(403).json({ error: 'Insufficient permissions' })
+    }
     if (!name || !pin || !classId) {
       return res.status(400).json({ error: 'name, pin, and classId are required' })
     }
@@ -96,6 +108,9 @@ router.put('/:id', async (req: Request, res: Response) => {
       req.user?.role !== 'admin' &&
       !canAccessOwnStudent(req, id)
     ) {
+      return res.status(403).json({ error: 'Insufficient permissions' })
+    }
+    if (req.user?.role === 'parent' && !(await canParentAccessStudent(req.user.id, id))) {
       return res.status(403).json({ error: 'Insufficient permissions' })
     }
     const {
@@ -146,6 +161,9 @@ router.patch('/:id/push-token', async (req: Request, res: Response) => {
     ) {
       return res.status(403).json({ error: 'Insufficient permissions' })
     }
+    if (req.user?.role === 'parent' && !(await canParentAccessStudent(req.user.id, req.params.id))) {
+      return res.status(403).json({ error: 'Insufficient permissions' })
+    }
     const { token } = req.body
     if (!token) return res.status(400).json({ error: 'token required' })
     await prisma.student.update({ where: { id: req.params.id }, data: { pushToken: token } })
@@ -163,6 +181,9 @@ router.get('/:id/badges', async (req: Request, res: Response) => {
       req.user?.role !== 'admin' &&
       !canAccessOwnStudent(req, req.params.id)
     ) {
+      return res.status(403).json({ error: 'Insufficient permissions' })
+    }
+    if (req.user?.role === 'parent' && !(await canParentAccessStudent(req.user.id, req.params.id))) {
       return res.status(403).json({ error: 'Insufficient permissions' })
     }
     const badges = await prisma.badge.findMany({

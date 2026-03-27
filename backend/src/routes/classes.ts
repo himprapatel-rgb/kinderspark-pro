@@ -1,14 +1,37 @@
 import { Router, Request, Response } from 'express'
 import prisma from '../prisma/client'
 import { requireRole } from '../middleware/auth.middleware'
+import { canTeacherAccessClass } from '../utils/accessControl'
 
 const router = Router()
 router.use(requireRole('teacher', 'admin'))
 
+async function ensureTeacherClassAccess(req: Request, res: Response, classId: string): Promise<boolean> {
+  if (req.user?.role !== 'teacher') return true
+  const ok = await canTeacherAccessClass(req.user.id, classId)
+  if (!ok) {
+    res.status(403).json({ error: 'Insufficient permissions' })
+    return false
+  }
+  return true
+}
+
 // GET /api/classes
-router.get('/', async (_req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
   try {
+    let where: any = {}
+    if (req.user?.role === 'teacher') {
+      const teacherProfile = await prisma.teacherProfile.findFirst({
+        where: { OR: [{ userId: req.user.id }, { legacyTeacherId: req.user.id }] },
+        include: { assignments: { include: { classGroup: true } } },
+      })
+      const classIds = (teacherProfile?.assignments || [])
+        .map((a: any) => a.classGroup?.legacyClassId)
+        .filter(Boolean)
+      where = classIds.length > 0 ? { id: { in: classIds } } : { id: { in: [] } }
+    }
     const classes = await prisma.class.findMany({
+      where,
       include: {
         _count: { select: { students: true, homework: true, syllabuses: true } },
         school: true,
@@ -27,6 +50,7 @@ router.get('/', async (_req: Request, res: Response) => {
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params
+    if (!(await ensureTeacherClassAccess(req, res, id))) return
 
     const cls = await prisma.class.findUnique({
       where: { id },
@@ -51,6 +75,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 router.get('/:id/students', async (req: Request, res: Response) => {
   try {
     const { id } = req.params
+    if (!(await ensureTeacherClassAccess(req, res, id))) return
 
     const students = await prisma.student.findMany({
       where: { classId: id },
@@ -96,6 +121,7 @@ router.post('/', async (req: Request, res: Response) => {
 router.put('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params
+    if (!(await ensureTeacherClassAccess(req, res, id))) return
     const { name, grade } = req.body
 
     const updateData: any = {}
@@ -118,6 +144,7 @@ router.put('/:id', async (req: Request, res: Response) => {
 router.delete('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params
+    if (!(await ensureTeacherClassAccess(req, res, id))) return
     const studentCount = await prisma.student.count({ where: { classId: id } })
     if (studentCount > 0) {
       return res.status(400).json({ error: 'Cannot delete a class that still has students' })
@@ -134,6 +161,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
 router.get('/:id/activity', async (req: Request, res: Response) => {
   try {
     const { id } = req.params
+    if (!(await ensureTeacherClassAccess(req, res, id))) return
     const [completions, sessions] = await Promise.all([
       prisma.homeworkCompletion.findMany({
         where: { homework: { classId: id }, done: true },

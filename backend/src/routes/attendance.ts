@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express'
 import prisma from '../prisma/client'
 import { requireAuth, requireRole } from '../middleware/auth.middleware'
+import { canParentAccessStudent, canTeacherAccessClass } from '../utils/accessControl'
 
 const router = Router()
 router.use(requireAuth)
@@ -10,6 +11,10 @@ router.get('/', requireRole('teacher', 'admin'), async (req: Request, res: Respo
   try {
     const { classId, date } = req.query
     if (!classId || !date) return res.status(400).json({ error: 'classId and date required' })
+    if (req.user?.role === 'teacher') {
+      const ok = await canTeacherAccessClass(req.user.id, String(classId))
+      if (!ok) return res.status(403).json({ error: 'Insufficient permissions' })
+    }
 
     const records = await prisma.attendance.findMany({
       where: { classId: String(classId), date: String(date) },
@@ -51,6 +56,10 @@ router.post('/', requireRole('teacher', 'admin'), async (req: Request, res: Resp
     if (!classId || !date || !Array.isArray(records)) {
       return res.status(400).json({ error: 'classId, date, and records[] required' })
     }
+    if (req.user?.role === 'teacher') {
+      const ok = await canTeacherAccessClass(req.user.id, String(classId))
+      if (!ok) return res.status(403).json({ error: 'Insufficient permissions' })
+    }
 
     await Promise.all(
       records.map((r: { studentId: string; present: boolean; note?: string }) =>
@@ -74,7 +83,7 @@ router.get('/summary', async (req: Request, res: Response) => {
   try {
     const { classId, days = '30' } = req.query
     if (!classId) return res.status(400).json({ error: 'classId required' })
-    if (req.user?.role === 'child' || req.user?.role === 'parent') {
+    if (req.user?.role === 'child') {
       const self = await prisma.student.findUnique({
         where: { id: req.user.id },
         select: { classId: true },
@@ -82,6 +91,14 @@ router.get('/summary', async (req: Request, res: Response) => {
       if (!self || self.classId !== String(classId)) {
         return res.status(403).json({ error: 'Insufficient permissions' })
       }
+    }
+    if (req.user?.role === 'parent') {
+      const students = await prisma.student.findMany({ where: { classId: String(classId) }, select: { id: true } })
+      let allowed = false
+      for (const s of students) {
+        if (await canParentAccessStudent(req.user.id, s.id)) { allowed = true; break }
+      }
+      if (!allowed) return res.status(403).json({ error: 'Insufficient permissions' })
     }
 
     const cutoff = new Date()

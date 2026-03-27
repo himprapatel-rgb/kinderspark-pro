@@ -26,7 +26,7 @@ export default function AdminPage() {
   const [tab, setTab] = useState(0)
 
   useEffect(() => {
-    if (!user || role !== 'admin') { router.push('/'); return }
+    if (!user || (role !== 'admin' && role !== 'principal')) { router.push('/'); return }
     loadData()
   }, [user, role, router])
 
