@@ -52,8 +52,8 @@ Write a 1-2 sentence caption that:
 
 Return ONLY the caption text, nothing else.`
 
-        const aiCaption = await aiComplete(prompt, { maxTokens: 100 })
-        finalCaption = aiCaption.trim()
+        const aiResult = await aiComplete('caption', prompt, { maxTokens: 100 })
+        finalCaption = aiResult.text.trim()
         isAiCaption = true
       } catch {
         finalCaption = 'A wonderful moment from class today! 📸'

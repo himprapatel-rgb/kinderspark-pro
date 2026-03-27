@@ -9,36 +9,39 @@ datasource db {
 }
 
 model School {
-  id        String   @id @default(cuid())
-  name      String
-  status    String   @default("active")
-  timezone  String   @default("UTC")
-  locale    String   @default("en")
-  classes   Class[]
-  roleAssignments RoleAssignment[]
-  teacherProfiles  TeacherProfile[]
-  parentProfiles   ParentProfile[]
-  studentProfiles  StudentProfile[]
+  id                String             @id @default(cuid())
+  name              String
+  status            String             @default("active")
+  timezone          String             @default("UTC")
+  locale            String             @default("en")
+  classes           Class[]
+  roleAssignments   RoleAssignment[]
+  teacherProfiles   TeacherProfile[]
+  parentProfiles    ParentProfile[]
+  studentProfiles   StudentProfile[]
   principalProfiles PrincipalProfile[]
   gradeLevels       GradeLevel[]
   classGroups       ClassGroup[]
   messageThreads    MessageThread[]
-  createdAt DateTime @default(now())
+  createdAt         DateTime           @default(now())
+  User              User[]
+  SchoolProfile     SchoolProfile?
+  AdminProfile      AdminProfile[]
 }
 
 model Class {
-  id         String          @id @default(cuid())
-  name       String
-  grade      String          @default("KG 1")
-  schoolId   String?
-  school     School?         @relation(fields: [schoolId], references: [id])
-  students   Student[]
-  homework   Homework[]
-  messages   Message[]
-  syllabuses  ClassSyllabus[]
-  attendance  Attendance[]
+  id            String          @id @default(cuid())
+  name          String
+  grade         String          @default("KG 1")
+  schoolId      String?
+  school        School?         @relation(fields: [schoolId], references: [id])
+  students      Student[]
+  homework      Homework[]
+  messages      Message[]
+  syllabuses    ClassSyllabus[]
+  attendance    Attendance[]
   activityPosts ActivityPost[]
-  createdAt   DateTime        @default(now())
+  createdAt     DateTime        @default(now())
 }
 
 model Student {
@@ -115,20 +118,20 @@ model SyllabusItem {
 }
 
 model Homework {
-  id           String               @id @default(cuid())
-  title        String
-  description  String?
-  moduleId     String?
-  syllabusId   String?
-  syllabus     Syllabus?            @relation(fields: [syllabusId], references: [id])
-  dueDate      String
-  assignedTo   String               @default("all")
-  starsReward  Int                  @default(5)
-  aiGenerated  Boolean              @default(false)
-  classId      String
-  class        Class                @relation(fields: [classId], references: [id])
-  completions  HomeworkCompletion[]
-  createdAt    DateTime             @default(now())
+  id          String               @id @default(cuid())
+  title       String
+  description String?
+  moduleId    String?
+  syllabusId  String?
+  syllabus    Syllabus?            @relation(fields: [syllabusId], references: [id])
+  dueDate     String
+  assignedTo  String               @default("all")
+  starsReward Int                  @default(5)
+  aiGenerated Boolean              @default(false)
+  classId     String
+  class       Class                @relation(fields: [classId], references: [id])
+  completions HomeworkCompletion[]
+  createdAt   DateTime             @default(now())
 }
 
 model HomeworkCompletion {
@@ -237,24 +240,26 @@ enum ProfileRole {
 }
 
 model User {
-  id             String            @id @default(cuid())
-  displayName    String
-  email          String?           @unique
-  pin            String?
-  avatar         String?
-  schoolId       String?
-  school         School?           @relation(fields: [schoolId], references: [id])
-  roleAssignments RoleAssignment[]
-  teacherProfile TeacherProfile?
-  parentProfile  ParentProfile?
-  studentProfile StudentProfile?
-  principalProfile PrincipalProfile?
-  adminProfile   AdminProfile?
-  createdMessageThreads MessageThread[] @relation("ThreadCreatedBy")
-  threadParticipants   ThreadParticipant[]
-  sentThreadMessages   ThreadMessage[]    @relation("ThreadMessageSender")
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
+  id                    String              @id @default(cuid())
+  displayName           String
+  email                 String?             @unique
+  pin                   String?
+  avatar                String?
+  schoolId              String?
+  school                School?             @relation(fields: [schoolId], references: [id])
+  roleAssignments       RoleAssignment[]
+  teacherProfile        TeacherProfile?
+  parentProfile         ParentProfile?
+  studentProfile        StudentProfile?
+  principalProfile      PrincipalProfile?
+  adminProfile          AdminProfile?
+  createdMessageThreads MessageThread[]     @relation("ThreadCreatedBy")
+  threadParticipants    ThreadParticipant[]
+  sentThreadMessages    ThreadMessage[]     @relation("ThreadMessageSender")
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  SchoolProfile         SchoolProfile[]
+  MessageReceipt        MessageReceipt[]
 
   @@index([schoolId])
 }
@@ -273,26 +278,26 @@ model RoleAssignment {
 }
 
 model SchoolProfile {
-  id            String   @id @default(cuid())
-  schoolId       String   @unique
-  school         School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  id              String   @id @default(cuid())
+  schoolId        String   @unique
+  school          School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   principalUserId String?
-  principalUser   User?   @relation(fields: [principalUserId], references: [id])
-  timezone       String   @default("UTC")
-  locale         String   @default("en")
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  principalUser   User?    @relation(fields: [principalUserId], references: [id])
+  timezone        String   @default("UTC")
+  locale          String   @default("en")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model PrincipalProfile {
-  id         String   @id @default(cuid())
-  userId      String   @unique
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  schoolId    String
-  school      School   @relation(fields: [schoolId], references: [id])
-  title       String   @default("Principal")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  schoolId  String
+  school    School   @relation(fields: [schoolId], references: [id])
+  title     String   @default("Principal")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([schoolId])
 }
@@ -310,22 +315,22 @@ model AdminProfile {
 }
 
 model TeacherProfile {
-  id              String                  @id @default(cuid())
-  userId           String                  @unique
-  user             User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id               String                     @id @default(cuid())
+  userId           String                     @unique
+  user             User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
   schoolId         String
-  school           School                  @relation(fields: [schoolId], references: [id])
-  legacyTeacherId  String?                 @unique
+  school           School                     @relation(fields: [schoolId], references: [id])
+  legacyTeacherId  String?                    @unique
   assignments      TeacherClassAssignment[]
   studentOverrides TeacherStudentAssignment[]
-  createdAt        DateTime                @default(now())
-  updatedAt        DateTime                @updatedAt
+  createdAt        DateTime                   @default(now())
+  updatedAt        DateTime                   @updatedAt
 
   @@index([schoolId])
 }
 
 model ParentProfile {
-  id             String            @id @default(cuid())
+  id              String            @id @default(cuid())
   userId          String            @unique
   user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   schoolId        String?
@@ -339,65 +344,65 @@ model ParentProfile {
 }
 
 model StudentProfile {
-  id              String                   @id @default(cuid())
-  userId           String                   @unique
-  user             User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id               String                     @id @default(cuid())
+  userId           String                     @unique
+  user             User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
   schoolId         String
-  school           School                   @relation(fields: [schoolId], references: [id])
-  legacyStudentId  String?                  @unique
+  school           School                     @relation(fields: [schoolId], references: [id])
+  legacyStudentId  String?                    @unique
   enrollments      StudentClassEnrollment[]
   parentLinks      ParentChildLink[]
   teacherOverrides TeacherStudentAssignment[]
   messageThreads   MessageThread[]
-  createdAt        DateTime                 @default(now())
-  updatedAt        DateTime                 @updatedAt
+  createdAt        DateTime                   @default(now())
+  updatedAt        DateTime                   @updatedAt
 
   @@index([schoolId])
 }
 
 model GradeLevel {
-  id         String       @id @default(cuid())
+  id          String       @id @default(cuid())
   schoolId    String
   school      School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  code       String
-  label      String
-  order      Int          @default(0)
+  code        String
+  label       String
+  order       Int          @default(0)
   classGroups ClassGroup[]
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   @@unique([schoolId, code])
   @@index([schoolId, order])
 }
 
 model ClassGroup {
-  id            String                   @id @default(cuid())
-  schoolId       String
-  school         School                   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  gradeLevelId   String
-  gradeLevel     GradeLevel               @relation(fields: [gradeLevelId], references: [id], onDelete: Cascade)
-  name          String
-  section       String?
-  legacyClassId String?                  @unique
+  id                 String                   @id @default(cuid())
+  schoolId           String
+  school             School                   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  gradeLevelId       String
+  gradeLevel         GradeLevel               @relation(fields: [gradeLevelId], references: [id], onDelete: Cascade)
+  name               String
+  section            String?
+  legacyClassId      String?                  @unique
   studentEnrollments StudentClassEnrollment[]
   teacherAssignments TeacherClassAssignment[]
-  messageThreads      MessageThread[]
-  createdAt     DateTime                 @default(now())
-  updatedAt     DateTime                 @updatedAt
+  messageThreads     MessageThread[]
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
 
   @@unique([schoolId, gradeLevelId, name, section])
   @@index([schoolId, gradeLevelId])
 }
 
 model TeacherClassAssignment {
-  id              String         @id @default(cuid())
+  id               String         @id @default(cuid())
   teacherProfileId String
   teacherProfile   TeacherProfile @relation(fields: [teacherProfileId], references: [id], onDelete: Cascade)
   classGroupId     String
   classGroup       ClassGroup     @relation(fields: [classGroupId], references: [id], onDelete: Cascade)
-  subject         String?
-  isPrimary       Boolean        @default(false)
-  createdAt       DateTime       @default(now())
+  subject          String?
+  isPrimary        Boolean        @default(false)
+  createdAt        DateTime       @default(now())
 
   @@unique([teacherProfileId, classGroupId, subject])
   @@index([classGroupId])
@@ -438,10 +443,10 @@ model StudentClassEnrollment {
 
 model ParentChildLink {
   id               String         @id @default(cuid())
-  parentProfileId   String
-  parentProfile     ParentProfile  @relation(fields: [parentProfileId], references: [id], onDelete: Cascade)
-  studentProfileId  String
-  studentProfile    StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  parentProfileId  String
+  parentProfile    ParentProfile  @relation(fields: [parentProfileId], references: [id], onDelete: Cascade)
+  studentProfileId String
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
   relationType     String         @default("guardian")
   isPrimary        Boolean        @default(false)
   createdAt        DateTime       @default(now())
@@ -470,20 +475,20 @@ enum MessageKind {
 }
 
 model MessageThread {
-  id               String            @id @default(cuid())
+  id               String              @id @default(cuid())
   scopeType        ThreadScope
   schoolId         String?
-  school           School?           @relation(fields: [schoolId], references: [id], onDelete: SetNull)
+  school           School?             @relation(fields: [schoolId], references: [id], onDelete: SetNull)
   classGroupId     String?
-  classGroup       ClassGroup?       @relation(fields: [classGroupId], references: [id], onDelete: SetNull)
+  classGroup       ClassGroup?         @relation(fields: [classGroupId], references: [id], onDelete: SetNull)
   studentProfileId String?
-  studentProfile   StudentProfile?   @relation(fields: [studentProfileId], references: [id], onDelete: SetNull)
+  studentProfile   StudentProfile?     @relation(fields: [studentProfileId], references: [id], onDelete: SetNull)
   createdByUserId  String
-  createdByUser    User              @relation("ThreadCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  createdByUser    User                @relation("ThreadCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
   participants     ThreadParticipant[]
   messages         ThreadMessage[]
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
 
   @@index([scopeType, schoolId])
   @@index([scopeType, classGroupId])
@@ -505,16 +510,16 @@ model ThreadParticipant {
 }
 
 model ThreadMessage {
-  id           String          @id @default(cuid())
+  id           String           @id @default(cuid())
   threadId     String
-  thread       MessageThread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  thread       MessageThread    @relation(fields: [threadId], references: [id], onDelete: Cascade)
   senderUserId String
-  senderUser   User            @relation("ThreadMessageSender", fields: [senderUserId], references: [id], onDelete: Restrict)
+  senderUser   User             @relation("ThreadMessageSender", fields: [senderUserId], references: [id], onDelete: Restrict)
   kind         MessageKind
-  priority     MessagePriority @default(normal)
-  body         String          @db.Text
+  priority     MessagePriority  @default(normal)
+  body         String           @db.Text
   expiresAt    DateTime?
-  sentAt       DateTime        @default(now())
+  sentAt       DateTime         @default(now())
   receipts     MessageReceipt[]
 
   @@index([threadId, sentAt])
@@ -541,10 +546,10 @@ model ActivityPost {
   classId     String
   class       Class    @relation(fields: [classId], references: [id])
   teacherId   String
-  imageData   String   @db.Text              // base64-encoded image
-  caption     String   @db.Text              // AI-generated or teacher-written caption
-  aiCaption   Boolean  @default(false)       // was caption AI-generated?
-  studentTags String[] @default([])          // tagged student IDs
+  imageData   String   @db.Text // base64-encoded image
+  caption     String   @db.Text // AI-generated or teacher-written caption
+  aiCaption   Boolean  @default(false) // was caption AI-generated?
+  studentTags String[] @default([]) // tagged student IDs
   emoji       String   @default("📸")
   likes       Int      @default(0)
   createdAt   DateTime @default(now())
@@ -556,17 +561,17 @@ model ActivityPost {
 // ── Agent Memory System ──────────────────────────────────────────────────────
 
 model AgentMemory {
-  id          String   @id @default(cuid())
-  agentId     String                          // e.g. "security-auditor"
-  agentName   String                          // e.g. "Security Auditor"
-  agentIcon   String   @default("🤖")
-  agentColor  String   @default("#5E5CE6")
-  type        String                          // observation|decision|finding|action|summary
-  content     String   @db.Text              // the memory content
-  metadata    Json?                           // extra: { files, issues, runId, severity }
-  runId       String?                         // GitHub Actions run ID
-  importance  Int      @default(1)           // 1=low 2=medium 3=high 4=critical
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  agentId    String // e.g. "security-auditor"
+  agentName  String // e.g. "Security Auditor"
+  agentIcon  String   @default("🤖")
+  agentColor String   @default("#5E5CE6")
+  type       String // observation|decision|finding|action|summary
+  content    String   @db.Text // the memory content
+  metadata   Json? // extra: { files, issues, runId, severity }
+  runId      String? // GitHub Actions run ID
+  importance Int      @default(1) // 1=low 2=medium 3=high 4=critical
+  createdAt  DateTime @default(now())
 
   @@index([agentId])
   @@index([createdAt])
@@ -579,10 +584,10 @@ model AgentConversation {
   fromName    String
   fromIcon    String   @default("🤖")
   fromColor   String   @default("#5E5CE6")
-  toAgentId   String                          // agent id or "all" for broadcast
+  toAgentId   String // agent id or "all" for broadcast
   toName      String   @default("All Agents")
   message     String   @db.Text
-  msgType     String   @default("update")    // alert|handoff|question|update|broadcast|fix
+  msgType     String   @default("update") // alert|handoff|question|update|broadcast|fix
   resolved    Boolean  @default(false)
   resolvedBy  String?
   createdAt   DateTime @default(now())
