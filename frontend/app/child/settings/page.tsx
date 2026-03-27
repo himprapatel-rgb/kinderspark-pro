@@ -113,7 +113,7 @@ export default function SettingsPage() {
         {/* Language */}
         <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
           <div className="font-black text-base mb-3 flex items-center gap-2"><Globe size={16} /> Language</div>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-3">
             {LANGS.map(lang => (
               <button
                 key={lang.code}

@@ -521,7 +521,7 @@ export default function TeacherDashboard() {
                     <div className="font-black text-sm">Priority Actions</div>
                     <div className="text-[11px] font-bold app-muted">Daily workflow</div>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <button
                       onClick={() => setTab('attendance')}
                       className="rounded-xl px-3 py-3 text-left app-pressable"
@@ -588,7 +588,7 @@ export default function TeacherDashboard() {
                 {/* More tools */}
                 <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}>
                   <div className="font-black mb-3">More Tools</div>
-                  <div className="grid grid-cols-2 gap-2 tablet:grid-cols-3">
+                  <div className="grid grid-cols-2 gap-3 tablet:grid-cols-3">
                     <button onClick={() => setTab('students')} className="rounded-xl p-3 text-left app-pressable" style={{ background: '#5B7FE822' }}>
                       <div className="text-xl mb-1">👥</div>
                       <div className="text-xs font-black">Manage Students</div>

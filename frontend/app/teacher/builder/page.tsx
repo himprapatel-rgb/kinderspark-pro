@@ -167,7 +167,7 @@ function BuilderContent() {
           </div>
 
           {/* Grade & Type */}
-          <div className="grid grid-cols-2 gap-2 mb-3">
+          <div className="grid grid-cols-2 gap-3 mb-3">
             <select value={meta.grade} onChange={e => setMeta(m => ({...m, grade: e.target.value}))} className="app-input">
               <option value="all">All Grades</option>
               <option value="KG 1">KG 1</option>

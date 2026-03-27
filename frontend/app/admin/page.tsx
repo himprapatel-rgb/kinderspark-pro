@@ -90,7 +90,7 @@ export default function AdminPage() {
           </div>
 
           {stats && (
-            <div className="grid grid-cols-4 gap-2 mt-5">
+            <div className="grid grid-cols-2 tablet:grid-cols-4 gap-3 mt-5">
               {[
                 { label: 'Classes', value: stats.totalClasses, icon: <GraduationCap size={16} />, color: '#5B7FE8' },
                 { label: 'Students', value: stats.totalStudents, icon: <Users size={16} />, color: '#4CAF6A' },
@@ -256,7 +256,7 @@ export default function AdminPage() {
                       {cls._count?.students || 0} students
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-2 text-center mb-2">
+                  <div className="grid grid-cols-3 gap-3 text-center mb-2">
                     <div className="rounded-xl p-2" style={{ background: 'rgba(94,92,230,0.1)' }}>
                       <div className="font-black text-sm">{cls._count?.homework || 0}</div>
                       <div className="text-xs font-bold app-muted">Homework</div>
@@ -331,7 +331,7 @@ export default function AdminPage() {
                     <div className="text-xs font-bold app-muted">Lv {ca.avgAILevel} avg</div>
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="grid grid-cols-3 gap-3 text-center">
                   <div className="rounded-xl p-2" style={{ background: 'rgba(255,159,10,0.1)' }}>
                     <div className="text-yellow-400 font-black text-sm">⭐{ca.avgStars}</div>
                     <div className="text-xs font-bold app-muted">Avg Stars</div>
