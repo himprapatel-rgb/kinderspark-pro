@@ -44,9 +44,7 @@ export async function aiComplete(
   for (const name of available) {
     try {
       const text = await ALL_PROVIDERS[name].complete(prompt, opts)
-      if (process.env.NODE_ENV !== 'production') {
-        console.log(`[AI] ${task} → ${name}`)
-      }
+      console.log(`[AI] ✅ ${task} → ${name}`)
       return { text, provider: name }
     } catch (err) {
       console.warn(`[AI] ${name} failed for task "${task}":`, (err as any)?.message ?? err)
