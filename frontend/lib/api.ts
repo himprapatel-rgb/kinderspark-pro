@@ -415,6 +415,10 @@ export async function getSchoolGrades(schoolId: string) {
   return req(`/schools/${encodeURIComponent(schoolId)}/grades`)
 }
 
+export async function getSchoolGraph(schoolId: string) {
+  return req(`/schools/${encodeURIComponent(schoolId)}/graph`)
+}
+
 export async function assignTeacherToClass(data: { teacherProfileId: string; classGroupId: string; subject?: string; isPrimary?: boolean }) {
   return req('/assignments/teacher-class', {
     method: 'POST',

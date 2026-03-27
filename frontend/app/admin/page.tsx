@@ -6,7 +6,7 @@ import { Loading, InlineEmpty } from '@/components/UIStates'
 import DashboardSidebar from '@/components/DashboardSidebar'
 import TopBarActions from '@/components/TopBarActions'
 import WeatherChip from '@/components/WeatherChip'
-import { getAdminStats, getAdminLeaderboard, getClasses, getClassAnalytics, getPilotMetrics } from '@/lib/api'
+import { getAdminStats, getAdminLeaderboard, getClasses, getClassAnalytics, getPilotMetrics, getSchoolGraph } from '@/lib/api'
 import { BarChart3, BookOpen, GraduationCap, Settings, Sparkles, Trophy, UserRound, Users } from 'lucide-react'
 
 export default function AdminPage() {
@@ -21,6 +21,7 @@ export default function AdminPage() {
   const [classes, setClasses] = useState<any[]>([])
   const [classAnalytics, setClassAnalytics] = useState<any[]>([])
   const [pilotMetrics, setPilotMetrics] = useState<any>(null)
+  const [schoolGraph, setSchoolGraph] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState(0)
 
@@ -42,6 +43,9 @@ export default function AdminPage() {
       setClasses(cls)
       setClassAnalytics(Array.isArray(analytics) ? analytics : [])
       getPilotMetrics().then(setPilotMetrics).catch(() => {})
+      if (user?.schoolId) {
+        getSchoolGraph(user.schoolId).then(setSchoolGraph).catch(() => {})
+      }
     } catch (e) {
       console.error(e)
     } finally {
@@ -56,6 +60,7 @@ export default function AdminPage() {
     { label: 'Leaderboard', icon: <Trophy size={14} /> },
     { label: 'Classes', icon: <GraduationCap size={14} /> },
     { label: 'AI Stats', icon: <Sparkles size={14} /> },
+    { label: 'School Graph', icon: <Users size={14} /> },
   ]
   const medals = ['🥇', '🥈', '🥉']
   const needsAttention = classAnalytics
@@ -409,6 +414,36 @@ export default function AdminPage() {
               </div>
             ))}
             {classAnalytics.length === 0 && <InlineEmpty emoji="📈" text="No analytics data yet" />}
+          </div>
+        )}
+
+        {tab === 4 && (
+          <div className="space-y-4">
+            <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+              <div className="font-black text-sm mb-1">School Graph</div>
+              <div className="text-xs font-bold app-muted">Grades -> Class groups -> Teachers and students</div>
+            </div>
+            {!schoolGraph?.grades?.length && (
+              <InlineEmpty emoji="🏫" text="No graph data yet. Run backfill and assign classes." />
+            )}
+            {(schoolGraph?.grades || []).map((g: any) => (
+              <div key={g.id} className="rounded-2xl p-4" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+                <div className="font-black text-sm mb-2">{g.label} ({g.code})</div>
+                <div className="space-y-2">
+                  {(g.classGroups || []).map((cg: any) => (
+                    <div key={cg.id} className="rounded-xl p-3" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}>
+                      <div className="flex items-center justify-between">
+                        <div className="font-black text-xs">{cg.name}{cg.section ? ` - ${cg.section}` : ''}</div>
+                        <div className="text-xs font-bold app-muted">{(cg.students || []).length} students</div>
+                      </div>
+                      <div className="text-[11px] font-bold app-muted mt-1">
+                        Teachers: {(cg.teachers || []).map((t: any) => t.name).join(', ') || 'Unassigned'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>

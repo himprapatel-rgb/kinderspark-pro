@@ -15,7 +15,7 @@ import {
   getUnreadCount, markAllMessagesRead, getFeedback, saveFeedback,
   generateHomeworkAI, sendParentReports,
   getClassActivity, sendHomeworkReminders, autoSyllabus, getTeacherInterventions,
-  createMessageStream,
+  createMessageStream, getMyProfile,
 } from '@/lib/api'
 
 // ─── tiny helpers ─────────────────────────────────────────────────────────────
@@ -187,9 +187,18 @@ export default function TeacherDashboard() {
 
   const load = async () => {
     try {
-      const cls = await getClasses()
-      setClasses(cls)
-      if (cls.length > 0) setSelectedClass(cls[0])
+      const [cls, profile] = await Promise.all([
+        getClasses(),
+        getMyProfile().catch(() => null),
+      ])
+      const assignedIds = (profile?.teacherProfile?.assignments || [])
+        .map((a: any) => a.classGroup?.legacyClassId)
+        .filter(Boolean)
+      const filtered = assignedIds.length > 0
+        ? cls.filter((c: any) => assignedIds.includes(c.id))
+        : cls
+      setClasses(filtered)
+      if (filtered.length > 0) setSelectedClass(filtered[0])
     } catch (e) { console.error(e) }
     finally { setLoading(false) }
   }

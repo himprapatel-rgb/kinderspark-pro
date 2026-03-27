@@ -12,9 +12,36 @@ router.get('/me', async (req: Request, res: Response) => {
       where: { id: req.user!.id },
       include: {
         roleAssignments: true,
-        teacherProfile: true,
-        parentProfile: true,
-        studentProfile: true,
+        teacherProfile: {
+          include: {
+            assignments: { include: { classGroup: true } },
+          },
+        },
+        parentProfile: {
+          include: {
+            children: {
+              include: {
+                studentProfile: {
+                  include: {
+                    user: true,
+                    enrollments: {
+                      where: { status: 'active' },
+                      include: { classGroup: true },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        studentProfile: {
+          include: {
+            enrollments: {
+              where: { status: 'active' },
+              include: { classGroup: true },
+            },
+          },
+        },
         principalProfile: true,
       },
     })

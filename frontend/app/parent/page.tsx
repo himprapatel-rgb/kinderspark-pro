@@ -5,7 +5,7 @@ import { useAppStore as useStore } from '@/store/appStore'
 import { Loading, InlineEmpty } from '@/components/UIStates'
 import TopBarActions from '@/components/TopBarActions'
 import WeatherChip from '@/components/WeatherChip'
-import { getHomework, getMessages, sendMessage, getAISessions, getAttendanceSummary, markAllMessagesRead, completeHomework, createMessageStream } from '@/lib/api'
+import { getHomework, getMessages, sendMessage, getAISessions, getAttendanceSummary, markAllMessagesRead, completeHomework, createMessageStream, getMyProfile } from '@/lib/api'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { BarChart3, Bell, Home, Users, MessageSquare } from 'lucide-react'
 
@@ -38,6 +38,7 @@ export default function ParentPage() {
 
   const [tab, setTab] = useState(0)
   const [student, setStudent] = useState<any>(null)
+  const [children, setChildren] = useState<Array<{ id: string; name: string; avatar?: string; classId?: string }>>([])
   const [homework, setHomework] = useState<any[]>([])
   const [messages, setMessages] = useState<any[]>([])
   const [aiSessions, setAiSessions] = useState<any[]>([])
@@ -55,8 +56,34 @@ export default function ParentPage() {
 
   useEffect(() => {
     if (!user) { router.push('/'); return }
-    setStudent(user)
-    loadData(user)
+    ;(async () => {
+      try {
+        const profile = await getMyProfile().catch(() => null)
+        const linkedChildren = (profile?.parentProfile?.children || [])
+          .map((link: any) => {
+            const sp = link.studentProfile
+            const activeEnrollment = (sp?.enrollments || [])[0]
+            return {
+              id: sp?.legacyStudentId || sp?.userId || '',
+              name: sp?.user?.displayName || 'Child',
+              avatar: sp?.user?.avatar || '🧒',
+              classId: activeEnrollment?.classGroup?.legacyClassId || user.classId,
+            }
+          })
+          .filter((c: any) => c.id)
+        if (linkedChildren.length > 0) {
+          setChildren(linkedChildren)
+          setStudent(linkedChildren[0])
+          loadData(linkedChildren[0])
+        } else {
+          setStudent(user)
+          loadData(user)
+        }
+      } catch {
+        setStudent(user)
+        loadData(user)
+      }
+    })()
   }, [user, router])
 
   useEffect(() => {
@@ -290,6 +317,23 @@ export default function ParentPage() {
                 <div>
                   <div className="text-xs font-bold app-muted mb-1 inline-flex items-center gap-1"><Users size={12} /> Parent View</div>
                   <div className="text-2xl font-black">{student?.avatar} {student?.name}</div>
+                  {children.length > 1 && (
+                    <select
+                      value={student?.id || ''}
+                      onChange={(e) => {
+                        const next = children.find((c) => c.id === e.target.value)
+                        if (!next) return
+                        setStudent(next)
+                        loadData(next)
+                      }}
+                      className="mt-2 app-field text-xs font-black"
+                      style={{ minWidth: 170 }}
+                    >
+                      {children.map((c) => (
+                        <option key={c.id} value={c.id}>{c.avatar || '🧒'} {c.name}</option>
+                      ))}
+                    </select>
+                  )}
                   <div className="flex gap-2 mt-2 flex-wrap">
                     <span className="bg-yellow-400/20 text-yellow-300 rounded-full px-3 py-0.5 text-xs font-black">⭐ {student?.stars} stars</span>
                     {(student?.streak ?? 0) > 0 && (

@@ -44,4 +44,51 @@ router.get('/:schoolId/grades', requireRole('admin', 'principal', 'teacher'), as
   }
 })
 
+// GET /api/schools/:schoolId/graph
+router.get('/:schoolId/graph', requireRole('admin', 'principal'), async (req: Request, res: Response) => {
+  try {
+    const schoolId = req.params.schoolId
+    const grades = await prisma.gradeLevel.findMany({
+      where: { schoolId },
+      include: {
+        classGroups: {
+          include: {
+            studentEnrollments: {
+              where: { status: 'active' },
+              include: { studentProfile: { include: { user: true } } },
+            },
+            teacherAssignments: {
+              include: { teacherProfile: { include: { user: true } } },
+            },
+          },
+        },
+      },
+      orderBy: [{ order: 'asc' }, { label: 'asc' }],
+    })
+    const graph = grades.map((g) => ({
+      id: g.id,
+      code: g.code,
+      label: g.label,
+      classGroups: g.classGroups.map((cg) => ({
+        id: cg.id,
+        name: cg.name,
+        section: cg.section,
+        teachers: cg.teacherAssignments.map((a) => ({
+          id: a.teacherProfile.id,
+          name: a.teacherProfile.user.displayName,
+        })),
+        students: cg.studentEnrollments.map((e) => ({
+          id: e.studentProfile.id,
+          name: e.studentProfile.user.displayName,
+          avatar: e.studentProfile.user.avatar,
+        })),
+      })),
+    }))
+    return res.json({ schoolId, grades: graph })
+  } catch (err) {
+    console.error('schools graph error:', err)
+    return res.status(500).json({ error: 'Failed to load school graph' })
+  }
+})
+
 export default router
