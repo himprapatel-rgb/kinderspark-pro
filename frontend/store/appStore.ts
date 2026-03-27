@@ -12,12 +12,32 @@ interface Settings {
   stLimit: number
 }
 
+export interface DailyMission {
+  kind: 'homework' | 'practice' | 'explore'
+  title: string
+  etaMin: number
+  action: string
+  route: string
+}
+
+export type KpiEventCategory = 'learning' | 'engagement' | 'communication' | 'screenHealth' | 'operational'
+
+export interface KpiEvent {
+  id: string
+  category: KpiEventCategory
+  name: string
+  value?: number
+  at: string
+}
+
 interface AppStore {
   user: User | null
   role: 'teacher' | 'parent' | 'child' | 'admin' | null
   token: string | null
   currentStudent: Student | null
   settings: Settings
+  dailyMission: DailyMission | null
+  kpiEvents: KpiEvent[]
 
   // Actions
   setAuth: (user: User, role: string, token: string) => void
@@ -26,6 +46,9 @@ interface AppStore {
   updateSettings: (settings: Partial<Settings>) => void
   toggleDark: () => void
   updateUserStars: (stars: number) => void
+  setDailyMission: (mission: DailyMission | null) => void
+  trackKpiEvent: (event: Omit<KpiEvent, 'id' | 'at'>) => void
+  clearKpiEvents: () => void
 
   // Legacy compat actions used by existing pages
   setRole: (role: string) => void
@@ -39,6 +62,8 @@ export const useAppStore = create<AppStore>()(
       role: null,
       token: null,
       currentStudent: null,
+      dailyMission: null,
+      kpiEvents: [],
       settings: {
         dark: true,
         large: false,
@@ -71,6 +96,19 @@ export const useAppStore = create<AppStore>()(
             ? { ...state.currentStudent, stars }
             : state.currentStudent,
         })),
+      setDailyMission: (dailyMission) => set({ dailyMission }),
+      trackKpiEvent: (event) =>
+        set((state) => ({
+          kpiEvents: [
+            {
+              ...event,
+              id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+              at: new Date().toISOString(),
+            },
+            ...state.kpiEvents,
+          ].slice(0, 300),
+        })),
+      clearKpiEvents: () => set({ kpiEvents: [] }),
 
       // Legacy compat
       setRole: (role) => set({ role: role as any }),
@@ -84,6 +122,8 @@ export const useAppStore = create<AppStore>()(
         token: state.token,
         currentStudent: state.currentStudent,
         settings: state.settings,
+        dailyMission: state.dailyMission,
+        kpiEvents: state.kpiEvents,
       }),
     }
   )

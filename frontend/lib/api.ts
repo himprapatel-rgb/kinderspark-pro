@@ -375,6 +375,26 @@ export async function autoSyllabus(data: { topic: string; grade?: string; count?
   })
 }
 
+// ── Ecosystem APIs ─────────────────────────────────────────────────────────────
+export async function getKpiSchema() {
+  return req('/ecosystem/kpi-schema')
+}
+
+export async function getPilotMetrics() {
+  return req('/ecosystem/pilot-metrics')
+}
+
+export async function getTeacherInterventions(classId: string) {
+  return req(`/ecosystem/teacher-interventions?classId=${encodeURIComponent(classId)}`)
+}
+
+export async function getDailyMission(data: { studentId: string; classId: string }) {
+  return req('/ecosystem/daily-mission', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
 // ── SSE helpers ───────────────────────────────────────────────────────────────
 
 /**

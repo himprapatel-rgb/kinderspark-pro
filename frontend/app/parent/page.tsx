@@ -27,6 +27,7 @@ export default function ParentPage() {
   const router = useRouter()
   const user = useStore(s => s.user)
   const logout = useStore(s => s.logout)
+  const dailyMission = useStore(s => s.dailyMission)
 
   const [tab, setTab] = useState(0)
   const [student, setStudent] = useState<any>(null)
@@ -173,6 +174,7 @@ export default function ParentPage() {
     : 0
   const totalAIStars = aiSessions.reduce((a: number, s: any) => a + (s.stars || 0), 0)
   const todayAction = pendingHW[0] || null
+  const missionAction = !todayAction && dailyMission ? dailyMission : null
   const insightText = pendingHW.length > 0
     ? `${pendingHW.length} homework item${pendingHW.length > 1 ? 's' : ''} need attention today.`
     : hwPct >= 80
@@ -279,6 +281,21 @@ export default function ParentPage() {
                       style={{ background: 'rgba(48,209,88,0.2)', color: '#9EF0B2' }}
                     >
                       Message Teacher
+                    </button>
+                  </div>
+                </div>
+              ) : missionAction ? (
+                <div className="rounded-xl p-3" style={{ background: 'var(--app-surface-soft)' }}>
+                  <div className="font-black text-sm">{missionAction.title}</div>
+                  <div className="text-xs font-bold app-muted mt-0.5">Suggested mission for today ({missionAction.etaMin} min).</div>
+                  <div className="flex items-center justify-between mt-2">
+                    <div className="text-xs font-black app-muted capitalize">{missionAction.kind}</div>
+                    <button
+                      onClick={() => router.push(missionAction.route)}
+                      className="text-xs font-black px-2.5 py-1 rounded-lg app-pressable"
+                      style={{ background: 'var(--app-accent-soft)', color: 'var(--app-accent)' }}
+                    >
+                      Open
                     </button>
                   </div>
                 </div>

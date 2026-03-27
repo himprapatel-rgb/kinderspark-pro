@@ -2,10 +2,11 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore as useStore } from '@/store/appStore'
-import { getHomework, getSyllabuses, getProgress, getRecommendations, getStudentBadges, completeHomework } from '@/lib/api'
+import { getHomework, getSyllabuses, getProgress, getRecommendations, getStudentBadges, completeHomework, getDailyMission } from '@/lib/api'
 import TopBarActions from '@/components/TopBarActions'
 import WeatherChip from '@/components/WeatherChip'
 import { MODS } from '@/lib/modules'
+import { selectAdaptiveMission } from '@/lib/missionEngine'
 import { ArrowRight, BookOpen, Bot, Flame, Palette, PencilLine, PlayCircle, Shapes, ShoppingBag, Sparkles, Star, Trophy } from 'lucide-react'
 
 // ── Daily Challenge helper ─────────────────────────────────────────────────────
@@ -38,6 +39,8 @@ export default function ChildPage() {
   const user = useStore(s => s.user)
   const currentStudent = useStore(s => s.currentStudent)
   const logout = useStore(s => s.logout)
+  const setDailyMission = useStore(s => s.setDailyMission)
+  const trackKpiEvent = useStore(s => s.trackKpiEvent)
 
   const [homework, setHomework] = useState<any[]>([])
   const [syllabuses, setSyllabuses] = useState<any[]>([])
@@ -49,6 +52,7 @@ export default function ChildPage() {
   const [celebrationBadges, setCelebrationBadges] = useState<any[]>([])
   const [dailyDone, setDailyDone] = useState(false)
   const [showAllMods, setShowAllMods] = useState(false)
+  const [remoteMission, setRemoteMission] = useState<any>(null)
   const { mod: dailyMod, todayKey } = getDailyChallenge()
 
   const student = currentStudent || user
@@ -77,6 +81,10 @@ export default function ChildPage() {
       getRecommendations(student.id).then(res => {
         if (res?.recommendations) setRecommendations(res.recommendations)
       }).catch(() => {})
+      getDailyMission({ studentId: student.id, classId: student.classId }).then((mission) => {
+        setRemoteMission(mission)
+        setDailyMission(mission)
+      }).catch(() => {})
     } catch (e) {
       console.error(e)
     } finally {
@@ -93,22 +101,34 @@ export default function ChildPage() {
   const doneCards = MODS.reduce((a, m) => a + Math.min(m.items.length, progressMap[m.id] || 0), 0)
   const overallPct = totalCards ? Math.round((doneCards / totalCards) * 100) : 0
   const startTodayHomework = pendingHW[0] || null
-  const startTodayHref = startTodayHomework
+  const adaptiveMission = selectAdaptiveMission({ pendingHomework: pendingHW, recommendations, progressMap })
+  const startTodayHref = remoteMission?.route || (startTodayHomework
     ? (startTodayHomework.aiGenerated
       ? `/child/tutor?topic=${encodeURIComponent(startTodayHomework.moduleId || 'daily-practice')}`
       : `/child/lesson/${startTodayHomework.moduleId || dailyMod.id}`)
-    : `/child/lesson/${dailyMod.id}`
+    : adaptiveMission
+      ? adaptiveMission.route
+      : `/child/lesson/${dailyMod.id}`)
   const startTodayTitle = startTodayHomework
     ? `Start with: ${startTodayHomework.title}`
-    : `Start today's challenge: ${dailyMod.title}`
-  const nextTaskMeta = startTodayHomework
+    : remoteMission?.title
+      ? remoteMission.title
+      : adaptiveMission
+        ? adaptiveMission.title
+        : `Start today's challenge: ${dailyMod.title}`
+  const nextTaskMeta = remoteMission
+    ? `${remoteMission.kind} · ${remoteMission.etaMin} min`
+    : startTodayHomework
     ? `Homework · ${startTodayHomework.dueDate ? new Date(startTodayHomework.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Due soon'}`
+    : adaptiveMission
+    ? adaptiveMission.meta
     : `Daily Challenge · ${dailyMod.items.length} cards`
 
   const handleMarkDone = async (hwId: string) => {
     if (!student || markingDone) return
     setMarkingDone(hwId)
     try {
+      trackKpiEvent({ category: 'learning', name: 'child_homework_mark_done' })
       const res = await completeHomework(hwId, student.id)
       if (res?.newBadges?.length) setCelebrationBadges(res.newBadges)
       await loadData()
@@ -274,7 +294,10 @@ export default function ChildPage() {
             </div>
             <p className="text-[10px] app-muted font-bold mt-1">{doneCards} of {totalCards} cards completed</p>
             <button
-              onClick={() => router.push(startTodayHref)}
+              onClick={() => {
+                trackKpiEvent({ category: 'engagement', name: 'child_continue_learning_click' })
+                router.push(startTodayHref)
+              }}
               className="mt-3 w-full rounded-xl py-3 px-3 font-black text-sm flex items-center justify-center gap-2 app-pressable"
               style={{ background: 'linear-gradient(135deg, var(--app-gold), var(--app-warning))', color: '#2B1F10' }}
             >

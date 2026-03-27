@@ -22,6 +22,7 @@ import classRoutes from './routes/classes'
 import aiSessionRoutes from './routes/aiSessions'
 import feedbackRoutes from './routes/feedback'
 import agentRoutes from './routes/agents.routes'
+import ecosystemRoutes from './routes/ecosystem.routes'
 import { startAgentScheduler } from './services/agentScheduler.service'
 
 const app = express()
@@ -92,6 +93,7 @@ app.use('/api/classes', cache(30), classRoutes)
 app.use('/api/ai-sessions', aiSessionRoutes)
 app.use('/api/feedback', feedbackRoutes)
 app.use('/api/agents', agentRoutes)
+app.use('/api/ecosystem', cache(20), ecosystemRoutes)
 
 app.use((err: any, _req: any, res: any, _next: any) => {
   console.error(err)

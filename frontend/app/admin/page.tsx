@@ -6,7 +6,7 @@ import { Loading, InlineEmpty } from '@/components/UIStates'
 import DashboardSidebar from '@/components/DashboardSidebar'
 import TopBarActions from '@/components/TopBarActions'
 import WeatherChip from '@/components/WeatherChip'
-import { getAdminStats, getAdminLeaderboard, getClasses, getClassAnalytics } from '@/lib/api'
+import { getAdminStats, getAdminLeaderboard, getClasses, getClassAnalytics, getPilotMetrics } from '@/lib/api'
 import { BarChart3, BookOpen, GraduationCap, Settings, Sparkles, Trophy, UserRound, Users } from 'lucide-react'
 
 export default function AdminPage() {
@@ -19,6 +19,7 @@ export default function AdminPage() {
   const [leaderboard, setLeaderboard] = useState<any[]>([])
   const [classes, setClasses] = useState<any[]>([])
   const [classAnalytics, setClassAnalytics] = useState<any[]>([])
+  const [pilotMetrics, setPilotMetrics] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState(0)
 
@@ -39,6 +40,7 @@ export default function AdminPage() {
       setLeaderboard(lb)
       setClasses(cls)
       setClassAnalytics(Array.isArray(analytics) ? analytics : [])
+      getPilotMetrics().then(setPilotMetrics).catch(() => {})
     } catch (e) {
       console.error(e)
     } finally {
@@ -128,6 +130,29 @@ export default function AdminPage() {
       <div className="app-content">
         {tab === 0 && stats && (
           <div className="app-stack">
+            {pilotMetrics && (
+              <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+                <div className="font-black text-sm mb-3">Pilot Metrics Snapshot</div>
+                <div className="grid grid-cols-2 tablet:grid-cols-4 gap-3">
+                  <div className="rounded-xl p-3" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}>
+                    <div className="text-lg font-black">{pilotMetrics.activeChildren7d}</div>
+                    <div className="text-xs font-bold app-muted">Active (7d)</div>
+                  </div>
+                  <div className="rounded-xl p-3" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}>
+                    <div className="text-lg font-black">{pilotMetrics.homeworkCompletionRate}%</div>
+                    <div className="text-xs font-bold app-muted">HW Completion</div>
+                  </div>
+                  <div className="rounded-xl p-3" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}>
+                    <div className="text-lg font-black">{pilotMetrics.parentReadRate}%</div>
+                    <div className="text-xs font-bold app-muted">Parent Read</div>
+                  </div>
+                  <div className="rounded-xl p-3" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}>
+                    <div className="text-lg font-black">{pilotMetrics.avgAccuracy}%</div>
+                    <div className="text-xs font-bold app-muted">AI Accuracy</div>
+                  </div>
+                </div>
+              </div>
+            )}
             {/* Needs attention (operational priority) */}
             {needsAttention.length > 0 && (
               <div className="rounded-2xl p-4" style={{ background: 'rgba(255,159,10,0.1)', border: '1px solid rgba(255,159,10,0.3)' }}>

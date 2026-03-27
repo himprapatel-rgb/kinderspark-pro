@@ -14,7 +14,7 @@ import {
   getAttendance, saveAttendance, generateReport, getClassStats,
   getUnreadCount, markAllMessagesRead, getFeedback, saveFeedback,
   generateHomeworkAI, sendParentReports,
-  getClassActivity, sendHomeworkReminders, autoSyllabus,
+  getClassActivity, sendHomeworkReminders, autoSyllabus, getTeacherInterventions,
   createMessageStream,
 } from '@/lib/api'
 
@@ -68,6 +68,7 @@ export default function TeacherDashboard() {
 
   // Activity feed
   const [activityFeed, setActivityFeed] = useState<any[]>([])
+  const [interventions, setInterventions] = useState<any[]>([])
   // Student deep-dive modal
   const [deepDiveStudent, setDeepDiveStudent] = useState<any>(null)
   // AI Syllabus builder
@@ -207,6 +208,7 @@ export default function TeacherDashboard() {
       setClassStats(stats)
       setUnreadCount(unread?.count || 0)
       getClassActivity(classId).then(setActivityFeed).catch(() => {})
+      getTeacherInterventions(classId).then((rows: any[]) => setInterventions(rows)).catch(() => {})
     } catch (e) { console.error(e) }
   }
 
@@ -656,9 +658,11 @@ export default function TeacherDashboard() {
 
                 {/* ⚠️ At Risk Students */}
                 {(() => {
-                  const atRisk = students.filter((s: any) =>
-                    !s.lastLoginAt || Date.now() - new Date(s.lastLoginAt).getTime() > 7 * 24 * 60 * 60 * 1000
-                  )
+                  const atRisk = interventions.length > 0
+                    ? interventions
+                    : students.filter((s: any) =>
+                        !s.lastLoginAt || Date.now() - new Date(s.lastLoginAt).getTime() > 7 * 24 * 60 * 60 * 1000
+                      )
                   if (atRisk.length === 0) return null
                   return (
                     <div className="rounded-2xl p-4" style={{ background: 'rgba(255,69,58,0.06)', border: '1px solid rgba(255,69,58,0.25)' }}>
