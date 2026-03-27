@@ -9,6 +9,10 @@ const JWT_SECRET = process.env.JWT_SECRET || 'kinderspark-secret'
 const ACCESS_TOKEN_TTL = '2h'
 const REFRESH_TOKEN_TTL_DAYS = 30
 
+function signAccessToken(payload: Record<string, unknown>) {
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: ACCESS_TOKEN_TTL })
+}
+
 async function issueRefreshToken(userId: string, role: string): Promise<string> {
   const token = crypto.randomBytes(40).toString('hex')
   const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_DAYS * 86400 * 1000)
@@ -37,11 +41,50 @@ export async function verifyPin(req: Request, res: Response) {
   if (!pin || !role) return res.status(400).json({ error: 'pin and role required' })
 
   try {
+    // New identity model (User + RoleAssignment) first.
+    const users = await prisma.user.findMany({
+      where: {
+        pin: { not: null },
+        roleAssignments: { some: { role: role as any } },
+      },
+      include: { roleAssignments: true },
+      take: 200,
+    })
+    for (const u of users) {
+      if (!u.pin) continue
+      if (await bcrypt.compare(pin, u.pin)) {
+        const roles = u.roleAssignments.map(r => String(r.role))
+        const activeRole = roles.includes(role) ? role : roles[0] || role
+        const token = signAccessToken({
+          id: u.id,
+          role: activeRole,
+          roles,
+          name: u.displayName,
+          schoolId: u.schoolId || null,
+        })
+        const refreshToken = await issueRefreshToken(u.id, activeRole)
+        setAuthCookies(res, token, refreshToken)
+        return res.json({
+          success: true,
+          role: activeRole,
+          token,
+          refreshToken,
+          user: {
+            id: u.id,
+            name: u.displayName,
+            avatar: u.avatar,
+            schoolId: u.schoolId || null,
+            roles,
+          },
+        })
+      }
+    }
+
     if (role === 'teacher') {
       const teachers = await prisma.teacher.findMany()
       const teacher = (await Promise.all(teachers.map(async t => (await bcrypt.compare(pin, t.pin)) ? t : null))).find(Boolean) ?? null
       if (!teacher) return res.status(401).json({ error: 'Wrong PIN' })
-      const token = jwt.sign({ id: teacher.id, role: 'teacher', name: teacher.name }, JWT_SECRET, { expiresIn: ACCESS_TOKEN_TTL })
+      const token = signAccessToken({ id: teacher.id, role: 'teacher', roles: ['teacher'], name: teacher.name, schoolId: teacher.schoolId || null })
       const refreshToken = await issueRefreshToken(teacher.id, 'teacher')
       setAuthCookies(res, token, refreshToken)
       return res.json({ success: true, role: 'teacher', token, refreshToken, user: { id: teacher.id, name: teacher.name } })
@@ -51,7 +94,7 @@ export async function verifyPin(req: Request, res: Response) {
       const admins = await prisma.admin.findMany()
       const admin = (await Promise.all(admins.map(async a => (await bcrypt.compare(pin, a.pin)) ? a : null))).find(Boolean) ?? null
       if (!admin) return res.status(401).json({ error: 'Wrong PIN' })
-      const token = jwt.sign({ id: admin.id, role: 'admin', name: admin.name }, JWT_SECRET, { expiresIn: ACCESS_TOKEN_TTL })
+      const token = signAccessToken({ id: admin.id, role: 'admin', roles: ['admin'], name: admin.name, schoolId: admin.schoolId || null })
       const refreshToken = await issueRefreshToken(admin.id, 'admin')
       setAuthCookies(res, token, refreshToken)
       return res.json({ success: true, role: 'admin', token, refreshToken, user: { id: admin.id, name: admin.name } })
@@ -82,7 +125,7 @@ export async function verifyPin(req: Request, res: Response) {
     checkAndAwardBadges(student.id).catch(() => {})
 
     const updatedStudent = { ...student, lastLoginAt: now, streak: newStreak }
-    const token = jwt.sign({ id: student.id, role, name: student.name }, JWT_SECRET, { expiresIn: ACCESS_TOKEN_TTL })
+    const token = signAccessToken({ id: student.id, role, roles: [role], name: student.name, schoolId: student.class?.schoolId || null })
     const refreshToken = await issueRefreshToken(student.id, role)
     setAuthCookies(res, token, refreshToken)
     return res.json({ success: true, role, token, refreshToken, user: updatedStudent })
@@ -102,8 +145,22 @@ export async function refreshAccessToken(req: Request, res: Response) {
     }
 
     // Issue new access token
-    const payload: any = { id: record.userId, role: record.role }
-    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: ACCESS_TOKEN_TTL })
+    let payload: any = { id: record.userId, role: record.role }
+    const identity = await prisma.user.findUnique({
+      where: { id: record.userId },
+      include: { roleAssignments: true },
+    }).catch(() => null)
+    if (identity) {
+      const roles = identity.roleAssignments.map(r => String(r.role))
+      payload = {
+        id: identity.id,
+        role: roles.includes(record.role) ? record.role : (roles[0] || record.role),
+        roles,
+        name: identity.displayName,
+        schoolId: identity.schoolId || null,
+      }
+    }
+    const token = signAccessToken(payload)
 
     // Rotate refresh token
     await prisma.refreshToken.delete({ where: { id: record.id } })

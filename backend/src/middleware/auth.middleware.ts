@@ -15,6 +15,8 @@ export interface AuthUser {
   id: string
   role: string
   name: string
+  roles?: string[]
+  schoolId?: string | null
 }
 
 declare global {
@@ -65,4 +67,10 @@ export function requireRole(...roles: string[]) {
     }
     next()
   }
+}
+
+export function hasRole(user: AuthUser | undefined, role: string): boolean {
+  if (!user) return false
+  if (user.role === role) return true
+  return Array.isArray(user.roles) && user.roles.includes(role)
 }

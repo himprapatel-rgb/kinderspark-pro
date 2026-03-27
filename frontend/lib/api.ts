@@ -395,6 +395,47 @@ export async function getDailyMission(data: { studentId: string; classId: string
   })
 }
 
+// ── Profile + relationship APIs ────────────────────────────────────────────────
+export async function getMyProfile() {
+  return req('/profiles/me')
+}
+
+export async function updateMyProfile(data: { displayName?: string; avatar?: string; email?: string }) {
+  return req('/profiles/me', {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  })
+}
+
+export async function getSchoolOverview(schoolId: string) {
+  return req(`/schools/${encodeURIComponent(schoolId)}/overview`)
+}
+
+export async function getSchoolGrades(schoolId: string) {
+  return req(`/schools/${encodeURIComponent(schoolId)}/grades`)
+}
+
+export async function assignTeacherToClass(data: { teacherProfileId: string; classGroupId: string; subject?: string; isPrimary?: boolean }) {
+  return req('/assignments/teacher-class', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export async function enrollStudentInClass(data: { studentProfileId: string; classGroupId: string; startDate?: string }) {
+  return req('/assignments/student-enrollment', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export async function linkParentChild(data: { parentProfileId: string; studentProfileId: string; relationType?: string; isPrimary?: boolean }) {
+  return req('/relationships/parent-child', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
 // ── SSE helpers ───────────────────────────────────────────────────────────────
 
 /**

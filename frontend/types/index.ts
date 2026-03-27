@@ -163,6 +163,7 @@ export interface User {
   id: string
   name: string
   role?: string
+  roles?: string[]
   avatar?: string
   stars?: number
   streak?: number
@@ -179,9 +180,14 @@ export interface User {
 
 export interface AppState {
   user: User | null
-  role: 'teacher' | 'parent' | 'child' | 'admin' | null
+  role: 'teacher' | 'parent' | 'child' | 'admin' | 'principal' | null
   token: string | null
   currentStudent: Student | null
+  availableRoles?: Array<'teacher' | 'parent' | 'child' | 'admin' | 'principal'>
+  activeProfile?: string | null
+  schoolContext?: { schoolId?: string | null; schoolName?: string | null } | null
+  children?: Array<{ id: string; name: string; avatar?: string }>
+  teachingClasses?: Array<{ id: string; name: string; grade?: string }>
   settings: {
     dark: boolean
     large: boolean

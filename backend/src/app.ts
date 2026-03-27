@@ -23,6 +23,10 @@ import aiSessionRoutes from './routes/aiSessions'
 import feedbackRoutes from './routes/feedback'
 import agentRoutes from './routes/agents.routes'
 import ecosystemRoutes from './routes/ecosystem.routes'
+import profilesRoutes from './routes/profiles.routes'
+import schoolsRoutes from './routes/schools.routes'
+import assignmentsRoutes from './routes/assignments.routes'
+import relationshipsRoutes from './routes/relationships.routes'
 import { startAgentScheduler } from './services/agentScheduler.service'
 
 const app = express()
@@ -94,6 +98,10 @@ app.use('/api/ai-sessions', aiSessionRoutes)
 app.use('/api/feedback', feedbackRoutes)
 app.use('/api/agents', agentRoutes)
 app.use('/api/ecosystem', cache(20), ecosystemRoutes)
+app.use('/api/profiles', profilesRoutes)
+app.use('/api/schools', schoolsRoutes)
+app.use('/api/assignments', assignmentsRoutes)
+app.use('/api/relationships', relationshipsRoutes)
 
 app.use((err: any, _req: any, res: any, _next: any) => {
   console.error(err)

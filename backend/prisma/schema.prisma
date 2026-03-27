@@ -216,6 +216,190 @@ model RefreshToken {
   createdAt DateTime @default(now())
 }
 
+enum ProfileRole {
+  principal
+  admin
+  teacher
+  parent
+  child
+}
+
+model User {
+  id             String            @id @default(cuid())
+  displayName    String
+  email          String?           @unique
+  pin            String?
+  avatar         String?
+  schoolId       String?
+  school         School?           @relation(fields: [schoolId], references: [id])
+  roleAssignments RoleAssignment[]
+  teacherProfile TeacherProfile?
+  parentProfile  ParentProfile?
+  studentProfile StudentProfile?
+  principalProfile PrincipalProfile?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([schoolId])
+}
+
+model RoleAssignment {
+  id        String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      ProfileRole
+  schoolId  String?
+  school    School?     @relation(fields: [schoolId], references: [id])
+  createdAt DateTime    @default(now())
+
+  @@unique([userId, role, schoolId])
+  @@index([schoolId, role])
+}
+
+model SchoolProfile {
+  id            String   @id @default(cuid())
+  schoolId       String   @unique
+  school         School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  principalUserId String?
+  principalUser   User?   @relation(fields: [principalUserId], references: [id])
+  timezone       String   @default("UTC")
+  locale         String   @default("en")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model PrincipalProfile {
+  id         String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  schoolId    String
+  school      School   @relation(fields: [schoolId], references: [id])
+  title       String   @default("Principal")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([schoolId])
+}
+
+model TeacherProfile {
+  id              String                  @id @default(cuid())
+  userId           String                  @unique
+  user             User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  schoolId         String
+  school           School                  @relation(fields: [schoolId], references: [id])
+  legacyTeacherId  String?                 @unique
+  assignments      TeacherClassAssignment[]
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+
+  @@index([schoolId])
+}
+
+model ParentProfile {
+  id             String            @id @default(cuid())
+  userId          String            @unique
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  schoolId        String?
+  school          School?           @relation(fields: [schoolId], references: [id])
+  children        ParentChildLink[]
+  legacyStudentId String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([schoolId])
+}
+
+model StudentProfile {
+  id              String                   @id @default(cuid())
+  userId           String                   @unique
+  user             User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  schoolId         String
+  school           School                   @relation(fields: [schoolId], references: [id])
+  legacyStudentId  String?                  @unique
+  enrollments      StudentClassEnrollment[]
+  parentLinks      ParentChildLink[]
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+
+  @@index([schoolId])
+}
+
+model GradeLevel {
+  id         String       @id @default(cuid())
+  schoolId    String
+  school      School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  code       String
+  label      String
+  order      Int          @default(0)
+  classGroups ClassGroup[]
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@unique([schoolId, code])
+  @@index([schoolId, order])
+}
+
+model ClassGroup {
+  id            String                   @id @default(cuid())
+  schoolId       String
+  school         School                   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  gradeLevelId   String
+  gradeLevel     GradeLevel               @relation(fields: [gradeLevelId], references: [id], onDelete: Cascade)
+  name          String
+  section       String?
+  legacyClassId String?                  @unique
+  studentEnrollments StudentClassEnrollment[]
+  teacherAssignments TeacherClassAssignment[]
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
+
+  @@unique([schoolId, gradeLevelId, name, section])
+  @@index([schoolId, gradeLevelId])
+}
+
+model TeacherClassAssignment {
+  id              String         @id @default(cuid())
+  teacherProfileId String
+  teacherProfile   TeacherProfile @relation(fields: [teacherProfileId], references: [id], onDelete: Cascade)
+  classGroupId     String
+  classGroup       ClassGroup     @relation(fields: [classGroupId], references: [id], onDelete: Cascade)
+  subject         String?
+  isPrimary       Boolean        @default(false)
+  createdAt       DateTime       @default(now())
+
+  @@unique([teacherProfileId, classGroupId, subject])
+  @@index([classGroupId])
+}
+
+model StudentClassEnrollment {
+  id               String         @id @default(cuid())
+  studentProfileId String
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  classGroupId     String
+  classGroup       ClassGroup     @relation(fields: [classGroupId], references: [id], onDelete: Cascade)
+  startDate        DateTime       @default(now())
+  endDate          DateTime?
+  status           String         @default("active")
+  createdAt        DateTime       @default(now())
+
+  @@index([studentProfileId, status])
+  @@index([classGroupId, status])
+}
+
+model ParentChildLink {
+  id               String         @id @default(cuid())
+  parentProfileId   String
+  parentProfile     ParentProfile  @relation(fields: [parentProfileId], references: [id], onDelete: Cascade)
+  studentProfileId  String
+  studentProfile    StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  relationType     String         @default("guardian")
+  isPrimary        Boolean        @default(false)
+  createdAt        DateTime       @default(now())
+
+  @@unique([parentProfileId, studentProfileId])
+  @@index([studentProfileId])
+}
+
 // ── Agent Memory System ──────────────────────────────────────────────────────
 
 model AgentMemory {

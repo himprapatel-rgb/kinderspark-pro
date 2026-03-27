@@ -35,6 +35,11 @@ interface AppStore {
   role: 'teacher' | 'parent' | 'child' | 'admin' | null
   token: string | null
   currentStudent: Student | null
+  availableRoles: Array<'teacher' | 'parent' | 'child' | 'admin' | 'principal'>
+  activeProfile: string | null
+  schoolContext: { schoolId?: string | null; schoolName?: string | null } | null
+  children: Array<{ id: string; name: string; avatar?: string }>
+  teachingClasses: Array<{ id: string; name: string; grade?: string }>
   settings: Settings
   dailyMission: DailyMission | null
   kpiEvents: KpiEvent[]
@@ -43,6 +48,14 @@ interface AppStore {
   setAuth: (user: User, role: string, token: string) => void
   logout: () => void
   setCurrentStudent: (student: Student | null) => void
+  setAvailableRoles: (roles: Array<'teacher' | 'parent' | 'child' | 'admin' | 'principal'>) => void
+  switchRole: (role: 'teacher' | 'parent' | 'child' | 'admin' | 'principal') => void
+  setProfileContext: (ctx: {
+    activeProfile?: string | null
+    schoolContext?: { schoolId?: string | null; schoolName?: string | null } | null
+    children?: Array<{ id: string; name: string; avatar?: string }>
+    teachingClasses?: Array<{ id: string; name: string; grade?: string }>
+  }) => void
   updateSettings: (settings: Partial<Settings>) => void
   toggleDark: () => void
   updateUserStars: (stars: number) => void
@@ -62,6 +75,11 @@ export const useAppStore = create<AppStore>()(
       role: null,
       token: null,
       currentStudent: null,
+      availableRoles: [],
+      activeProfile: null,
+      schoolContext: null,
+      children: [],
+      teachingClasses: [],
       dailyMission: null,
       kpiEvents: [],
       settings: {
@@ -74,12 +92,38 @@ export const useAppStore = create<AppStore>()(
       },
 
       setAuth: (user, role, token) =>
-        set({ user, role: role as any, token }),
+        set({
+          user,
+          role: role as any,
+          token,
+          availableRoles: Array.isArray((user as any)?.roles) && (user as any).roles.length
+            ? ((user as any).roles as Array<'teacher' | 'parent' | 'child' | 'admin' | 'principal'>)
+            : [role as any],
+        }),
 
       logout: () =>
-        set({ user: null, role: null, token: null, currentStudent: null }),
+        set({
+          user: null,
+          role: null,
+          token: null,
+          currentStudent: null,
+          availableRoles: [],
+          activeProfile: null,
+          schoolContext: null,
+          children: [],
+          teachingClasses: [],
+        }),
 
       setCurrentStudent: (student) => set({ currentStudent: student }),
+      setAvailableRoles: (availableRoles) => set({ availableRoles }),
+      switchRole: (role) => set({ role }),
+      setProfileContext: (ctx) =>
+        set((state) => ({
+          activeProfile: ctx.activeProfile ?? state.activeProfile,
+          schoolContext: ctx.schoolContext ?? state.schoolContext,
+          children: ctx.children ?? state.children,
+          teachingClasses: ctx.teachingClasses ?? state.teachingClasses,
+        })),
 
       updateSettings: (settings) =>
         set((state) => ({ settings: { ...state.settings, ...settings } })),
@@ -121,6 +165,11 @@ export const useAppStore = create<AppStore>()(
         role: state.role,
         token: state.token,
         currentStudent: state.currentStudent,
+        availableRoles: state.availableRoles,
+        activeProfile: state.activeProfile,
+        schoolContext: state.schoolContext,
+        children: state.children,
+        teachingClasses: state.teachingClasses,
         settings: state.settings,
         dailyMission: state.dailyMission,
         kpiEvents: state.kpiEvents,
