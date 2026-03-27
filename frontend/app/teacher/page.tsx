@@ -10,6 +10,7 @@ import { BarChart3, Bell, Bot, BookOpen, Users, Home, MessageSquare, ClipboardLi
 import PhotoCapture from '@/components/PhotoCapture'
 import { useToast } from '@/components/Toast'
 import PageTransition from '@/components/PageTransition'
+import TeacherOnboarding from '@/components/TeacherOnboarding'
 import {
   getClasses, getStudents, getHomework, getSyllabuses, getMessages,
   createClass, createStudent, deleteStudent, createHomework, deleteHomework,
@@ -85,6 +86,7 @@ export default function TeacherDashboard() {
 
   // Photo capture state
   const [showPhotoCapture, setShowPhotoCapture] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(false)
 
   // AI Homework Wizard state
   const [showWizard, setShowWizard] = useState(false)
@@ -239,6 +241,7 @@ export default function TeacherDashboard() {
         : cls
       setClasses(filtered)
       if (filtered.length > 0) setSelectedClass(filtered[0])
+      else setShowOnboarding(true)
     } catch (e) { console.error(e) }
     finally { setLoading(false) }
   }
@@ -575,6 +578,20 @@ export default function TeacherDashboard() {
   }, [tab, selectedClass, trackKpiEvent])
 
   if (loading) return <Loading emoji="👩‍🏫" text="Loading your classes…" />
+
+  if (showOnboarding && classes.length === 0) {
+    return (
+      <TeacherOnboarding
+        teacherName={user?.name || 'Teacher'}
+        onCreateClass={async (name) => {
+          const newClass = await createClass({ name })
+          setClasses([newClass])
+          setSelectedClass(newClass)
+        }}
+        onDismiss={() => setShowOnboarding(false)}
+      />
+    )
+  }
 
   const TABS: { id: Tab; icon: React.ReactNode; label: string }[] = [
     { id: 'home',       icon: <Home size={14} />,          label: 'Home' },
