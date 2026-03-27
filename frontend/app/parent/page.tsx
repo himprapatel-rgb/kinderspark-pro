@@ -9,6 +9,12 @@ import { getHomework, getMessages, sendMessage, getAISessions, getAttendanceSumm
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { BarChart3, Bell, Home, Users, MessageSquare } from 'lucide-react'
 
+const QUICK_PARENT_REPLIES = [
+  'Thanks! We will complete this tonight.',
+  'Could you share a simpler version for home practice?',
+  'My child found this hard. Any 5-minute tip for us?',
+] as const
+
 // SVG ring component for circular progress
 function Ring({ pct, color, size = 80, stroke = 8 }: { pct: number; color: string; size?: number; stroke?: number }) {
   const r = (size - stroke) / 2
@@ -208,6 +214,13 @@ export default function ParentPage() {
     } catch (e: any) { alert(e.message) }
   }
 
+  const openQuickReply = (template: string) => {
+    const teacherMsg = messages.find((m: any) => m.fromId !== student?.id)
+    setShowReply(teacherMsg || { subject: 'Daily Check-in', fromId: 'teacher' })
+    setReplyBody(template)
+    setTab(2)
+  }
+
   if (loading) return <Loading emoji="✨" text="Loading your child's data…" />
 
   const TABS = [
@@ -306,6 +319,18 @@ export default function ParentPage() {
               )}
               <div className="app-muted text-xs font-bold mt-3">
                 {insightText}
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {QUICK_PARENT_REPLIES.map((q) => (
+                  <button
+                    key={q}
+                    onClick={() => openQuickReply(q)}
+                    className="px-2.5 py-1.5 rounded-lg text-[11px] font-black app-pressable"
+                    style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}
+                  >
+                    {q}
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -556,6 +581,18 @@ export default function ParentPage() {
             <textarea placeholder="Your message..." value={replyBody} rows={5}
               onChange={e => setReplyBody(e.target.value)}
               className="app-input mb-3 resize-none" />
+            <div className="mb-3 flex flex-wrap gap-2">
+              {QUICK_PARENT_REPLIES.map((q) => (
+                <button
+                  key={q}
+                  onClick={() => setReplyBody(q)}
+                  className="px-2.5 py-1.5 rounded-lg text-[11px] font-black app-pressable"
+                  style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}
+                >
+                  Use: {q}
+                </button>
+              ))}
+            </div>
             <button onClick={handleReply}
               className="w-full py-3 rounded-xl font-black app-pressable"
               style={{ background: 'var(--app-success)', color: '#fff' }}>

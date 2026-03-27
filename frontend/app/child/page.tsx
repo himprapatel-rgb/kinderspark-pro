@@ -319,6 +319,28 @@ export default function ChildPage() {
 
       {/* ── CONTENT ── */}
       <div className="px-4 pt-5 space-y-6">
+        {/* Imported "learning path" pattern: clear 3-step journey */}
+        <div className="rounded-2xl p-3.5" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="font-black text-sm inline-flex items-center gap-2"><Sparkles size={14} /> SparkPath Today</h2>
+            <span className="text-[10px] font-black app-muted">10-10-5 loop</span>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <div className="rounded-xl p-2.5" style={{ background: 'rgba(91,127,232,0.1)' }}>
+              <p className="text-[10px] font-black app-muted uppercase">Now</p>
+              <p className="text-xs font-black truncate">{startTodayTitle.replace('Start with: ', '')}</p>
+            </div>
+            <div className="rounded-xl p-2.5" style={{ background: 'rgba(245,166,35,0.14)' }}>
+              <p className="text-[10px] font-black app-muted uppercase">Next</p>
+              <p className="text-xs font-black">{adaptiveMission?.title || 'Quick activity'}</p>
+            </div>
+            <div className="rounded-xl p-2.5" style={{ background: 'rgba(76,175,106,0.12)' }}>
+              <p className="text-[10px] font-black app-muted uppercase">Reward</p>
+              <p className="text-xs font-black">Earn stars + badge</p>
+            </div>
+          </div>
+        </div>
+
         {/* ── Today zone ── */}
         <div className="space-y-4">
           <h2 className="font-black text-base mb-3 inline-flex items-center gap-2"><Sparkles size={16} /> Today&apos;s Next Task</h2>

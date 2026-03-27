@@ -346,6 +346,34 @@ export default function TeacherDashboard() {
     finally { setBusy(false) }
   }
 
+  // Imported "intervention quick-actions" pattern from classroom ops tools:
+  // one-tap encouragement + parent nudge directly from at-risk list.
+  const sendInterventionNudge = async (student: any, mode: 'encourage' | 'parent') => {
+    if (!selectedClass || !user) return
+    const payload = mode === 'encourage'
+      ? {
+          subject: `You can do this, ${student.name}!`,
+          body: `Hi ${student.name}, your teacher believes in you. Try a short 5-minute mission today and earn stars.`,
+        }
+      : {
+          subject: `Home support request for ${student.name}`,
+          body: `Hi Parent/Guardian, ${student.name} has been less active recently. Please help with one short learning activity tonight.`,
+        }
+    try {
+      await sendMessage({
+        from: user.name || 'Teacher',
+        fromId: user.id,
+        to: student.id,
+        subject: payload.subject,
+        body: payload.body,
+        classId: selectedClass.id,
+      })
+      showToast(mode === 'encourage' ? `Encouragement sent to ${student.name}` : `Parent nudge sent for ${student.name}`)
+    } catch {
+      showToast('Failed to send nudge')
+    }
+  }
+
   // ── UI helpers ─────────────────────────────────────────────────────────────
   const pendingHW = (hw: any) => {
     const completedCount = hw.completions?.filter((c: any) => c.done).length || 0
@@ -685,18 +713,34 @@ export default function TeacherDashboard() {
                                   {daysAgo !== null ? `${daysAgo} days inactive` : 'Never logged in'}
                                 </p>
                               </div>
-                              <button
-                                onClick={async () => {
-                                  try {
-                                    await sendHomeworkReminders(selectedClass?.id)
-                                    showToast(`Reminder sent for ${s.name}`)
-                                  } catch { showToast('Failed to send reminder') }
-                                }}
-                                className="text-xs font-black px-3 py-1.5 rounded-xl app-pressable"
-                                style={{ background: 'rgba(255,159,10,0.15)', color: '#F5A623', border: '1px solid rgba(255,159,10,0.3)', cursor: 'pointer' }}
-                              >
-                                <span className="inline-flex items-center gap-1"><Bell size={13} /> Remind</span>
-                              </button>
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  onClick={() => sendInterventionNudge(s, 'encourage')}
+                                  className="text-[11px] font-black px-2.5 py-1.5 rounded-xl app-pressable"
+                                  style={{ background: 'rgba(76,175,106,0.16)', color: '#4CAF6A', border: '1px solid rgba(76,175,106,0.3)' }}
+                                >
+                                  Encourage
+                                </button>
+                                <button
+                                  onClick={() => sendInterventionNudge(s, 'parent')}
+                                  className="text-[11px] font-black px-2.5 py-1.5 rounded-xl app-pressable"
+                                  style={{ background: 'rgba(255,159,10,0.15)', color: '#F5A623', border: '1px solid rgba(255,159,10,0.3)' }}
+                                >
+                                  Parent Nudge
+                                </button>
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      await sendHomeworkReminders(selectedClass?.id)
+                                      showToast('Class reminder sent')
+                                    } catch { showToast('Failed to send reminder') }
+                                  }}
+                                  className="text-[11px] font-black px-2.5 py-1.5 rounded-xl app-pressable"
+                                  style={{ background: 'rgba(91,127,232,0.16)', color: '#5B7FE8', border: '1px solid rgba(91,127,232,0.32)' }}
+                                >
+                                  <span className="inline-flex items-center gap-1"><Bell size={12} /> Remind Class</span>
+                                </button>
+                              </div>
                             </div>
                           )
                         })}
