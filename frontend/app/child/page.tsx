@@ -5,7 +5,7 @@ import { useAppStore as useStore } from '@/store/appStore'
 import { getHomework, getSyllabuses, getProgress, getRecommendations, getStudentBadges, completeHomework, getDailyMission } from '@/lib/api'
 import { MODS } from '@/lib/modules'
 import { selectAdaptiveMission } from '@/lib/missionEngine'
-import { ArrowRight, BookOpen, Bot, Flame, Palette, PencilLine, PlayCircle, Settings, Shapes, ShoppingBag, Sparkles, Star, Trophy } from 'lucide-react'
+import { ArrowRight, BookOpen, Bot, Flame, Hash, Palette, PencilLine, PlayCircle, Settings, Shapes, ShoppingBag, Sparkles, Star, Trophy } from 'lucide-react'
 import PageTransition from '@/components/PageTransition'
 import { usePullToRefresh, PullIndicator } from '@/hooks/usePullToRefresh'
 import { playTap } from '@/lib/sounds'
@@ -170,6 +170,8 @@ export default function ChildPage() {
     { label: 'Draw', icon: Palette, path: '/child/draw', bg: 'rgba(245,166,35,0.18)', border: 'rgba(245,166,35,0.35)', iconColor: '#D4881A' },
     { label: 'Trace', icon: PencilLine, path: '/child/trace', bg: 'rgba(76,175,106,0.18)', border: 'rgba(76,175,106,0.35)', iconColor: '#2F9E52' },
     { label: 'Match', icon: Shapes, path: '/child/match', bg: 'rgba(91,127,232,0.16)', border: 'rgba(91,127,232,0.35)', iconColor: '#4A6ED0' },
+    { label: 'Count', icon: Hash, path: '/child/count', bg: 'rgba(76,175,106,0.16)', border: 'rgba(76,175,106,0.35)', iconColor: '#2F9E52' },
+    { label: 'Story', icon: BookOpen, path: '/child/story', bg: 'rgba(139,108,193,0.16)', border: 'rgba(139,108,193,0.35)', iconColor: '#7C5AB6' },
     { label: 'Tutor', icon: Bot, path: '/child/tutor', bg: 'rgba(139,108,193,0.16)', border: 'rgba(139,108,193,0.35)', iconColor: '#7C5AB6' },
     { label: 'Rank', icon: Trophy, path: '/child/leaderboard', bg: 'rgba(245,183,49,0.18)', border: 'rgba(245,183,49,0.35)', iconColor: '#C79012' },
     { label: 'Shop', icon: ShoppingBag, path: '/child/shop', bg: 'rgba(77,170,223,0.16)', border: 'rgba(77,170,223,0.35)', iconColor: '#2E8FC2' },
