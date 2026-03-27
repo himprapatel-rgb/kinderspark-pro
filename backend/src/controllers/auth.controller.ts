@@ -9,6 +9,19 @@ const JWT_SECRET = process.env.JWT_SECRET || 'kinderspark-secret'
 const ACCESS_TOKEN_TTL = '2h'
 const REFRESH_TOKEN_TTL_DAYS = 30
 
+/**
+ * Generate a unique human-readable Profile ID like "KS-A7X9K2"
+ * Format: KS-{6 alphanumeric chars}
+ */
+function generateProfileId(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // no 0,O,1,I to avoid confusion
+  let id = 'KS-'
+  for (let i = 0; i < 6; i++) {
+    id += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return id
+}
+
 function signAccessToken(payload: Record<string, unknown>) {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: ACCESS_TOKEN_TTL })
 }
@@ -185,5 +198,109 @@ export async function revokeRefreshToken(req: Request, res: Response) {
     res.clearCookie('kinderspark_token')
     res.clearCookie('kinderspark_refresh', { path: '/api/auth/refresh' })
     return res.json({ success: true })
+  }
+}
+
+export async function registerUser(req: Request, res: Response) {
+  const { displayName, pin, role, email, avatar } = req.body
+
+  if (!displayName || !pin || !role) {
+    return res.status(400).json({ error: 'displayName, pin, and role are required' })
+  }
+
+  try {
+    const pinHash = await bcrypt.hash(pin, 10)
+
+    // Generate a unique profile ID (retry if collision)
+    let profileId = generateProfileId()
+    let attempts = 0
+    while (attempts < 10) {
+      const existing = await prisma.user.findFirst({ where: { id: profileId } })
+      if (!existing) break
+      profileId = generateProfileId()
+      attempts++
+    }
+
+    // Check email uniqueness if provided
+    if (email) {
+      const existingEmail = await prisma.user.findFirst({ where: { email } })
+      if (existingEmail) {
+        return res.status(409).json({ error: 'Email already registered' })
+      }
+    }
+
+    // Create User with the profile ID
+    const user = await prisma.user.create({
+      data: {
+        id: profileId,
+        displayName: displayName.trim(),
+        pin: pinHash,
+        email: email || null,
+        avatar: avatar || (role === 'child' ? '🧒' : role === 'teacher' ? '👩‍🏫' : role === 'parent' ? '👨‍👩‍👧' : '⚙️'),
+      },
+    })
+
+    // Create RoleAssignment
+    await prisma.roleAssignment.create({
+      data: {
+        userId: user.id,
+        role: role as any,
+      },
+    })
+
+    // If child role, also create a Student record for backward compat
+    if (role === 'child') {
+      // Find any existing class to assign to (first available)
+      const firstClass = await prisma.class.findFirst({ orderBy: { createdAt: 'asc' } })
+      if (firstClass) {
+        await prisma.student.create({
+          data: {
+            name: displayName.trim(),
+            age: 5,
+            avatar: avatar || '🧒',
+            pin: pinHash,
+            classId: firstClass.id,
+            stars: 0,
+            streak: 0,
+            ownedItems: ['av_def', 'th_def'],
+            selectedTheme: 'th_def',
+          },
+        }).catch(() => {}) // Non-fatal if it fails
+      }
+    }
+
+    // Issue tokens
+    const roles = [role]
+    const token = signAccessToken({
+      id: user.id,
+      role,
+      roles,
+      name: user.displayName,
+      schoolId: null,
+    })
+    const refreshToken = await issueRefreshToken(user.id, role)
+    setAuthCookies(res, token, refreshToken)
+
+    return res.status(201).json({
+      success: true,
+      role,
+      token,
+      refreshToken,
+      profileId: user.id,
+      user: {
+        id: user.id,
+        name: user.displayName,
+        avatar: user.avatar,
+        email: user.email,
+        roles,
+        profileId: user.id,
+      },
+    })
+  } catch (err: any) {
+    console.error('register error:', err)
+    if (err.code === 'P2002') {
+      return res.status(409).json({ error: 'Account already exists' })
+    }
+    return res.status(500).json({ error: 'Registration failed. Please try again.' })
   }
 }

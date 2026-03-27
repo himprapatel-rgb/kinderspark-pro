@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express'
-import { verifyPin, refreshAccessToken, revokeRefreshToken } from '../controllers/auth.controller'
+import { verifyPin, refreshAccessToken, revokeRefreshToken, registerUser } from '../controllers/auth.controller'
 import { authRateLimit } from '../middleware/rateLimit.middleware'
 
 const router = Router()
@@ -20,6 +20,28 @@ router.post(
     next()
   },
   verifyPin
+)
+
+router.post(
+  '/register',
+  authRateLimit,
+  (req: Request, res: Response, next: NextFunction) => {
+    const { displayName, pin, role } = req.body
+    if (!displayName || typeof displayName !== 'string' || displayName.trim().length < 2) {
+      return res.status(400).json({ error: 'Display name must be at least 2 characters' })
+    }
+    if (!pin || typeof pin !== 'string' || pin.length < 4 || pin.length > 6) {
+      return res.status(400).json({ error: 'PIN must be 4–6 digits' })
+    }
+    if (!/^\d{4,6}$/.test(pin)) {
+      return res.status(400).json({ error: 'PIN must contain only digits' })
+    }
+    if (!role || !validRoles.includes(role)) {
+      return res.status(400).json({ error: 'Invalid role' })
+    }
+    next()
+  },
+  registerUser
 )
 
 router.post('/refresh', refreshAccessToken)

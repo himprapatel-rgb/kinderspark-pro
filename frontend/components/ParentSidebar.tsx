@@ -1,6 +1,7 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
+import { logoutApi } from '@/lib/api'
 import { BarChart3, DoorOpen, Home, Heart, MessageSquare, Sparkles } from 'lucide-react'
 
 interface ParentSidebarProps {
@@ -95,7 +96,7 @@ export default function ParentSidebar({ userName, childName, activeIndex, onItem
       {/* Bottom actions */}
       <div className="px-3 py-4 border-t space-y-1" style={{ borderColor: 'var(--app-border)' }}>
         <button
-          onClick={() => { logout(); window.location.href = '/login' }}
+          onClick={async () => { await logoutApi().catch(() => {}); logout(); window.location.href = '/login' }}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all app-pressable"
           style={{ color: 'var(--app-danger)', fontSize: '13px', fontWeight: 600 }}
         >

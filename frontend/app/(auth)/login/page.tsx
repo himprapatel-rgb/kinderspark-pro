@@ -72,8 +72,8 @@ const DEV_LOGINS = [
 
 const IS_DEV = process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_SHOW_DEV_TOOLS === 'true'
 
-// TODO: Remove SKIP_PIN before production launch — temporary testing bypass
-const SKIP_PIN = true
+// PIN is now required for all roles
+const SKIP_PIN = false
 
 const ROLE_DEFAULT_PIN: Record<string, string> = {
   admin: '9999', teacher: '1234', parent: '1111', child: '1111',
@@ -320,6 +320,30 @@ export default function LoginPage() {
           </div>
         </div>
       )}
+
+      {/* ── Create Account ── */}
+      <div className="w-full max-w-[360px] mt-6 relative z-10">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(70,75,96,0.15))' }} />
+          <span className="text-xs font-bold" style={{ color: 'rgba(70, 75, 96, 0.5)' }}>New here?</span>
+          <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, rgba(70,75,96,0.15), transparent)' }} />
+        </div>
+        <button
+          onClick={() => router.push('/register')}
+          className="w-full rounded-2xl p-4 flex items-center justify-center gap-3 text-left relative overflow-hidden group transition-all duration-200 active:scale-[0.97] app-pressable"
+          style={{
+            background: 'rgba(255,255,255,0.7)',
+            border: '2px dashed rgba(94,92,230,0.3)',
+            boxShadow: '0 4px 16px rgba(30,40,70,0.06)',
+          }}
+        >
+          <span className="text-2xl">✨</span>
+          <div>
+            <div className="text-sm font-black" style={{ color: '#5B7FE8' }}>Create Account</div>
+            <div className="text-xs font-semibold" style={{ color: 'rgba(70,75,96,0.6)' }}>Get your unique Profile ID</div>
+          </div>
+        </button>
+      </div>
 
       {/* ── Footer ── */}
       <div className="mt-12 text-center relative z-10 animate-fade-in">

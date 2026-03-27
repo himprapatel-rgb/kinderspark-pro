@@ -106,6 +106,23 @@ export async function verifyPin(pin: string, role: string) {
   return data
 }
 
+export async function registerAccount(data: {
+  displayName: string
+  pin: string
+  role: string
+  email?: string
+  avatar?: string
+}) {
+  const result = await req('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+  if (result.refreshToken) {
+    localStorage.setItem('kinderspark-refresh', result.refreshToken)
+  }
+  return result
+}
+
 export async function logoutApi() {
   const refreshToken = getRefreshToken()
   if (refreshToken) {

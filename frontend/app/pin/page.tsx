@@ -247,8 +247,8 @@ function PinContent() {
         ))}
       </div>
 
-      {/* On-screen numeric keypad for child role (touch-friendly) */}
-      {role === 'child' && (
+      {/* On-screen numeric keypad (touch-friendly for all roles) */}
+      {(
         <div className="mt-8 w-full max-w-[280px] relative z-10">
           <div className="grid grid-cols-3 gap-2">
             {['1','2','3','4','5','6','7','8','9'].map(d => (
