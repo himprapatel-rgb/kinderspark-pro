@@ -66,27 +66,34 @@ export default function ChildPage() {
   }, [student])
 
   const loadData = async () => {
-    if (!student?.classId || !student?.id) { setLoading(false); return }
+    if (!student?.id) { setLoading(false); return }
     try {
-      const [hw, syl, prog, bdgs] = await Promise.all([
-        getHomework(student.classId!),
-        getSyllabuses(student.classId),
-        getProgress(student.id),
+      // Load progress and badges (these work without classId)
+      const [prog, bdgs] = await Promise.all([
+        getProgress(student.id).catch(() => []),
         getStudentBadges(student.id).catch(() => []),
       ])
-      setHomework(hw)
-      setSyllabuses(syl.filter((s: any) => s.published))
       const pm: Record<string, number> = {}
-      prog.forEach((p: any) => { pm[p.moduleId] = p.cards })
+      ;(prog || []).forEach((p: any) => { pm[p.moduleId] = p.cards })
       setProgressMap(pm)
-      setBadges(bdgs)
-      getRecommendations(student.id).then(res => {
-        if (res?.recommendations) setRecommendations(res.recommendations)
-      }).catch(() => {})
-      getDailyMission({ studentId: student.id, classId: student.classId }).then((mission) => {
-        setRemoteMission(mission)
-        setDailyMission(mission)
-      }).catch(() => {})
+      setBadges(bdgs || [])
+
+      // Class-dependent features (homework, syllabuses, missions)
+      if (student.classId) {
+        const [hw, syl] = await Promise.all([
+          getHomework(student.classId).catch(() => []),
+          getSyllabuses(student.classId).catch(() => []),
+        ])
+        setHomework(hw || [])
+        setSyllabuses((syl || []).filter((s: any) => s.published))
+        getRecommendations(student.id).then(res => {
+          if (res?.recommendations) setRecommendations(res.recommendations)
+        }).catch(() => {})
+        getDailyMission({ studentId: student.id, classId: student.classId }).then((mission) => {
+          setRemoteMission(mission)
+          setDailyMission(mission)
+        }).catch(() => {})
+      }
     } catch (e) {
       console.error(e)
     } finally {

@@ -31,7 +31,7 @@ export default function LeaderboardPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!student?.classId) { router.push('/'); return }
+    if (!student?.classId) { setLoading(false); return }
     getStudents(student.classId)
       .then(s => setStudents(s))
       .catch(() => {})

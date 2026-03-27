@@ -60,6 +60,7 @@ function mapThreadMessageToLegacy(msg: any) {
 export default function ParentPage() {
   const router = useRouter()
   const user = useStore(s => s.user)
+  const role = useStore(s => s.role)
   const logout = useStore(s => s.logout)
   const dailyMission = useStore(s => s.dailyMission)
   const trackKpiEvent = useStore(s => s.trackKpiEvent)
@@ -88,6 +89,7 @@ export default function ParentPage() {
 
   useEffect(() => {
     if (!user) { router.push('/'); return }
+    if (role !== 'parent') { router.push('/'); return }
     ;(async () => {
       try {
         const profile = await getMyProfile().catch(() => null)
@@ -214,8 +216,8 @@ export default function ParentPage() {
   const loadData = async (u: any) => {
     try {
       const [hw, sessions, prog] = await Promise.all([
-        getHomework(u.classId),
-        getAISessions(u.id),
+        u.classId ? getHomework(u.classId) : Promise.resolve([]),
+        getAISessions(u.id).catch(() => []),
         getProgress(u.id).catch(() => []),
       ])
       let msgs: any[] = []
@@ -229,26 +231,28 @@ export default function ParentPage() {
             msgs = rows.map(mapThreadMessageToLegacy)
           } else {
             setThreadMode({ enabled: false, threadId: undefined })
-            msgs = await getMessages({ classId: u.classId })
+            if (u.classId) msgs = await getMessages({ classId: u.classId }).catch(() => [])
           }
         } catch {
           setThreadMode({ enabled: false, threadId: undefined })
-          msgs = await getMessages({ classId: u.classId })
+          if (u.classId) msgs = await getMessages({ classId: u.classId }).catch(() => [])
         }
-      } else {
+      } else if (u.classId) {
         setThreadMode({ enabled: false, threadId: undefined })
-        msgs = await getMessages({ classId: u.classId })
+        msgs = await getMessages({ classId: u.classId }).catch(() => [])
       }
-      setHomework(hw)
+      setHomework(hw || [])
       setMessages(msgs)
       setAiSessions(sessions || [])
       setProgressData(prog || [])
       const unread = msgs.filter((m: any) => !m.read && m.fromId !== u.id).length
       setUnreadMsgs(unread)
-      getAttendanceSummary(u.classId, 30).then(summary => {
-        const mine = summary?.find((s: any) => s.studentId === u.id)
-        setAttendance(mine || null)
-      }).catch(() => {})
+      if (u.classId) {
+        getAttendanceSummary(u.classId, 30).then(summary => {
+          const mine = summary?.find((s: any) => s.studentId === u.id)
+          setAttendance(mine || null)
+        }).catch(() => {})
+      }
       getStudentBadges(u.id).then(b => setBadgesData(b || [])).catch(() => {})
     } catch (e) {
       console.error(e)

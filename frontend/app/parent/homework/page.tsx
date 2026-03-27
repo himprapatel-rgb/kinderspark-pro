@@ -16,11 +16,16 @@ export default function ParentHomeworkPage() {
   const [toast, setToast] = useState('')
 
   useEffect(() => {
-    getHomework()
-      .then((data: any[]) => setHomework(data))
-      .catch(() => {})
-      .finally(() => setLoading(false))
-  }, [])
+    const classId = (user as any)?.classId
+    if (classId) {
+      getHomework(classId)
+        .then((data: any[]) => setHomework(data))
+        .catch(() => {})
+        .finally(() => setLoading(false))
+    } else {
+      setLoading(false)
+    }
+  }, [user])
 
   const studentId = (user as any)?.id
 

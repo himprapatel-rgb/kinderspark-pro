@@ -50,6 +50,7 @@ function mapThreadMessageToLegacy(msg: any) {
 export default function TeacherDashboard() {
   const router = useRouter()
   const user = useAppStore((s) => s.user)
+  const role = useAppStore((s) => s.role)
   const logout = useAppStore((s) => s.logout)
   const trackKpiEvent = useAppStore((s) => s.trackKpiEvent)
   const kpiEvents = useAppStore((s) => s.kpiEvents)
@@ -120,8 +121,9 @@ export default function TeacherDashboard() {
 
   useEffect(() => {
     if (!user) { router.push('/'); return }
+    if (role !== 'teacher' && role !== 'admin' && role !== 'principal') { router.push('/'); return }
     load()
-  }, [user, router])
+  }, [user, role, router])
 
   useEffect(() => {
     if (selectedClass) loadClassData(selectedClass.id)
