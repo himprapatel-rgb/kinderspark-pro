@@ -6,6 +6,8 @@ import { updateProgress, updateStudent, getSyllabus } from '@/lib/api'
 import { MODS } from '@/lib/modules'
 import { speak } from '@/lib/speech'
 import { Home, RotateCcw, Volume2 } from 'lucide-react'
+import ConfettiCanvas from '@/components/Confetti'
+import { playComplete, playSwipe, playStar } from '@/lib/sounds'
 
 export default function LessonPage() {
   const router = useRouter()
@@ -65,6 +67,7 @@ export default function LessonPage() {
 
   const handleNext = async () => {
     if (idx < total - 1) {
+      playSwipe()
       setIdx(i => i + 1)
       // Update progress
       if (student) {
@@ -72,9 +75,11 @@ export default function LessonPage() {
       }
     } else {
       // Finished
+      playComplete()
       setDone(true)
       setConfetti(true)
       if (student) {
+        playStar()
         await updateProgress(student.id, moduleId, total).catch(() => {})
         const newStars = (student.stars || 0) + 10
         const newStreak = (student.streak || 0) + 1
@@ -99,7 +104,7 @@ export default function LessonPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-6"
         style={{ background: 'var(--app-bg)' }}>
-        {confetti && <Confetti />}
+        <ConfettiCanvas trigger={confetti} onComplete={() => setConfetti(false)} />
         <div className="text-7xl mb-4 animate-bounce">🎉</div>
         <div className="text-3xl font-black mb-2" style={{ color: 'rgb(var(--foreground-rgb))' }}>Amazing!</div>
         <div className="app-muted font-bold text-center mb-6">
@@ -240,24 +245,3 @@ function getColorHex(name: string): string {
   return map[name] || '#5B7FE8'
 }
 
-function Confetti() {
-  const pieces = Array.from({ length: 30 }, (_, i) => i)
-  const colors = ['#F5B731', '#F5A623', '#5B7FE8', '#4CAF6A', '#8B6CC1', '#E05252']
-  return (
-    <div className="fixed inset-0 pointer-events-none z-50">
-      {pieces.map(i => (
-        <div
-          key={i}
-          className="confetti-piece"
-          style={{
-            left: `${Math.random() * 100}%`,
-            background: colors[i % colors.length],
-            borderRadius: Math.random() > 0.5 ? '50%' : '0',
-            animationDelay: `${Math.random() * 2}s`,
-            animationDuration: `${2 + Math.random() * 2}s`,
-          }}
-        />
-      ))}
-    </div>
-  )
-}

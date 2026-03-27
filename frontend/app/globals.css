@@ -328,6 +328,36 @@ body {
   60%  { transform: scale(1.08); filter: brightness(1.06); }
   100% { transform: scale(1); filter: brightness(1); }
 }
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes page-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes page-scale {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(40px) scale(0.95); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+@keyframes confetti-burst {
+  0%   { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
+  100% { opacity: 0; transform: translate(var(--cx, 40px), var(--cy, -60px)) rotate(var(--cr, 180deg)) scale(0.3); }
+}
+@keyframes confetti-fall {
+  0%   { opacity: 1; transform: translateY(-20px) rotate(0deg); }
+  100% { opacity: 0; transform: translateY(100vh) rotate(720deg); }
+}
+@keyframes bounce-in {
+  0%   { opacity: 0; transform: scale(0.3); }
+  50%  { transform: scale(1.05); }
+  70%  { transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
+}
 
 /* ── Animation utility classes ───────────────────────────────────────────────── */
 .animate-float        { animation: float 5s ease-in-out infinite; }
@@ -343,6 +373,11 @@ body {
 .animate-wiggle-slow  { animation: wiggle-soft 3.2s ease-in-out infinite; transform-origin: center; }
 .animate-bob          { animation: bob-soft 2.4s ease-in-out infinite; }
 .animate-sparkle-on-hover:hover { animation: sparkle-pop 0.45s cubic-bezier(.16,1,.3,1); }
+.animate-page-enter   { animation: page-enter 0.4s cubic-bezier(.16,1,.3,1) forwards; }
+.animate-page-fade    { animation: page-fade 0.35s ease forwards; }
+.animate-page-scale   { animation: page-scale 0.35s cubic-bezier(.16,1,.3,1) forwards; }
+.animate-bounce-in    { animation: bounce-in 0.5s cubic-bezier(.16,1,.3,1) forwards; }
+.confetti-piece       { position: absolute; width: 10px; height: 10px; top: -10px; animation: confetti-fall 3s ease-in forwards; }
 
 /* Stagger delays */
 .delay-100 { animation-delay: 100ms; }

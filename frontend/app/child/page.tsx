@@ -6,6 +6,9 @@ import { getHomework, getSyllabuses, getProgress, getRecommendations, getStudent
 import { MODS } from '@/lib/modules'
 import { selectAdaptiveMission } from '@/lib/missionEngine'
 import { ArrowRight, BookOpen, Bot, Flame, Palette, PencilLine, PlayCircle, Settings, Shapes, ShoppingBag, Sparkles, Star, Trophy } from 'lucide-react'
+import PageTransition from '@/components/PageTransition'
+import { usePullToRefresh, PullIndicator } from '@/hooks/usePullToRefresh'
+import { playTap } from '@/lib/sounds'
 
 // ── Daily Challenge helper ─────────────────────────────────────────────────────
 function getDailyChallenge() {
@@ -54,6 +57,7 @@ export default function ChildPage() {
   const { mod: dailyMod, todayKey } = getDailyChallenge()
 
   const student = currentStudent || user
+  const { pullRef, refreshing, pullProgress, pullDistance } = usePullToRefresh(() => loadData())
 
   useEffect(() => {
     if (!student) { router.push('/'); return }
@@ -173,9 +177,12 @@ export default function ChildPage() {
 
   return (
     <div
+      ref={pullRef}
       className="min-h-screen pb-28 app-container"
-      style={{ background: 'var(--app-bg)' }}
+      style={{ background: 'var(--app-bg)', overflowY: 'auto' }}
     >
+      <PullIndicator progress={pullProgress} refreshing={refreshing} pullDistance={pullDistance} />
+      <PageTransition>
       {/* ── HERO HEADER ── */}
       <div
         className="relative overflow-hidden doodle-surface"
@@ -751,6 +758,7 @@ export default function ChildPage() {
           </div>
         </div>
       )}
+      </PageTransition>
     </div>
   )
 }

@@ -8,6 +8,8 @@ import TopBarActions from '@/components/TopBarActions'
 import WeatherChip from '@/components/WeatherChip'
 import { BarChart3, Bell, Bot, BookOpen, Users, Home, MessageSquare, ClipboardList, CheckSquare, Camera } from 'lucide-react'
 import PhotoCapture from '@/components/PhotoCapture'
+import { useToast } from '@/components/Toast'
+import PageTransition from '@/components/PageTransition'
 import {
   getClasses, getStudents, getHomework, getSyllabuses, getMessages,
   createClass, createStudent, deleteStudent, createHomework, deleteHomework,
@@ -50,6 +52,7 @@ export default function TeacherDashboard() {
   const logout = useAppStore((s) => s.logout)
   const trackKpiEvent = useAppStore((s) => s.trackKpiEvent)
   const kpiEvents = useAppStore((s) => s.kpiEvents)
+  const toastNotify = useToast()
 
   const [tab, setTab] = useState<Tab>('home')
 
@@ -321,14 +324,15 @@ export default function TeacherDashboard() {
   }
 
   const handleDeleteStudent = async (id: string) => {
-    if (!window.confirm('Remove this student from the class? Their progress data will be lost.')) return
-    setBusy(true)
-    try {
-      await deleteStudent(id)
-      setStudents(prev => prev.filter(s => s.id !== id))
-      showToast('Student removed')
-    } catch (e: any) { showToast(e.message) }
-    finally { setBusy(false) }
+    toastNotify.confirm('Remove this student from the class? Their progress data will be lost.', async () => {
+      setBusy(true)
+      try {
+        await deleteStudent(id)
+        setStudents(prev => prev.filter(s => s.id !== id))
+        showToast('Student removed')
+      } catch (e: any) { showToast(e.message) }
+      finally { setBusy(false) }
+    })
   }
 
   const handleCreateHomework = async () => {
@@ -348,14 +352,15 @@ export default function TeacherDashboard() {
   }
 
   const handleDeleteHomework = async (id: string) => {
-    if (!window.confirm('Remove this homework? Students will no longer see it.')) return
-    setBusy(true)
-    try {
-      await deleteHomework(id)
-      setHomework(prev => prev.filter(h => h.id !== id))
-      showToast('Homework removed')
-    } catch (e: any) { showToast(e.message) }
-    finally { setBusy(false) }
+    toastNotify.confirm('Remove this homework? Students will no longer see it.', async () => {
+      setBusy(true)
+      try {
+        await deleteHomework(id)
+        setHomework(prev => prev.filter(h => h.id !== id))
+        showToast('Homework removed')
+      } catch (e: any) { showToast(e.message) }
+      finally { setBusy(false) }
+    })
   }
 
   const handleWizardGenerate = async () => {

@@ -16,6 +16,9 @@ import {
 import { MODS } from '@/lib/modules'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { BarChart3, Bell, Home, Users, MessageSquare, Download } from 'lucide-react'
+import { useToast } from '@/components/Toast'
+import PageTransition from '@/components/PageTransition'
+import { usePullToRefresh, PullIndicator } from '@/hooks/usePullToRefresh'
 
 const QUICK_PARENT_REPLIES = [
   'Thanks! We will complete this tonight.',
@@ -60,6 +63,7 @@ export default function ParentPage() {
   const logout = useStore(s => s.logout)
   const dailyMission = useStore(s => s.dailyMission)
   const trackKpiEvent = useStore(s => s.trackKpiEvent)
+  const toast = useToast()
 
   const [tab, setTab] = useState(0)
   const [student, setStudent] = useState<any>(null)
@@ -393,14 +397,14 @@ export default function ParentPage() {
 
   const handleMarkDone = async (hwId: string) => {
     if (!student || markingDone) return
-    const confirmed = window.confirm('Are you sure your child has completed this homework? This will notify the teacher.')
-    if (!confirmed) return
-    setMarkingDone(hwId)
-    try {
-      await completeHomework(hwId, student.id)
-      await loadData(user)
-    } catch (e: any) { alert(e.message) }
-    finally { setMarkingDone(null) }
+    toast.confirm('Are you sure your child has completed this homework? This will notify the teacher.', async () => {
+      setMarkingDone(hwId)
+      try {
+        await completeHomework(hwId, student.id)
+        await loadData(user)
+      } catch (e: any) { toast.error(e.message) }
+      finally { setMarkingDone(null) }
+    })
   }
 
   const handleReply = async () => {
@@ -448,7 +452,7 @@ export default function ParentPage() {
       setShowReply(null)
       setReplyBody('')
       loadData(user)
-    } catch (e: any) { alert(e.message) }
+    } catch (e: any) { toast.error(e.message) }
   }
 
   const openQuickReply = (template: string) => {

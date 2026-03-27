@@ -5,6 +5,8 @@ import { useAppStore } from '@/store/appStore'
 import { MODS } from '@/lib/modules'
 import { updateProgress, saveAISession } from '@/lib/api'
 import { BookOpen, RefreshCw, Target } from 'lucide-react'
+import ConfettiCanvas from '@/components/Confetti'
+import { playCorrect, playWrong, playComplete } from '@/lib/sounds'
 
 const QUESTIONS_PER_ROUND = 10
 const STARS_PER_CORRECT = 3
@@ -94,11 +96,13 @@ export default function WordMatchPage() {
     setFeedback(isCorrect ? 'correct' : 'wrong')
 
     if (isCorrect) {
+      playCorrect()
       const newStreak = streak + 1
       setScore(s => s + 1)
       setStreak(newStreak)
       setMaxStreak(ms => Math.max(ms, newStreak))
     } else {
+      playWrong()
       setStreak(0)
     }
 
@@ -113,8 +117,14 @@ export default function WordMatchPage() {
     }, 900)
   }
 
+  const [showConfetti, setShowConfetti] = useState(false)
+
   const finishGame = async (finalScore: number) => {
     setScreen('result')
+    if (finalScore >= QUESTIONS_PER_ROUND * 0.6) {
+      playComplete()
+      setShowConfetti(true)
+    }
     if (!student?.id) return
     setSaving(true)
     const starsEarned = finalScore * STARS_PER_CORRECT
@@ -202,6 +212,7 @@ export default function WordMatchPage() {
         className="min-h-screen flex flex-col items-center justify-center px-5 pb-24"
         style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #EDF2FF), var(--app-bg))' }}
       >
+        <ConfettiCanvas trigger={showConfetti} onComplete={() => setShowConfetti(false)} />
         <div className="text-7xl mb-4 animate-bounce">{accuracy >= 70 ? '🎉' : '💪'}</div>
         <h1 className="text-3xl font-black mb-1">{grade}</h1>
         <p className="text-sm font-bold app-muted mb-8">{score}/{QUESTIONS_PER_ROUND} correct</p>

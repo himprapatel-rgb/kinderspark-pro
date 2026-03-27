@@ -5,6 +5,7 @@ import { useStore } from '@/lib/store'
 import { createSyllabus, updateSyllabus, getSyllabus } from '@/lib/api'
 import { TEMPLATES } from '@/lib/modules'
 import { generateLesson } from '@/lib/api'
+import { useToast } from '@/components/Toast'
 
 const ICONS = ['📖','🌟','🔢','🔤','🎨','🐾','🍎','🚗','⛅','🔷','👁️','👨‍👩‍👧','🏠','🎵','🌍','🧩','💡','🎯']
 const COLORS = ['#5B7FE8','#8B6CC1','#4CAF6A','#E05252','#F5A623','#0A84FF','#FF375F','#32D74B']
@@ -15,6 +16,7 @@ function BuilderContent() {
   const useTemplate = params.get('template')
   const router = useRouter()
   const user = useStore(s => s.user)
+  const toast = useToast()
 
   const [meta, setMeta] = useState({
     title: '',
@@ -57,7 +59,7 @@ function BuilderContent() {
   }
 
   const handleSave = async (publish = false) => {
-    if (!meta.title) { alert('Please enter a title'); return }
+    if (!meta.title) { toast.warning('Please enter a title'); return }
     setSaving(true)
     try {
       const data = {
@@ -72,7 +74,7 @@ function BuilderContent() {
       }
       router.push('/teacher')
     } catch (e: any) {
-      alert(e.message)
+      toast.error(e.message)
     } finally {
       setSaving(false)
     }
@@ -87,7 +89,7 @@ function BuilderContent() {
       if (!meta.title) setMeta(m => ({ ...m, title: aiTopic }))
       setShowAI(false)
     } catch {
-      alert('AI generation failed. Please try again.')
+      toast.error('AI generation failed. Please try again.')
     } finally {
       setAiLoading(false)
     }

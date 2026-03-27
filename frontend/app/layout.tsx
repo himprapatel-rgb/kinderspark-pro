@@ -4,9 +4,10 @@ import type { Metadata } from 'next';
 import AccessibilityProvider from '@/components/AccessibilityProvider';
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
 import ThemeCustomizer from '@/components/ThemeCustomizer';
+import { ToastProvider } from '@/components/Toast';
 
 export const metadata: Metadata = {
-  title: 'KinderSpark Pro · v1.1',
+  title: 'KinderSpark Pro · v1.2',
   description: 'AI-powered kindergarten learning platform',
 };
 
@@ -23,10 +24,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
       <body className="font-sans antialiased min-h-screen" style={{ background: 'var(--app-bg)' }}>
-        <AccessibilityProvider>
-          {children}
-          <ThemeCustomizer />
-        </AccessibilityProvider>
+        <ToastProvider>
+          <AccessibilityProvider>
+            {children}
+            <ThemeCustomizer />
+          </AccessibilityProvider>
+        </ToastProvider>
         <ServiceWorkerRegistration />
       </body>
     </html>

@@ -10,6 +10,8 @@ import {
   setVoiceEnabled, isVoiceEnabled, stopSpeaking,
 } from '@/lib/speech'
 import { Bot, Home, RotateCcw, Volume2, VolumeX, X, Mic } from 'lucide-react'
+import ConfettiCanvas from '@/components/Confetti'
+import { playCorrect, playWrong, playComplete, playBadge } from '@/lib/sounds'
 
 type Phase = 'topics' | 'quiz' | 'results'
 
@@ -114,6 +116,7 @@ export default function TutorPage() {
     setAnswered(true)
     const isCorrect = choice === currentQ.a
     if (isCorrect) {
+      playCorrect()
       const newCorrect = correct + 1
       const newStreak = streak + 1
       const newMaxStreak = Math.max(maxStreak, newStreak)
@@ -129,6 +132,7 @@ export default function TutorPage() {
       const phrase = CORRECT_PHRASES[Math.floor(Math.random() * CORRECT_PHRASES.length)]
       speakEncouragement(phrase)
     } else {
+      playWrong()
       setStreak(0)
 
       // Voice: say the correct answer
@@ -147,10 +151,17 @@ export default function TutorPage() {
     }
   }
 
+  const [showConfetti, setShowConfetti] = useState(false)
+
   const finishQuiz = async () => {
     setPhase('results')
     const accuracy = Math.round((correct / TOTAL_Q) * 100)
     const stars = Math.round((correct / TOTAL_Q) * 3)
+
+    if (accuracy >= 60) {
+      playComplete()
+      setShowConfetti(true)
+    }
 
     // Voice: announce results
     speakResults(correct, TOTAL_Q)
@@ -168,7 +179,10 @@ export default function TutorPage() {
           }),
         ])
         setAiFeedback(feedbackRes.feedback)
-        if (sessionRes?.newBadges?.length) setNewBadges(sessionRes.newBadges)
+        if (sessionRes?.newBadges?.length) {
+          setNewBadges(sessionRes.newBadges)
+          playBadge()
+        }
 
         // Voice: read AI feedback
         if (feedbackRes.feedback) {
@@ -257,6 +271,7 @@ export default function TutorPage() {
           <VoiceToggle />
         </div>
 
+        <ConfettiCanvas trigger={showConfetti} onComplete={() => setShowConfetti(false)} />
         <div className="text-7xl mb-3 animate-bounce">
           {accuracy >= 80 ? '🏆' : accuracy >= 60 ? '🌟' : '💪'}
         </div>
