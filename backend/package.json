@@ -9,6 +9,7 @@
     "prisma:generate": "prisma generate",
     "prisma:seed": "ts-node prisma/seed.ts",
     "prisma:backfill-ecosystem": "ts-node prisma/backfill-ecosystem.ts",
+    "prisma:verify-ecosystem": "ts-node prisma/verify-ecosystem.ts",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"
