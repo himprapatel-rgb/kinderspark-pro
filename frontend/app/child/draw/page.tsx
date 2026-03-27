@@ -12,6 +12,7 @@ const COLORS = [
 export default function DrawPage() {
   const router = useRouter()
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const canvasWrapRef = useRef<HTMLDivElement>(null)
   const user = useStore(s => s.user)
   const currentStudent = useStore(s => s.currentStudent)
 
@@ -26,11 +27,24 @@ export default function DrawPage() {
   useEffect(() => {
     if (!student) { router.push('/'); return }
     const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-    ctx.fillStyle = '#FFF9EE'
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    const wrap = canvasWrapRef.current
+    if (!canvas || !wrap) return
+
+    const initCanvas = () => {
+      const width = Math.min(Math.max(wrap.clientWidth - 8, 280), 760)
+      const height = Math.round(width * 1.1)
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+      ctx.fillStyle = '#FFF9EE'
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      setHasDrawn(false)
+    }
+
+    initCanvas()
+    window.addEventListener('resize', initCanvas)
+    return () => window.removeEventListener('resize', initCanvas)
   }, [student, router])
 
   const getPos = (e: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
@@ -111,13 +125,13 @@ export default function DrawPage() {
       </div>
 
       {/* Canvas */}
-      <div className="flex-1 px-3 flex items-center justify-center">
+      <div ref={canvasWrapRef} className="flex-1 px-3 flex items-center justify-center">
         <canvas
           ref={canvasRef}
           width={380}
           height={420}
-          className="rounded-2xl w-full touch-none"
-          style={{ maxHeight: '50vh', background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}
+          className="rounded-2xl w-full max-w-[760px] touch-none"
+          style={{ maxHeight: '62vh', background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}
           onMouseDown={startDraw}
           onMouseMove={draw}
           onMouseUp={endDraw}

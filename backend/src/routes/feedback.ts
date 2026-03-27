@@ -11,6 +11,12 @@ router.use(requireAuth)
 router.get('/:studentId', async (req: Request, res: Response) => {
   try {
     const { studentId } = req.params
+    if (
+      (req.user?.role === 'child' || req.user?.role === 'parent') &&
+      req.user.id !== studentId
+    ) {
+      return res.status(403).json({ error: 'Insufficient permissions' })
+    }
 
     const feedback = await prisma.feedback.findUnique({
       where: { studentId },

@@ -150,6 +150,18 @@ router.post('/daily-mission', async (req: Request, res: Response) => {
     const { studentId, classId } = req.body || {}
     if (!studentId || !classId) return res.status(400).json({ error: 'studentId and classId required' })
 
+    if ((req.user?.role === 'child' || req.user?.role === 'parent') && req.user.id !== studentId) {
+      return res.status(403).json({ error: 'Insufficient permissions' })
+    }
+
+    const student = await prisma.student.findUnique({
+      where: { id: studentId },
+      select: { id: true, classId: true },
+    })
+    if (!student || student.classId !== classId) {
+      return res.status(403).json({ error: 'Invalid student/class ownership' })
+    }
+
     const [homework, progress] = await Promise.all([
       prisma.homework.findMany({
         where: { classId },

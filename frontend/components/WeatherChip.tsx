@@ -61,6 +61,7 @@ function getGeo(): Promise<{ lat: number; lon: number }> {
 export default function WeatherChip({ variant = 'light' }: WeatherChipProps) {
   const [weather, setWeather] = useState<WeatherView | null>(null)
   const [loading, setLoading] = useState(true)
+  const [locationStatus, setLocationStatus] = useState<'ok' | 'blocked' | 'fallback'>('ok')
 
   useEffect(() => {
     let cancelled = false
@@ -83,10 +84,16 @@ export default function WeatherChip({ variant = 'light' }: WeatherChipProps) {
 
         let value: WeatherView | null = null
         try {
+          if (typeof navigator !== 'undefined' && 'permissions' in navigator && navigator.permissions?.query) {
+            const perm = await navigator.permissions.query({ name: 'geolocation' as PermissionName })
+            if (perm.state === 'denied') setLocationStatus('blocked')
+          }
           const geo = await getGeo()
           value = await fetchWeather(geo.lat, geo.lon, 'Near you', 'geo')
+          setLocationStatus('ok')
         } catch {
           value = await fetchWeather(FALLBACK.lat, FALLBACK.lon, FALLBACK.place, 'fallback')
+          setLocationStatus((s) => (s === 'blocked' ? 'blocked' : 'fallback'))
         }
 
         if (!cancelled && value) {
@@ -108,14 +115,16 @@ export default function WeatherChip({ variant = 'light' }: WeatherChipProps) {
   const skin = variant === 'light' ? 'app-btn-glass text-white' : 'app-btn-soft'
 
   return (
-    <div className={`${base} ${skin}`}>
+    <div className={`${base} ${skin}`} aria-live="polite">
       {loading ? (
         <span>Weather…</span>
       ) : weather ? (
         <>
           <span>{codeToIcon(weather.code, weather.isDay)}</span>
           <span>{weather.temp}°C</span>
-          <span className={variant === 'light' ? 'text-white/80' : 'app-muted'}>· {weather.place}</span>
+          <span className={variant === 'light' ? 'text-white/80' : 'app-muted'}>
+            · {locationStatus === 'blocked' ? 'Location blocked' : weather.place}
+          </span>
         </>
       ) : (
         <span>Weather unavailable</span>

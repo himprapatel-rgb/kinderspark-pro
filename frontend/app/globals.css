@@ -234,6 +234,13 @@ body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+  .app-pressable:hover,
+  .app-pressable:active {
+    transform: none !important;
+  }
+  .animate-sparkle-on-hover:hover {
+    animation: none !important;
+  }
 }
 
 /* ── Keyframe animations ──────────────────────────────────────────────────────── */

@@ -10,6 +10,8 @@ const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
 export default function TracePage() {
   const router = useRouter()
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const canvasWrapRef = useRef<HTMLDivElement>(null)
+  const drawCountRef = useRef(0)
   const user = useStore(s => s.user)
   const currentStudent = useStore(s => s.currentStudent)
 
@@ -52,6 +54,7 @@ export default function TracePage() {
 
     setProgress(0)
     setDrawCount(0)
+    drawCountRef.current = 0
     setAwarded(false)
   }
 
@@ -97,16 +100,14 @@ export default function TracePage() {
     ctx.lineTo(pos.x, pos.y)
     ctx.stroke()
 
-    setDrawCount(c => {
-      const newCount = c + 1
-      const newProgress = Math.min(100, Math.round((newCount / 200) * 100))
-      setProgress(newProgress)
-
-      if (newProgress >= 100 && !completed.has(currentLetter)) {
-        handleComplete()
-      }
-      return newCount
-    })
+    drawCountRef.current += 1
+    if (drawCountRef.current % 4 !== 0) return
+    const newProgress = Math.min(100, Math.round((drawCountRef.current / 200) * 100))
+    setDrawCount(drawCountRef.current)
+    setProgress(newProgress)
+    if (newProgress >= 100 && !completed.has(currentLetter)) {
+      handleComplete()
+    }
   }
 
   const handleComplete = async () => {
@@ -138,6 +139,22 @@ export default function TracePage() {
   }
 
   const endDraw = () => setDrawing(false)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    const wrap = canvasWrapRef.current
+    if (!canvas || !wrap) return
+    const resizeCanvas = () => {
+      const width = Math.min(Math.max(wrap.clientWidth - 8, 280), 740)
+      const height = Math.round(width * 0.86)
+      canvas.width = width
+      canvas.height = height
+      drawLetterGuide(currentLetter)
+    }
+    resizeCanvas()
+    window.addEventListener('resize', resizeCanvas)
+    return () => window.removeEventListener('resize', resizeCanvas)
+  }, [currentLetter])
 
   return (
     <div className="min-h-screen flex flex-col app-page app-container">
@@ -182,13 +199,13 @@ export default function TracePage() {
       </div>
 
       {/* Canvas */}
-      <div className="flex-1 px-3 flex items-center justify-center">
+      <div ref={canvasWrapRef} className="flex-1 px-3 flex items-center justify-center">
         <canvas
           ref={canvasRef}
           width={370}
           height={320}
-          className="rounded-2xl w-full touch-none"
-          style={{ maxHeight: '50vh', background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}
+          className="rounded-2xl w-full max-w-[740px] touch-none"
+          style={{ maxHeight: '58vh', background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}
           onMouseDown={startDraw}
           onMouseMove={draw}
           onMouseUp={endDraw}
