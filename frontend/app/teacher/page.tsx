@@ -29,6 +29,8 @@ export default function TeacherDashboard() {
   const router = useRouter()
   const user = useAppStore((s) => s.user)
   const logout = useAppStore((s) => s.logout)
+  const trackKpiEvent = useAppStore((s) => s.trackKpiEvent)
+  const kpiEvents = useAppStore((s) => s.kpiEvents)
 
   const [tab, setTab] = useState<Tab>('home')
 
@@ -81,6 +83,7 @@ export default function TeacherDashboard() {
   const [feedbacks, setFeedbacks] = useState<Record<string, { grade: string; note: string }>>({})
   const [gradeForm, setGradeForm] = useState({ grade: '', note: '' })
   const [gradeBusy, setGradeBusy] = useState(false)
+  const [smartIdeaApplied, setSmartIdeaApplied] = useState<string | null>(null)
 
   // SSE / fallback polling ref
   const sseRef = useRef<EventSource | null>(null)
@@ -267,6 +270,10 @@ export default function TeacherDashboard() {
     try {
       const hw = await createHomework({ ...hwForm, classId: selectedClass.id })
       setHomework(prev => [...prev, hw])
+      if (smartIdeaApplied) {
+        trackKpiEvent({ category: 'learning', name: 'teacher_homework_assigned_from_recommendation' })
+      }
+      setSmartIdeaApplied(null)
       setHwForm({ title: '', moduleId: '', dueDate: '', starsReward: 5 })
       showToast('Homework assigned!')
     } catch (e: any) { showToast(e.message) }
@@ -440,15 +447,25 @@ export default function TeacherDashboard() {
   })()
 
   const applySmartIdea = (idea: any) => {
+    trackKpiEvent({ category: 'learning', name: 'teacher_smart_recommendation_used' })
     setHwForm({
       title: idea.title,
       moduleId: idea.moduleId,
       dueDate: idea.dueDate,
       starsReward: idea.starsReward,
     })
+    setSmartIdeaApplied(idea.id)
     setWizardTopic(idea.moduleId)
     showToast(`Loaded "${idea.title}" into assignment form`)
   }
+
+  useEffect(() => {
+    if (!selectedClass || tab !== 'homework') return
+    const key = `ks_teacher_reco_seen_${selectedClass.id}_${new Date().toISOString().slice(0, 10)}`
+    if (typeof window !== 'undefined' && localStorage.getItem(key)) return
+    trackKpiEvent({ category: 'operational', name: 'teacher_smart_recommendations_shown' })
+    if (typeof window !== 'undefined') localStorage.setItem(key, '1')
+  }, [tab, selectedClass, trackKpiEvent])
 
   if (loading) return <Loading emoji="👩‍🏫" text="Loading your classes…" />
 
@@ -1027,6 +1044,30 @@ export default function TeacherDashboard() {
         {/* ── HOMEWORK TAB ─────────────────────────────────────────────────── */}
         {tab === 'homework' && (
           <div className="space-y-4">
+            {(() => {
+              const since = Date.now() - 7 * 24 * 60 * 60 * 1000
+              const events = kpiEvents.filter((e: any) => new Date(e.at).getTime() >= since)
+              const shown = events.filter((e: any) => e.name === 'teacher_smart_recommendations_shown').length
+              const used = events.filter((e: any) => e.name === 'teacher_smart_recommendation_used').length
+              const assigned = events.filter((e: any) => e.name === 'teacher_homework_assigned_from_recommendation').length
+              const useRate = shown ? Math.round((used / shown) * 100) : 0
+              const assignRate = used ? Math.round((assigned / used) * 100) : 0
+              return (
+                <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="font-black text-sm">Recommendation Funnel (7d)</div>
+                    <span className="text-[10px] font-black app-muted">Local analytics</span>
+                  </div>
+                  <div className="grid grid-cols-2 tablet:grid-cols-4 gap-2">
+                    <div className="rounded-xl p-2.5" style={{ background: 'var(--app-surface-soft)' }}><div className="text-lg font-black">{shown}</div><div className="text-[10px] font-bold app-muted">Shown</div></div>
+                    <div className="rounded-xl p-2.5" style={{ background: 'var(--app-surface-soft)' }}><div className="text-lg font-black">{used}</div><div className="text-[10px] font-bold app-muted">Used</div></div>
+                    <div className="rounded-xl p-2.5" style={{ background: 'var(--app-surface-soft)' }}><div className="text-lg font-black">{assigned}</div><div className="text-[10px] font-bold app-muted">Assigned</div></div>
+                    <div className="rounded-xl p-2.5" style={{ background: 'var(--app-surface-soft)' }}><div className="text-lg font-black">{useRate}% / {assignRate}%</div><div className="text-[10px] font-bold app-muted">Use / Assign</div></div>
+                  </div>
+                </div>
+              )
+            })()}
+
             {/* Smart assignment recommendations */}
             <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}>
               <div className="flex items-center justify-between mb-2">

@@ -34,6 +34,7 @@ export default function ParentPage() {
   const user = useStore(s => s.user)
   const logout = useStore(s => s.logout)
   const dailyMission = useStore(s => s.dailyMission)
+  const trackKpiEvent = useStore(s => s.trackKpiEvent)
 
   const [tab, setTab] = useState(0)
   const [student, setStudent] = useState<any>(null)
@@ -63,6 +64,14 @@ export default function ParentPage() {
       markAllMessagesRead(student.classId, student.id).then(() => setUnreadMsgs(0)).catch(() => {})
     }
   }, [tab])
+
+  useEffect(() => {
+    if (!student || loading || tab !== 0) return
+    const key = `ks_parent_digest_viewed_${student.id}_${new Date().toISOString().slice(0, 10)}`
+    if (typeof window !== 'undefined' && localStorage.getItem(key)) return
+    trackKpiEvent({ category: 'engagement', name: 'parent_weekly_digest_viewed' })
+    if (typeof window !== 'undefined') localStorage.setItem(key, '1')
+  }, [student, loading, tab, trackKpiEvent])
 
   // Real-time messages via SSE (falls back to 10s polling if not supported)
   useEffect(() => {
@@ -234,6 +243,7 @@ export default function ParentPage() {
   }
 
   const openQuickReply = (template: string) => {
+    trackKpiEvent({ category: 'communication', name: 'parent_quick_reply_used' })
     const teacherMsg = messages.find((m: any) => m.fromId !== student?.id)
     setShowReply(teacherMsg || { subject: 'Daily Check-in', fromId: 'teacher' })
     setReplyBody(template)
@@ -323,7 +333,10 @@ export default function ParentPage() {
                   <div className="flex items-center justify-between mt-2">
                     <div className="text-xs font-black app-muted capitalize">{missionAction.kind}</div>
                     <button
-                      onClick={() => router.push(missionAction.route)}
+                      onClick={() => {
+                        trackKpiEvent({ category: 'engagement', name: 'parent_mission_open_from_copilot' })
+                        router.push(missionAction.route)
+                      }}
                       className="text-xs font-black px-2.5 py-1 rounded-lg app-pressable"
                       style={{ background: 'var(--app-accent-soft)', color: 'var(--app-accent)' }}
                     >
@@ -374,6 +387,18 @@ export default function ParentPage() {
                 </div>
               </div>
               <div className="text-xs font-bold app-muted">{weeklyDigestText}</div>
+              {missionAction && (
+                <button
+                  onClick={() => {
+                    trackKpiEvent({ category: 'engagement', name: 'parent_mission_open_from_digest' })
+                    router.push(missionAction.route)
+                  }}
+                  className="mt-3 px-3 py-2 rounded-xl text-xs font-black app-pressable"
+                  style={{ background: 'rgba(91,127,232,0.16)', color: '#5B7FE8', border: '1px solid rgba(91,127,232,0.3)' }}
+                >
+                  Open 5-min mission
+                </button>
+              )}
             </div>
 
             {/* Progress rings */}

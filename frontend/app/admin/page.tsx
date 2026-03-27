@@ -14,6 +14,7 @@ export default function AdminPage() {
   const user = useStore(s => s.user)
   const role = useStore(s => s.role)
   const logout = useStore(s => s.logout)
+  const kpiEvents = useStore(s => s.kpiEvents)
 
   const [stats, setStats] = useState<any>(null)
   const [leaderboard, setLeaderboard] = useState<any[]>([])
@@ -130,6 +131,31 @@ export default function AdminPage() {
       <div className="app-content">
         {tab === 0 && stats && (
           <div className="app-stack">
+            {(() => {
+              const since = Date.now() - 7 * 24 * 60 * 60 * 1000
+              const recent = kpiEvents.filter((e: any) => new Date(e.at).getTime() >= since)
+              const digestViews = recent.filter((e: any) => e.name === 'parent_weekly_digest_viewed').length
+              const missionFromDigest = recent.filter((e: any) => e.name === 'parent_mission_open_from_digest').length
+              const quickReplies = recent.filter((e: any) => e.name === 'parent_quick_reply_used').length
+              const teacherRecoUsed = recent.filter((e: any) => e.name === 'teacher_smart_recommendation_used').length
+              const digestToMission = digestViews ? Math.round((missionFromDigest / digestViews) * 100) : 0
+              return (
+                <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="font-black text-sm">Feature Conversion Snapshot (7d)</div>
+                    <span className="text-[10px] font-black app-muted">Product analytics</span>
+                  </div>
+                  <div className="grid grid-cols-2 tablet:grid-cols-5 gap-3">
+                    <div className="rounded-xl p-3" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}><div className="text-lg font-black">{digestViews}</div><div className="text-xs font-bold app-muted">Digest Views</div></div>
+                    <div className="rounded-xl p-3" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}><div className="text-lg font-black">{missionFromDigest}</div><div className="text-xs font-bold app-muted">Digest → Mission</div></div>
+                    <div className="rounded-xl p-3" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}><div className="text-lg font-black">{digestToMission}%</div><div className="text-xs font-bold app-muted">Digest Conversion</div></div>
+                    <div className="rounded-xl p-3" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}><div className="text-lg font-black">{quickReplies}</div><div className="text-xs font-bold app-muted">Quick Replies</div></div>
+                    <div className="rounded-xl p-3" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}><div className="text-lg font-black">{teacherRecoUsed}</div><div className="text-xs font-bold app-muted">Reco Used</div></div>
+                  </div>
+                </div>
+              )
+            })()}
+
             {pilotMetrics && (
               <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
                 <div className="font-black text-sm mb-3">Pilot Metrics Snapshot</div>
