@@ -293,7 +293,7 @@ export default function ChildPage() {
       {/* ── CONTENT ── */}
       <div className="px-4 pt-5 space-y-6">
         {/* ── Today zone ── */}
-        <div>
+        <div className="space-y-4">
           <h2 className="font-black text-base mb-3 inline-flex items-center gap-2"><Sparkles size={16} /> Today&apos;s Next Task</h2>
 
         {/* ── Homework Alert ── */}
@@ -321,8 +321,9 @@ export default function ChildPage() {
                   {pendingHW.length}
                 </div>
               </div>
+              <div className="space-y-3">
               {pendingHW.slice(0, 2).map(hw => (
-                <div key={hw.id} className="mb-2 last:mb-0">
+                <div key={hw.id} className="rounded-2xl p-2" style={{ background: 'rgba(255,255,255,0.35)', border: '1px solid rgba(255,255,255,0.45)' }}>
                   <button
                     onClick={() => hw.moduleId && router.push(hw.aiGenerated ? `/child/tutor?topic=${encodeURIComponent(hw.moduleId)}` : `/child/lesson/${hw.moduleId}`)}
                     className="w-full rounded-2xl p-3 flex items-center gap-3 active:scale-[0.98] transition-all text-left app-pressable"
@@ -336,7 +337,7 @@ export default function ChildPage() {
                       <p className="font-black text-sm truncate">{hw.title}</p>
                       <p className="text-xs font-bold app-muted">Due {hw.dueDate ? new Date(hw.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'soon'} · ⭐ {hw.starsReward} stars</p>
                     </div>
-                    <span className="text-white/40 text-lg flex-shrink-0">›</span>
+                    <span className="app-muted text-lg flex-shrink-0">›</span>
                   </button>
                   <button
                     onClick={() => handleMarkDone(hw.id)}
@@ -354,6 +355,7 @@ export default function ChildPage() {
                   </button>
                 </div>
               ))}
+              </div>
             </div>
           </div>
         )}
@@ -395,12 +397,12 @@ export default function ChildPage() {
               <p className="font-black text-sm leading-tight">
                 {dailyDone ? 'Challenge Complete!' : `Today: ${dailyMod.title}`}
               </p>
-              <p className="text-white/45 text-xs font-bold mt-0.5">
+              <p className="app-muted text-xs font-bold mt-0.5">
                 {dailyDone ? 'Come back tomorrow for a new one' : `Earn bonus ⭐ · ${dailyMod.items.length} cards`}
               </p>
             </div>
             {!dailyDone && (
-              <span className="text-white/40 text-lg flex-shrink-0">›</span>
+              <span className="app-muted text-lg flex-shrink-0">›</span>
             )}
           </div>
         </button>
