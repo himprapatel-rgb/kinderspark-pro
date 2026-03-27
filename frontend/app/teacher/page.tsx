@@ -380,6 +380,76 @@ export default function TeacherDashboard() {
     return { total: students.length, done: completedCount }
   }
 
+  const weakModule = (() => {
+    const byModule: Record<string, { sum: number; n: number }> = {}
+    students.forEach((s: any) => {
+      ;(s.progress || []).forEach((p: any) => {
+        if (!byModule[p.moduleId]) byModule[p.moduleId] = { sum: 0, n: 0 }
+        byModule[p.moduleId].sum += Number(p.cards || 0)
+        byModule[p.moduleId].n += 1
+      })
+    })
+    const rows = Object.entries(byModule).map(([moduleId, v]) => ({
+      moduleId,
+      avgCards: v.n ? v.sum / v.n : 0,
+    }))
+    rows.sort((a, b) => a.avgCards - b.avgCards)
+    return rows[0]?.moduleId || 'letters'
+  })()
+
+  const nextDate = (days: number) => {
+    const d = new Date()
+    d.setDate(d.getDate() + days)
+    return d.toISOString().slice(0, 10)
+  }
+
+  const smartHomeworkIdeas = (() => {
+    const lowEngagementCount = interventions.filter((i: any) => i.priority === 'high').length
+    const avgCompletion = classStats?.avgHwCompletion ?? 0
+    const ideas = [
+      {
+        id: 'confidence',
+        title: 'Confidence Booster (5 mins)',
+        moduleId: weakModule,
+        starsReward: 6,
+        dueDate: nextDate(1),
+        reason: lowEngagementCount > 0
+          ? `${lowEngagementCount} students are high-priority; assign quick-win practice.`
+          : 'Short win to keep momentum across the class.',
+      },
+      {
+        id: 'core-skill',
+        title: `Core Skill Sprint: ${weakModule}`,
+        moduleId: weakModule,
+        starsReward: 8,
+        dueDate: nextDate(2),
+        reason: `Class has lowest progress in "${weakModule}".`,
+      },
+      {
+        id: 'catch-up',
+        title: 'Catch-up Homework Pack',
+        moduleId: weakModule,
+        starsReward: 10,
+        dueDate: nextDate(3),
+        reason: avgCompletion < 70
+          ? `Homework completion is ${avgCompletion}% — this targets completion lift.`
+          : 'Balanced practice pack for consistency.',
+      },
+    ]
+    return ideas
+  })()
+
+  const applySmartIdea = (idea: any) => {
+    setHwForm({
+      title: idea.title,
+      moduleId: idea.moduleId,
+      dueDate: idea.dueDate,
+      starsReward: idea.starsReward,
+    })
+    setWizardTopic(idea.moduleId)
+    showToast(`Loaded "${idea.title}" into assignment form`)
+  }
+
   if (loading) return <Loading emoji="👩‍🏫" text="Loading your classes…" />
 
   const TABS: { id: Tab; icon: React.ReactNode; label: string }[] = [
@@ -957,6 +1027,31 @@ export default function TeacherDashboard() {
         {/* ── HOMEWORK TAB ─────────────────────────────────────────────────── */}
         {tab === 'homework' && (
           <div className="space-y-4">
+            {/* Smart assignment recommendations */}
+            <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="font-black text-sm">Smart Assignment Recommendations</div>
+                <span className="text-[10px] font-black px-2 py-1 rounded-full" style={{ background: 'rgba(91,127,232,0.16)', color: '#5B7FE8' }}>Auto</span>
+              </div>
+              <div className="space-y-2">
+                {smartHomeworkIdeas.map((idea) => (
+                  <div key={idea.id} className="rounded-xl p-3 flex items-center gap-3" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-black text-sm truncate">{idea.title}</div>
+                      <div className="text-xs font-bold app-muted mt-0.5">{idea.reason}</div>
+                      <div className="text-[10px] font-bold app-muted mt-1">Module: {idea.moduleId} · Due: {fmt(idea.dueDate)} · ⭐{idea.starsReward}</div>
+                    </div>
+                    <button
+                      onClick={() => applySmartIdea(idea)}
+                      className="text-xs font-black px-3 py-1.5 rounded-xl app-pressable"
+                      style={{ background: 'rgba(91,127,232,0.16)', color: '#5B7FE8', border: '1px solid rgba(91,127,232,0.32)' }}
+                    >
+                      Use
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
 
             {/* ✨ AI Homework Wizard banner */}
             <button

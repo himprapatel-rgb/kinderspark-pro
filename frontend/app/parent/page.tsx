@@ -179,6 +179,25 @@ export default function ParentPage() {
     ? Math.round(aiSessions.reduce((a: number, s: any) => a + (s.accuracy || 0), 0) / aiSessions.length)
     : 0
   const totalAIStars = aiSessions.reduce((a: number, s: any) => a + (s.stars || 0), 0)
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+  const weeklyCompleted = homework.filter((hw: any) =>
+    hw.completions?.some((c: any) =>
+      c.studentId === student?.id && c.done && c.completedAt && new Date(c.completedAt) >= sevenDaysAgo
+    )
+  ).length
+  const weeklyAISessions = aiSessions.filter((s: any) => s.createdAt && new Date(s.createdAt) >= sevenDaysAgo).length
+  const weeklyAvgAccuracy = weeklyAISessions
+    ? Math.round(
+        aiSessions
+          .filter((s: any) => s.createdAt && new Date(s.createdAt) >= sevenDaysAgo)
+          .reduce((a: number, s: any) => a + (s.accuracy || 0), 0) / weeklyAISessions
+      )
+    : totalAccuracy
+  const weeklyDigestText = weeklyCompleted >= 3
+    ? 'Strong learning momentum this week. Keep the same routine.'
+    : weeklyCompleted > 0
+      ? 'Good progress this week. A short daily check-in can boost confidence.'
+      : 'Light activity this week. Try one 5-minute mission together today.'
   const todayAction = pendingHW[0] || null
   const missionAction = !todayAction && dailyMission ? dailyMission : null
   const insightText = pendingHW.length > 0
@@ -332,6 +351,29 @@ export default function ParentPage() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Weekly digest card (imported pattern from family learning apps) */}
+            <div className="mx-3 mb-4 rounded-2xl p-4" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="font-black text-sm">Weekly Digest</div>
+                <span className="text-[10px] font-black px-2 py-1 rounded-full" style={{ background: 'rgba(91,127,232,0.16)', color: '#5B7FE8' }}>Last 7 days</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 mb-2">
+                <div className="rounded-xl p-2.5" style={{ background: 'var(--app-surface-soft)' }}>
+                  <div className="text-lg font-black text-green-500">{weeklyCompleted}</div>
+                  <div className="text-[10px] font-bold app-muted">HW Done</div>
+                </div>
+                <div className="rounded-xl p-2.5" style={{ background: 'var(--app-surface-soft)' }}>
+                  <div className="text-lg font-black text-purple-500">{weeklyAISessions}</div>
+                  <div className="text-[10px] font-bold app-muted">AI Sessions</div>
+                </div>
+                <div className="rounded-xl p-2.5" style={{ background: 'var(--app-surface-soft)' }}>
+                  <div className="text-lg font-black text-blue-500">{weeklyAvgAccuracy}%</div>
+                  <div className="text-[10px] font-bold app-muted">Accuracy</div>
+                </div>
+              </div>
+              <div className="text-xs font-bold app-muted">{weeklyDigestText}</div>
             </div>
 
             {/* Progress rings */}
