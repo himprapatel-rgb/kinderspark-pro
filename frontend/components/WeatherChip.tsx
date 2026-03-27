@@ -10,6 +10,7 @@ type WeatherView = {
   code: number
   isDay: number
   place: string
+  source: 'geo' | 'fallback'
 }
 
 const CACHE_KEY = 'ks_weather_v1'
@@ -28,7 +29,7 @@ function codeToIcon(code: number, isDay: number) {
   return '🌈'
 }
 
-async function fetchWeather(lat: number, lon: number, place: string): Promise<WeatherView | null> {
+async function fetchWeather(lat: number, lon: number, place: string, source: 'geo' | 'fallback'): Promise<WeatherView | null> {
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lon)}&current=temperature_2m,weather_code,is_day&timezone=auto`
   const res = await fetch(url)
   if (!res.ok) return null
@@ -39,6 +40,7 @@ async function fetchWeather(lat: number, lon: number, place: string): Promise<We
     code: Number(data.current.weather_code ?? 0),
     isDay: Number(data.current.is_day ?? 1),
     place,
+    source,
   }
 }
 
@@ -66,26 +68,32 @@ export default function WeatherChip({ variant = 'light' }: WeatherChipProps) {
     const run = async () => {
       try {
         const raw = localStorage.getItem(CACHE_KEY)
+        let hadCachedFallback = false
         if (raw) {
           const cached = JSON.parse(raw)
           if (cached?.expiresAt && cached?.value && Date.now() < cached.expiresAt) {
             setWeather(cached.value)
-            setLoading(false)
-            return
+            hadCachedFallback = cached.value?.source === 'fallback'
+            if (!hadCachedFallback) {
+              setLoading(false)
+              return
+            }
           }
         }
 
         let value: WeatherView | null = null
         try {
           const geo = await getGeo()
-          value = await fetchWeather(geo.lat, geo.lon, 'Near you')
+          value = await fetchWeather(geo.lat, geo.lon, 'Near you', 'geo')
         } catch {
-          value = await fetchWeather(FALLBACK.lat, FALLBACK.lon, FALLBACK.place)
+          value = await fetchWeather(FALLBACK.lat, FALLBACK.lon, FALLBACK.place, 'fallback')
         }
 
         if (!cancelled && value) {
           setWeather(value)
-          localStorage.setItem(CACHE_KEY, JSON.stringify({ expiresAt: Date.now() + CACHE_MS, value }))
+          // Keep fallback cache shorter so we retry live location soon.
+          const ttl = value.source === 'geo' ? CACHE_MS : 5 * 60 * 1000
+          localStorage.setItem(CACHE_KEY, JSON.stringify({ expiresAt: Date.now() + ttl, value }))
         }
       } finally {
         if (!cancelled) setLoading(false)
