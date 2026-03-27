@@ -106,7 +106,7 @@ export default function DrawPage() {
       {/* Header */}
       <div className="flex items-center justify-between p-4">
         <button onClick={() => router.push('/child')} className="app-muted font-bold app-pressable">← Back</button>
-        <div className="app-title">🎨 Drawing Canvas</div>
+        <div className="app-title animate-bob">🎨 Drawing Canvas</div>
         <button onClick={clearCanvas} className="text-orange-400 font-bold text-sm app-pressable">Clear</button>
       </div>
 
@@ -135,8 +135,8 @@ export default function DrawPage() {
           <div className="text-xs font-bold app-muted mb-2">Color</div>
           <div className="flex flex-wrap gap-2">
             {COLORS.map(c => (
-              <button className="app-pressable" key={c} onClick={() => setColor(c)}
-                className="w-8 h-8 rounded-full transition-all active:scale-90"
+              <button key={c} onClick={() => setColor(c)}
+                className="w-8 h-8 rounded-full transition-all active:scale-90 app-pressable"
                 style={{
                   background: c,
                   border: color === c ? '3px solid var(--app-accent)' : '2px solid var(--app-border)',
@@ -156,7 +156,7 @@ export default function DrawPage() {
 
         {/* Save button */}
         <button onClick={handleSave} disabled={!hasDrawn}
-          className="w-full py-4 rounded-2xl font-black text-white transition-all active:scale-95 disabled:opacity-40 app-pressable"
+          className="w-full py-4 rounded-2xl font-black text-white transition-all active:scale-95 disabled:opacity-40 app-pressable animate-sparkle-on-hover"
           style={{ background: saved ? '#4CAF6A' : 'linear-gradient(135deg, #5B7FE8, #8B6CC1)' }}>
           {saved ? '✅ Saved! +5 ⭐' : '💾 Save Drawing (+5 ⭐)'}
         </button>

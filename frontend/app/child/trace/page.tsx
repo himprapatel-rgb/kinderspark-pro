@@ -144,7 +144,7 @@ export default function TracePage() {
       {/* Header */}
       <div className="flex items-center justify-between p-4">
         <button onClick={() => router.push('/child')} className="app-muted font-bold app-pressable">← Back</button>
-        <div className="app-title">✍️ Trace Letters</div>
+        <div className="app-title animate-bob">✍️ Trace Letters</div>
         <div className="app-muted text-sm font-bold">{completed.size}/26</div>
       </div>
 
@@ -152,9 +152,9 @@ export default function TracePage() {
       <div className="overflow-x-auto px-3 pb-3">
         <div className="flex gap-2 w-max">
           {LETTERS.map(l => (
-            <button className="app-pressable" key={l}
+            <button key={l}
               onClick={() => { setCurrentLetter(l); speak(l) }}
-              className="w-10 h-10 rounded-xl font-black text-sm flex-shrink-0 transition-all active:scale-90"
+              className="w-10 h-10 rounded-xl font-black text-sm flex-shrink-0 transition-all active:scale-90 app-pressable"
               style={{
                 background: currentLetter === l ? '#5B7FE8' : completed.has(l) ? '#4CAF6A40' : 'var(--app-surface)',
                 color: currentLetter === l ? 'white' : completed.has(l) ? '#4CAF6A' : 'rgba(70,75,96,0.75)',
@@ -207,7 +207,7 @@ export default function TracePage() {
           Clear
         </button>
         <button onClick={nextLetter} disabled={LETTERS.indexOf(currentLetter) === LETTERS.length - 1}
-          className="flex-1 py-3 rounded-2xl font-black text-white disabled:opacity-40 app-pressable"
+          className="flex-1 py-3 rounded-2xl font-black text-white disabled:opacity-40 app-pressable animate-sparkle-on-hover"
           style={{ background: '#5B7FE8' }}>
           Next Letter →
         </button>

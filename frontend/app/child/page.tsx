@@ -198,7 +198,7 @@ export default function ChildPage() {
           <div className="flex justify-between items-start mb-5">
             <div className="flex items-center gap-3">
               <div
-                className="w-16 h-16 rounded-3xl flex items-center justify-center text-4xl flex-shrink-0 sticker-bubble"
+                className="w-16 h-16 rounded-3xl flex items-center justify-center text-4xl flex-shrink-0 sticker-bubble animate-float2"
                 style={{
                   background: 'rgba(255,255,255,0.24)',
                   boxShadow: '0 4px 20px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.3)',
@@ -298,10 +298,10 @@ export default function ChildPage() {
                 trackKpiEvent({ category: 'engagement', name: 'child_continue_learning_click' })
                 router.push(startTodayHref)
               }}
-              className="mt-3 w-full rounded-xl py-3 px-3 font-black text-sm flex items-center justify-center gap-2 app-pressable"
+              className="mt-3 w-full rounded-xl py-3 px-3 font-black text-sm flex items-center justify-center gap-2 app-pressable animate-sparkle-on-hover"
               style={{ background: 'linear-gradient(135deg, var(--app-gold), var(--app-warning))', color: '#2B1F10' }}
             >
-              <PlayCircle size={16} />
+              <PlayCircle size={16} className="animate-bob" />
               Continue Learning
             </button>
             <div className="mt-2 rounded-xl px-3 py-2 flex items-center justify-between" style={{ background: 'rgba(255,255,255,0.14)' }}>
@@ -536,7 +536,7 @@ export default function ChildPage() {
                 className="rounded-2xl p-4 flex flex-col items-center gap-2 active:scale-[0.94] transition-all"
                 style={{ background: a.bg, border: `1.5px solid ${a.border}` }}
               >
-                <span className="w-12 h-12 flex items-center justify-center sticker-bubble" style={{ background: 'rgba(255,255,255,0.74)', transform: a.label.length % 2 ? 'rotate(-5deg)' : 'rotate(4deg)' }}>
+                <span className="w-12 h-12 flex items-center justify-center sticker-bubble animate-wiggle-slow" style={{ background: 'rgba(255,255,255,0.74)', transform: a.label.length % 2 ? 'rotate(-5deg)' : 'rotate(4deg)' }}>
                   <a.icon size={22} style={{ color: a.iconColor }} />
                 </span>
                 <span className="font-black text-xs">{a.label}</span>

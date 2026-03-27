@@ -175,7 +175,7 @@ export default function WordMatchPage() {
         </div>
         <button
           onClick={startGame}
-          className="w-full max-w-[280px] py-5 rounded-3xl font-black text-xl active:scale-95 transition-all relative overflow-hidden app-pressable"
+          className="w-full max-w-[280px] py-5 rounded-3xl font-black text-xl active:scale-95 transition-all relative overflow-hidden app-pressable animate-sparkle-on-hover"
           style={{
             background: 'linear-gradient(135deg, #F5A623, #D4881A)',
             boxShadow: '0 8px 32px rgba(255,159,10,0.5)',

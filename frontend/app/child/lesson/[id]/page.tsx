@@ -146,13 +146,13 @@ export default function LessonPage() {
         {/* Main next/finish button — big and obvious */}
         {idx < total - 1 ? (
           <button onClick={handleNext} disabled={!card}
-            className="w-full py-4 rounded-2xl font-black text-base active:scale-95 transition-all disabled:opacity-40 app-pressable flex items-center justify-center gap-2"
+            className="w-full py-4 rounded-2xl font-black text-base active:scale-95 transition-all disabled:opacity-40 app-pressable flex items-center justify-center gap-2 animate-sparkle-on-hover"
             style={{ background: `linear-gradient(135deg, ${color}, ${color}cc)`, color: '#fff', boxShadow: `0 4px 16px ${color}40` }}>
             Next Card → <span className="text-xs opacity-70">{idx + 1}/{total}</span>
           </button>
         ) : (
           <button onClick={handleNext}
-            className="w-full py-5 rounded-2xl font-black text-lg active:scale-95 transition-all app-pressable flex items-center justify-center gap-2"
+            className="w-full py-5 rounded-2xl font-black text-lg active:scale-95 transition-all app-pressable flex items-center justify-center gap-2 animate-sparkle-on-hover"
             style={{ background: `linear-gradient(135deg, var(--app-success), #5FBF7F)`, color: '#fff', boxShadow: '0 4px 20px rgba(43,165,94,0.35)' }}>
             🎉 All Done! Earn Stars
           </button>
