@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── iOS safe areas (notch, Dynamic Island, home indicator) ─────── */
+html {
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);
+}
+/* Prevent overscroll bounce in standalone PWA mode */
+@media (display-mode: standalone) {
+  html, body { overscroll-behavior: none; }
+}
+
 :root {
   /* ── "Sunny Classroom" palette — child psychology-informed ─────── */
   --foreground-rgb: 36, 32, 48;
