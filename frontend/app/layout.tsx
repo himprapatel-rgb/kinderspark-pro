@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import type { Metadata, Viewport } from 'next';
 import AccessibilityProvider from '@/components/AccessibilityProvider';
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
+import NativeBridge from '@/components/NativeBridge';
 import ThemeCustomizer from '@/components/ThemeCustomizer';
 import { ToastProvider } from '@/components/Toast';
 
@@ -58,6 +59,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           </AccessibilityProvider>
         </ToastProvider>
         <ServiceWorkerRegistration />
+        <NativeBridge />
       </body>
     </html>
   );

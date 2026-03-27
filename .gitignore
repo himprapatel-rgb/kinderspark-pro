@@ -11,3 +11,9 @@ coverage/
 .turbo
 *.tsbuildinfo
 .claude/worktrees/
+
+# Capacitor
+frontend/www/
+frontend/ios/App/Pods/
+*.xcworkspace
+*.xcuserdata
