@@ -227,7 +227,7 @@ async function runCategory(cat: string, importance: mem.MemoryEntry['importance'
     const agents = ALL_AGENTS.filter(a => a.cat === cat)
     for (const agent of agents) {
       await agentSpeak(agent, snap, undefined, 'update', importance)
-      await new Promise(r => setTimeout(r, 2000))
+      await new Promise(r => setTimeout(r, 5000)) // 5s between agents for free tier
     }
     // Cross-talk: first agent in category talks to a random agent in another category
     if (agents.length > 0) {
@@ -244,14 +244,15 @@ async function runCategory(cat: string, importance: mem.MemoryEntry['importance'
 }
 
 // ── Run ALL agents (startup burst) ───────────────────────────────────────────
+// Throttled: free-tier Gemini allows 15 RPM so we space agents 5s apart
 
 async function runAllAgents() {
   try {
     const snap = await getPlatformSnapshot()
-    console.log(`[AgentScheduler] Running all ${ALL_AGENTS.length} agents...`)
+    console.log(`[AgentScheduler] Running all ${ALL_AGENTS.length} agents (throttled for free tier)...`)
     for (const agent of ALL_AGENTS) {
       await agentSpeak(agent, snap, undefined, 'update', 1)
-      await new Promise(r => setTimeout(r, 1500))
+      await new Promise(r => setTimeout(r, 5000)) // 5s = 12 RPM, under 15 RPM limit
     }
   } catch (e: any) {
     console.warn('[RunAll] error:', e.message)
@@ -266,40 +267,40 @@ export function startAgentScheduler() {
   }
   console.log(`[AgentScheduler] 🤖 Starting ${ALL_AGENTS.length} autonomous agents...`)
 
-  // Round-table chat every 3 minutes
-  cron.schedule('*/3 * * * *', runRoundTable)
+  // Round-table chat every 10 minutes (was 3 — throttled for free tier)
+  cron.schedule('*/10 * * * *', runRoundTable)
 
-  // Dev/ops agents every 15 minutes
-  cron.schedule('*/15 * * * *', () => runCategory('ops', 1))
+  // Dev/ops agents every 30 minutes (was 15)
+  cron.schedule('*/30 * * * *', () => runCategory('ops', 1))
 
-  // Security + quality every 30 minutes
-  cron.schedule('*/30 * * * *', () => runCategory('security', 2))
+  // Security + quality every hour (was 30 min)
+  cron.schedule('0 * * * *', () => runCategory('security', 2))
 
-  // Dev agents every hour
-  cron.schedule('0 * * * *', () => runCategory('dev', 1))
+  // Dev agents every 2 hours (was 1 hour)
+  cron.schedule('0 */2 * * *', () => runCategory('dev', 1))
 
-  // Analytics + user success every hour (offset)
-  cron.schedule('20 * * * *', () => runCategory('analytics', 1))
-  cron.schedule('40 * * * *', () => runCategory('success', 2))
+  // Analytics + user success every 2 hours (was 1 hour)
+  cron.schedule('20 */2 * * *', () => runCategory('analytics', 1))
+  cron.schedule('40 */2 * * *', () => runCategory('success', 2))
 
-  // Content + quality every 2 hours
-  cron.schedule('0 */2 * * *', () => runCategory('content', 1))
-  cron.schedule('30 */2 * * *', () => runCategory('quality', 1))
+  // Content + quality every 4 hours (was 2)
+  cron.schedule('0 */4 * * *', () => runCategory('content', 1))
+  cron.schedule('30 */4 * * *', () => runCategory('quality', 1))
 
-  // Growth + design every 4 hours
-  cron.schedule('0 */4 * * *', () => runCategory('growth', 1))
-  cron.schedule('0 */6 * * *', () => runCategory('design', 1))
+  // Growth + design every 6-8 hours (was 4-6)
+  cron.schedule('0 */6 * * *', () => runCategory('growth', 1))
+  cron.schedule('0 */8 * * *', () => runCategory('design', 1))
 
-  // Startup: run all agents then kick off round-table chats
+  // Startup: run all agents with proper throttling
   setTimeout(async () => {
-    console.log('[AgentScheduler] 🚀 Startup burst — all agents initialising...')
+    console.log('[AgentScheduler] 🚀 Startup burst — all agents initialising (throttled)...')
     await runAllAgents()
-    await new Promise(r => setTimeout(r, 3000))
-    // 5 round-table turns so dashboard looks alive immediately
-    for (let i = 0; i < 5; i++) {
+    await new Promise(r => setTimeout(r, 5000))
+    // 2 round-table turns (was 5 — reduced for free tier)
+    for (let i = 0; i < 2; i++) {
       await runRoundTable()
-      await new Promise(r => setTimeout(r, 3500))
+      await new Promise(r => setTimeout(r, 10000))
     }
     console.log('[AgentScheduler] ✅ Startup complete')
-  }, 6000)
+  }, 10000)
 }

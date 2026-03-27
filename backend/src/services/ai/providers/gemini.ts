@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import type { AIProvider, AICallOptions } from '../types'
 
-const DEFAULT_MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash'
+const DEFAULT_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
 
 let _client: GoogleGenerativeAI | null = null
 function getClient(): GoogleGenerativeAI {
