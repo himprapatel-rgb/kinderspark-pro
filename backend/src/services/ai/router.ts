@@ -2,10 +2,12 @@
 import { claudeProvider }     from './providers/claude'
 import { openaiProvider }     from './providers/openai'
 import { perplexityProvider } from './providers/perplexity'
+import { geminiProvider }     from './providers/gemini'
 import type { AIProvider, AIProviderName, AICallOptions } from './types'
 import { TASK_PROVIDERS } from './types'
 
 const ALL_PROVIDERS: Record<AIProviderName, AIProvider> = {
+  gemini:     geminiProvider,
   claude:     claudeProvider,
   openai:     openaiProvider,
   perplexity: perplexityProvider,
@@ -27,14 +29,14 @@ export async function aiComplete(
   // Build preference list: explicit override first, then task defaults, then all providers
   let order: AIProviderName[] = opts.provider
     ? [opts.provider, ...(TASK_PROVIDERS[task] ?? []).filter(p => p !== opts.provider)]
-    : (TASK_PROVIDERS[task] ?? ['claude', 'openai', 'perplexity'])
+    : (TASK_PROVIDERS[task] ?? ['gemini', 'claude', 'openai', 'perplexity'])
 
   // Only keep providers that have credentials configured
   const available = order.filter(name => ALL_PROVIDERS[name].available())
 
   if (available.length === 0) {
     throw new Error(
-      `No AI provider configured. Set ANTHROPIC_API_KEY, OPENAI_API_KEY, or PERPLEXITY_API_KEY.`
+      `No AI provider configured. Set GEMINI_API_KEY (free!), ANTHROPIC_API_KEY, OPENAI_API_KEY, or PERPLEXITY_API_KEY.`
     )
   }
 
@@ -58,6 +60,7 @@ export async function aiComplete(
 /** Return which providers are currently configured (for health/admin endpoints) */
 export function getProviderStatus(): Record<AIProviderName, boolean> {
   return {
+    gemini:     geminiProvider.available(),
     claude:     claudeProvider.available(),
     openai:     openaiProvider.available(),
     perplexity: perplexityProvider.available(),
