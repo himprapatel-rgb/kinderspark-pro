@@ -5,6 +5,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
+# Copy source (including fixed prisma schema with all opposite relation fields)
 COPY . .
 RUN npx prisma generate
 RUN npm run build
