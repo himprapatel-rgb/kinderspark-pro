@@ -1,5 +1,12 @@
-const CACHE_NAME = 'kinderspark-v1';
-const STATIC_ASSETS = ['/', '/login'];
+const CACHE_NAME = 'kinderspark-v2';
+const STATIC_ASSETS = [
+  '/',
+  '/login',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/apple-touch-icon.png',
+  '/manifest.json',
+];
 
 self.addEventListener('install', event => {
   event.waitUntil(

@@ -9,11 +9,19 @@ function getClient(): GoogleGenerativeAI {
   return _client
 }
 
+// Circuit breaker: after 3 consecutive 429s, disable for 10 minutes
+let consecutiveFailures = 0
+let disabledUntil = 0
+const MAX_FAILURES = 3
+const COOLDOWN_MS = 10 * 60 * 1000 // 10 minutes
+
 export const geminiProvider: AIProvider = {
   name: 'gemini',
 
   available() {
-    return !!process.env.GEMINI_API_KEY
+    if (!process.env.GEMINI_API_KEY) return false
+    if (Date.now() < disabledUntil) return false // circuit open
+    return true
   },
 
   async complete(prompt: string, opts: AICallOptions = {}): Promise<string> {
@@ -24,7 +32,22 @@ export const geminiProvider: AIProvider = {
         temperature: opts.temperature ?? 0.7,
       },
     })
-    const result = await model.generateContent(prompt)
-    return result.response.text().trim()
+    try {
+      const result = await model.generateContent(prompt)
+      consecutiveFailures = 0 // reset on success
+      return result.response.text().trim()
+    } catch (err: any) {
+      const msg = err?.message || ''
+      // 429 or quota errors → increment circuit breaker
+      if (msg.includes('429') || msg.includes('quota') || msg.includes('RESOURCE_EXHAUSTED')) {
+        consecutiveFailures++
+        if (consecutiveFailures >= MAX_FAILURES) {
+          disabledUntil = Date.now() + COOLDOWN_MS
+          console.log(`[Gemini] ⚡ Circuit breaker open — disabled for 10 min after ${consecutiveFailures} failures`)
+          consecutiveFailures = 0
+        }
+      }
+      throw err // re-throw so router tries next provider
+    }
   },
 }
