@@ -1,0 +1,155 @@
+name: Deploy iOS to App Store
+
+# This workflow requires the following GitHub Secrets:
+#   APPLE_CERTIFICATE_BASE64    - Your .p12 signing certificate (base64 encoded)
+#   APPLE_CERTIFICATE_PASSWORD  - Password for the .p12 certificate
+#   APPLE_PROVISIONING_PROFILE  - Your .mobileprovision file (base64 encoded)
+#   APPLE_TEAM_ID               - Your Apple Developer Team ID
+#   APP_STORE_CONNECT_KEY_ID    - App Store Connect API Key ID
+#   APP_STORE_CONNECT_ISSUER_ID - App Store Connect API Issuer ID
+#   APP_STORE_CONNECT_KEY       - App Store Connect API Private Key (.p8 contents)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'App version (e.g. 1.0.0)'
+        required: true
+        default: '1.0.0'
+      build_number:
+        description: 'Build number (auto-increments if empty)'
+        required: false
+
+jobs:
+  deploy:
+    name: 🚀 Deploy to App Store
+    runs-on: macos-14
+    timeout-minutes: 45
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 📲 Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: 🎨 Generate iOS assets
+        working-directory: frontend
+        run: node scripts/generate-ios-assets.js
+
+      - name: 🔄 Capacitor Sync
+        working-directory: frontend
+        run: |
+          npx cap sync ios
+          cp assets/icon-1024.png ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png
+          cp assets/splash-universal.png ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732.png
+          cp assets/splash-dark.png ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732-1.png
+          cp assets/splash-dark.png ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732-2.png
+
+      - name: 🔐 Install Apple Certificate
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          PROVISION_PROFILE_BASE64: ${{ secrets.APPLE_PROVISIONING_PROFILE }}
+        run: |
+          # Create keychain
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+          
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          
+          # Import certificate
+          echo -n "$CERTIFICATE_BASE64" | base64 --decode -o $RUNNER_TEMP/certificate.p12
+          security import $RUNNER_TEMP/certificate.p12 -P "$CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
+          
+          # Install provisioning profile
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          echo -n "$PROVISION_PROFILE_BASE64" | base64 --decode -o ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision
+
+      - name: 🏗️ Archive for App Store
+        working-directory: frontend/ios/App
+        env:
+          BUILD_NUMBER: ${{ inputs.build_number || github.run_number }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          xcodebuild archive \
+            -project App.xcodeproj \
+            -scheme App \
+            -archivePath $RUNNER_TEMP/KinderSparkPro.xcarchive \
+            -destination 'generic/platform=iOS' \
+            MARKETING_VERSION="$VERSION" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
+            DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
+            | tail -20
+
+      - name: 📤 Export IPA
+        run: |
+          cat > $RUNNER_TEMP/ExportOptions.plist << EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store-connect</string>
+            <key>teamID</key>
+            <string>${{ secrets.APPLE_TEAM_ID }}</string>
+            <key>uploadBitcode</key>
+            <false/>
+            <key>uploadSymbols</key>
+            <true/>
+          </dict>
+          </plist>
+          EOF
+          
+          xcodebuild -exportArchive \
+            -archivePath $RUNNER_TEMP/KinderSparkPro.xcarchive \
+            -exportOptionsPlist $RUNNER_TEMP/ExportOptions.plist \
+            -exportPath $RUNNER_TEMP/export
+
+      - name: 🚀 Upload to App Store Connect
+        env:
+          API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          API_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+        run: |
+          # Save API key
+          mkdir -p ~/private_keys
+          echo "$API_KEY" > ~/private_keys/AuthKey_$API_KEY_ID.p8
+          
+          # Upload using altool or xcrun
+          xcrun notarytool submit $RUNNER_TEMP/export/*.ipa \
+            --key ~/private_keys/AuthKey_$API_KEY_ID.p8 \
+            --key-id "$API_KEY_ID" \
+            --issuer "$API_ISSUER_ID" \
+            --wait || true
+          
+          # Also try direct upload
+          xcrun altool --upload-app \
+            -f $RUNNER_TEMP/export/*.ipa \
+            --apiKey "$API_KEY_ID" \
+            --apiIssuer "$API_ISSUER_ID" \
+            --type ios
+
+      - name: ✅ Deployment Summary
+        run: |
+          echo "## 🎉 iOS App Uploaded to App Store Connect!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version:** ${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build:** ${{ inputs.build_number || github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next steps:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Go to [App Store Connect](https://appstoreconnect.apple.com)" >> $GITHUB_STEP_SUMMARY
+          echo "2. Select KinderSpark Pro" >> $GITHUB_STEP_SUMMARY
+          echo "3. Add screenshots, description, keywords" >> $GITHUB_STEP_SUMMARY
+          echo "4. Submit for Apple Review" >> $GITHUB_STEP_SUMMARY
