@@ -363,9 +363,8 @@ export default function RegisterPage() {
             </div>
           )}
 
-          {/* On-screen keypad for kids */}
-          {role === 'child' && (
-            <div className="mt-4">
+          {/* On-screen keypad for all roles (touch-friendly) */}
+          <div className="mt-4">
               <div className="grid grid-cols-3 gap-2">
                 {['1','2','3','4','5','6','7','8','9'].map(d => (
                   <button
@@ -416,7 +415,6 @@ export default function RegisterPage() {
                 </button>
               </div>
             </div>
-          )}
         </div>
       )}
 

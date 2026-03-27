@@ -72,12 +72,6 @@ const DEV_LOGINS = [
 
 const IS_DEV = process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_SHOW_DEV_TOOLS === 'true'
 
-// PIN is now required for all roles
-const SKIP_PIN = false
-
-const ROLE_DEFAULT_PIN: Record<string, string> = {
-  admin: '9999', teacher: '1234', parent: '1111', child: '1111',
-}
 
 export default function LoginPage() {
   const router = useRouter()
@@ -94,19 +88,6 @@ export default function LoginPage() {
       if (item.role === 'teacher') router.replace('/teacher')
       else if (item.role === 'admin')  router.replace('/admin')
       else if (item.role === 'parent') router.replace('/parent')
-      else router.replace('/child')
-    } catch { setDevLoading(null) }
-  }
-
-  async function skipPinLogin(roleId: string) {
-    setDevLoading(roleId)
-    try {
-      const pin = ROLE_DEFAULT_PIN[roleId] || '1111'
-      const data = await verifyPin(pin, roleId)
-      setAuth(data.user, roleId, data.accessToken || data.token)
-      if (roleId === 'teacher') router.replace('/teacher')
-      else if (roleId === 'admin') router.replace('/admin')
-      else if (roleId === 'parent') router.replace('/parent')
       else router.replace('/child')
     } catch { setDevLoading(null) }
   }
@@ -216,7 +197,7 @@ export default function LoginPage() {
         {ROLES.map((r, i) => (
           <button
             key={r.id}
-            onClick={() => SKIP_PIN ? skipPinLogin(r.id) : router.push(`/pin?role=${r.id}`)}
+            onClick={() => router.push(`/pin?role=${r.id}`)}
             className="w-full rounded-2xl p-4 flex items-center gap-4 text-left relative overflow-hidden group transition-all duration-200 active:scale-[0.97] app-pressable"
             style={{
               animationDelay: `${(i + 2) * 100}ms`,

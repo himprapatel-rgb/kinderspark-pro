@@ -87,6 +87,7 @@ export async function verifyPin(req: Request, res: Response) {
             name: u.displayName,
             avatar: u.avatar,
             schoolId: u.schoolId || null,
+            profileId: u.id,
             roles,
           },
         })

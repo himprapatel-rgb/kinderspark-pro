@@ -1,10 +1,10 @@
 import { Router, Request, Response, NextFunction } from 'express'
 import { verifyPin, refreshAccessToken, revokeRefreshToken, registerUser } from '../controllers/auth.controller'
-import { authRateLimit } from '../middleware/rateLimit.middleware'
+import { authRateLimit, registerRateLimit } from '../middleware/rateLimit.middleware'
 
 const router = Router()
 
-const validRoles = ['child', 'teacher', 'parent', 'admin']
+const validRoles = ['child', 'teacher', 'parent', 'admin', 'principal']
 
 router.post(
   '/pin',
@@ -24,7 +24,7 @@ router.post(
 
 router.post(
   '/register',
-  authRateLimit,
+  registerRateLimit,
   (req: Request, res: Response, next: NextFunction) => {
     const { displayName, pin, role } = req.body
     if (!displayName || typeof displayName !== 'string' || displayName.trim().length < 2) {

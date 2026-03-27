@@ -39,7 +39,7 @@ export default function ProfileManager({ roleLabel }: { roleLabel: string }) {
           avatar: profile?.avatar || user.avatar || '',
         })
         setRoles((profile?.roleAssignments || []).map((r: any) => String(r.role)))
-        setProfileId(profile?.id || user.id || '')
+        setProfileId(profile?.id || user.profileId || user.id || '')
       } catch {
         setForm({
           displayName: user.name || '',
@@ -47,7 +47,7 @@ export default function ProfileManager({ roleLabel }: { roleLabel: string }) {
           avatar: user.avatar || '',
         })
         setRoles([(user as any)?.role || 'user'])
-        setProfileId(user.id || '')
+        setProfileId(user.profileId || user.id || '')
       } finally {
         setLoading(false)
       }

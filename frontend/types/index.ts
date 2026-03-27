@@ -165,6 +165,8 @@ export interface User {
   role?: string
   roles?: string[]
   avatar?: string
+  profileId?: string
+  email?: string
   stars?: number
   streak?: number
   classId?: string

@@ -1,8 +1,9 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
+import { logoutApi } from '@/lib/api'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
-import { Bell, Eye, Globe, Monitor, Settings, Timer } from 'lucide-react'
+import { Bell, Eye, Globe, Monitor, Settings, Timer, User, LogOut } from 'lucide-react'
 
 const LANGS = [
   { code: 'en', label: 'English', flag: '🇬🇧' },
@@ -20,6 +21,7 @@ export default function SettingsPage() {
   const updateSettings = useAppStore(s => s.updateSettings)
   const user = useAppStore(s => s.user)
   const currentStudent = useAppStore(s => s.currentStudent)
+  const logout = useAppStore(s => s.logout)
   const student = currentStudent || user
 
   const acc = settings.large ? 'text-lg' : 'text-sm'
@@ -197,9 +199,38 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        {/* Profile & Logout */}
+        <div className="rounded-2xl p-4 space-y-3" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+          <div className="font-black text-base flex items-center gap-2"><User size={16} /> Account</div>
+          <button
+            onClick={() => router.push('/child/profile')}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all app-pressable"
+            style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}
+          >
+            <span className="text-xl">{student?.avatar || '🧒'}</span>
+            <div className="flex-1">
+              <div className="text-sm font-black">{student?.name || 'My Profile'}</div>
+              <div className="text-xs font-bold app-muted">View & edit profile · Profile ID</div>
+            </div>
+            <span className="text-sm font-bold app-muted">›</span>
+          </button>
+          <button
+            onClick={async () => { await logoutApi().catch(() => {}); logout(); window.location.href = '/login' }}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-black text-sm transition-all app-pressable"
+            style={{
+              background: 'rgba(255,69,58,0.08)',
+              border: '1px solid rgba(255,69,58,0.2)',
+              color: '#E05252',
+            }}
+          >
+            <LogOut size={15} />
+            Sign Out
+          </button>
+        </div>
+
         {/* About */}
         <div className="rounded-2xl p-4 text-center" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
-          <div className="text-xs font-bold app-muted">KinderSpark Pro • v1.1</div>
+          <div className="text-xs font-bold app-muted">KinderSpark Pro • v2.0</div>
           <div className="text-xs font-bold mt-1 app-muted">AI-powered learning for every child</div>
         </div>
       </div>
