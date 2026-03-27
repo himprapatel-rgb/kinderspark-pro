@@ -86,7 +86,7 @@ export default function LoginPage() {
       const data = await verifyPin(item.pin, item.role)
       setAuth(data.user, item.role, data.accessToken || data.token)
       if (item.role === 'teacher') router.replace('/teacher')
-      else if (item.role === 'admin')  router.replace('/admin')
+      else if (item.role === 'admin' || item.role === 'principal')  router.replace('/admin')
       else if (item.role === 'parent') router.replace('/parent')
       else router.replace('/child')
     } catch { setDevLoading(null) }
@@ -95,7 +95,7 @@ export default function LoginPage() {
   useEffect(() => {
     if (!user || !role) return
     if (role === 'teacher') router.replace('/teacher')
-    else if (role === 'admin')  router.replace('/admin')
+    else if (role === 'admin' || role === 'principal')  router.replace('/admin')
     else if (role === 'parent') router.replace('/parent')
     else router.replace('/child')
   }, [user, role, router])

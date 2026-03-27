@@ -101,7 +101,7 @@ export async function verifyPin(req: Request, res: Response) {
       const token = signAccessToken({ id: teacher.id, role: 'teacher', roles: ['teacher'], name: teacher.name, schoolId: teacher.schoolId || null })
       const refreshToken = await issueRefreshToken(teacher.id, 'teacher')
       setAuthCookies(res, token, refreshToken)
-      return res.json({ success: true, role: 'teacher', token, refreshToken, user: { id: teacher.id, name: teacher.name } })
+      return res.json({ success: true, role: 'teacher', token, refreshToken, user: { id: teacher.id, name: teacher.name, avatar: (teacher as any).avatar || '👩‍🏫', profileId: teacher.id, roles: ['teacher'] } })
     }
 
     if (role === 'admin') {
@@ -111,7 +111,7 @@ export async function verifyPin(req: Request, res: Response) {
       const token = signAccessToken({ id: admin.id, role: 'admin', roles: ['admin'], name: admin.name, schoolId: admin.schoolId || null })
       const refreshToken = await issueRefreshToken(admin.id, 'admin')
       setAuthCookies(res, token, refreshToken)
-      return res.json({ success: true, role: 'admin', token, refreshToken, user: { id: admin.id, name: admin.name } })
+      return res.json({ success: true, role: 'admin', token, refreshToken, user: { id: admin.id, name: admin.name, avatar: '⚙️', profileId: admin.id, roles: ['admin'] } })
     }
 
     // child or parent
@@ -212,14 +212,18 @@ export async function registerUser(req: Request, res: Response) {
   try {
     const pinHash = await bcrypt.hash(pin, 10)
 
-    // Generate a unique profile ID (retry if collision)
-    let profileId = generateProfileId()
-    let attempts = 0
-    while (attempts < 10) {
-      const existing = await prisma.user.findFirst({ where: { id: profileId } })
-      if (!existing) break
-      profileId = generateProfileId()
-      attempts++
+    // Generate a unique profile ID (retry up to 10 times if collision)
+    let profileId = ''
+    for (let attempts = 0; attempts < 10; attempts++) {
+      const candidate = generateProfileId()
+      const existing = await prisma.user.findUnique({ where: { id: candidate } })
+      if (!existing) {
+        profileId = candidate
+        break
+      }
+    }
+    if (!profileId) {
+      return res.status(500).json({ error: 'Failed to generate unique Profile ID. Please try again.' })
     }
 
     // Check email uniqueness if provided

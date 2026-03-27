@@ -32,7 +32,7 @@ export interface KpiEvent {
 
 interface AppStore {
   user: User | null
-  role: 'teacher' | 'parent' | 'child' | 'admin' | null
+  role: 'teacher' | 'parent' | 'child' | 'admin' | 'principal' | null
   token: string | null
   currentStudent: Student | null
   availableRoles: Array<'teacher' | 'parent' | 'child' | 'admin' | 'principal'>
@@ -106,6 +106,7 @@ export const useAppStore = create<AppStore>()(
         if (typeof window !== 'undefined') {
           localStorage.removeItem('kinderspark-store')
           localStorage.removeItem('token')
+          localStorage.removeItem('kinderspark-refresh')
         }
         set({
           user: null,

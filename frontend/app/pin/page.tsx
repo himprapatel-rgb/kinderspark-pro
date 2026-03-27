@@ -5,10 +5,11 @@ import { verifyPin } from '@/lib/api'
 import { useAppStore } from '@/store/appStore'
 
 const ROLE_META: Record<string, { emoji: string; label: string; grad: string; color: string; glow: string }> = {
-  child:   { emoji: '🧒', label: 'Kid',     grad: 'linear-gradient(135deg,#F5A623,#D4881A)', color: '#F5A623', glow: 'rgba(255,159,10,0.45)' },
-  teacher: { emoji: '👩‍🏫', label: 'Teacher', grad: 'linear-gradient(135deg,#5B7FE8,#8B6CC1)', color: '#5B7FE8', glow: 'rgba(94,92,230,0.45)' },
-  parent:  { emoji: '👨‍👩‍👧', label: 'Parent',  grad: 'linear-gradient(135deg,#4CAF6A,#5FBF7F)', color: '#4CAF6A', glow: 'rgba(48,209,88,0.45)' },
-  admin:   { emoji: '⚙️', label: 'Admin',   grad: 'linear-gradient(135deg,#8B6CC1,#5B7FE8)', color: '#8B6CC1', glow: 'rgba(191,90,242,0.45)' },
+  child:     { emoji: '🧒', label: 'Kid',       grad: 'linear-gradient(135deg,#F5A623,#D4881A)', color: '#F5A623', glow: 'rgba(255,159,10,0.45)' },
+  teacher:   { emoji: '👩‍🏫', label: 'Teacher',   grad: 'linear-gradient(135deg,#5B7FE8,#8B6CC1)', color: '#5B7FE8', glow: 'rgba(94,92,230,0.45)' },
+  parent:    { emoji: '👨‍👩‍👧', label: 'Parent',    grad: 'linear-gradient(135deg,#4CAF6A,#5FBF7F)', color: '#4CAF6A', glow: 'rgba(48,209,88,0.45)' },
+  admin:     { emoji: '⚙️', label: 'Admin',     grad: 'linear-gradient(135deg,#8B6CC1,#5B7FE8)', color: '#8B6CC1', glow: 'rgba(191,90,242,0.45)' },
+  principal: { emoji: '👑', label: 'Principal', grad: 'linear-gradient(135deg,#8B6CC1,#5B7FE8)', color: '#8B6CC1', glow: 'rgba(191,90,242,0.45)' },
 }
 
 function PinContent() {
@@ -96,7 +97,7 @@ function PinContent() {
       setAuth(data.user, role, data.accessToken || data.token)
       setTimeout(() => {
         if (role === 'teacher') router.replace('/teacher')
-        else if (role === 'admin') router.replace('/admin')
+        else if (role === 'admin' || role === 'principal') router.replace('/admin')
         else if (role === 'parent') router.replace('/parent')
         else router.replace('/child')
       }, 600)
@@ -248,8 +249,7 @@ function PinContent() {
       </div>
 
       {/* On-screen numeric keypad (touch-friendly for all roles) */}
-      {(
-        <div className="mt-8 w-full max-w-[280px] relative z-10">
+      <div className="mt-8 w-full max-w-[280px] relative z-10">
           <div className="grid grid-cols-3 gap-2">
             {['1','2','3','4','5','6','7','8','9'].map(d => (
               <button
@@ -281,7 +281,17 @@ function PinContent() {
             </button>
           </div>
         </div>
-      )}
+
+      {/* Create Account link */}
+      <div className="mt-6 text-center relative z-10">
+        <button
+          onClick={() => router.push('/register')}
+          className="text-sm font-bold app-pressable"
+          style={{ color: 'rgba(70,75,96,0.6)' }}
+        >
+          New here? <span style={{ color: meta.color, fontWeight: 900 }}>Create Account</span>
+        </button>
+      </div>
 
       <style>{`
         @keyframes glow-pulse {

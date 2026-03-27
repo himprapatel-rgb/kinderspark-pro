@@ -131,7 +131,7 @@ export default function RegisterPage() {
 
   function goToDashboard() {
     if (role === 'teacher') router.replace('/teacher')
-    else if (role === 'admin') router.replace('/admin')
+    else if (role === 'admin' || role === 'principal') router.replace('/admin')
     else if (role === 'parent') router.replace('/parent')
     else router.replace('/child')
   }
@@ -457,9 +457,21 @@ export default function RegisterPage() {
             {/* Copy button */}
             <button
               onClick={() => {
-                navigator.clipboard?.writeText(profileId)
-                alert('Profile ID copied!')
+                if (navigator.clipboard) {
+                  navigator.clipboard.writeText(profileId)
+                } else {
+                  // Fallback for older browsers / insecure contexts
+                  const ta = document.createElement('textarea')
+                  ta.value = profileId
+                  document.body.appendChild(ta)
+                  ta.select()
+                  document.execCommand('copy')
+                  document.body.removeChild(ta)
+                }
+                const btn = document.getElementById('copy-id-btn')
+                if (btn) { btn.textContent = '✓ Copied!'; setTimeout(() => { btn.textContent = '📋 Copy ID' }, 2000) }
               }}
+              id="copy-id-btn"
               className="mt-3 px-4 py-2 rounded-xl text-xs font-black app-pressable transition-all active:scale-95"
               style={{ background: `${accentColor}15`, color: accentColor, border: `1px solid ${accentColor}30` }}
             >

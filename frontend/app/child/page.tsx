@@ -66,7 +66,7 @@ export default function ChildPage() {
   }, [student])
 
   const loadData = async () => {
-    if (!student?.classId || !student?.id) return
+    if (!student?.classId || !student?.id) { setLoading(false); return }
     try {
       const [hw, syl, prog, bdgs] = await Promise.all([
         getHomework(student.classId!),
