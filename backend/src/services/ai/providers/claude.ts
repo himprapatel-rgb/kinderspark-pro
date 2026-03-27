@@ -9,10 +9,11 @@ function getClient(): Anthropic {
   return _client
 }
 
-// Circuit breaker: after 3 consecutive billing errors, disable for 30 minutes
+// Circuit breaker: after 1 billing error, disable for 30 minutes
+// (no credits means every call will fail — save the noise)
 let consecutiveFailures = 0
 let disabledUntil = 0
-const MAX_FAILURES = 3
+const MAX_FAILURES = 1
 const COOLDOWN_MS = 30 * 60 * 1000 // 30 minutes
 
 export const claudeProvider: AIProvider = {

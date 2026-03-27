@@ -9,11 +9,12 @@ function getClient(): GoogleGenerativeAI {
   return _client
 }
 
-// Circuit breaker: after 3 consecutive 429s, disable for 10 minutes
+// Circuit breaker: after 1 quota error, disable for 30 minutes
+// (limit:0 means the API isn't enabled — retrying is pointless)
 let consecutiveFailures = 0
 let disabledUntil = 0
-const MAX_FAILURES = 3
-const COOLDOWN_MS = 10 * 60 * 1000 // 10 minutes
+const MAX_FAILURES = 1
+const COOLDOWN_MS = 30 * 60 * 1000 // 30 minutes
 
 export const geminiProvider: AIProvider = {
   name: 'gemini',

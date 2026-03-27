@@ -13,24 +13,20 @@ function run(cmd) {
   }
 }
 
-// ── Migrations ────────────────────────────────────────────────────────────────
-console.log('==> Running prisma migrate deploy...');
-if (!run('npx prisma migrate deploy')) {
-  console.log('==> Migration failed — attempting auto-repair...');
-
-  // The failed migrations use IF NOT EXISTS / idempotent SQL.
-  // Roll them back and re-mark so Prisma tries them again.
-  run('npx prisma migrate resolve --rolled-back 20260327_ecosystem_phase2_safe_messaging');
-  run('npx prisma migrate resolve --rolled-back 20260327_full_ecosystem_profiles');
-
-  // Retry migration (this will actually execute the SQL now)
+// ── Schema sync ───────────────────────────────────────────────────────────────
+// db push is the safest way to ensure all schema columns/tables exist.
+// It adds anything missing without touching existing data.
+console.log('==> Syncing database schema with prisma db push...');
+if (!run('npx prisma db push --skip-generate')) {
+  console.error('==> db push failed — trying migrate deploy as fallback...');
   if (!run('npx prisma migrate deploy')) {
-    console.log('==> Retry migration also failed — using db push as last resort');
-    // db push syncs schema → DB without migration history
-    run('npx prisma db push --skip-generate');
+    console.error('==> migrate deploy also failed — resolving and retrying...');
+    run('npx prisma migrate resolve --applied 20260327_ecosystem_phase2_safe_messaging');
+    run('npx prisma migrate resolve --applied 20260327_full_ecosystem_profiles');
+    run('npx prisma migrate deploy');
   }
 }
-console.log('==> Migration step done');
+console.log('==> Schema sync done');
 
 // ── Seed ──────────────────────────────────────────────────────────────────────
 console.log('==> Running prisma db seed...');
