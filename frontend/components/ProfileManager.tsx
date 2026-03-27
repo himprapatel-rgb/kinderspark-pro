@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation'
 import { getMyProfile, updateMyProfile, logoutApi } from '@/lib/api'
 import { useAppStore } from '@/store/appStore'
 
+const TOAST_DURATION = 2500
+
 const ROLE_COLORS: Record<string, { color: string; grad: string }> = {
   child:     { color: '#F5A623', grad: 'linear-gradient(135deg,#F5A623,#D4881A)' },
   teacher:   { color: '#5B7FE8', grad: 'linear-gradient(135deg,#5B7FE8,#8B6CC1)' },
@@ -25,6 +27,12 @@ export default function ProfileManager({ roleLabel }: { roleLabel: string }) {
   const [roles, setRoles] = useState<string[]>([])
   const [profileId, setProfileId] = useState('')
   const [copied, setCopied] = useState(false)
+  const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
+
+  const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
+    setToast({ msg, type })
+    setTimeout(() => setToast(null), TOAST_DURATION)
+  }
 
   const rc = ROLE_COLORS[role || 'child'] || ROLE_COLORS.child
 
@@ -59,9 +67,12 @@ export default function ProfileManager({ roleLabel }: { roleLabel: string }) {
     try {
       const updated = await updateMyProfile(form)
       setUser({ ...user, name: updated.displayName, avatar: updated.avatar })
-      alert('Profile updated ✓')
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/d5ccc2e0-20b1-4fcf-845d-ede26b674430',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ProfileManager.tsx:save',message:'Profile save success',data:{updated:!!updated},timestamp:Date.now(),hypothesisId:'H3'})}).catch(()=>{});
+      // #endregion
+      showToast('Profile updated ✓', 'success')
     } catch (e: any) {
-      alert(e.message || 'Failed to update profile')
+      showToast(e.message || 'Failed to update profile', 'error')
     } finally {
       setBusy(false)
     }
@@ -228,6 +239,21 @@ export default function ProfileManager({ roleLabel }: { roleLabel: string }) {
           </p>
         </div>
       </div>
+
+      {/* Toast notification */}
+      {toast && (
+        <div
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl text-sm font-black shadow-lg animate-slide-up"
+          style={{
+            background: toast.type === 'success' ? 'rgba(76,175,106,0.95)' : 'rgba(224,82,82,0.95)',
+            color: '#fff',
+            border: `1px solid ${toast.type === 'success' ? 'rgba(76,175,106,0.5)' : 'rgba(224,82,82,0.5)'}`,
+            boxShadow: `0 8px 32px ${toast.type === 'success' ? 'rgba(76,175,106,0.3)' : 'rgba(224,82,82,0.3)'}`,
+          }}
+        >
+          {toast.type === 'success' ? '✅' : '⚠️'} {toast.msg}
+        </div>
+      )}
     </div>
   )
 }

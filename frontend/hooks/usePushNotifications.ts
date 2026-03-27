@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { API_BASE, getRawToken } from '@/lib/api';
 
 export function usePushNotifications(studentId?: string) {
   const [permission, setPermission] = useState<NotificationPermission>('default');
@@ -14,7 +15,10 @@ export function usePushNotifications(studentId?: string) {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
 
     const reg = await navigator.serviceWorker.ready;
-    const vapidRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/push/vapid-public-key`);
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/d5ccc2e0-20b1-4fcf-845d-ede26b674430',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'usePushNotifications.ts:subscribe',message:'Push subscribe called',data:{apiBase:API_BASE,studentId},timestamp:Date.now(),hypothesisId:'H5'})}).catch(()=>{});
+    // #endregion
+    const vapidRes = await fetch(`${API_BASE}/push/vapid-public-key`);
     const { publicKey } = await vapidRes.json();
     if (!publicKey) return;
 
@@ -28,10 +32,10 @@ export function usePushNotifications(studentId?: string) {
     });
 
     if (studentId) {
-      const token = localStorage.getItem('kinderspark-token');
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/students/${studentId}/push-token`, {
+      const token = getRawToken();
+      await fetch(`${API_BASE}/students/${studentId}/push-token`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ token: JSON.stringify(sub) })
       });
     }

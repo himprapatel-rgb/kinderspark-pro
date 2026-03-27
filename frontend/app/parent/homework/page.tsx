@@ -62,9 +62,13 @@ export default function ParentHomeworkPage() {
   const pendingCount = homework.filter(hw => !isDone(hw)).length
 
   async function markDone(hw: any) {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/d5ccc2e0-20b1-4fcf-845d-ede26b674430',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'parent/homework/page.tsx:markDone',message:'markDone called',data:{hwId:hw.id,studentId,hasStudentId:!!studentId},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
+    // #endregion
+    if (!studentId) return
     setCompleting(hw.id)
     try {
-      await completeHomework(hw.id)
+      await completeHomework(hw.id, studentId)
       setHomework(prev => prev.map(h => h.id === hw.id
         ? { ...h, completions: [{ studentId, done: true }] }
         : h

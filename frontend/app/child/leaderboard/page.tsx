@@ -99,10 +99,10 @@ export default function LeaderboardPage() {
         {/* Sort tabs */}
         <div className="flex gap-2">
           {SORT_OPTIONS.map(opt => (
-            <button className="app-pressable"
+            <button
               key={opt.key}
               onClick={() => setSortBy(opt.key)}
-              className="flex-1 py-2 rounded-2xl text-xs font-black transition-all flex items-center justify-center gap-1.5"
+              className="app-pressable flex-1 py-2 rounded-2xl text-xs font-black transition-all flex items-center justify-center gap-1.5"
               style={{
                 background: sortBy === opt.key ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.1)',
                 border: `1.5px solid ${sortBy === opt.key ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.15)'}`,
