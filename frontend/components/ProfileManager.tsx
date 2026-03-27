@@ -67,9 +67,6 @@ export default function ProfileManager({ roleLabel }: { roleLabel: string }) {
     try {
       const updated = await updateMyProfile(form)
       setUser({ ...user, name: updated.displayName, avatar: updated.avatar })
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/d5ccc2e0-20b1-4fcf-845d-ede26b674430',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ProfileManager.tsx:save',message:'Profile save success',data:{updated:!!updated},timestamp:Date.now(),hypothesisId:'H3'})}).catch(()=>{});
-      // #endregion
       showToast('Profile updated ✓', 'success')
     } catch (e: any) {
       showToast(e.message || 'Failed to update profile', 'error')

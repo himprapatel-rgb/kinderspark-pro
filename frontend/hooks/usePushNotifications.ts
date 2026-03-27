@@ -15,9 +15,6 @@ export function usePushNotifications(studentId?: string) {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
 
     const reg = await navigator.serviceWorker.ready;
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/d5ccc2e0-20b1-4fcf-845d-ede26b674430',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'usePushNotifications.ts:subscribe',message:'Push subscribe called',data:{apiBase:API_BASE,studentId},timestamp:Date.now(),hypothesisId:'H5'})}).catch(()=>{});
-    // #endregion
     const vapidRes = await fetch(`${API_BASE}/push/vapid-public-key`);
     const { publicKey } = await vapidRes.json();
     if (!publicKey) return;
