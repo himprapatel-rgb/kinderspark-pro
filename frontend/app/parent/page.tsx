@@ -1,18 +1,21 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore as useStore } from '@/store/appStore'
 import { Loading, InlineEmpty } from '@/components/UIStates'
 import TopBarActions from '@/components/TopBarActions'
 import WeatherChip from '@/components/WeatherChip'
 import ParentSidebar from '@/components/ParentSidebar'
+import ProgressCharts from '@/components/ProgressCharts'
+import ActivityFeed from '@/components/ActivityFeed'
 import {
   getHomework, getMessages, sendMessage, getAISessions, getAttendanceSummary, markAllMessagesRead,
-  completeHomework, createMessageStream, getMyProfile,
+  completeHomework, createMessageStream, getMyProfile, getProgress, getStudentBadges,
   getMessageThreads, getThreadMessages, createMessageThread, sendThreadMessage,
 } from '@/lib/api'
+import { MODS } from '@/lib/modules'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
-import { BarChart3, Bell, Home, Users, MessageSquare } from 'lucide-react'
+import { BarChart3, Bell, Home, Users, MessageSquare, Download } from 'lucide-react'
 
 const QUICK_PARENT_REPLIES = [
   'Thanks! We will complete this tonight.',
@@ -71,6 +74,8 @@ export default function ParentPage() {
   const [replyBody, setReplyBody] = useState('')
   const [markingDone, setMarkingDone] = useState<string | null>(null)
   const [unreadMsgs, setUnreadMsgs] = useState(0)
+  const [progressData, setProgressData] = useState<any[]>([])
+  const [badgesData, setBadgesData] = useState<any[]>([])
   const { permission: notifPermission, subscribe: subscribeNotif } = usePushNotifications(student?.id ?? user?.id)
 
   // SSE / fallback polling refs
@@ -204,9 +209,10 @@ export default function ParentPage() {
 
   const loadData = async (u: any) => {
     try {
-      const [hw, sessions] = await Promise.all([
+      const [hw, sessions, prog] = await Promise.all([
         getHomework(u.classId),
         getAISessions(u.id),
+        getProgress(u.id).catch(() => []),
       ])
       let msgs: any[] = []
       if (u.classGroupId) {
@@ -232,12 +238,14 @@ export default function ParentPage() {
       setHomework(hw)
       setMessages(msgs)
       setAiSessions(sessions || [])
+      setProgressData(prog || [])
       const unread = msgs.filter((m: any) => !m.read && m.fromId !== u.id).length
       setUnreadMsgs(unread)
       getAttendanceSummary(u.classId, 30).then(summary => {
         const mine = summary?.find((s: any) => s.studentId === u.id)
         setAttendance(mine || null)
       }).catch(() => {})
+      getStudentBadges(u.id).then(b => setBadgesData(b || [])).catch(() => {})
     } catch (e) {
       console.error(e)
     } finally {
@@ -285,6 +293,103 @@ export default function ParentPage() {
     : hwPct >= 80
       ? 'Great momentum this week. Keep the routine going.'
       : 'Progress is steady. A short 5-minute practice can help a lot.'
+
+  // ── Computed chart data for ProgressCharts ─────────────────────
+  const skillsForChart = useMemo(() => {
+    // Group AI sessions by topic → average accuracy per topic
+    const topicMap: Record<string, { total: number; count: number }> = {}
+    aiSessions.forEach((s: any) => {
+      const key = (s.topic || 'unknown').toLowerCase()
+      if (!topicMap[key]) topicMap[key] = { total: 0, count: 0 }
+      topicMap[key].total += s.accuracy || 0
+      topicMap[key].count += 1
+    })
+
+    // Also include module progress as skills
+    const moduleMap: Record<string, number> = {}
+    progressData.forEach((p: any) => {
+      const mod = MODS.find(m => m.id === p.moduleId)
+      if (mod) {
+        moduleMap[p.moduleId] = Math.round((p.cards / mod.items.length) * 100)
+      }
+    })
+
+    const colors = ['#5E5CE6', '#30D158', '#FF453A', '#FF9F0A', '#BF5AF2', '#64D2FF', '#FF6B6B', '#4CAF6A']
+    const emojiMap: Record<string, string> = {
+      numbers: '🔢', letters: '🔤', animals: '🐾', colors: '🎨',
+      shapes: '🔷', fruits: '🍎', food: '🍔', weather: '⛅',
+      vehicles: '🚗', feelings: '😊', habits: '🌟', manners: '💝',
+    }
+
+    const skills: { label: string; emoji: string; value: number; color: string }[] = []
+    let ci = 0
+
+    // From AI sessions
+    Object.entries(topicMap).forEach(([topic, data]) => {
+      const avg = Math.round(data.total / data.count)
+      skills.push({
+        label: topic.charAt(0).toUpperCase() + topic.slice(1),
+        emoji: emojiMap[topic] || '📚',
+        value: avg,
+        color: colors[ci % colors.length],
+      })
+      ci++
+    })
+
+    // From module progress (only add if not already covered by AI sessions)
+    Object.entries(moduleMap).forEach(([modId, pct]) => {
+      if (!topicMap[modId]) {
+        const mod = MODS.find(m => m.id === modId)
+        skills.push({
+          label: mod?.title || modId,
+          emoji: mod?.icon || '📘',
+          value: pct,
+          color: colors[ci % colors.length],
+        })
+        ci++
+      }
+    })
+
+    return skills
+  }, [aiSessions, progressData])
+
+  const weeklyForChart = useMemo(() => {
+    // Group AI sessions by date (last 7 days)
+    const dayMap: Record<string, { accuracy: number[]; sessions: number; stars: number }> = {}
+    const now = Date.now()
+    const daysBack = 7
+
+    for (let i = daysBack - 1; i >= 0; i--) {
+      const d = new Date(now - i * 86400_000)
+      const key = d.toISOString().slice(0, 10)
+      dayMap[key] = { accuracy: [], sessions: 0, stars: 0 }
+    }
+
+    aiSessions.forEach((s: any) => {
+      if (!s.createdAt) return
+      const key = new Date(s.createdAt).toISOString().slice(0, 10)
+      if (dayMap[key]) {
+        dayMap[key].accuracy.push(s.accuracy || 0)
+        dayMap[key].sessions += 1
+        dayMap[key].stars += s.stars || 0
+      }
+    })
+
+    return Object.entries(dayMap).map(([dateStr, d]) => ({
+      label: new Date(dateStr).toLocaleDateString('en-US', { weekday: 'short' }),
+      accuracy: d.accuracy.length ? Math.round(d.accuracy.reduce((a, v) => a + v, 0) / d.accuracy.length) : 0,
+      sessions: d.sessions,
+      stars: d.stars,
+    }))
+  }, [aiSessions])
+
+  const chartBadges = useMemo(() => {
+    return (badgesData || []).map((b: any) => ({
+      name: b.name || b.badge || '',
+      emoji: b.emoji || '🏅',
+      earnedAt: b.earnedAt || b.createdAt || '',
+    }))
+  }, [badgesData])
 
   const handleMarkDone = async (hwId: string) => {
     if (!student || markingDone) return
@@ -638,6 +743,14 @@ export default function ParentPage() {
               </div>
             )}
 
+            {/* Activity Feed from Teacher */}
+            {student?.classId && (
+              <div className="mx-3 mb-4">
+                <div className="font-black text-sm mb-3">📸 Classroom Moments</div>
+                <ActivityFeed classId={student.classId} />
+              </div>
+            )}
+
             {/* Recent messages preview */}
             {messages.length > 0 && (
               <div className="mx-3">
@@ -663,7 +776,16 @@ export default function ParentPage() {
         {/* ── PROGRESS TAB ──────────────────────────────────────── */}
         {tab === 1 && (
           <div className="px-3 pt-2">
-            <h2 className="font-black text-lg mb-4 inline-flex items-center gap-2"><BarChart3 size={18} /> Learning Progress</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-black text-lg inline-flex items-center gap-2"><BarChart3 size={18} /> Learning Progress</h2>
+              <button
+                onClick={() => window.print()}
+                className="px-3 py-1.5 rounded-xl text-xs font-black app-pressable inline-flex items-center gap-1.5"
+                style={{ background: 'rgba(94,92,230,0.15)', color: '#5E5CE6', border: '1px solid rgba(94,92,230,0.3)' }}
+              >
+                <Download size={12} /> Save Report
+              </button>
+            </div>
 
             {/* Summary bar */}
             <div className="rounded-2xl p-4 mb-4" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
@@ -677,9 +799,23 @@ export default function ParentPage() {
               <div className="text-xs font-bold app-muted mt-1">{completedHW.length} done · {pendingHW.length} pending</div>
             </div>
 
+            {/* Visual Progress Charts */}
+            {(aiSessions.length > 0 || progressData.length > 0) && (
+              <ProgressCharts
+                skills={skillsForChart}
+                weekly={weeklyForChart}
+                totalStars={totalAIStars}
+                totalSessions={aiSessions.length}
+                avgAccuracy={totalAccuracy}
+                bestLevel={student?.aiBestLevel || 1}
+                badges={chartBadges}
+              />
+            )}
+
+            {/* AI Tutor Sessions list */}
             {aiSessions.length > 0 && (
-              <div className="mb-4">
-                <div className="text-xs font-bold app-muted mb-2">AI TUTOR SESSIONS</div>
+              <div className="mt-4 mb-4">
+                <div className="text-xs font-bold app-muted mb-2">AI TUTOR SESSION HISTORY</div>
                 <div className="space-y-2">
                   {aiSessions.slice(0, 8).map((s: any) => (
                     <div key={s.id} className="rounded-2xl p-3 flex items-center gap-3" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
@@ -701,6 +837,7 @@ export default function ParentPage() {
               </div>
             )}
 
+            {/* Homework status */}
             {homework.length > 0 && (
               <div className="mb-4">
                 <div className="text-xs font-bold app-muted mb-2">HOMEWORK STATUS</div>
@@ -731,7 +868,7 @@ export default function ParentPage() {
               </div>
             )}
 
-            {aiSessions.length === 0 && homework.length === 0 && <InlineEmpty emoji="📊" text="No activity yet" />}
+            {aiSessions.length === 0 && homework.length === 0 && progressData.length === 0 && <InlineEmpty emoji="📊" text="No activity yet" />}
           </div>
         )}
 

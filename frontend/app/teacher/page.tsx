@@ -6,7 +6,8 @@ import { Loading, InlineEmpty } from '@/components/UIStates'
 import DashboardSidebar from '@/components/DashboardSidebar'
 import TopBarActions from '@/components/TopBarActions'
 import WeatherChip from '@/components/WeatherChip'
-import { BarChart3, Bell, Bot, BookOpen, Users, Home, MessageSquare, ClipboardList, CheckSquare } from 'lucide-react'
+import { BarChart3, Bell, Bot, BookOpen, Users, Home, MessageSquare, ClipboardList, CheckSquare, Camera } from 'lucide-react'
+import PhotoCapture from '@/components/PhotoCapture'
 import {
   getClasses, getStudents, getHomework, getSyllabuses, getMessages,
   createClass, createStudent, deleteStudent, createHomework, deleteHomework,
@@ -78,6 +79,9 @@ export default function TeacherDashboard() {
   const [attendanceLoading, setAttendanceLoading] = useState(false)
   const [reportText, setReportText] = useState('')
   const [reportLoading, setReportLoading] = useState(false)
+
+  // Photo capture state
+  const [showPhotoCapture, setShowPhotoCapture] = useState(false)
 
   // AI Homework Wizard state
   const [showWizard, setShowWizard] = useState(false)
@@ -740,7 +744,7 @@ export default function TeacherDashboard() {
                     <div className="font-black text-sm">Priority Actions</div>
                     <div className="text-[11px] font-bold app-muted">Daily workflow</div>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <button
                       onClick={() => setTab('attendance')}
                       className="rounded-xl px-3 py-3 text-left app-pressable"
@@ -764,6 +768,14 @@ export default function TeacherDashboard() {
                     >
                       <div className="text-lg mb-1">📨</div>
                       <div className="text-xs font-black">Send Parent Update</div>
+                    </button>
+                    <button
+                      onClick={() => setShowPhotoCapture(true)}
+                      className="rounded-xl px-3 py-3 text-left app-pressable"
+                      style={{ background: 'rgba(255,69,58,0.15)', border: '1px solid rgba(255,69,58,0.3)' }}
+                    >
+                      <div className="text-lg mb-1"><Camera size={18} /></div>
+                      <div className="text-xs font-black">Share Activity 📸</div>
                     </button>
                   </div>
                 </div>
@@ -1741,6 +1753,20 @@ export default function TeacherDashboard() {
         )
       })()}
     </div>
+
+    {/* Photo Capture Modal */}
+    {showPhotoCapture && selectedClass && (
+      <PhotoCapture
+        classId={selectedClass.id}
+        students={students.map((s: any) => ({ id: s.id, name: s.name, avatar: s.avatar }))}
+        onPosted={() => {
+          setShowPhotoCapture(false)
+          setToast('📸 Activity shared with parents!')
+          setTimeout(() => setToast(''), 3000)
+        }}
+        onClose={() => setShowPhotoCapture(false)}
+      />
+    )}
     </div>
   )
 }

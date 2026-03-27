@@ -37,6 +37,7 @@ model Class {
   messages   Message[]
   syllabuses  ClassSyllabus[]
   attendance  Attendance[]
+  activityPosts ActivityPost[]
   createdAt   DateTime        @default(now())
 }
 
@@ -531,6 +532,25 @@ model MessageReceipt {
 
   @@unique([messageId, userId])
   @@index([userId, seenAt])
+}
+
+// ── Activity Feed (Photo Sharing) ────────────────────────────────────────────
+
+model ActivityPost {
+  id          String   @id @default(cuid())
+  classId     String
+  class       Class    @relation(fields: [classId], references: [id])
+  teacherId   String
+  imageData   String   @db.Text              // base64-encoded image
+  caption     String   @db.Text              // AI-generated or teacher-written caption
+  aiCaption   Boolean  @default(false)       // was caption AI-generated?
+  studentTags String[] @default([])          // tagged student IDs
+  emoji       String   @default("📸")
+  likes       Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  @@index([classId, createdAt])
+  @@index([teacherId])
 }
 
 // ── Agent Memory System ──────────────────────────────────────────────────────

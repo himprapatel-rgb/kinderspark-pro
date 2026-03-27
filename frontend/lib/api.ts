@@ -413,6 +413,30 @@ export async function getClassActivity(classId: string) {
   return req(`/classes/${classId}/activity`)
 }
 
+// ── Activity Feed (Photo Sharing) ────────────────────────────────
+export async function getActivityFeed(classId: string, limit = 20) {
+  return req(`/activity/${classId}?limit=${limit}`)
+}
+
+export async function createActivityPost(data: {
+  classId: string
+  imageData: string
+  caption?: string
+  studentTags?: string[]
+  emoji?: string
+  generateCaption?: boolean
+}) {
+  return req('/activity', { method: 'POST', body: JSON.stringify(data) })
+}
+
+export async function likeActivityPost(postId: string) {
+  return req(`/activity/${postId}/like`, { method: 'POST' })
+}
+
+export async function deleteActivityPost(postId: string) {
+  return req(`/activity/${postId}`, { method: 'DELETE' })
+}
+
 export async function sendHomeworkReminders(classId?: string) {
   return req('/homework/send-reminders', {
     method: 'POST',

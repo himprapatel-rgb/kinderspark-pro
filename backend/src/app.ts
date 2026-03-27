@@ -23,6 +23,7 @@ import aiSessionRoutes from './routes/aiSessions'
 import feedbackRoutes from './routes/feedback'
 import agentRoutes from './routes/agents.routes'
 import ecosystemRoutes from './routes/ecosystem.routes'
+import activityRoutes from './routes/activity.routes'
 import profilesRoutes from './routes/profiles.routes'
 import schoolsRoutes from './routes/schools.routes'
 import assignmentsRoutes from './routes/assignments.routes'
@@ -51,7 +52,7 @@ app.use(cors({
   ].filter(Boolean),
   credentials: true
 }))
-app.use(express.json({ limit: '1mb' }))
+app.use(express.json({ limit: '6mb' }))
 app.use(cookieParser())
 app.use(rateLimiter)
 app.use(authenticate)
@@ -102,6 +103,7 @@ app.use('/api/profiles', profilesRoutes)
 app.use('/api/schools', schoolsRoutes)
 app.use('/api/assignments', assignmentsRoutes)
 app.use('/api/relationships', relationshipsRoutes)
+app.use('/api/activity', activityRoutes)
 
 app.use((err: any, _req: any, res: any, _next: any) => {
   console.error(err)
