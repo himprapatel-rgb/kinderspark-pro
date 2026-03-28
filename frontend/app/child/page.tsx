@@ -146,10 +146,16 @@ export default function ChildPage() {
     if (!student || markingDone) return
     hapticImpact()
     playTap()
+    // #region agent log
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/diag`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/child/page.tsx:markDone:start',message:'Mark Done tap',data:{studentId:student.id,hwId},timestamp:Date.now(),hypothesisId:'H5'})}).catch(()=>{});
+    // #endregion
     setMarkingDone(hwId)
     try {
       trackKpiEvent({ category: 'learning', name: 'child_homework_mark_done' })
       const res = await completeHomework(hwId, student.id)
+      // #region agent log
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/diag`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/child/page.tsx:markDone:success',message:'Homework marked done',data:{hwId,newBadges:(res?.newBadges||[]).length},timestamp:Date.now(),hypothesisId:'H5'})}).catch(()=>{});
+      // #endregion
       hapticSuccess()
       playComplete()
       if (res?.newBadges?.length) {
@@ -253,6 +259,9 @@ export default function ChildPage() {
               <button
                 onClick={() => {
                   hapticTap()
+                  // #region agent log
+                  fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/diag`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/child/page.tsx:share:tap',message:'Share Progress tap',data:{studentId:student?.id,totalStars:Object.values(progressMap).reduce((a,b)=>a+b,0),badgeCount:badges.length},timestamp:Date.now(),hypothesisId:'H4'})}).catch(()=>{});
+                  // #endregion
                   const totalStars = Object.values(progressMap).reduce((a, b) => a + b, 0)
                   nativeShare({
                     title: `${student?.name}'s KinderSpark Progress`,

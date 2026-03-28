@@ -17,6 +17,9 @@ export default function LanguageSelector() {
   const handleSelect = (code: SupportedLang) => {
     hapticTap()
     playTap()
+    // #region agent log
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/diag`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'components/LanguageSelector.tsx:select',message:'Language changed',data:{from:lang,to:code},timestamp:Date.now(),hypothesisId:'H3'})}).catch(()=>{});
+    // #endregion
     setLang(code)
     setOpen(false)
   }

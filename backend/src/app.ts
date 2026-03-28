@@ -28,6 +28,7 @@ import profilesRoutes from './routes/profiles.routes'
 import schoolsRoutes from './routes/schools.routes'
 import assignmentsRoutes from './routes/assignments.routes'
 import relationshipsRoutes from './routes/relationships.routes'
+import diagRoutes from './routes/diag.routes'
 import { startAgentScheduler } from './services/agentScheduler.service'
 
 const app = express()
@@ -100,6 +101,7 @@ app.use('/api/feedback', feedbackRoutes)
 app.use('/api/agents', agentRoutes)
 app.use('/api/ecosystem', cache(20), ecosystemRoutes)
 app.use('/api/profiles', profilesRoutes)
+app.use('/api/diag', diagRoutes)
 app.use('/api/schools', schoolsRoutes)
 app.use('/api/assignments', assignmentsRoutes)
 app.use('/api/relationships', relationshipsRoutes)
