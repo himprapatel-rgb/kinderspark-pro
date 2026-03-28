@@ -9,6 +9,7 @@ import { ArrowRight, BookOpen, Bot, Flame, Hash, Palette, PencilLine, PlayCircle
 import PageTransition from '@/components/PageTransition'
 import { usePullToRefresh, PullIndicator } from '@/hooks/usePullToRefresh'
 import { playTap, playCorrect, playComplete, playBadge, playSwipe, playLevelUp, playNotification, startBackgroundMusic, stopBackgroundMusic } from '@/lib/sounds'
+import { API_BASE } from '@/lib/api'
 import { hapticTap, hapticSuccess, hapticImpact, nativeShare } from '@/lib/capacitor'
 import { useTranslation } from '@/hooks/useTranslation'
 
@@ -147,14 +148,14 @@ export default function ChildPage() {
     hapticImpact()
     playTap()
     // #region agent log
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/diag`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/child/page.tsx:markDone:start',message:'Mark Done tap',data:{studentId:student.id,hwId},timestamp:Date.now(),hypothesisId:'H5'})}).catch(()=>{});
+    fetch(`${API_BASE}/diag`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/child/page.tsx:markDone:start',message:'Mark Done tap',data:{studentId:student.id,hwId},timestamp:Date.now(),hypothesisId:'H5'})}).catch(()=>{});
     // #endregion
     setMarkingDone(hwId)
     try {
       trackKpiEvent({ category: 'learning', name: 'child_homework_mark_done' })
       const res = await completeHomework(hwId, student.id)
       // #region agent log
-      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/diag`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/child/page.tsx:markDone:success',message:'Homework marked done',data:{hwId,newBadges:(res?.newBadges||[]).length},timestamp:Date.now(),hypothesisId:'H5'})}).catch(()=>{});
+      fetch(`${API_BASE}/diag`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/child/page.tsx:markDone:success',message:'Homework marked done',data:{hwId,newBadges:(res?.newBadges||[]).length},timestamp:Date.now(),hypothesisId:'H5'})}).catch(()=>{});
       // #endregion
       hapticSuccess()
       playComplete()
@@ -260,7 +261,7 @@ export default function ChildPage() {
                 onClick={() => {
                   hapticTap()
                   // #region agent log
-                  fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/diag`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/child/page.tsx:share:tap',message:'Share Progress tap',data:{studentId:student?.id,totalStars:Object.values(progressMap).reduce((a,b)=>a+b,0),badgeCount:badges.length},timestamp:Date.now(),hypothesisId:'H4'})}).catch(()=>{});
+                  fetch(`${API_BASE}/diag`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/child/page.tsx:share:tap',message:'Share Progress tap',data:{studentId:student?.id,totalStars:Object.values(progressMap).reduce((a,b)=>a+b,0),badgeCount:badges.length},timestamp:Date.now(),hypothesisId:'H4'})}).catch(()=>{});
                   // #endregion
                   const totalStars = Object.values(progressMap).reduce((a, b) => a + b, 0)
                   nativeShare({

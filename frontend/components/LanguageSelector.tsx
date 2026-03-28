@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
+import { API_BASE } from '@/lib/api'
 import { playTap } from '@/lib/sounds'
 import { hapticTap } from '@/lib/capacitor'
 import { Globe, Check } from 'lucide-react'
@@ -18,7 +19,7 @@ export default function LanguageSelector() {
     hapticTap()
     playTap()
     // #region agent log
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/diag`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'components/LanguageSelector.tsx:select',message:'Language changed',data:{from:lang,to:code},timestamp:Date.now(),hypothesisId:'H3'})}).catch(()=>{});
+    fetch(`${API_BASE}/diag`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'components/LanguageSelector.tsx:select',message:'Language changed',data:{from:lang,to:code},timestamp:Date.now(),hypothesisId:'H3'})}).catch(()=>{});
     // #endregion
     setLang(code)
     setOpen(false)

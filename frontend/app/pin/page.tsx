@@ -1,7 +1,7 @@
 'use client'
 import { useState, useRef, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { verifyPin } from '@/lib/api'
+import { verifyPin, API_BASE } from '@/lib/api'
 import { useAppStore } from '@/store/appStore'
 import { hapticTap, hapticSuccess, hapticError } from '@/lib/capacitor'
 
@@ -96,18 +96,18 @@ function PinContent() {
     setError('')
     try {
       // #region agent log
-      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/diag`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/pin/page.tsx:submit:start',message:'PIN submit start',data:{role,pinLen:pinValue.length},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
+      fetch(`${API_BASE}/diag`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/pin/page.tsx:submit:start',message:'PIN submit start',data:{role,pinLen:pinValue.length},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
       // #endregion
       const data = await verifyPin(pinValue, role)
       // #region agent log
-      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/diag`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/pin/page.tsx:submit:success',message:'PIN submit success',data:{role,hasToken:!!(data.accessToken||data.token)},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
+      fetch(`${API_BASE}/diag`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/pin/page.tsx:submit:success',message:'PIN submit success',data:{role,hasToken:!!(data.accessToken||data.token)},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
       // #endregion
       hapticSuccess()
       setSuccess(true)
       setAuth(data.user, role, data.accessToken || data.token)
       setTimeout(() => {
         // #region agent log
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/diag`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/pin/page.tsx:submit:redirect',message:'Redirect after PIN',data:{role},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
+        fetch(`${API_BASE}/diag`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/pin/page.tsx:submit:redirect',message:'Redirect after PIN',data:{role},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
         // #endregion
         if (role === 'teacher') router.replace('/teacher')
         else if (role === 'admin' || role === 'principal') router.replace('/admin')
@@ -116,7 +116,7 @@ function PinContent() {
       }, 600)
     } catch {
       // #region agent log
-      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/diag`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/pin/page.tsx:submit:error',message:'PIN submit error',data:{role},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
+      fetch(`${API_BASE}/diag`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/pin/page.tsx:submit:error',message:'PIN submit error',data:{role},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
       // #endregion
       hapticError()
       setError('Wrong PIN — try again')
