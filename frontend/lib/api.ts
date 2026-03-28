@@ -1,4 +1,6 @@
-export const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
+export const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL ||
+  'https://kinderspark-backend-production.up.railway.app/api'
 
 // Keep internal alias so nothing below breaks
 const BASE = API_BASE
