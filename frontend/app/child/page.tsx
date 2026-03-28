@@ -60,6 +60,10 @@ export default function ChildPage() {
   const { pullRef, refreshing, pullProgress, pullDistance } = usePullToRefresh(() => loadData())
 
   useEffect(() => {
+    // #region agent log
+    console.log('[KS-DEBUG] child page mount', { hasStudent: !!student, studentId: student?.id, studentName: (student as any)?.name, classId: (student as any)?.classId })
+    fetch('http://127.0.0.1:7243/ingest/d5ccc2e0-20b1-4fcf-845d-ede26b674430',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'child/page.tsx:mount',message:'child mount',data:{hasStudent:!!student,studentId:student?.id,classId:(student as any)?.classId},timestamp:Date.now(),hypothesisId:'H3'})}).catch(()=>{})
+    // #endregion
     if (!student) { router.push('/'); return }
     loadData()
     setDailyDone(getDailyChallenge().done)

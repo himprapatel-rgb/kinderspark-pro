@@ -1,7 +1,7 @@
 'use client'
 import { useState, useRef, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { verifyPin } from '@/lib/api'
+import { verifyPin, API_BASE } from '@/lib/api'
 import { useAppStore } from '@/store/appStore'
 
 const ROLE_META: Record<string, { emoji: string; label: string; grad: string; color: string; glow: string }> = {
@@ -89,10 +89,18 @@ function PinContent() {
   }
 
   async function submit(pinValue: string) {
+    // #region agent log
+    console.log('[KS-DEBUG] PIN submit', { role, pinLen: pinValue.length, apiBase: API_BASE })
+    fetch('http://127.0.0.1:7243/ingest/d5ccc2e0-20b1-4fcf-845d-ede26b674430',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'pin/page.tsx:submit',message:'PIN submit',data:{role,pinLen:pinValue.length,apiBase:API_BASE},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{})
+    // #endregion
     setLoading(true)
     setError('')
     try {
       const data = await verifyPin(pinValue, role)
+      // #region agent log
+      console.log('[KS-DEBUG] PIN success', { role, userId: data?.user?.id, hasToken: !!data?.token })
+      fetch('http://127.0.0.1:7243/ingest/d5ccc2e0-20b1-4fcf-845d-ede26b674430',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'pin/page.tsx:success',message:'PIN success',data:{role,userId:data?.user?.id},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{})
+      // #endregion
       setSuccess(true)
       setAuth(data.user, role, data.accessToken || data.token)
       setTimeout(() => {
@@ -101,7 +109,11 @@ function PinContent() {
         else if (role === 'parent') router.replace('/parent')
         else router.replace('/child')
       }, 600)
-    } catch {
+    } catch (err: any) {
+      // #region agent log
+      console.error('[KS-DEBUG] PIN FAILED', { role, error: err?.message })
+      fetch('http://127.0.0.1:7243/ingest/d5ccc2e0-20b1-4fcf-845d-ede26b674430',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'pin/page.tsx:error',message:'PIN FAILED',data:{role,error:err?.message},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{})
+      // #endregion
       setError('Wrong PIN — try again')
       setPin(['', '', '', ''])
       setShake(true)

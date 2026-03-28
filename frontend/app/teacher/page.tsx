@@ -120,6 +120,10 @@ export default function TeacherDashboard() {
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
+    // #region agent log
+    console.log('[KS-DEBUG] teacher page mount', { hasUser: !!user, role, userId: user?.id })
+    fetch('http://127.0.0.1:7243/ingest/d5ccc2e0-20b1-4fcf-845d-ede26b674430',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'teacher/page.tsx:mount',message:'teacher mount',data:{hasUser:!!user,role,userId:user?.id},timestamp:Date.now(),hypothesisId:'H3'})}).catch(()=>{})
+    // #endregion
     if (!user) { router.push('/'); return }
     if (role !== 'teacher' && role !== 'admin' && role !== 'principal') { router.push('/'); return }
     load()
