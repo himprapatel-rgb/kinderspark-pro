@@ -46,7 +46,12 @@ router.get('/me', async (req: Request, res: Response) => {
       },
     })
     if (!user) return res.status(404).json({ error: 'Profile not found' })
-    return res.json(user)
+    // Never expose the hashed PIN to the client
+    const { pin: _pin, ...safeUser } = user as any
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/d5ccc2e0-20b1-4fcf-845d-ede26b674430',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'profiles.routes.ts:GET-me',message:'Profile response stripped pin',data:{userId:safeUser.id,hasPin:!!safeUser.pin},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
+    // #endregion
+    return res.json(safeUser)
   } catch (err) {
     console.error('profiles/me error:', err)
     return res.status(500).json({ error: 'Failed to load profile' })

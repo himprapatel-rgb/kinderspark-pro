@@ -138,11 +138,34 @@ export async function verifyPin(req: Request, res: Response) {
     // Check streak badges asynchronously (don't block login)
     checkAndAwardBadges(student.id).catch(() => {})
 
-    const updatedStudent = { ...student, lastLoginAt: now, streak: newStreak }
     const token = signAccessToken({ id: student.id, role, roles: [role], name: student.name, schoolId: student.class?.schoolId || null })
     const refreshToken = await issueRefreshToken(student.id, role)
     setAuthCookies(res, token, refreshToken)
-    return res.json({ success: true, role, token, refreshToken, user: updatedStudent })
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/d5ccc2e0-20b1-4fcf-845d-ede26b674430',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.controller.ts:legacy-login',message:'Legacy student login response',data:{studentId:student.id,role,hasPin:false,fieldCount:Object.keys({id:1,name:1,avatar:1,stars:1,streak:1}).length},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
+    // #endregion
+    // Strip sensitive / bulky fields from the response
+    return res.json({
+      success: true,
+      role,
+      token,
+      refreshToken,
+      user: {
+        id: student.id,
+        name: student.name,
+        avatar: student.avatar || '🧒',
+        stars: student.stars,
+        streak: newStreak,
+        grade: student.grade,
+        aiStars: student.aiStars,
+        ownedItems: student.ownedItems,
+        selectedTheme: student.selectedTheme,
+        classId: student.classId,
+        schoolId: student.class?.schoolId || null,
+        profileId: student.id,
+        roles: [role],
+      },
+    })
   } catch (err) {
     return res.status(500).json({ error: 'Server error' })
   }
