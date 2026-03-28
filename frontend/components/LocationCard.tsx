@@ -25,7 +25,15 @@ export default function LocationCard() {
           {loading ? 'Checking…' : 'Update'}
         </button>
       </div>
-      {error && <div className="text-[11px] font-bold" style={{ color: '#E05252' }}>Error: {error}</div>}
+      {error && (
+        <div className="text-[11px] font-bold" style={{ color: '#E05252' }}>
+          {error === 'permission_denied'
+            ? 'Location permission is off. Enable “While Using” (and Precise) in iOS Settings.'
+            : error === 'geolocation_unavailable'
+              ? 'Location is not available in this environment.'
+              : `Error: ${error}`}
+        </div>
+      )}
       <div className="text-xs font-bold app-muted">
         Permission: {permission}
       </div>
@@ -34,10 +42,10 @@ export default function LocationCard() {
           ? <>Lat {display.lat.toFixed(4)}, Lon {display.lon.toFixed(4)}</>
           : coords
             ? <>Lat {coords.lat.toFixed(4)}, Lon {coords.lon.toFixed(4)}</>
-            : 'No location yet'}
+            : 'Near you — tap Update to enable precise location'}
       </div>
       <div className="text-[10px] app-muted mt-1">
-        Tip: Set permission to “While Using” (or “Always” for geofenced attendance).
+        Tip: Set permission to “While Using” (enable Precise). Use “Always” only for geofenced attendance.
       </div>
     </div>
   )

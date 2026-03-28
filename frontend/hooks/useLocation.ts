@@ -56,15 +56,34 @@ export function useLocation() {
         setState(s => ({ ...s, error: 'permission_denied', loading: false }))
         return null
       }
-      const pos = await Geolocation.getCurrentPosition({
-        enableHighAccuracy: false,
-        timeout: 8000,
-        maximumAge: 60000,
-      })
-      const coords = { lat: pos.coords.latitude, lon: pos.coords.longitude }
-      setState(s => ({ ...s, coords, loading: false }))
-      postDiag('LocationOK', coords)
-      return coords
+      // Try Capacitor Geolocation first (mobile/native). On web, this may proxy to navigator.geolocation.
+      try {
+        const pos = await Geolocation.getCurrentPosition({
+          enableHighAccuracy: true,
+          timeout: 8000,
+          maximumAge: 60000,
+        })
+        const coords = { lat: pos.coords.latitude, lon: pos.coords.longitude }
+        setState(s => ({ ...s, coords, loading: false }))
+        postDiag('LocationOK', { via: 'capacitor', ...coords })
+        return coords
+      } catch (capErr: any) {
+        // Fallback: Browser geolocation (PWA/Safari)
+        postDiag('LocationFallback', { reason: String(capErr?.message || capErr) })
+        const coords = await new Promise<{ lat: number; lon: number }>((resolve, reject) => {
+          if (typeof window === 'undefined' || !('geolocation' in navigator)) {
+            return reject(new Error('geolocation_unavailable'))
+          }
+          navigator.geolocation.getCurrentPosition(
+            (p) => resolve({ lat: p.coords.latitude, lon: p.coords.longitude }),
+            (e) => reject(e),
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+          )
+        })
+        setState(s => ({ ...s, coords, loading: false }))
+        postDiag('LocationOK', { via: 'browser', ...coords })
+        return coords
+      }
     } catch (e: any) {
       setState(s => ({ ...s, error: e?.message || 'loc_error', loading: false }))
       postDiag('LocationError', { error: String(e?.message || e) })
