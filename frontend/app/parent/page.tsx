@@ -19,6 +19,7 @@ import { BarChart3, Bell, Home, Users, MessageSquare, Download } from 'lucide-re
 import { useToast } from '@/components/Toast'
 import PageTransition from '@/components/PageTransition'
 import { usePullToRefresh, PullIndicator } from '@/hooks/usePullToRefresh'
+import { hapticTap, hapticSuccess, nativeShare } from '@/lib/capacitor'
 
 const QUICK_PARENT_REPLIES = [
   'Thanks! We will complete this tonight.',

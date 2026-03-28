@@ -5,10 +5,11 @@ import { useAppStore as useStore } from '@/store/appStore'
 import { getHomework, getSyllabuses, getProgress, getRecommendations, getStudentBadges, completeHomework, getDailyMission } from '@/lib/api'
 import { MODS } from '@/lib/modules'
 import { selectAdaptiveMission } from '@/lib/missionEngine'
-import { ArrowRight, BookOpen, Bot, Flame, Hash, Palette, PencilLine, PlayCircle, Settings, Shapes, ShoppingBag, Sparkles, Star, Trophy } from 'lucide-react'
+import { ArrowRight, BookOpen, Bot, Flame, Hash, Palette, PencilLine, PlayCircle, Settings, Share2, Shapes, ShoppingBag, Sparkles, Star, Trophy } from 'lucide-react'
 import PageTransition from '@/components/PageTransition'
 import { usePullToRefresh, PullIndicator } from '@/hooks/usePullToRefresh'
 import { playTap } from '@/lib/sounds'
+import { hapticTap, hapticSuccess, hapticImpact, nativeShare } from '@/lib/capacitor'
 
 // ── Daily Challenge helper ─────────────────────────────────────────────────────
 function getDailyChallenge() {
@@ -135,10 +136,12 @@ export default function ChildPage() {
 
   const handleMarkDone = async (hwId: string) => {
     if (!student || markingDone) return
+    hapticImpact()
     setMarkingDone(hwId)
     try {
       trackKpiEvent({ category: 'learning', name: 'child_homework_mark_done' })
       const res = await completeHomework(hwId, student.id)
+      hapticSuccess()
       if (res?.newBadges?.length) setCelebrationBadges(res.newBadges)
       await loadData()
     } catch { /* ignore */ }
@@ -233,6 +236,21 @@ export default function ChildPage() {
                 className="flex items-center justify-center rounded-xl h-10 px-3 gap-1.5 text-sm font-bold active:scale-95 transition-all app-pressable app-btn-glass"
               >
                 <ShoppingBag size={15} /> <span className="text-xs">Shop</span>
+              </button>
+              <button
+                onClick={() => {
+                  hapticTap()
+                  const totalStars = Object.values(progressMap).reduce((a, b) => a + b, 0)
+                  nativeShare({
+                    title: `${student?.name}'s KinderSpark Progress`,
+                    text: `🌟 ${student?.name} earned ${totalStars} stars and ${badges.length} badges on KinderSpark Pro!`,
+                    url: 'https://kinderspark.com',
+                  })
+                }}
+                className="flex items-center justify-center rounded-xl w-10 h-10 text-sm font-bold active:scale-95 transition-all app-pressable app-btn-glass"
+                title="Share Progress"
+              >
+                <Share2 size={16} />
               </button>
               <button
                 onClick={() => router.push('/child/settings')}

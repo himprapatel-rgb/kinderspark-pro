@@ -3,6 +3,7 @@ import { useState, useRef, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { verifyPin } from '@/lib/api'
 import { useAppStore } from '@/store/appStore'
+import { hapticTap, hapticSuccess, hapticError } from '@/lib/capacitor'
 
 const ROLE_META: Record<string, { emoji: string; label: string; grad: string; color: string; glow: string }> = {
   child:     { emoji: '🧒', label: 'Kid',       grad: 'linear-gradient(135deg,#F5A623,#D4881A)', color: '#F5A623', glow: 'rgba(255,159,10,0.45)' },
@@ -75,12 +76,14 @@ function PinContent() {
   function tapDigit(digit: string) {
     const emptyIdx = pin.findIndex(d => !d)
     if (emptyIdx === -1) return
+    hapticTap()
     handleDigit(emptyIdx, digit)
   }
 
   function tapBackspace() {
     const lastFilled = pin.map((d, i) => d ? i : -1).filter(i => i >= 0).pop()
     if (lastFilled !== undefined && lastFilled >= 0) {
+      hapticTap()
       const next = [...pin]
       next[lastFilled] = ''
       setPin(next)
@@ -93,6 +96,7 @@ function PinContent() {
     setError('')
     try {
       const data = await verifyPin(pinValue, role)
+      hapticSuccess()
       setSuccess(true)
       setAuth(data.user, role, data.accessToken || data.token)
       setTimeout(() => {
@@ -102,6 +106,7 @@ function PinContent() {
         else router.replace('/child')
       }, 600)
     } catch {
+      hapticError()
       setError('Wrong PIN — try again')
       setPin(['', '', '', ''])
       setShake(true)
