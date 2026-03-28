@@ -9,12 +9,12 @@ function getClient(): GoogleGenerativeAI {
   return _client
 }
 
-// Circuit breaker: after 1 quota error, disable for 30 minutes
+// Circuit breaker: after 1 quota error, disable for 60 minutes
 // (limit:0 means the API isn't enabled — retrying is pointless)
 let consecutiveFailures = 0
 let disabledUntil = 0
 const MAX_FAILURES = 1
-const COOLDOWN_MS = 30 * 60 * 1000 // 30 minutes
+const COOLDOWN_MS = 60 * 60 * 1000 // 60 minutes (was 30 — quota resets are slow on free tier)
 
 export const geminiProvider: AIProvider = {
   name: 'gemini',
@@ -44,11 +44,13 @@ export const geminiProvider: AIProvider = {
         consecutiveFailures++
         if (consecutiveFailures >= MAX_FAILURES) {
           disabledUntil = Date.now() + COOLDOWN_MS
-          console.log(`[Gemini] ⚡ Circuit breaker open — disabled for 10 min after ${consecutiveFailures} failures`)
+          console.log(`[Gemini] ⚡ Circuit breaker OPEN — disabled for 60 min (quota exhausted)`)
           consecutiveFailures = 0
         }
       }
-      throw err // re-throw so router tries next provider
+      // Throw a short error instead of the huge Gemini quota JSON blob
+      const isQuota = msg.includes('429') || msg.includes('quota')
+      throw new Error(isQuota ? 'Gemini quota exceeded' : msg.slice(0, 200))
     }
   },
 }

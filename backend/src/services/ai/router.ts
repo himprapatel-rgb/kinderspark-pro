@@ -47,7 +47,12 @@ export async function aiComplete(
       console.log(`[AI] ✅ ${task} → ${name}`)
       return { text, provider: name }
     } catch (err) {
-      console.warn(`[AI] ${name} failed for task "${task}":`, (err as any)?.message ?? err)
+      const errMsg = (err as any)?.message ?? ''
+      // Suppress verbose logs for known quota/billing failures — circuit breaker already logged it
+      const isKnownQuota = errMsg.includes('quota exceeded') || errMsg.includes('no credits')
+      if (!isKnownQuota) {
+        console.warn(`[AI] ${name} failed for task "${task}":`, errMsg.slice(0, 150))
+      }
       lastError = err
     }
   }

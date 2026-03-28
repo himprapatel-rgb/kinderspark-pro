@@ -9,12 +9,12 @@ function getClient(): Anthropic {
   return _client
 }
 
-// Circuit breaker: after 1 billing error, disable for 30 minutes
+// Circuit breaker: after 1 billing error, disable for 60 minutes
 // (no credits means every call will fail — save the noise)
 let consecutiveFailures = 0
 let disabledUntil = 0
 const MAX_FAILURES = 1
-const COOLDOWN_MS = 30 * 60 * 1000 // 30 minutes
+const COOLDOWN_MS = 60 * 60 * 1000 // 60 minutes
 
 export const claudeProvider: AIProvider = {
   name: 'claude',
@@ -41,11 +41,13 @@ export const claudeProvider: AIProvider = {
         consecutiveFailures++
         if (consecutiveFailures >= MAX_FAILURES) {
           disabledUntil = Date.now() + COOLDOWN_MS
-          console.log(`[Claude] ⚡ Circuit breaker open — disabled for 30 min (no credits)`)
+          console.log(`[Claude] ⚡ Circuit breaker OPEN — disabled for 60 min (no credits)`)
           consecutiveFailures = 0
         }
       }
-      throw err
+      // Throw a short error instead of the huge JSON body
+      const isBilling = errMsg.includes('credit balance') || errMsg.includes('billing')
+      throw new Error(isBilling ? 'Claude no credits' : errMsg.slice(0, 200))
     }
   },
 }
