@@ -30,6 +30,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [profileId, setProfileId] = useState('')
+  const [parentConsent, setParentConsent] = useState(false)
 
   const selectedRole = ROLES.find(r => r.id === role)
 
@@ -279,6 +280,41 @@ export default function RegisterPage() {
               </div>
             </div>
 
+            {/* COPPA — Parental Consent for Children */}
+            {role === 'child' && (
+              <div
+                className="rounded-2xl p-4"
+                style={{ background: 'rgba(245,166,35,0.06)', border: '1px solid rgba(245,166,35,0.2)' }}
+              >
+                <div className="flex items-start gap-3">
+                  <button
+                    onClick={() => setParentConsent(!parentConsent)}
+                    className="w-6 h-6 rounded-lg flex-shrink-0 flex items-center justify-center mt-0.5 app-pressable transition-all"
+                    style={{
+                      background: parentConsent ? accentColor : 'rgba(255,255,255,0.9)',
+                      border: `2px solid ${parentConsent ? accentColor : 'rgba(120,120,140,0.3)'}`,
+                    }}
+                  >
+                    {parentConsent && <span className="text-white text-sm font-black">✓</span>}
+                  </button>
+                  <div>
+                    <div className="text-xs font-black" style={{ color: '#1f2233' }}>Parental Consent Required</div>
+                    <div className="text-xs font-semibold mt-0.5" style={{ color: 'rgba(70,75,96,0.55)' }}>
+                      A parent or guardian confirms they have reviewed our{' '}
+                      <span
+                        className="underline cursor-pointer"
+                        style={{ color: accentColor }}
+                        onClick={(e) => { e.stopPropagation(); window.open('/privacy', '_blank') }}
+                      >
+                        Privacy Policy
+                      </span>{' '}
+                      and consent to this child&apos;s account creation.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {error && (
               <div className="px-4 py-2.5 rounded-2xl text-sm font-bold" style={{ background: 'rgba(255,69,58,0.1)', border: '1px solid rgba(255,69,58,0.2)', color: '#E05252' }}>
                 ⚠️ {error}
@@ -287,7 +323,7 @@ export default function RegisterPage() {
 
             <button
               onClick={submitInfo}
-              disabled={!name.trim() || name.trim().length < 2}
+              disabled={!name.trim() || name.trim().length < 2 || (role === 'child' && !parentConsent)}
               className="w-full py-4 rounded-2xl font-black text-base text-white transition-all active:scale-95 disabled:opacity-40 app-pressable"
               style={{ background: accentGrad, boxShadow: `0 6px 28px ${accentColor}30` }}
             >

@@ -51,5 +51,7 @@
 	<string>KinderSpark needs photo library access to share activity photos</string>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>

@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { getMyProfile, updateMyProfile, logoutApi } from '@/lib/api'
+import { getMyProfile, updateMyProfile, logoutApi, deleteMyAccount } from '@/lib/api'
 import { useAppStore } from '@/store/appStore'
 
 const TOAST_DURATION = 2500
@@ -28,6 +28,9 @@ export default function ProfileManager({ roleLabel }: { roleLabel: string }) {
   const [profileId, setProfileId] = useState('')
   const [copied, setCopied] = useState(false)
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleteInput, setDeleteInput] = useState('')
+  const [deleting, setDeleting] = useState(false)
 
   const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
     setToast({ msg, type })
@@ -84,6 +87,19 @@ export default function ProfileManager({ roleLabel }: { roleLabel: string }) {
     }
     logout()
     window.location.href = '/login'
+  }
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true)
+    try {
+      await deleteMyAccount()
+      await logoutApi().catch(() => {})
+      logout()
+      window.location.href = '/login'
+    } catch (e: any) {
+      showToast(e.message || 'Failed to delete account', 'error')
+      setDeleting(false)
+    }
   }
 
   const copyId = () => {
@@ -229,13 +245,84 @@ export default function ProfileManager({ roleLabel }: { roleLabel: string }) {
           )}
         </button>
 
+        {/* Delete Account — Apple Guideline 5.1.1(v) */}
+        <div className="mt-4 rounded-2xl p-4" style={{ background: 'rgba(255,59,48,0.03)', border: '1px solid rgba(255,59,48,0.1)' }}>
+          <div className="text-xs font-black uppercase tracking-wider mb-2" style={{ color: 'rgba(255,59,48,0.5)' }}>Danger Zone</div>
+          <p className="text-xs font-semibold mb-3" style={{ color: 'rgba(70,75,96,0.5)' }}>
+            Permanently delete your account and all data. This action cannot be undone.
+          </p>
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="w-full py-3 rounded-xl text-sm font-black text-red-500 transition-all active:scale-95 app-pressable"
+            style={{ background: 'rgba(255,59,48,0.06)', border: '1px solid rgba(255,59,48,0.15)' }}
+          >
+            🗑️ Delete My Account
+          </button>
+        </div>
+
+        {/* Privacy Policy link */}
+        <div className="mt-4 text-center">
+          <button
+            onClick={() => router.push('/privacy')}
+            className="text-xs font-bold underline app-pressable"
+            style={{ color: 'rgba(94, 92, 230, 0.5)' }}
+          >
+            Privacy Policy
+          </button>
+        </div>
+
         {/* Footer */}
-        <div className="mt-6 text-center">
+        <div className="mt-4 text-center">
           <p className="text-xs font-semibold" style={{ color: 'rgba(70,75,96,0.3)' }}>
             KinderSpark Pro · v2.0
           </p>
         </div>
       </div>
+
+      {/* Delete Account Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
+          <div className="mx-5 w-full max-w-sm rounded-3xl p-6" style={{ background: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.25)' }}>
+            <div className="text-center mb-4">
+              <div className="text-4xl mb-2">⚠️</div>
+              <h3 className="text-lg font-black" style={{ color: '#E05252' }}>Delete Account?</h3>
+              <p className="text-xs font-semibold mt-2" style={{ color: 'rgba(70,75,96,0.6)' }}>
+                This will permanently delete your account, all learning progress, badges, and associated data. This cannot be undone.
+              </p>
+            </div>
+            <div className="mb-4">
+              <label className="text-xs font-black uppercase tracking-wider block mb-1" style={{ color: 'rgba(70,75,96,0.4)' }}>
+                Type &quot;DELETE&quot; to confirm
+              </label>
+              <input
+                className="w-full px-4 py-3 rounded-xl text-sm font-bold text-center outline-none"
+                style={{ background: '#f8f8fa', border: '2px solid rgba(255,59,48,0.2)', color: '#E05252' }}
+                value={deleteInput}
+                onChange={(e) => setDeleteInput(e.target.value)}
+                placeholder="DELETE"
+                autoComplete="off"
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setShowDeleteConfirm(false); setDeleteInput('') }}
+                className="flex-1 py-3 rounded-xl text-sm font-black app-pressable"
+                style={{ background: '#f2f2f5', color: '#666' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleteInput !== 'DELETE' || deleting}
+                className="flex-1 py-3 rounded-xl text-sm font-black text-white app-pressable disabled:opacity-40"
+                style={{ background: deleteInput === 'DELETE' ? '#E05252' : '#ccc' }}
+              >
+                {deleting ? 'Deleting…' : '🗑️ Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Toast notification */}
       {toast && (

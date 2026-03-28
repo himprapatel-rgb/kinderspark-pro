@@ -500,6 +500,10 @@ export async function updateMyProfile(data: { displayName?: string; avatar?: str
   })
 }
 
+export async function deleteMyAccount() {
+  return req('/profiles/me', { method: 'DELETE' })
+}
+
 export async function getSchoolOverview(schoolId: string) {
   return req(`/schools/${encodeURIComponent(schoolId)}/overview`)
 }

@@ -89,4 +89,26 @@ router.get('/school/:schoolId/users', requireRole('admin', 'principal'), async (
   }
 })
 
+// DELETE /api/profiles/me — Account Deletion (Apple Guideline 5.1.1v)
+// All profile models use onDelete: Cascade from User, so deleting User cascades everything.
+// RefreshToken is the only model without a FK relation — must be cleaned up manually.
+router.delete('/me', async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.id
+
+    // 1. Clean up refresh tokens (no FK cascade since it's a raw userId field)
+    await prisma.refreshToken.deleteMany({ where: { userId } })
+
+    // 2. Delete the user — cascades to:
+    //    RoleAssignment, PrincipalProfile, TeacherProfile (→ TeacherClassAssignment, TeacherStudentAssignment),
+    //    ParentProfile (→ ParentChildLink), StudentProfile (→ StudentClassEnrollment, ParentChildLink)
+    await prisma.user.delete({ where: { id: userId } })
+
+    return res.json({ success: true, message: 'Account and all associated data have been deleted' })
+  } catch (err) {
+    console.error('profiles/me delete error:', err)
+    return res.status(500).json({ error: 'Failed to delete account' })
+  }
+})
+
 export default router

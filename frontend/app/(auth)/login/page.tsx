@@ -334,6 +334,11 @@ export default function LoginPage() {
           ))}
         </div>
         <p className="text-xs font-semibold" style={{ color: 'rgba(70, 75, 96, 0.4)' }}>Safe & AI-powered learning · © 2026 KinderSpark Pro</p>
+        <div className="mt-2 flex items-center justify-center gap-3">
+          <button onClick={() => router.push('/privacy')} className="text-xs font-bold underline app-pressable" style={{ color: 'rgba(94, 92, 230, 0.5)' }}>Privacy Policy</button>
+          <span className="text-xs" style={{ color: 'rgba(70,75,96,0.2)' }}>·</span>
+          <button onClick={() => router.push('/terms')} className="text-xs font-bold underline app-pressable" style={{ color: 'rgba(94, 92, 230, 0.5)' }}>Terms of Service</button>
+        </div>
       </div>
 
       <style>{`
