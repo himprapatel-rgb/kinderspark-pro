@@ -63,11 +63,19 @@ export default function ChildPage() {
   const student = currentStudent || user
   const { pullRef, refreshing, pullProgress, pullDistance } = usePullToRefresh(() => loadData())
 
-  // Start background music on mount, stop on unmount
+  // Start background music on mount (may be blocked on iOS until a gesture), stop on unmount
   useEffect(() => {
     startBackgroundMusic()
     return () => { stopBackgroundMusic() }
   }, [])
+
+  // iOS: ensure audio context unlocks on first user interaction
+  const [audioPrimed, setAudioPrimed] = useState(false)
+  const primeAudio = () => {
+    if (audioPrimed) return
+    startBackgroundMusic()
+    setAudioPrimed(true)
+  }
 
   useEffect(() => {
     if (!student) { router.push('/'); return }
@@ -212,6 +220,8 @@ export default function ChildPage() {
       ref={pullRef}
       className="min-h-screen pb-28 app-container"
       style={{ background: 'var(--app-bg)', overflowY: 'auto' }}
+      onTouchStart={primeAudio}
+      onMouseDown={primeAudio}
     >
       <PullIndicator progress={pullProgress} refreshing={refreshing} pullDistance={pullDistance} />
       <PageTransition>
