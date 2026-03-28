@@ -88,10 +88,6 @@ export default function ParentPage() {
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
-    // #region agent log
-    console.log('[KS-DEBUG] parent page mount', { hasUser: !!user, role, userId: user?.id, classId: user?.classId })
-    fetch('http://127.0.0.1:7243/ingest/d5ccc2e0-20b1-4fcf-845d-ede26b674430',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'parent/page.tsx:mount',message:'parent mount',data:{hasUser:!!user,role,userId:user?.id,classId:user?.classId},timestamp:Date.now(),hypothesisId:'H3'})}).catch(()=>{})
-    // #endregion
     if (!user) { router.push('/'); return }
     if (role !== 'parent') { router.push('/'); return }
     ;(async () => {

@@ -72,15 +72,7 @@ async function req(path: string, options?: RequestInit): Promise<any> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   if (token) headers['Authorization'] = `Bearer ${token}`
 
-  // #region agent log
-  console.log('[KS-DEBUG] API req', { path, method: options?.method || 'GET', hasToken: !!token, base: BASE })
-  // #endregion
-
   const res = await fetch(`${BASE}${path}`, { headers, ...options })
-
-  // #region agent log
-  if (!res.ok) console.error('[KS-DEBUG] API error', { path, status: res.status })
-  // #endregion
 
   if (res.status === 401) {
     const newToken = await tryRefresh()

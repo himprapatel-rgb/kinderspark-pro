@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
-import { verifyPin, API_BASE } from '@/lib/api'
+import { verifyPin } from '@/lib/api'
 
 const ROLES = [
   {
@@ -80,41 +80,19 @@ export default function LoginPage() {
   const setAuth = useAppStore((s) => s.setAuth)
   const [devLoading, setDevLoading] = useState<string | null>(null)
 
-  // #region agent log
-  useEffect(() => {
-    const dbg = { page: 'login', hasUser: !!user, role, userId: user?.id, apiBase: API_BASE, ts: Date.now() }
-    console.log('[KS-DEBUG] login mount', dbg)
-    fetch('http://127.0.0.1:7243/ingest/d5ccc2e0-20b1-4fcf-845d-ede26b674430',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:mount',message:'login mount',data:dbg,timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{})
-  }, [])
-  // #endregion
-
   async function quickLogin(item: typeof DEV_LOGINS[number]) {
     setDevLoading(item.role)
     try {
-      // #region agent log
-      console.log('[KS-DEBUG] quickLogin attempt', { role: item.role })
-      // #endregion
       const data = await verifyPin(item.pin, item.role)
-      // #region agent log
-      console.log('[KS-DEBUG] quickLogin success', { role: item.role, userId: data?.user?.id, hasToken: !!data?.token, hasAccessToken: !!data?.accessToken })
-      // #endregion
       setAuth(data.user, item.role, data.accessToken || data.token)
       if (item.role === 'teacher') router.replace('/teacher')
       else if (item.role === 'admin' || item.role === 'principal')  router.replace('/admin')
       else if (item.role === 'parent') router.replace('/parent')
       else router.replace('/child')
-    } catch (err: any) {
-      // #region agent log
-      console.error('[KS-DEBUG] quickLogin FAILED', { role: item.role, error: err?.message })
-      // #endregion
-      setDevLoading(null)
-    }
+    } catch { setDevLoading(null) }
   }
 
   useEffect(() => {
-    // #region agent log
-    console.log('[KS-DEBUG] login auto-redirect check', { hasUser: !!user, role })
-    // #endregion
     if (!user || !role) return
     if (role === 'teacher') router.replace('/teacher')
     else if (role === 'admin' || role === 'principal')  router.replace('/admin')
