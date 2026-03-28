@@ -5,6 +5,7 @@ import { useAppStore as useStore } from '@/store/appStore'
 import { Loading, InlineEmpty } from '@/components/UIStates'
 import TopBarActions from '@/components/TopBarActions'
 import WeatherChip from '@/components/WeatherChip'
+import LocationCard from '@/components/LocationCard'
 import ParentSidebar from '@/components/ParentSidebar'
 import ProgressCharts from '@/components/ProgressCharts'
 import ActivityFeed from '@/components/ActivityFeed'
@@ -699,6 +700,11 @@ export default function ParentPage() {
                 <div className="text-xs font-bold app-muted mt-1">Pending Homework</div>
                 {pendingHW.length > 0 && <div className="text-orange-400/60 text-xs font-bold">Needs attention!</div>}
               </div>
+            </div>
+
+            {/* Location card */}
+            <div className="mx-3 mb-4">
+              <LocationCard />
             </div>
 
             {/* Push notification opt-in banner */}

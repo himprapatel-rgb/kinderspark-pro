@@ -49,6 +49,10 @@
 	<string>KinderSpark needs microphone access for the voice AI tutor</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>KinderSpark needs photo library access to share activity photos</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>KinderSpark uses your location (parent app) to show local weather and optional school arrival/leave events. This is always optional.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>With your explicit consent, KinderSpark can monitor arrival/leave at school to simplify attendance. This is optional and can be turned off anytime.</string>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 	<key>ITSAppUsesNonExemptEncryption</key>
