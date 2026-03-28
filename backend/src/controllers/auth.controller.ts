@@ -141,9 +141,6 @@ export async function verifyPin(req: Request, res: Response) {
     const token = signAccessToken({ id: student.id, role, roles: [role], name: student.name, schoolId: student.class?.schoolId || null })
     const refreshToken = await issueRefreshToken(student.id, role)
     setAuthCookies(res, token, refreshToken)
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/d5ccc2e0-20b1-4fcf-845d-ede26b674430',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.controller.ts:legacy-login',message:'Legacy student login response',data:{studentId:student.id,role,hasPin:false,fieldCount:Object.keys({id:1,name:1,avatar:1,stars:1,streak:1}).length},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
-    // #endregion
     // Strip sensitive / bulky fields from the response
     return res.json({
       success: true,
