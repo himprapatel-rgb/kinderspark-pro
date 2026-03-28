@@ -3,6 +3,9 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getMyProfile, updateMyProfile, logoutApi, deleteMyAccount } from '@/lib/api'
 import { useAppStore } from '@/store/appStore'
+import SoundSettings from '@/components/SoundSettings'
+import LanguageSelector from '@/components/LanguageSelector'
+import { useTranslation } from '@/hooks/useTranslation'
 
 const TOAST_DURATION = 2500
 
@@ -222,6 +225,24 @@ export default function ProfileManager({ roleLabel }: { roleLabel: string }) {
               {busy ? 'Saving…' : '✓ Save Changes'}
             </button>
           </div>
+        </div>
+
+        {/* ── Sound & Music Settings ── */}
+        <div
+          className="rounded-2xl p-5 mb-4"
+          style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(120,120,140,0.15)', boxShadow: '0 4px 20px rgba(30,40,70,0.08)' }}
+        >
+          <h2 className="text-sm font-black uppercase tracking-wider mb-4" style={{ color: 'rgba(70,75,96,0.5)' }}>🎵 Sound & Music</h2>
+          <SoundSettings />
+        </div>
+
+        {/* ── Language Settings ── */}
+        <div
+          className="rounded-2xl p-5 mb-4"
+          style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(120,120,140,0.15)', boxShadow: '0 4px 20px rgba(30,40,70,0.08)' }}
+        >
+          <h2 className="text-sm font-black uppercase tracking-wider mb-4" style={{ color: 'rgba(70,75,96,0.5)' }}>🌍 Language</h2>
+          <LanguageSelector />
         </div>
 
         {/* Logout */}

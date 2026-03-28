@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
 import { verifyPin } from '@/lib/api'
+import Onboarding, { isOnboardingDone } from '@/components/Onboarding'
+import { useTranslation } from '@/hooks/useTranslation'
 
 const ROLES = [
   {
@@ -79,6 +81,12 @@ export default function LoginPage() {
   const role = useAppStore((s) => s.role)
   const setAuth = useAppStore((s) => s.setAuth)
   const [devLoading, setDevLoading] = useState<string | null>(null)
+  const [showOnboarding, setShowOnboarding] = useState(false)
+  const { t } = useTranslation()
+
+  useEffect(() => {
+    if (!isOnboardingDone()) setShowOnboarding(true)
+  }, [])
 
   async function quickLogin(item: typeof DEV_LOGINS[number]) {
     setDevLoading(item.role)
@@ -99,6 +107,10 @@ export default function LoginPage() {
     else if (role === 'parent') router.replace('/parent')
     else router.replace('/child')
   }, [user, role, router])
+
+  if (showOnboarding) {
+    return <Onboarding onComplete={() => setShowOnboarding(false)} />
+  }
 
   return (
     <div

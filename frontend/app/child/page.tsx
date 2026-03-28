@@ -8,8 +8,9 @@ import { selectAdaptiveMission } from '@/lib/missionEngine'
 import { ArrowRight, BookOpen, Bot, Flame, Hash, Palette, PencilLine, PlayCircle, Settings, Share2, Shapes, ShoppingBag, Sparkles, Star, Trophy } from 'lucide-react'
 import PageTransition from '@/components/PageTransition'
 import { usePullToRefresh, PullIndicator } from '@/hooks/usePullToRefresh'
-import { playTap } from '@/lib/sounds'
+import { playTap, playCorrect, playComplete, playBadge, playSwipe, playLevelUp, playNotification, startBackgroundMusic, stopBackgroundMusic } from '@/lib/sounds'
 import { hapticTap, hapticSuccess, hapticImpact, nativeShare } from '@/lib/capacitor'
+import { useTranslation } from '@/hooks/useTranslation'
 
 // ── Daily Challenge helper ─────────────────────────────────────────────────────
 function getDailyChallenge() {
@@ -43,6 +44,7 @@ export default function ChildPage() {
   const logout = useStore(s => s.logout)
   const setDailyMission = useStore(s => s.setDailyMission)
   const trackKpiEvent = useStore(s => s.trackKpiEvent)
+  const { t } = useTranslation()
 
   const [homework, setHomework] = useState<any[]>([])
   const [syllabuses, setSyllabuses] = useState<any[]>([])
@@ -59,6 +61,12 @@ export default function ChildPage() {
 
   const student = currentStudent || user
   const { pullRef, refreshing, pullProgress, pullDistance } = usePullToRefresh(() => loadData())
+
+  // Start background music on mount, stop on unmount
+  useEffect(() => {
+    startBackgroundMusic()
+    return () => { stopBackgroundMusic() }
+  }, [])
 
   useEffect(() => {
     if (!student) { router.push('/'); return }
@@ -137,12 +145,17 @@ export default function ChildPage() {
   const handleMarkDone = async (hwId: string) => {
     if (!student || markingDone) return
     hapticImpact()
+    playTap()
     setMarkingDone(hwId)
     try {
       trackKpiEvent({ category: 'learning', name: 'child_homework_mark_done' })
       const res = await completeHomework(hwId, student.id)
       hapticSuccess()
-      if (res?.newBadges?.length) setCelebrationBadges(res.newBadges)
+      playComplete()
+      if (res?.newBadges?.length) {
+        playBadge()
+        setCelebrationBadges(res.newBadges)
+      }
       await loadData()
     } catch { /* ignore */ }
     setMarkingDone(null)
@@ -168,7 +181,7 @@ export default function ChildPage() {
             <div key={i} className="h-2 rounded-full shimmer" style={{ width: `${w}%`, background: 'rgba(120,120,140,0.06)' }} />
           ))}
         </div>
-        <p className="text-sm font-bold" style={{ color: 'rgba(70, 75, 96, 0.85)' }}>Loading your world…</p>
+        <p className="text-sm font-bold" style={{ color: 'rgba(70, 75, 96, 0.85)' }}>{t('loading_world')}</p>
       </div>
     )
   }
