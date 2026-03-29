@@ -185,7 +185,7 @@ router.post('/daily-mission', async (req: Request, res: Response) => {
       return res.json({
         kind: 'homework',
         title: pending.title,
-        etaMin: 10,
+        etaMin: 5,
         action: pending.aiGenerated ? 'Open AI Tutor' : 'Open Lesson',
         route: pending.aiGenerated ? `/child/tutor?topic=${encodeURIComponent(pending.moduleId || 'daily-practice')}` : `/child/lesson/${pending.moduleId || 'numbers'}`,
       })
@@ -196,7 +196,7 @@ router.post('/daily-mission', async (req: Request, res: Response) => {
       return res.json({
         kind: 'practice',
         title: `Practice ${weakest.moduleId}`,
-        etaMin: 8,
+        etaMin: 5,
         action: 'Resume Learning',
         route: `/child/lesson/${weakest.moduleId}`,
       })
@@ -205,13 +205,50 @@ router.post('/daily-mission', async (req: Request, res: Response) => {
     return res.json({
       kind: 'explore',
       title: 'Try a new mini mission',
-      etaMin: 7,
+      etaMin: 5,
       action: 'Start Mission',
       route: '/child/learn',
     })
   } catch (err) {
     console.error('dailyMission error:', err)
     return res.status(500).json({ error: 'Failed to build daily mission' })
+  }
+})
+
+// In-memory same-day completion markers (scaffold; replace with DB if needed)
+const DAILY_MISSION_COMPLETED = new Set<string>()
+
+// POST /api/ecosystem/daily-mission/complete
+router.post('/daily-mission/complete', async (req: Request, res: Response) => {
+  try {
+    const { studentId, classId } = req.body || {}
+    if (!studentId || !classId) return res.status(400).json({ error: 'studentId and classId required' })
+
+    if (req.user?.role === 'child' && req.user.id !== studentId) {
+      return res.status(403).json({ error: 'Insufficient permissions' })
+    }
+    if (req.user?.role === 'parent' && !(await canParentAccessStudent(req.user.id, studentId))) {
+      return res.status(403).json({ error: 'Insufficient permissions' })
+    }
+    if (!['child', 'parent'].includes(req.user?.role || '')) {
+      return res.status(403).json({ error: 'Insufficient permissions' })
+    }
+
+    const student = await prisma.student.findUnique({
+      where: { id: studentId },
+      select: { id: true, classId: true },
+    })
+    if (!student || student.classId !== classId) {
+      return res.status(403).json({ error: 'Invalid student/class ownership' })
+    }
+
+    const day = new Date().toISOString().slice(0, 10)
+    DAILY_MISSION_COMPLETED.add(`${studentId}:${day}`)
+    console.log('[DAILY_MISSION_COMPLETE]', JSON.stringify({ studentId, day }))
+    return res.json({ ok: true })
+  } catch (err) {
+    console.error('dailyMissionComplete error:', err)
+    return res.status(500).json({ error: 'Failed to record mission completion' })
   }
 })
 

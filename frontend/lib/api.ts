@@ -490,6 +490,35 @@ export async function getDailyMission(data: { studentId: string; classId: string
   })
 }
 
+export async function completeDailyMission(data: { studentId: string; classId: string }) {
+  return req('/ecosystem/daily-mission/complete', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export async function getDiagRecent() {
+  return req('/diag/recent')
+}
+
+export async function setGeofenceConsent(enabled: boolean) {
+  return req('/attendance/geofence/consent', {
+    method: 'POST',
+    body: JSON.stringify({ enabled }),
+  })
+}
+
+export async function postGeofenceEvent(data: { type: 'enter' | 'exit'; regionLabel?: string }) {
+  return req('/attendance/geofence/event', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export async function getGeofenceEvents() {
+  return req('/attendance/geofence/events')
+}
+
 // ── Profile + relationship APIs ────────────────────────────────────────────────
 export async function getMyProfile() {
   return req('/profiles/me')

@@ -122,23 +122,7 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
 
       {children}
 
-      {/* Bottom Tab Bar */}
-      <div
-        className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto flex items-center justify-around z-40"
-        style={{ position: 'relative' }}
-      >
-        {/* Timer badge */}
-        {limitMin > 0 && !timeUp && remainingSec <= 300 && (
-          <div style={{
-            position: 'absolute', top: -32, left: '50%', transform: 'translateX(-50%)',
-            background: remainingSec <= 60 ? 'rgba(255,69,58,0.9)' : 'rgba(255,159,10,0.9)',
-            borderRadius: 20, padding: '3px 10px', fontSize: 10, fontWeight: 900, color: 'white',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.4)', whiteSpace: 'nowrap',
-          }}>
-            ⏱ {remainingMin} min left
-          </div>
-        )}
-      </div>
+      {/* Bottom Tab Bar — fixed; timer floats above when screen limit is on */}
       <div
         className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[960px] flex items-center justify-around z-40 rounded-t-2xl"
         style={{
@@ -151,6 +135,23 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
           boxShadow: '0 -4px 20px rgba(20,25,45,0.08)',
         }}
       >
+        {limitMin > 0 && !timeUp && remainingSec <= 300 && (
+          <div
+            className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-9 z-50"
+            style={{
+              background: remainingSec <= 60 ? 'rgba(255,69,58,0.9)' : 'rgba(255,159,10,0.9)',
+              borderRadius: 20,
+              padding: '3px 10px',
+              fontSize: 10,
+              fontWeight: 900,
+              color: 'white',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.4)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            ⏱ {remainingMin} min left
+          </div>
+        )}
         {NAV_TABS.map((tab, i) => {
           const active = i === activeIdx
           return (

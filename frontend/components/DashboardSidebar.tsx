@@ -1,8 +1,6 @@
 'use client'
 import { usePathname, useRouter } from 'next/navigation'
-import { useAppStore } from '@/store/appStore'
-import { logoutApi } from '@/lib/api'
-import { BarChart3, BookOpen, DoorOpen, GraduationCap, Home, Sparkles, Trophy, Users, MessageSquare, ClipboardList } from 'lucide-react'
+import { BarChart3, BookOpen, GraduationCap, Home, Sparkles, Trophy, UserRound, Users, MessageSquare, ClipboardList } from 'lucide-react'
 
 interface NavItem {
   icon: string
@@ -15,16 +13,18 @@ interface DashboardSidebarProps {
   role: 'teacher' | 'admin'
   items: NavItem[]
   userName?: string
+  /** Profile / account (Sign Out lives on profile only) */
+  profileHref?: string
   /** When provided, sidebar clicks call this instead of router.push */
   onItemClick?: (index: number) => void
   /** Index of the currently active tab (used with onItemClick) */
   activeIndex?: number
 }
 
-export default function DashboardSidebar({ role, items, userName, onItemClick, activeIndex }: DashboardSidebarProps) {
+export default function DashboardSidebar({ role, items, userName, profileHref, onItemClick, activeIndex }: DashboardSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
-  const logout = useAppStore(s => s.logout)
+  const resolvedProfile = profileHref || (role === 'admin' ? '/admin/profile' : '/teacher/profile')
 
   const roleColor = role === 'teacher' ? 'var(--role-teacher)' : 'var(--role-admin)'
   const roleLabel = role === 'teacher' ? 'Teacher' : 'Admin'
@@ -120,15 +120,16 @@ export default function DashboardSidebar({ role, items, userName, onItemClick, a
         })}
       </nav>
 
-      {/* Bottom actions */}
+      {/* Bottom: profile (Sign Out is in Profile only) */}
       <div className="px-3 py-4 border-t space-y-1" style={{ borderColor: 'var(--app-border)' }}>
         <button
-          onClick={async () => { await logoutApi().catch(() => {}); logout(); window.location.href = '/login' }}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all app-pressable"
-          style={{ color: 'var(--app-danger)', fontSize: '13px', fontWeight: 600 }}
+          type="button"
+          onClick={() => router.push(resolvedProfile)}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all app-pressable min-h-11"
+          style={{ color: 'var(--app-text-muted)', fontSize: '13px', fontWeight: 700 }}
         >
-          <span className="text-base"><DoorOpen size={16} /></span>
-          <span>Sign Out</span>
+          <UserRound size={17} aria-hidden />
+          <span>Profile & Settings</span>
         </button>
       </div>
     </aside>

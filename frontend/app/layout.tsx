@@ -2,7 +2,7 @@ import './globals.css';
 import type { ReactNode } from 'react';
 import type { Metadata, Viewport } from 'next';
 import AccessibilityProvider from '@/components/AccessibilityProvider';
-import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
+import PwaUpdateBanner from '@/components/PwaUpdateBanner';
 import NativeBridge from '@/components/NativeBridge';
 import ThemeCustomizer from '@/components/ThemeCustomizer';
 import { ToastProvider } from '@/components/Toast';
@@ -52,13 +52,21 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <link rel="apple-touch-startup-image" href="/icon-512.png" />
       </head>
       <body className="font-sans antialiased min-h-screen" style={{ background: 'var(--app-bg)' }}>
+        <a
+          href="#ks-main"
+          className="sr-only-focusable"
+        >
+          Skip to main content
+        </a>
         <ToastProvider>
           <AccessibilityProvider>
-            {children}
+            <main id="ks-main" tabIndex={-1} className="min-h-screen outline-none">
+              {children}
+            </main>
             <ThemeCustomizer />
           </AccessibilityProvider>
         </ToastProvider>
-        <ServiceWorkerRegistration />
+        <PwaUpdateBanner />
         <NativeBridge />
       </body>
     </html>

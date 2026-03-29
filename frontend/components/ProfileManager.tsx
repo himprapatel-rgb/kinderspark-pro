@@ -6,6 +6,7 @@ import { useAppStore } from '@/store/appStore'
 import SoundSettings from '@/components/SoundSettings'
 import LanguageSelector from '@/components/LanguageSelector'
 import { useTranslation } from '@/hooks/useTranslation'
+import { LogOut } from 'lucide-react'
 
 const TOAST_DURATION = 2500
 
@@ -19,6 +20,7 @@ const ROLE_COLORS: Record<string, { color: string; grad: string }> = {
 
 export default function ProfileManager({ roleLabel }: { roleLabel: string }) {
   const router = useRouter()
+  const { t } = useTranslation()
   const user = useAppStore(s => s.user)
   const role = useAppStore(s => s.role)
   const setUser = useAppStore(s => s.setUser)
@@ -32,6 +34,7 @@ export default function ProfileManager({ roleLabel }: { roleLabel: string }) {
   const [copied, setCopied] = useState(false)
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [deleteInput, setDeleteInput] = useState('')
   const [deleting, setDeleting] = useState(false)
 
@@ -245,11 +248,12 @@ export default function ProfileManager({ roleLabel }: { roleLabel: string }) {
           <LanguageSelector />
         </div>
 
-        {/* Logout */}
+        {/* Sign Out — confirmation required */}
         <button
-          onClick={handleLogout}
+          type="button"
+          onClick={() => setShowLogoutConfirm(true)}
           disabled={loggingOut}
-          className="w-full py-4 rounded-2xl font-black text-base transition-all active:scale-95 disabled:opacity-60 app-pressable flex items-center justify-center gap-2"
+          className="w-full py-4 rounded-2xl font-black text-base transition-all active:scale-95 disabled:opacity-60 app-pressable flex items-center justify-center gap-2 min-h-11"
           style={{
             background: 'rgba(255,69,58,0.08)',
             border: '2px solid rgba(255,69,58,0.2)',
@@ -262,7 +266,10 @@ export default function ProfileManager({ roleLabel }: { roleLabel: string }) {
               Signing out…
             </>
           ) : (
-            <>🚪 Sign Out</>
+            <>
+              <LogOut size={17} aria-hidden />
+              Sign Out
+            </>
           )}
         </button>
 
@@ -299,6 +306,45 @@ export default function ProfileManager({ roleLabel }: { roleLabel: string }) {
           </p>
         </div>
       </div>
+
+      {/* Sign Out confirmation */}
+      {showLogoutConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center px-4"
+          style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="logout-confirm-title"
+        >
+          <div className="w-full max-w-sm rounded-3xl p-6" style={{ background: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.25)' }}>
+            <h3 id="logout-confirm-title" className="text-lg font-black text-center" style={{ color: '#1f2233' }}>
+              {t('sign_out_confirm_title')}
+            </h3>
+            <p className="text-xs font-semibold mt-2 text-center" style={{ color: 'rgba(70,75,96,0.65)' }}>
+              {t('sign_out_confirm_body')}
+            </p>
+            <div className="flex gap-3 mt-5">
+              <button
+                type="button"
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 py-3 rounded-xl text-sm font-black app-pressable min-h-11"
+                style={{ background: '#f2f2f5', color: '#666' }}
+              >
+                {t('cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setShowLogoutConfirm(false); handleLogout() }}
+                className="flex-1 py-3 rounded-xl text-sm font-black text-white app-pressable min-h-11 flex items-center justify-center gap-2"
+                style={{ background: '#E05252' }}
+              >
+                <LogOut size={16} aria-hidden />
+                {t('logout')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete Account Confirmation Modal */}
       {showDeleteConfirm && (

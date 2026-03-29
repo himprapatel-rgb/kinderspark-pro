@@ -39,6 +39,11 @@ jest.mock('../middleware/auth.middleware', () => ({
   requireRole: (..._roles: string[]) => (_req: Request, _res: Response, next: NextFunction) => next(),
 }))
 
+jest.mock('../utils/accessControl', () => ({
+  canTeacherAccessClass: jest.fn().mockResolvedValue(true),
+  canParentAccessStudent: jest.fn().mockResolvedValue(true),
+}))
+
 import homeworkRouter from '../routes/homework.routes'
 
 const FAKE_HW = {
@@ -146,6 +151,7 @@ describe('DELETE /api/homework/:id', () => {
   beforeEach(() => { app = buildApp(); jest.clearAllMocks() })
 
   it('returns 200 on success', async () => {
+    mockHomework.findUnique.mockResolvedValue({ classId: 'cls-1' })
     mockHomework.delete.mockResolvedValue({})
 
     const res = await request(app).delete('/api/homework/hw-1')
@@ -155,6 +161,7 @@ describe('DELETE /api/homework/:id', () => {
   })
 
   it('returns 500 on Prisma error', async () => {
+    mockHomework.findUnique.mockResolvedValue({ classId: 'cls-1' })
     mockHomework.delete.mockRejectedValue(new Error('db'))
 
     const res = await request(app).delete('/api/homework/hw-1')
@@ -244,6 +251,7 @@ describe('GET /api/homework/:id/completions', () => {
   beforeEach(() => { app = buildApp(); jest.clearAllMocks() })
 
   it('returns 200 with completions list', async () => {
+    mockHomework.findUnique.mockResolvedValue({ classId: 'cls-1' })
     const completions = [
       { id: 'hc-1', homeworkId: 'hw-1', studentId: 'stu-1', done: true, student: { name: 'Emma' } },
     ]
@@ -257,6 +265,7 @@ describe('GET /api/homework/:id/completions', () => {
   })
 
   it('returns empty array when no completions', async () => {
+    mockHomework.findUnique.mockResolvedValue({ classId: 'cls-1' })
     mockHomeworkCompletion.findMany.mockResolvedValue([])
 
     const res = await request(app).get('/api/homework/hw-1/completions')

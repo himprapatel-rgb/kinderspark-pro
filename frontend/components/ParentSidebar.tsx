@@ -1,8 +1,6 @@
 'use client'
 import { useRouter } from 'next/navigation'
-import { useAppStore } from '@/store/appStore'
-import { logoutApi } from '@/lib/api'
-import { BarChart3, DoorOpen, Home, Heart, MessageSquare, Sparkles } from 'lucide-react'
+import { BarChart3, Home, Heart, MessageSquare, UserRound } from 'lucide-react'
 
 interface ParentSidebarProps {
   userName?: string
@@ -20,7 +18,6 @@ const ITEMS = [
 
 export default function ParentSidebar({ userName, childName, activeIndex, onItemClick, unreadCount = 0 }: ParentSidebarProps) {
   const router = useRouter()
-  const logout = useAppStore(s => s.logout)
 
   return (
     <aside className="hidden lg:flex w-64 h-screen sticky top-0 flex-col border-r" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)' }}>
@@ -93,15 +90,16 @@ export default function ParentSidebar({ userName, childName, activeIndex, onItem
         })}
       </nav>
 
-      {/* Bottom actions */}
+      {/* Bottom: profile & account (Sign Out is in Profile only) */}
       <div className="px-3 py-4 border-t space-y-1" style={{ borderColor: 'var(--app-border)' }}>
         <button
-          onClick={async () => { await logoutApi().catch(() => {}); logout(); window.location.href = '/login' }}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all app-pressable"
-          style={{ color: 'var(--app-danger)', fontSize: '13px', fontWeight: 600 }}
+          type="button"
+          onClick={() => router.push('/parent/profile')}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all app-pressable min-h-11"
+          style={{ color: 'var(--app-text-muted)', fontSize: '13px', fontWeight: 700 }}
         >
-          <DoorOpen size={16} />
-          <span>Sign Out</span>
+          <UserRound size={17} aria-hidden />
+          <span>Profile & Settings</span>
         </button>
       </div>
     </aside>

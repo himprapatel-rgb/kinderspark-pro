@@ -1,52 +1,51 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
-import { logoutApi } from '@/lib/api'
-import { LogOut, Settings, UserRound } from 'lucide-react'
+import { Settings, UserRound } from 'lucide-react'
 
 /**
- * Consistent top-right action buttons for all role headers.
- * Always renders in a horizontal row: [optional extras] [Settings] [Logout]
- * 
- * Usage:
- *   <TopBarActions />                          — logout only
- *   <TopBarActions showSettings />             — settings + logout
- *   <TopBarActions settingsHref="/child/settings" showSettings />
- *   <TopBarActions extra={<button>📊 Report</button>} />
+ * Top-right actions: Profile, optional role switcher, optional Settings.
+ * Sign out lives only in Profile / Settings screens (see ProfileManager).
  */
 export default function TopBarActions({
   showSettings = false,
   settingsHref = '/child/settings',
+  profileHref,
   showRoleSwitcher = true,
-  variant = 'light', // 'light' for on gradient headers (white icons), 'dark' for on light surfaces
+  variant = 'light',
   extra,
 }: {
   showSettings?: boolean
   settingsHref?: string
+  /** Defaults to /{role}/profile */
+  profileHref?: string
   showRoleSwitcher?: boolean
   variant?: 'light' | 'dark'
   extra?: React.ReactNode
 }) {
   const router = useRouter()
-  const logout = useAppStore(s => s.logout)
   const role = useAppStore(s => s.role)
   const availableRoles = useAppStore(s => s.availableRoles)
   const switchRole = useAppStore(s => s.switchRole)
 
+  const resolvedProfile = profileHref || `/${role || 'child'}/profile`
+
   const btnClass = variant === 'light'
-    ? 'flex items-center justify-center rounded-xl text-sm font-bold active:scale-95 transition-all app-pressable app-btn-glass'
-    : 'flex items-center justify-center rounded-xl text-sm font-bold active:scale-95 transition-all app-pressable app-btn-soft'
+    ? 'flex items-center justify-center rounded-xl text-sm font-bold active:scale-95 transition-all app-pressable app-btn-glass min-h-10 min-w-10'
+    : 'flex items-center justify-center rounded-xl text-sm font-bold active:scale-95 transition-all app-pressable app-btn-soft min-h-10 min-w-10'
 
   return (
     <div className="flex items-center gap-2">
       {extra}
 
       <button
-        onClick={() => router.push(`/${role || 'child'}/profile`)}
-        className={`${btnClass} w-10 h-10`}
+        type="button"
+        onClick={() => router.push(resolvedProfile)}
+        className={btnClass}
         title="Profile"
+        aria-label="Profile"
       >
-        <UserRound size={16} />
+        <UserRound size={17} aria-hidden />
       </button>
 
       {showRoleSwitcher && availableRoles.length > 1 && (
@@ -59,7 +58,7 @@ export default function TopBarActions({
             const route = nextRole === 'principal' ? '/admin' : `/${nextRole}`
             router.push(route)
           }}
-          className="h-10 rounded-xl px-2 text-xs font-black app-field app-pressable"
+          className="min-h-10 rounded-xl px-2 text-xs font-black app-field app-pressable"
           style={{ minWidth: 92 }}
         >
           {availableRoles.map((r) => (
@@ -70,22 +69,15 @@ export default function TopBarActions({
 
       {showSettings && (
         <button
+          type="button"
           onClick={() => router.push(settingsHref)}
-          className={`${btnClass} w-10 h-10`}
+          className={btnClass}
           title="Settings"
+          aria-label="Settings"
         >
-          <Settings size={16} />
+          <Settings size={17} aria-hidden />
         </button>
       )}
-
-      <button
-        onClick={async () => { await logoutApi().catch(() => {}); logout(); window.location.href = '/login' }}
-        className={`${btnClass} h-10 px-3 gap-1.5`}
-        title="Sign out"
-      >
-        <LogOut size={15} />
-        <span className="hidden sm:inline text-xs font-bold">Logout</span>
-      </button>
     </div>
   )
 }

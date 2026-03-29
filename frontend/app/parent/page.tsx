@@ -13,6 +13,7 @@ import {
   getHomework, getMessages, sendMessage, getAISessions, getAttendanceSummary, markAllMessagesRead,
   completeHomework, createMessageStream, getMyProfile, getProgress, getStudentBadges,
   getMessageThreads, getThreadMessages, createMessageThread, sendThreadMessage,
+  getDailyMission,
 } from '@/lib/api'
 import { MODS } from '@/lib/modules'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
@@ -21,12 +22,7 @@ import { useToast } from '@/components/Toast'
 import PageTransition from '@/components/PageTransition'
 import { usePullToRefresh, PullIndicator } from '@/hooks/usePullToRefresh'
 import { hapticTap, hapticSuccess, nativeShare } from '@/lib/capacitor'
-
-const QUICK_PARENT_REPLIES = [
-  'Thanks! We will complete this tonight.',
-  'Could you share a simpler version for home practice?',
-  'My child found this hard. Any 5-minute tip for us?',
-] as const
+import { useTranslation } from '@/hooks/useTranslation'
 
 // SVG ring component for circular progress
 function Ring({ pct, color, size = 80, stroke = 8 }: { pct: number; color: string; size?: number; stroke?: number }) {
@@ -63,8 +59,9 @@ export default function ParentPage() {
   const router = useRouter()
   const user = useStore(s => s.user)
   const role = useStore(s => s.role)
-  const logout = useStore(s => s.logout)
   const dailyMission = useStore(s => s.dailyMission)
+  const setDailyMission = useStore(s => s.setDailyMission)
+  const { t } = useTranslation()
   const trackKpiEvent = useStore(s => s.trackKpiEvent)
   const toast = useToast()
 
@@ -256,6 +253,13 @@ export default function ParentPage() {
         }).catch(() => {})
       }
       getStudentBadges(u.id).then(b => setBadgesData(b || [])).catch(() => {})
+      if (u.classId && u.id) {
+        getDailyMission({ studentId: u.id, classId: u.classId })
+          .then((m) => setDailyMission(m))
+          .catch(() => setDailyMission(null))
+      } else {
+        setDailyMission(null)
+      }
     } catch (e) {
       console.error(e)
     } finally {
@@ -469,6 +473,32 @@ export default function ParentPage() {
     setTab(2)
   }
 
+  const quickReplies = [t('parent_quick_r1'), t('parent_quick_r2'), t('parent_quick_r3')]
+
+  /** Child-only routes cannot run as parent; copy steps + toast instead of navigating. */
+  const shareChildMissionFromParent = (route: string, title: string, kpiEventName: string) => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : ''
+    const url = route.startsWith('http') ? route : `${origin}${route.startsWith('/') ? route : `/${route}`}`
+    const name = student?.name || 'your child'
+    const text = [
+      `KinderSpark — ${title}`,
+      `For: ${name}`,
+      '',
+      'Steps:',
+      '1) Sign out (Profile → Sign Out).',
+      `2) Choose I am a Kid and enter ${name}'s PIN.`,
+      `3) Open this link in the same browser: ${url}`,
+    ].join('\n')
+    trackKpiEvent({ category: 'engagement', name: kpiEventName })
+    const notify = () => toast.info(t('parent_mission_toast'), 8000)
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(notify).catch(notify)
+    } else {
+      notify()
+    }
+    void nativeShare({ title: `KinderSpark: ${title}`, text })
+  }
+
   if (loading) return <Loading emoji="✨" text="Loading your child's data…" />
 
   const TABS = [
@@ -490,12 +520,12 @@ export default function ParentPage() {
       {/* Fixed tab bar */}
       <div className="lg:hidden fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[960px] z-50 backdrop-blur border-b rounded-b-xl" style={{ background: 'rgba(255,255,255,0.92)', borderColor: 'var(--app-border)' }}>
         <div className="flex">
-          {TABS.map(t => (
-            <button key={t.idx} onClick={() => setTab(t.idx)}
-              className={`flex-1 py-3 text-xs font-black transition-colors relative ${tab === t.idx ? 'border-b-2' : ''}`}
-              style={{ color: tab === t.idx ? 'var(--app-accent)' : 'rgba(70, 75, 96, 0.8)', borderColor: tab === t.idx ? 'var(--app-accent)' : 'transparent' }}>
-              <span className="inline-flex items-center gap-1.5">{t.icon}<span>{t.label}</span></span>
-              {t.idx === 2 && unreadMsgs > 0 && (
+          {TABS.map((tabItem) => (
+            <button key={tabItem.idx} type="button" onClick={() => setTab(tabItem.idx)}
+              className={`flex-1 py-3 text-xs font-black transition-colors relative min-h-11 ${tab === tabItem.idx ? 'border-b-2' : ''}`}
+              style={{ color: tab === tabItem.idx ? 'var(--app-accent)' : 'rgba(70, 75, 96, 0.8)', borderColor: tab === tabItem.idx ? 'var(--app-accent)' : 'transparent' }}>
+              <span className="inline-flex items-center gap-1.5">{tabItem.icon}<span>{tabItem.label}</span></span>
+              {tabItem.idx === 2 && unreadMsgs > 0 && (
                 <span className="absolute top-1 right-2 bg-red-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center app-pressable">
                   {unreadMsgs > 9 ? '9+' : unreadMsgs}
                 </span>
@@ -544,7 +574,7 @@ export default function ParentPage() {
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <WeatherChip variant="light" />
-                  <TopBarActions variant="light" />
+                  <TopBarActions variant="light" profileHref="/parent/profile" />
                 </div>
               </div>
             </div>
@@ -552,56 +582,64 @@ export default function ParentPage() {
             {/* Parent co-pilot: today action + plain-language insight */}
             <div className="mx-3 mb-4 rounded-2xl p-4" style={{ background: 'rgba(48,209,88,0.12)', border: '1px solid rgba(48,209,88,0.3)' }}>
               <div className="flex items-center justify-between gap-2 mb-2">
-                <div className="font-black text-sm">Today&apos;s 5-minute action</div>
-                <div className="text-green-300 text-[11px] font-bold">Parent Co-Pilot</div>
+                <div className="font-black text-sm">{t('parent_copilot_today_title')}</div>
+                <div className="text-green-300 text-[11px] font-bold">{t('parent_copilot_badge')}</div>
               </div>
               {todayAction ? (
                 <div className="rounded-xl p-3" style={{ background: 'var(--app-surface-soft)' }}>
                   <div className="font-black text-sm">{todayAction.title}</div>
-                  <div className="text-xs font-bold app-muted mt-0.5">Help your child finish this first.</div>
+                  <div className="text-xs font-bold app-muted mt-0.5">{t('parent_copilot_hw_sub')}</div>
                   <div className="flex items-center justify-between mt-2">
                     <div className="text-yellow-300 text-xs font-black">⭐ {todayAction.starsReward} stars</div>
                     <button
+                      type="button"
                       onClick={() => setTab(2)}
-                      className="text-xs font-black px-2.5 py-1 rounded-lg app-pressable"
+                      className="min-h-10 text-xs font-black px-2.5 py-2 rounded-lg app-pressable"
                       style={{ background: 'rgba(48,209,88,0.2)', color: '#9EF0B2' }}
                     >
-                      Message Teacher
+                      {t('parent_copilot_msg_teacher')}
                     </button>
                   </div>
                 </div>
               ) : missionAction ? (
                 <div className="rounded-xl p-3" style={{ background: 'var(--app-surface-soft)' }}>
                   <div className="font-black text-sm">{missionAction.title}</div>
-                  <div className="text-xs font-bold app-muted mt-0.5">Suggested mission for today ({missionAction.etaMin} min).</div>
+                  <div className="text-xs font-bold app-muted mt-0.5">
+                    {t('parent_copilot_mission_sub')} ({missionAction.etaMin} min).
+                  </div>
                   <div className="flex items-center justify-between mt-2">
                     <div className="text-xs font-black app-muted capitalize">{missionAction.kind}</div>
                     <button
-                      onClick={() => {
-                        trackKpiEvent({ category: 'engagement', name: 'parent_mission_open_from_copilot' })
-                        router.push(missionAction.route)
-                      }}
-                      className="text-xs font-black px-2.5 py-1 rounded-lg app-pressable"
+                      type="button"
+                      onClick={() =>
+                        shareChildMissionFromParent(
+                          missionAction.route,
+                          missionAction.title,
+                          'parent_mission_share_from_copilot'
+                        )
+                      }
+                      className="min-h-10 text-xs font-black px-2.5 py-2 rounded-lg app-pressable"
                       style={{ background: 'var(--app-accent-soft)', color: 'var(--app-accent)' }}
                     >
-                      Open
+                      {t('parent_mission_share_label')}
                     </button>
                   </div>
                 </div>
               ) : (
                 <div className="rounded-xl p-3 text-xs app-muted font-bold" style={{ background: 'var(--app-surface-soft)' }}>
-                  No pending homework today. Great job staying on track.
+                  {t('parent_copilot_all_caught_up')}
                 </div>
               )}
               <div className="app-muted text-xs font-bold mt-3">
                 {insightText}
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
-                {QUICK_PARENT_REPLIES.map((q) => (
+                {quickReplies.map((q) => (
                   <button
+                    type="button"
                     key={q}
                     onClick={() => openQuickReply(q)}
-                    className="px-2.5 py-1.5 rounded-lg text-[11px] font-black app-pressable"
+                    className="min-h-10 px-2.5 py-2 rounded-lg text-[11px] font-black app-pressable text-left"
                     style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}
                   >
                     {q}
@@ -633,14 +671,18 @@ export default function ParentPage() {
               <div className="text-xs font-bold app-muted">{weeklyDigestText}</div>
               {missionAction && (
                 <button
-                  onClick={() => {
-                    trackKpiEvent({ category: 'engagement', name: 'parent_mission_open_from_digest' })
-                    router.push(missionAction.route)
-                  }}
-                  className="mt-3 px-3 py-2 rounded-xl text-xs font-black app-pressable"
+                  type="button"
+                  onClick={() =>
+                    shareChildMissionFromParent(
+                      missionAction.route,
+                      missionAction.title,
+                      'parent_mission_share_from_digest'
+                    )
+                  }
+                  className="mt-3 min-h-10 px-3 py-2 rounded-xl text-xs font-black app-pressable"
                   style={{ background: 'rgba(91,127,232,0.16)', color: '#5B7FE8', border: '1px solid rgba(91,127,232,0.3)' }}
                 >
-                  Open 5-min mission
+                  {t('parent_mission_share_label')}
                 </button>
               )}
             </div>

@@ -14,15 +14,24 @@ const mockPrismaRefreshToken = {
   delete: jest.fn(),
   deleteMany: jest.fn(),
 }
+const mockPrismaUser = {
+  findMany: jest.fn(),
+  findUnique: jest.fn(),
+}
 
 jest.mock('../prisma/client', () => ({
   __esModule: true,
   default: {
+    user: mockPrismaUser,
     teacher: mockPrismaTeacher,
     admin: mockPrismaAdmin,
     student: mockPrismaStudent,
     refreshToken: mockPrismaRefreshToken,
   },
+}))
+
+jest.mock('../services/badge.service', () => ({
+  checkAndAwardBadges: jest.fn().mockResolvedValue([]),
 }))
 
 // Mock bcryptjs: compare succeeds when plain === hash (tests use plaintext pins as "hashes")
@@ -52,6 +61,12 @@ import * as authController from '../controllers/auth.controller'
 function buildApp() {
   const app = express()
   app.use(express.json())
+  // verifyPin / refresh set cookies — stub for supertest (no cookie-parser in minimal app)
+  app.use((req, res: any, next) => {
+    res.cookie = jest.fn(() => res)
+    res.clearCookie = jest.fn(() => res)
+    next()
+  })
   app.post('/api/auth/pin', authController.verifyPin)
   app.post('/api/auth/refresh', authController.refreshAccessToken)
   app.post('/api/auth/logout', authController.revokeRefreshToken)
@@ -66,6 +81,7 @@ describe('Auth Controller – POST /api/auth/pin', () => {
   beforeEach(() => {
     app = buildApp()
     jest.clearAllMocks()
+    mockPrismaUser.findMany.mockResolvedValue([])
   })
 
   it('returns 200 with accessToken for valid teacher PIN', async () => {
@@ -137,7 +153,12 @@ describe('Auth Controller – POST /api/auth/pin', () => {
       stars: 10,
       streak: 0,
       lastLoginAt: null,
-      class: { id: 'class-1' },
+      grade: 'KG 1',
+      aiStars: 0,
+      ownedItems: [],
+      selectedTheme: 'th_def',
+      classId: 'class-1',
+      class: { id: 'class-1', schoolId: 'school-1' },
       progress: [],
       feedback: null,
     }
@@ -173,6 +194,7 @@ describe('Auth Controller – POST /api/auth/refresh', () => {
   beforeEach(() => {
     app = buildApp()
     jest.clearAllMocks()
+    mockPrismaUser.findUnique.mockResolvedValue(null)
   })
 
   it('returns 200 with new tokens for a valid refresh token', async () => {

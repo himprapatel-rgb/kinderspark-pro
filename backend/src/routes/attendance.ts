@@ -130,4 +130,61 @@ router.get('/summary', async (req: Request, res: Response) => {
   }
 })
 
+// ── Geofenced attendance scaffold (in-memory; opt-in consent) ────────────────
+const GEOFENCE_CONSENT: Record<string, boolean> = {}
+type GeofenceEvt = { userId: string; type: 'enter' | 'exit'; at: number; regionLabel?: string }
+const GEOFENCE_EVENTS: GeofenceEvt[] = []
+const GEOFENCE_MAX = 200
+
+// POST /api/attendance/geofence/consent  body: { enabled: boolean }
+router.post('/geofence/consent', async (req: Request, res: Response) => {
+  try {
+    if (!req.user?.id) return res.status(401).json({ error: 'Authentication required' })
+    const enabled = !!req.body?.enabled
+    GEOFENCE_CONSENT[req.user.id] = enabled
+    return res.json({ ok: true, enabled })
+  } catch (err) {
+    console.error('geofenceConsent error:', err)
+    return res.status(500).json({ error: 'Failed to save consent' })
+  }
+})
+
+// POST /api/attendance/geofence/event  body: { type: 'enter'|'exit', regionLabel? }
+router.post('/geofence/event', async (req: Request, res: Response) => {
+  try {
+    if (!req.user?.id) return res.status(401).json({ error: 'Authentication required' })
+    if (!GEOFENCE_CONSENT[req.user.id]) {
+      return res.status(403).json({ error: 'Geofence consent is off' })
+    }
+    const type = req.body?.type
+    if (type !== 'enter' && type !== 'exit') {
+      return res.status(400).json({ error: 'type must be enter or exit' })
+    }
+    const evt: GeofenceEvt = {
+      userId: req.user.id,
+      type,
+      at: Date.now(),
+      regionLabel: typeof req.body?.regionLabel === 'string' ? req.body.regionLabel : undefined,
+    }
+    GEOFENCE_EVENTS.push(evt)
+    if (GEOFENCE_EVENTS.length > GEOFENCE_MAX) GEOFENCE_EVENTS.splice(0, GEOFENCE_EVENTS.length - GEOFENCE_MAX)
+    return res.json({ ok: true })
+  } catch (err) {
+    console.error('geofenceEvent error:', err)
+    return res.status(500).json({ error: 'Failed to record event' })
+  }
+})
+
+// GET /api/attendance/geofence/events
+router.get('/geofence/events', async (req: Request, res: Response) => {
+  try {
+    if (!req.user?.id) return res.status(401).json({ error: 'Authentication required' })
+    const mine = GEOFENCE_EVENTS.filter((e) => e.userId === req.user!.id)
+    return res.json({ events: mine.slice(-50), consent: !!GEOFENCE_CONSENT[req.user.id] })
+  } catch (err) {
+    console.error('geofenceEvents error:', err)
+    return res.status(500).json({ error: 'Failed to list events' })
+  }
+})
+
 export default router

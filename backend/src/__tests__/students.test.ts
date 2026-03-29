@@ -1,5 +1,5 @@
 import request from 'supertest'
-import express from 'express'
+import express, { Request, Response, NextFunction } from 'express'
 
 // ── Prisma mock ───────────────────────────────────────────────────────────────
 const mockStudent = {
@@ -21,6 +21,16 @@ jest.mock('bcryptjs', () => ({
   compare: jest.fn((a: string, b: string) => Promise.resolve(a === b)),
 }))
 
+jest.mock('../middleware/auth.middleware', () => ({
+  requireAuth: (_req: Request, _res: Response, next: NextFunction) => next(),
+  requireRole: (..._roles: string[]) => (_req: Request, _res: Response, next: NextFunction) => next(),
+}))
+
+jest.mock('../utils/accessControl', () => ({
+  canTeacherAccessClass: jest.fn().mockResolvedValue(true),
+  canParentAccessStudent: jest.fn().mockResolvedValue(true),
+}))
+
 import studentRouter from '../routes/student.routes'
 
 const FAKE_STUDENT = {
@@ -29,9 +39,13 @@ const FAKE_STUDENT = {
   aiSessionLogs: [], badges: [],
 }
 
-function buildApp() {
+function buildApp(role = 'teacher', userId = 'teacher-1') {
   const app = express()
   app.use(express.json())
+  app.use((req: any, _res: Response, next: NextFunction) => {
+    req.user = { id: userId, role, name: 'Test User' }
+    next()
+  })
   app.use('/api/students', studentRouter)
   return app
 }

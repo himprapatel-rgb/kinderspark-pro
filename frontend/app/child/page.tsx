@@ -1,12 +1,13 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore as useStore } from '@/store/appStore'
-import { getHomework, getSyllabuses, getProgress, getRecommendations, getStudentBadges, completeHomework, getDailyMission } from '@/lib/api'
+import { getHomework, getSyllabuses, getProgress, getRecommendations, getStudentBadges, completeHomework, getDailyMission, completeDailyMission } from '@/lib/api'
 import { MODS } from '@/lib/modules'
 import { selectAdaptiveMission } from '@/lib/missionEngine'
-import { ArrowRight, BookOpen, Bot, Flame, Hash, Palette, PencilLine, PlayCircle, Settings, Share2, Shapes, ShoppingBag, Sparkles, Star, Trophy } from 'lucide-react'
+import { ArrowRight, BookOpen, Bot, Flame, Hash, Palette, PencilLine, PlayCircle, Settings, Share2, Shapes, ShoppingBag, Sparkles, Star, Trophy, UserRound } from 'lucide-react'
 import PageTransition from '@/components/PageTransition'
+import MissionCelebration from '@/components/MissionCelebration'
 import { usePullToRefresh, PullIndicator } from '@/hooks/usePullToRefresh'
 import { playTap, playCorrect, playComplete, playBadge, playSwipe, playLevelUp, playNotification, startBackgroundMusic, stopBackgroundMusic } from '@/lib/sounds'
 import { API_BASE } from '@/lib/api'
@@ -42,7 +43,6 @@ export default function ChildPage() {
   const router = useRouter()
   const user = useStore(s => s.user)
   const currentStudent = useStore(s => s.currentStudent)
-  const logout = useStore(s => s.logout)
   const setDailyMission = useStore(s => s.setDailyMission)
   const trackKpiEvent = useStore(s => s.trackKpiEvent)
   const { t } = useTranslation()
@@ -58,9 +58,22 @@ export default function ChildPage() {
   const [dailyDone, setDailyDone] = useState(false)
   const [showAllMods, setShowAllMods] = useState(false)
   const [remoteMission, setRemoteMission] = useState<any>(null)
+  const [missionDoneLocal, setMissionDoneLocal] = useState(false)
+  const [celebrateMission, setCelebrateMission] = useState(false)
   const { mod: dailyMod, todayKey } = getDailyChallenge()
 
   const student = currentStudent || user
+
+  const missionDayKey = useMemo(() => {
+    if (!student?.id) return ''
+    return `ks_daily_mission_done_${student.id}_${new Date().toISOString().slice(0, 10)}`
+  }, [student?.id])
+
+  useEffect(() => {
+    if (missionDayKey && typeof window !== 'undefined') {
+      setMissionDoneLocal(localStorage.getItem(missionDayKey) === '1')
+    }
+  }, [missionDayKey])
   const { pullRef, refreshing, pullProgress, pullDistance } = usePullToRefresh(() => loadData())
 
   // Start background music on mount (may be blocked on iOS until a gesture), stop on unmount
@@ -150,6 +163,33 @@ export default function ChildPage() {
     : adaptiveMission
     ? adaptiveMission.meta
     : `Daily Challenge · ${dailyMod.items.length} cards`
+
+  const missionCardTitle =
+    remoteMission?.title ||
+    (adaptiveMission?.title?.replace(/^Start with: /, '') ?? '') ||
+    dailyMod.title
+
+  const onDailyMissionCelebrate = async () => {
+    if (!student?.classId || missionDoneLocal || !missionDayKey) return
+    hapticSuccess()
+    playComplete()
+    setCelebrateMission(true)
+    localStorage.setItem(missionDayKey, '1')
+    setMissionDoneLocal(true)
+    trackKpiEvent({ category: 'learning', name: 'child_daily_mission_complete' })
+    await completeDailyMission({ studentId: student.id, classId: student.classId }).catch(() => {})
+    fetch(`${API_BASE}/diag`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        location: 'app/child/page.tsx',
+        message: 'daily_mission_complete',
+        data: { studentId: student.id },
+        timestamp: Date.now(),
+        hypothesisId: 'DAILY_MISSION',
+      }),
+    }).catch(() => {})
+  }
 
   const handleMarkDone = async (hwId: string) => {
     if (!student || markingDone) return
@@ -286,11 +326,22 @@ export default function ChildPage() {
                 <Share2 size={16} />
               </button>
               <button
+                type="button"
+                onClick={() => router.push('/child/profile')}
+                className="flex items-center justify-center rounded-xl w-10 h-10 text-sm font-bold active:scale-95 transition-all app-pressable app-btn-glass"
+                title="Profile"
+                aria-label="Profile"
+              >
+                <UserRound size={16} aria-hidden />
+              </button>
+              <button
+                type="button"
                 onClick={() => router.push('/child/settings')}
                 className="flex items-center justify-center rounded-xl w-10 h-10 text-sm font-bold active:scale-95 transition-all app-pressable app-btn-glass"
                 title="Settings"
+                aria-label="Settings"
               >
-                <Settings size={16} />
+                <Settings size={16} aria-hidden />
               </button>
             </div>
           </div>
@@ -383,6 +434,67 @@ export default function ChildPage() {
 
       {/* ── CONTENT ── */}
       <div className="px-4 pt-5 space-y-6">
+        <MissionCelebration active={celebrateMission} onDone={() => setCelebrateMission(false)} />
+
+        {/* Daily 5-Minute Mission — per-student adaptive pick */}
+        <section aria-labelledby="daily-mission-heading">
+          <div
+            className="rounded-3xl p-4 relative overflow-hidden"
+            style={{
+              background: 'linear-gradient(135deg, rgba(94,92,230,0.2), rgba(191,90,242,0.14))',
+              border: '1.5px solid rgba(94,92,230,0.35)',
+              boxShadow: 'var(--app-shadow-md)',
+            }}
+          >
+            <div className="absolute inset-0 shimmer opacity-25 pointer-events-none" aria-hidden />
+            <div className="relative flex gap-3 items-start">
+              <div
+                className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
+                style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)' }}
+                aria-hidden
+              >
+                ⏱️
+              </div>
+              <div className="flex-1 min-w-0">
+                <p id="daily-mission-heading" className="font-black text-base leading-tight">
+                  {t('child_daily_mission_title')}
+                </p>
+                <p className="text-[11px] font-bold app-muted mt-1">{t('child_daily_mission_sub')}</p>
+                <p className="text-sm font-black mt-2 truncate">{missionCardTitle}</p>
+                <p className="text-[10px] font-black app-muted mt-0.5">
+                  ~{remoteMission?.etaMin ?? 5} min · {nextTaskMeta}
+                </p>
+              </div>
+            </div>
+            <div className="relative mt-3 flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  trackKpiEvent({ category: 'engagement', name: 'child_daily_mission_start' })
+                  router.push(startTodayHref)
+                }}
+                className="w-full min-h-11 rounded-xl py-3 font-black text-sm app-pressable active:scale-[0.98] transition-transform"
+                style={{ background: 'linear-gradient(135deg, var(--app-accent), var(--role-admin))', color: '#fff' }}
+              >
+                {t('child_daily_mission_start')}
+              </button>
+              <button
+                type="button"
+                disabled={missionDoneLocal}
+                onClick={onDailyMissionCelebrate}
+                className="w-full min-h-11 rounded-xl py-3 font-black text-sm app-pressable active:scale-[0.98] transition-transform disabled:opacity-55"
+                style={{
+                  background: missionDoneLocal ? 'rgba(76,175,106,0.2)' : 'rgba(255,255,255,0.1)',
+                  border: `1px solid ${missionDoneLocal ? 'rgba(76,175,106,0.4)' : 'rgba(255,255,255,0.15)'}`,
+                  color: missionDoneLocal ? '#4CAF6A' : 'inherit',
+                }}
+              >
+                {missionDoneLocal ? t('child_daily_mission_done') : t('child_daily_mission_celebrate')}
+              </button>
+            </div>
+          </div>
+        </section>
+
         {/* Imported "learning path" pattern: clear 3-step journey */}
         <div className="rounded-2xl p-3.5" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
           <div className="flex items-center justify-between mb-2">

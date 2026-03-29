@@ -121,14 +121,13 @@ describe('authRateLimit middleware', () => {
     expect(typeof mod.authRateLimit).toBe('function')
   })
 
-  it('blocks after 5 requests from the same IP within 15 minutes', () => {
-    // We import synchronously after the module is loaded
+  it('blocks after 10 requests from the same IP within 15 minutes (auth PIN limit)', () => {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { authRateLimit } = require('../middleware/rateLimit.middleware')
     const ip = '10.1.2.3'
     const nextFn = jest.fn()
 
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 10; i++) {
       authRateLimit(makeReq(ip) as Request, makeRes() as Response, nextFn as NextFunction)
     }
 

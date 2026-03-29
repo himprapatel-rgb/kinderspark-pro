@@ -1,8 +1,12 @@
 'use client'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
 import { logoutApi } from '@/lib/api'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
+import { useTranslation } from '@/hooks/useTranslation'
+import DiagnosticsPanel from '@/components/DiagnosticsPanel'
+import PrivacyGeofenceCard from '@/components/Settings/Privacy'
 import { Bell, Eye, Globe, Monitor, Settings, Timer, User, LogOut } from 'lucide-react'
 
 const LANGS = [
@@ -17,12 +21,15 @@ const SESSION_LIMITS = [10, 15, 20, 30, 45, 60]
 
 export default function SettingsPage() {
   const router = useRouter()
+  const { t } = useTranslation()
   const settings = useAppStore(s => s.settings)
   const updateSettings = useAppStore(s => s.updateSettings)
   const user = useAppStore(s => s.user)
   const currentStudent = useAppStore(s => s.currentStudent)
   const logout = useAppStore(s => s.logout)
   const student = currentStudent || user
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [loggingOut, setLoggingOut] = useState(false)
 
   const acc = settings.large ? 'text-lg' : 'text-sm'
   const { permission, subscribe } = usePushNotifications(student?.id)
@@ -172,6 +179,10 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        <DiagnosticsPanel />
+
+        <PrivacyGeofenceCard />
+
         {/* Notifications */}
         <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
           <div className="font-black text-base mb-3 flex items-center gap-2"><Bell size={16} /> Notifications</div>
@@ -215,18 +226,68 @@ export default function SettingsPage() {
             <span className="text-sm font-bold app-muted">›</span>
           </button>
           <button
-            onClick={async () => { await logoutApi().catch(() => {}); logout(); window.location.href = '/login' }}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-black text-sm transition-all app-pressable"
+            type="button"
+            onClick={() => setShowLogoutConfirm(true)}
+            disabled={loggingOut}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-black text-sm transition-all app-pressable min-h-11 disabled:opacity-60"
             style={{
               background: 'rgba(255,69,58,0.08)',
               border: '1px solid rgba(255,69,58,0.2)',
               color: '#E05252',
             }}
           >
-            <LogOut size={15} />
+            {loggingOut ? (
+              <span className="w-4 h-4 border-2 border-red-200 border-t-red-500 rounded-full animate-spin" />
+            ) : (
+              <LogOut size={17} aria-hidden />
+            )}
             Sign Out
           </button>
         </div>
+
+        {showLogoutConfirm && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center px-4"
+            style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="child-logout-title"
+          >
+            <div className="w-full max-w-sm rounded-3xl p-6" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+              <h3 id="child-logout-title" className="text-lg font-black text-center">
+                {t('sign_out_confirm_title')}
+              </h3>
+              <p className="text-xs font-bold app-muted mt-2 text-center">{t('sign_out_confirm_body')}</p>
+              <div className="flex gap-3 mt-5">
+                <button
+                  type="button"
+                  onClick={() => setShowLogoutConfirm(false)}
+                  className="flex-1 py-3 rounded-xl text-sm font-black app-pressable min-h-11"
+                  style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}
+                >
+                  {t('cancel')}
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setLoggingOut(true)
+                    try {
+                      await logoutApi().catch(() => {})
+                    } finally {
+                      logout()
+                      window.location.href = '/login'
+                    }
+                  }}
+                  className="flex-1 py-3 rounded-xl text-sm font-black text-white app-pressable min-h-11 flex items-center justify-center gap-2"
+                  style={{ background: '#E05252' }}
+                >
+                  <LogOut size={16} aria-hidden />
+                  {t('logout')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* About */}
         <div className="rounded-2xl p-4 text-center" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>

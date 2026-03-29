@@ -13,7 +13,6 @@ export default function AdminPage() {
   const router = useRouter()
   const user = useStore(s => s.user)
   const role = useStore(s => s.role)
-  const logout = useStore(s => s.logout)
   const kpiEvents = useStore(s => s.kpiEvents)
 
   const [stats, setStats] = useState<any>(null)
@@ -84,7 +83,7 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen flex" style={{ background: 'var(--app-bg)' }}>
-      <DashboardSidebar role="admin" items={SIDEBAR_ITEMS} userName={user?.name} onItemClick={(idx) => setTab(idx)} activeIndex={tab} />
+      <DashboardSidebar role="admin" items={SIDEBAR_ITEMS} userName={user?.name} profileHref="/admin/profile" onItemClick={(idx) => setTab(idx)} activeIndex={tab} />
       <div className="flex-1 min-h-screen pb-20 app-container">
       {/* Header */}
       <div className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, var(--app-accent), #4A6ED0)' }}>
@@ -98,7 +97,7 @@ export default function AdminPage() {
             </div>
             <div className="flex flex-col items-end gap-2">
               <WeatherChip variant="light" />
-              <TopBarActions variant="light" />
+              <TopBarActions variant="light" profileHref="/admin/profile" />
             </div>
           </div>
 

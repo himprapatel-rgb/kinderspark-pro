@@ -324,3 +324,8 @@ export async function initNative(): Promise<void> {
   
   console.log('[Native] Ready ✨')
 }
+
+/** Hook native region monitoring here when geofence plugins ship; client posts enter/exit via API today. */
+export function geofenceScaffoldNote(_phase: 'enter' | 'exit', _regionId?: string): void {
+  /* no-op on web; native builds can forward to postGeofenceEvent */
+}

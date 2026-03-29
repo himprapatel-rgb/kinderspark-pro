@@ -51,7 +51,6 @@ export default function TeacherDashboard() {
   const router = useRouter()
   const user = useAppStore((s) => s.user)
   const role = useAppStore((s) => s.role)
-  const logout = useAppStore((s) => s.logout)
   const trackKpiEvent = useAppStore((s) => s.trackKpiEvent)
   const kpiEvents = useAppStore((s) => s.kpiEvents)
   const toastNotify = useToast()
@@ -678,7 +677,7 @@ export default function TeacherDashboard() {
 
   return (
     <div className="min-h-screen flex" style={{ background: 'var(--app-bg)' }}>
-      <DashboardSidebar role="teacher" items={SIDEBAR_ITEMS} userName={user?.name} onItemClick={(idx) => setTab(TAB_ORDER[idx])} activeIndex={TAB_ORDER.indexOf(tab)} />
+      <DashboardSidebar role="teacher" items={SIDEBAR_ITEMS} userName={user?.name} profileHref="/teacher/profile" onItemClick={(idx) => setTab(TAB_ORDER[idx])} activeIndex={TAB_ORDER.indexOf(tab)} />
       <div className="flex-1 min-h-screen flex flex-col app-container">
       {/* Toast */}
       {toast && (
@@ -698,6 +697,7 @@ export default function TeacherDashboard() {
             <WeatherChip variant="light" />
             <TopBarActions
               variant="light"
+              profileHref="/teacher/profile"
               extra={
                 <button
                   onClick={() => router.push('/teacher/reports')}
@@ -737,16 +737,17 @@ export default function TeacherDashboard() {
 
       {/* Tab bar */}
       <div className="flex border-b backdrop-blur sticky top-0 z-30" style={{ borderColor: 'var(--app-border)', background: 'rgba(255,255,255,0.92)' }}>
-        {TABS.map(t => (
+        {TABS.map(tabItem => (
           <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`flex-1 py-3 text-xs font-black transition-colors flex items-center justify-center gap-1.5 relative app-pressable ${tab === t.id ? 'border-b-2' : ''}`}
-            style={{ color: tab === t.id ? 'var(--app-accent)' : 'rgba(70, 75, 96, 0.6)', borderColor: tab === t.id ? 'var(--app-accent)' : 'transparent' }}
+            type="button"
+            key={tabItem.id}
+            onClick={() => setTab(tabItem.id)}
+            className={`flex-1 min-h-11 py-3 text-xs font-black transition-colors flex items-center justify-center gap-1.5 relative app-pressable ${tab === tabItem.id ? 'border-b-2' : ''}`}
+            style={{ color: tab === tabItem.id ? 'var(--app-accent)' : 'rgba(70, 75, 96, 0.6)', borderColor: tab === tabItem.id ? 'var(--app-accent)' : 'transparent' }}
           >
-            <span>{t.icon}</span>
-            <span className="hidden sm:inline">{t.label}</span>
-            {t.id === 'messages' && unreadCount > 0 && (
+            <span>{tabItem.icon}</span>
+            <span className="hidden sm:inline">{tabItem.label}</span>
+            {tabItem.id === 'messages' && unreadCount > 0 && (
               <span className="absolute top-1.5 right-1/4 bg-red-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center app-pressable">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
@@ -1040,6 +1041,11 @@ export default function TeacherDashboard() {
 
         {/* ── STUDENTS TAB ─────────────────────────────────────────────────── */}
         {tab === 'students' && (
+          !selectedClass ? (
+            <div className="p-4">
+              <InlineEmpty emoji="👥" text="Select or create a class to manage students." />
+            </div>
+          ) : (
           <div className="space-y-4">
             {/* Add student form */}
             <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}>
@@ -1173,10 +1179,16 @@ export default function TeacherDashboard() {
               {students.length === 0 && <InlineEmpty emoji="👥" text="No students in this class" />}
             </div>
           </div>
+          )
         )}
 
         {/* ── HOMEWORK TAB ─────────────────────────────────────────────────── */}
         {tab === 'homework' && (
+          !selectedClass ? (
+            <div className="p-4">
+              <InlineEmpty emoji="📚" text="Select or create a class to manage homework." />
+            </div>
+          ) : (
           <div className="space-y-4">
             {(process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_SHOW_DEV_TOOLS === 'true') && (() => {
               const since = Date.now() - 7 * 24 * 60 * 60 * 1000
@@ -1486,10 +1498,16 @@ export default function TeacherDashboard() {
               </div>
             </button>
           </div>
+          )
         )}
 
         {/* ── SYLLABUS TAB ─────────────────────────────────────────────────── */}
         {tab === 'syllabus' && (
+          !selectedClass ? (
+            <div className="p-4">
+              <InlineEmpty emoji="📖" text="Select or create a class to manage syllabuses." />
+            </div>
+          ) : (
           <div className="space-y-4">
             {/* ✨ AI Lesson Auto-Builder */}
             <div className="rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg,rgba(191,90,242,0.15),rgba(94,92,230,0.15))', border: '1px solid rgba(191,90,242,0.3)' }}>
@@ -1558,9 +1576,10 @@ export default function TeacherDashboard() {
                   {!syl.published && (
                     <button
                       onClick={async () => {
+                        if (!selectedClass) return
                         try {
-                          await assignSyllabus(syl.id, 'class', selectedClass?.id)
-                          await loadClassData(selectedClass?.id)
+                          await assignSyllabus(syl.id, 'class', selectedClass.id)
+                          await loadClassData(selectedClass.id)
                           showToast('Syllabus published!')
                         } catch (e: any) { showToast(e.message) }
                       }}
@@ -1575,10 +1594,16 @@ export default function TeacherDashboard() {
               {syllabuses.length === 0 && <InlineEmpty emoji="📖" text="No syllabuses yet" />}
             </div>
           </div>
+          )
         )}
 
         {/* ── MESSAGES TAB ─────────────────────────────────────────────────── */}
         {tab === 'messages' && (
+          !selectedClass ? (
+            <div className="p-4">
+              <InlineEmpty emoji="💬" text="Select or create a class to view and send messages." />
+            </div>
+          ) : (
           <div className="space-y-4">
             {/* Send message form */}
             <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}>
@@ -1626,6 +1651,7 @@ export default function TeacherDashboard() {
               {messages.length === 0 && <InlineEmpty emoji="💬" text="No messages yet" />}
             </div>
           </div>
+          )
         )}
 
         {/* ── ATTENDANCE TAB ─────────────────────────────────────── */}
