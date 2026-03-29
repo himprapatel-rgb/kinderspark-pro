@@ -1,0 +1,56 @@
+---
+alwaysApply: true
+---
+# KinderSpark UI Consistency Guide
+
+This rule standardizes look-and-feel across roles (child, parent, teacher, admin/principal). It applies to React/Next files, and references shared components for quick navigation.
+
+## Global Tokens
+- Spacing: xs 4, sm 8, md 12, lg 16, xl 24
+- Radius: sm 10, md 16, lg 20, xl 24
+- Shadows: sm var(--app-shadow-sm), md var(--app-shadow-md)
+- Typography: Title lg 20/24 bold; Subtitle 14/20 semibold; Body 12/18 semibold; Caption 10/14 bold
+- Surfaces: card var(--app-surface); soft var(--app-surface-soft); border var(--app-border)
+
+## Buttons (all roles)
+- Sizes: sm 28px, md 36px, lg 44px heights
+- Label case: Title Case
+- Icon gap: 6–8px, icon size 14–18
+- Press feedback: app-pressable + active:scale-95
+- Primary: gradient or role-accent; Secondary: surface soft; Destructive: red scale
+
+## Cards
+- Padding: md (12–16px) internal; Grid gaps consistent
+- Border: 1–1.5px var(--app-border); Surface: var(--app-surface) or soft for emphasis
+- Rounded: md (16) for standard, lg (20) for hero
+
+## Navigation and Sign Out
+- Top bar: no Sign Out button.
+- Sign Out lives only in Profile/Settings for every role with same icon and label.
+  - Icon: ↯ (or Lucide LogOut) sized 16–18
+  - Label: "Sign Out"
+  - Confirmation modal; clears tokens; server revoke via logoutApi
+  - Same placement block beneath account info
+- Affected files to align:
+  - [frontend/components/TopBarActions.tsx](mdc:frontend/components/TopBarActions.tsx)
+  - [frontend/components/ParentSidebar.tsx](mdc:frontend/components/ParentSidebar.tsx)
+  - [frontend/components/DashboardSidebar.tsx](mdc:frontend/components/DashboardSidebar.tsx)
+  - [frontend/components/ProfileManager.tsx](mdc:frontend/components/ProfileManager.tsx)
+
+## Profile Header Layout (all roles)
+- Avatar left, name + role stacked, action chip row below
+- Copy Profile ID component identical across roles
+- Location/Weather: show Parent/Teacher only; hide on Child/Admin. If permission denied, show compact "Enable location" chip instead of placeholder.
+
+## Empty/Loading
+- Use shared `<Loading />` and `<InlineEmpty />` with same emoji+copy and spacing
+- Avoid one-off spinners
+
+## Responsive
+- Mobile-first; tablet grid gap 12–16; card max widths consistent
+
+## Locale and Accessibility
+- All interactive text through i18n; large tap targets; haptic on critical confirms
+
+## Deployment Freshness
+- Service worker should prompt "New version available — Refresh" to avoid stale UI after deploys

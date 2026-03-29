@@ -582,7 +582,7 @@ export default function TeacherDashboard() {
   if (loading) return <Loading emoji="👩‍🏫" text="Loading your classes…" />
 
   if (showOnboarding && classes.length === 0) {
-    return (
+  return (
       <TeacherOnboarding
         teacherName={user?.name || 'Teacher'}
         onCreateClass={async (name) => {

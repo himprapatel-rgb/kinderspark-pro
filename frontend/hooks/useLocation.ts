@@ -6,6 +6,7 @@ import { API_BASE } from '@/lib/api'
 type LocationState = {
   permission: 'prompt' | 'granted' | 'denied'
   coords: { lat: number; lon: number } | null
+  placeName?: string
   error?: string
   loading: boolean
 }
@@ -64,7 +65,9 @@ export function useLocation() {
           maximumAge: 60000,
         })
         const coords = { lat: pos.coords.latitude, lon: pos.coords.longitude }
-        setState(s => ({ ...s, coords, loading: false }))
+        // Reverse geocode (Nominatim) for a friendly label
+        const placeName = await reverseGeocode(coords).catch(() => undefined)
+        setState(s => ({ ...s, coords, placeName, loading: false }))
         postDiag('LocationOK', { via: 'capacitor', ...coords })
         return coords
       } catch (capErr: any) {
@@ -80,7 +83,8 @@ export function useLocation() {
             { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
           )
         })
-        setState(s => ({ ...s, coords, loading: false }))
+        const placeName = await reverseGeocode(coords).catch(() => undefined)
+        setState(s => ({ ...s, coords, placeName, loading: false }))
         postDiag('LocationOK', { via: 'browser', ...coords })
         return coords
       }
@@ -104,3 +108,17 @@ export function useLocation() {
   return { ...state, requestPermission, getCurrent }
 }
 
+async function reverseGeocode(coords: { lat: number; lon: number }): Promise<string | undefined> {
+  const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${encodeURIComponent(coords.lat)}&lon=${encodeURIComponent(coords.lon)}&zoom=10&addressdetails=1`
+  const res = await fetch(url, {
+    headers: { 'Accept': 'application/json', 'User-Agent': 'KinderSpark-Pro/1.0 (education app)' },
+  })
+  if (!res.ok) return undefined
+  const data = await res.json().catch(() => null)
+  const addr = data?.address || {}
+  const city = addr.city || addr.town || addr.village || addr.suburb
+  const state = addr.state
+  const country = addr.country_code ? String(addr.country_code).toUpperCase() : addr.country
+  const parts = [city, state, country].filter(Boolean)
+  return parts.length ? parts.join(', ') : data?.display_name
+}
