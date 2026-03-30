@@ -32,6 +32,8 @@ function resetStore() {
         dys: false,
         lang: 'en',
         stLimit: 10,
+        voiceOn: true,
+        voiceProfile: 'auto',
       },
     })
   })

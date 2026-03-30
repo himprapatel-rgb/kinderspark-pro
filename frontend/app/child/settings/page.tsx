@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
 import { logoutApi } from '@/lib/api'
@@ -7,7 +7,9 @@ import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { useTranslation } from '@/hooks/useTranslation'
 import DiagnosticsPanel from '@/components/DiagnosticsPanel'
 import PrivacyGeofenceCard from '@/components/Settings/Privacy'
-import { Bell, Eye, Globe, Monitor, Settings, Timer, User, LogOut } from 'lucide-react'
+import { Bell, Eye, Globe, Monitor, Settings, Timer, User, LogOut, Volume2 } from 'lucide-react'
+import { getVoiceProfile, setVoiceEnabled, setVoiceProfile, speak } from '@/lib/speech'
+import KidAvatar from '@/components/KidAvatar'
 
 const LANGS = [
   { code: 'en', label: 'English', flag: '🇬🇧' },
@@ -30,9 +32,32 @@ export default function SettingsPage() {
   const student = currentStudent || user
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
+  const [previewingVoice, setPreviewingVoice] = useState(false)
 
   const acc = settings.large ? 'text-lg' : 'text-sm'
   const { permission, subscribe } = usePushNotifications(student?.id)
+
+  const voiceOn = settings.voiceOn !== false
+  const voiceProfile = settings.voiceProfile || 'auto'
+
+  useEffect(() => {
+    // Keep speech engine in sync with persisted app settings.
+    setVoiceEnabled(voiceOn)
+    setVoiceProfile((voiceProfile || getVoiceProfile()) as 'auto' | 'girl' | 'boy')
+  }, [voiceOn, voiceProfile])
+
+  const previewVoice = () => {
+    setPreviewingVoice(true)
+    const profile = voiceProfile
+    const text =
+      profile === 'girl'
+        ? 'Hi! I am your learning voice. Let us learn together!'
+        : profile === 'boy'
+          ? 'Hey! I am your learning voice. Let us have fun learning!'
+          : 'Hi there! I am your helper voice. Ready for learning time?'
+    speak(text, { onEnd: () => setPreviewingVoice(false) })
+    setTimeout(() => setPreviewingVoice(false), 4000)
+  }
 
   return (
     <div className="min-h-screen pb-10 app-container" style={{ background: 'var(--app-bg)' }}>
@@ -149,6 +174,57 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        {/* Voice */}
+        <div className="rounded-2xl p-4 space-y-3" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+          <div className="font-black text-base flex items-center gap-2"><Volume2 size={16} /> Voice</div>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className={`font-bold ${acc}`}>Voice Guide</div>
+              <div className="text-xs font-bold app-muted">Use a natural voice while reading questions and stories.</div>
+            </div>
+            <button
+              onClick={() => updateSettings({ voiceOn: !voiceOn })}
+              className="app-toggle app-pressable"
+              role="switch"
+              aria-checked={voiceOn}
+              aria-label="Voice Guide"
+              data-on={voiceOn}
+            >
+              <div className="app-toggle-knob" data-on={voiceOn} />
+            </button>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { id: 'auto', label: 'Auto' },
+              { id: 'girl', label: 'Girl' },
+              { id: 'boy', label: 'Boy' },
+            ].map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => updateSettings({ voiceProfile: opt.id as 'auto' | 'girl' | 'boy' })}
+                className="py-2.5 rounded-xl font-black text-xs app-pressable min-h-11"
+                style={{
+                  background: voiceProfile === opt.id ? 'var(--app-accent)' : 'var(--app-surface-soft)',
+                  color: voiceProfile === opt.id ? '#fff' : 'rgb(var(--foreground-rgb))',
+                  border: voiceProfile === opt.id ? '2px solid color-mix(in srgb, var(--app-accent) 78%, white 22%)' : '1px solid var(--app-border)',
+                }}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={previewVoice}
+            disabled={!voiceOn || previewingVoice}
+            className="w-full min-h-11 py-2.5 rounded-xl font-black text-sm app-pressable disabled:opacity-55"
+            style={{ background: 'rgba(94,92,230,0.18)', border: '1px solid rgba(94,92,230,0.35)', color: '#5B7FE8' }}
+          >
+            {previewingVoice ? 'Playing sample...' : 'Play Voice Sample'}
+          </button>
+        </div>
+
         {/* Preview */}
         <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
           <div className="font-black text-base mb-3 flex items-center gap-2"><Eye size={16} /> Preview</div>
@@ -218,10 +294,29 @@ export default function SettingsPage() {
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all app-pressable"
             style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}
           >
-            <span className="text-xl">{student?.avatar || '🧒'}</span>
+            <span className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.12)' }}>
+              <KidAvatar
+                studentId={student?.id}
+                ownedItems={(student as any)?.ownedItems}
+                fallback={student?.avatar || '🧒'}
+                size={28}
+              />
+            </span>
             <div className="flex-1">
               <div className="text-sm font-black">{student?.name || 'My Profile'}</div>
               <div className="text-xs font-bold app-muted">View & edit profile · Profile ID</div>
+            </div>
+            <span className="text-sm font-bold app-muted">›</span>
+          </button>
+          <button
+            onClick={() => router.push('/child/avatar-builder')}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all app-pressable"
+            style={{ background: 'rgba(91,127,232,0.12)', border: '1px solid rgba(91,127,232,0.35)' }}
+          >
+            <span className="text-xl">🎨</span>
+            <div className="flex-1">
+              <div className="text-sm font-black">Create My Avatar</div>
+              <div className="text-xs font-bold app-muted">Build a custom look like a mini character.</div>
             </div>
             <span className="text-sm font-bold app-muted">›</span>
           </button>

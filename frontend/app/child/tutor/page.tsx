@@ -2,13 +2,14 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore as useStore } from '@/store/appStore'
-import { saveAISession, getTutorFeedback, updateStudent } from '@/lib/api'
+import { saveAISession, getTutorFeedback, updateStudent, runAiSparkTask } from '@/lib/api'
 import { TUTOR_TOPICS, QB } from '@/lib/modules'
 import {
   speak, speakQuestion, speakEncouragement, speakAnswer,
   speakGreeting, speakTopicIntro, speakResults,
   setVoiceEnabled, isVoiceEnabled, stopSpeaking,
 } from '@/lib/speech'
+import { getTodayMood, gentleMode } from '@/lib/emotion'
 import { Bot, Home, RotateCcw, Volume2, VolumeX, X, Mic } from 'lucide-react'
 import ConfettiCanvas from '@/components/Confetti'
 import { playCorrect, playWrong, playComplete, playBadge } from '@/lib/sounds'
@@ -28,10 +29,10 @@ const CORRECT_PHRASES = [
 ]
 
 const WRONG_PHRASES = [
-  'Not quite, but good try!',
-  'Almost! The right answer is',
-  'Keep trying, you will get it!',
-  'Nice try! The answer was',
+  'Nice try, sweet learner. The right answer is',
+  'Almost there, you are doing great. The answer is',
+  'That was brave to try. Let us learn it together: ',
+  'Good effort. The answer was',
 ]
 
 export default function TutorPage() {
@@ -40,6 +41,8 @@ export default function TutorPage() {
   const currentStudent = useStore(s => s.currentStudent)
 
   const student = currentStudent || user
+  const mood = getTodayMood(student?.id)
+  const isGentle = gentleMode(mood)
 
   const [phase, setPhase] = useState<Phase>('topics')
   const [topic, setTopic] = useState('')
@@ -57,6 +60,9 @@ export default function TutorPage() {
   const [newBadges, setNewBadges] = useState<any[]>([])
   const [voiceOn, setVoiceOn] = useState(true)
   const [speaking, setSpeaking] = useState(false)
+  const [hintSpark, setHintSpark] = useState('')
+  const [hintText, setHintText] = useState('')
+  const [hintBusy, setHintBusy] = useState(false)
 
   // Speak greeting on mount
   useEffect(() => {
@@ -89,6 +95,8 @@ export default function TutorPage() {
     setAnswered(false)
     setAiFeedback('')
     setNewBadges([])
+    setHintSpark('')
+    setHintText('')
     setPhase('quiz')
 
     // Voice: introduce the topic
@@ -100,15 +108,43 @@ export default function TutorPage() {
 
   const currentQ = questions[qIdx]
 
+  useEffect(() => {
+    setHintSpark('')
+    setHintText('')
+  }, [qIdx])
+
+  const fetchTutorHint = async () => {
+    if (!hintSpark.trim() || hintBusy) return
+    setHintBusy(true)
+    try {
+      const topicLabel = TUTOR_TOPICS.find(t => t.id === topic)?.label || topic
+      const res = await runAiSparkTask({
+        taskId: 'tutor-hint-spark',
+        spark: hintSpark.trim(),
+        topic: topicLabel,
+      })
+      const h = typeof res?.hint === 'string' ? res.hint : ''
+      setHintText(h)
+      if (h && voiceOn) {
+        speak(h, { rate: isGentle ? 0.68 : 0.82, pitch: isGentle ? 1.0 : 1.08 })
+      }
+    } catch {
+      setHintText('No hint right now — try again soon!')
+    } finally {
+      setHintBusy(false)
+    }
+  }
+
   // Auto-read question when it changes
   useEffect(() => {
     if (phase === 'quiz' && currentQ && !answered) {
       const timer = setTimeout(() => {
-        speakQuestion(currentQ.q)
+        if (isGentle) speak(currentQ.q, { rate: 0.68, pitch: 1.0 })
+        else speakQuestion(currentQ.q)
       }, 400)
       return () => clearTimeout(timer)
     }
-  }, [qIdx, phase, currentQ, answered])
+  }, [qIdx, phase, currentQ, answered, isGentle])
 
   const handleAnswer = (choice: string) => {
     if (answered) return
@@ -137,7 +173,8 @@ export default function TutorPage() {
 
       // Voice: say the correct answer
       const phrase = WRONG_PHRASES[Math.floor(Math.random() * WRONG_PHRASES.length)]
-      speakAnswer(`${phrase} ${currentQ.a}.`)
+      if (isGentle) speak(`${phrase} ${currentQ.a}.`, { rate: 0.62, pitch: 0.98 })
+      else speakAnswer(`${phrase} ${currentQ.a}.`)
     }
   }
 
@@ -200,7 +237,10 @@ export default function TutorPage() {
 
   // Repeat current question
   const repeatQuestion = () => {
-    if (currentQ) speakQuestion(currentQ.q)
+    if (currentQ) {
+      if (isGentle) speak(currentQ.q, { rate: 0.68, pitch: 1.0 })
+      else speakQuestion(currentQ.q)
+    }
   }
 
   const accuracy = TOTAL_Q > 0 ? Math.round((correct / TOTAL_Q) * 100) : 0
@@ -442,6 +482,40 @@ export default function TutorPage() {
           )}
         </div>
       </div>
+
+      {!answered && (
+        <div className="px-4 mb-4 rounded-2xl p-3" style={{ background: 'rgba(94,92,230,0.06)', border: '1px solid rgba(94,92,230,0.18)' }}>
+          <div className="text-[11px] font-black app-muted mb-2">Need a tiny nudge? Add one short line (your words only):</div>
+          <div className="flex gap-2 flex-wrap sm:flex-nowrap">
+            <input
+              value={hintSpark}
+              onChange={(e) => setHintSpark(e.target.value)}
+              maxLength={80}
+              placeholder='e.g. "The big number confuses me"'
+              className="flex-1 min-w-0 app-field text-xs font-bold"
+            />
+            <button
+              type="button"
+              onClick={fetchTutorHint}
+              disabled={hintBusy || !hintSpark.trim()}
+              className="min-h-11 px-4 rounded-xl text-xs font-black app-pressable shrink-0"
+              style={{
+                background: 'rgba(94,92,230,0.2)',
+                color: '#5E5CE6',
+                border: '1px solid rgba(94,92,230,0.35)',
+                opacity: hintBusy || !hintSpark.trim() ? 0.5 : 1,
+              }}
+            >
+              {hintBusy ? '…' : 'Hint ✨'}
+            </button>
+          </div>
+          {hintText ? (
+            <div className="mt-2 text-xs font-bold leading-relaxed" style={{ color: 'rgb(32,36,52)' }}>
+              💡 {hintText}
+            </div>
+          ) : null}
+        </div>
+      )}
 
       {/* Answer grid */}
       <div className="px-4 flex-1">

@@ -10,6 +10,8 @@ interface Settings {
   dys: boolean
   lang: string
   stLimit: number
+  voiceOn: boolean
+  voiceProfile: 'auto' | 'girl' | 'boy'
 }
 
 export interface DailyMission {
@@ -89,6 +91,8 @@ export const useAppStore = create<AppStore>()(
         dys: false,
         lang: 'en',
         stLimit: 10,
+        voiceOn: true,
+        voiceProfile: 'auto',
       },
 
       setAuth: (user, role, token) =>

@@ -403,3 +403,141 @@ export async function canUserAccessThread(authUserId: string, role: RoleName, th
   }
   return true
 }
+
+export async function canUserDirectMessageTarget(
+  authUserId: string,
+  role: RoleName,
+  targetUserId: string
+): Promise<boolean> {
+  const identity = await resolveIdentityContext(authUserId, role)
+  if (!identity) return false
+  if (!targetUserId || identity.canonicalUserId === targetUserId) return false
+
+  const target = await prisma.user.findUnique({
+    where: { id: targetUserId },
+    include: {
+      roleAssignments: true,
+      teacherProfile: { select: { id: true, schoolId: true } },
+      parentProfile: { select: { id: true, schoolId: true } },
+      studentProfile: {
+        select: {
+          id: true,
+          schoolId: true,
+          parentLinks: { select: { parentProfileId: true } },
+          enrollments: {
+            where: { status: 'active' },
+            select: {
+              classGroupId: true,
+              classGroup: {
+                select: {
+                  teacherAssignments: { select: { teacherProfileId: true } },
+                },
+              },
+            },
+          },
+        },
+      },
+      principalProfile: { select: { schoolId: true } },
+      adminProfile: { select: { schoolId: true } },
+    },
+  })
+  if (!target) return false
+
+  const targetSchoolId =
+    target.studentProfile?.schoolId ||
+    target.teacherProfile?.schoolId ||
+    target.parentProfile?.schoolId ||
+    target.principalProfile?.schoolId ||
+    target.adminProfile?.schoolId ||
+    target.schoolId ||
+    null
+
+  if ((role === 'admin' || role === 'principal') && identity.schoolId) {
+    return !!targetSchoolId && targetSchoolId === identity.schoolId
+  }
+
+  if (role === 'teacher') {
+    if (target.studentProfile) {
+      return canTeacherAccessStudent(authUserId, target.studentProfile.id)
+    }
+    if (target.parentProfile) {
+      return canUserAccessParentProfile(authUserId, role, target.parentProfile.id)
+    }
+    return false
+  }
+
+  if (role === 'parent') {
+    if (target.studentProfile) {
+      const linked = await prisma.parentChildLink.findFirst({
+        where: {
+          parentProfileId: identity.parentProfileId,
+          studentProfileId: target.studentProfile.id,
+        },
+        select: { id: true },
+      })
+      if (linked) return true
+    }
+    if (target.teacherProfile) {
+      const childWithTeacher = await prisma.parentChildLink.findFirst({
+        where: {
+          parentProfileId: identity.parentProfileId,
+          studentProfile: {
+            enrollments: {
+              some: {
+                status: 'active',
+                classGroup: {
+                  teacherAssignments: { some: { teacherProfileId: target.teacherProfile.id } },
+                },
+              },
+            },
+          },
+        },
+        select: { id: true },
+      })
+      if (childWithTeacher) return true
+    }
+    const targetRoles = new Set(target.roleAssignments.map((r) => r.role))
+    if ((targetRoles.has('admin') || targetRoles.has('principal')) && identity.schoolId) {
+      return !!targetSchoolId && targetSchoolId === identity.schoolId
+    }
+    return false
+  }
+
+  if (role === 'child') {
+    if (!identity.studentProfileId) return false
+    if (target.studentProfile) {
+      const myClass = await prisma.studentClassEnrollment.findFirst({
+        where: { studentProfileId: identity.studentProfileId, status: 'active' },
+        select: { classGroupId: true },
+      })
+      if (!myClass) return false
+      const sameClass = target.studentProfile.enrollments.some((e) => e.classGroupId === myClass.classGroupId)
+      return sameClass
+    }
+    if (target.teacherProfile) {
+      const myClass = await prisma.studentClassEnrollment.findFirst({
+        where: { studentProfileId: identity.studentProfileId, status: 'active' },
+        select: { classGroupId: true },
+      })
+      if (!myClass) return false
+      const teachesMe = await prisma.teacherClassAssignment.findFirst({
+        where: { teacherProfileId: target.teacherProfile.id, classGroupId: myClass.classGroupId },
+        select: { id: true },
+      })
+      return !!teachesMe
+    }
+    if (target.parentProfile) {
+      const linked = await prisma.parentChildLink.findFirst({
+        where: {
+          parentProfileId: target.parentProfile.id,
+          studentProfileId: identity.studentProfileId,
+        },
+        select: { id: true },
+      })
+      return !!linked
+    }
+    return false
+  }
+
+  return false
+}

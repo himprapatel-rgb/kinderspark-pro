@@ -304,6 +304,16 @@ export async function sendThreadMessage(threadId: string, data: {
   })
 }
 
+export async function lookupMessageRecipient(profileId: string) {
+  const query = new URLSearchParams()
+  query.set('profileId', profileId)
+  return req(`/messages/recipients/lookup?${query.toString()}`)
+}
+
+export async function getMessageRecipients() {
+  return req('/messages/recipients')
+}
+
 export async function markThreadRead(threadId: string) {
   return req(`/messages/threads/${encodeURIComponent(threadId)}/read`, {
     method: 'POST',
@@ -381,6 +391,34 @@ export async function getRecommendations(studentId: string) {
     method: 'POST',
     body: JSON.stringify({ studentId }),
   })
+}
+
+/** AI poem: server uses locked prompt; user sends one word or short line only. */
+export async function generatePoemSpark(data: { spark: string; targetMinutes?: number }) {
+  return req('/ai/poem-spark', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+/** Unified spark tasks: poem-listen-spark | tutor-hint-spark | homework-idea-spark (teacher/admin). */
+export async function runAiSparkTask(data: {
+  taskId: string
+  spark?: string
+  targetMinutes?: number
+  topic?: string
+  grade?: string
+  classId?: string
+}) {
+  return req('/ai/spark-task', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export async function getSparkArtifacts(taskId?: string) {
+  const q = taskId ? `?taskId=${encodeURIComponent(taskId)}` : ''
+  return req(`/ai/spark-artifacts${q}`)
 }
 
 export async function getAdminStats() {

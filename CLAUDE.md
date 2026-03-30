@@ -142,6 +142,8 @@ POST   /api/ai/weekly-report
 POST   /api/ai/tutor-feedback
 GET    /api/agents/memories
 POST   /api/agents/conversations
+GET    /api/messages/recipients
+GET    /api/messages/recipients/lookup?profileId=
 ```
 
 ---

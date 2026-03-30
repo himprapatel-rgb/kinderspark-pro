@@ -8,6 +8,7 @@ import {
   canTeacherAccessClass,
   canUserAccessClassGroup,
   canUserAccessSchool,
+  canUserDirectMessageTarget,
   canUserAccessStudentProfile,
   canUserAccessThread,
   resolveIdentityContext,
@@ -425,6 +426,243 @@ router.get('/threads', requireAuth, async (req: Request, res: Response) => {
   }
 })
 
+// GET /api/messages/recipients/lookup?profileId=KSP...
+router.get('/recipients/lookup', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const profileId = String(req.query.profileId || '').trim()
+    if (!profileId) return res.status(400).json({ error: 'profileId is required' })
+
+    const allowed = await canUserDirectMessageTarget(req.user!.id, req.user!.role, profileId)
+    if (!allowed) return res.status(403).json({ error: 'Insufficient permissions' })
+
+    const user = await prisma.user.findUnique({
+      where: { id: profileId },
+      select: {
+        id: true,
+        displayName: true,
+        avatar: true,
+        roleAssignments: { select: { role: true } },
+      },
+    })
+    if (!user) return res.status(404).json({ error: 'Recipient not found' })
+
+    return res.json({
+      id: user.id,
+      name: user.displayName,
+      avatar: user.avatar,
+      roles: user.roleAssignments.map((r) => r.role),
+      profileId: user.id,
+    })
+  } catch (err) {
+    console.error('lookup recipient error:', err)
+    return res.status(500).json({ error: 'Failed to lookup recipient' })
+  }
+})
+
+// GET /api/messages/recipients
+router.get('/recipients', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const identity = await resolveIdentityContext(req.user!.id, req.user!.role)
+    if (!identity) {
+      return res.status(403).json({ error: 'User is not mapped to messaging identity model yet' })
+    }
+
+    const bucket: Record<string, Map<string, any>> = {
+      kids: new Map(),
+      teachers: new Map(),
+      parents: new Map(),
+      school: new Map(),
+    }
+    const addRecipient = (group: keyof typeof bucket, user: any, roleName: string) => {
+      if (!user?.id || user.id === identity.canonicalUserId) return
+      bucket[group].set(user.id, {
+        id: user.id,
+        profileId: user.id,
+        name: user.displayName || 'User',
+        avatar: user.avatar || null,
+        role: roleName,
+      })
+    }
+
+    if (req.user!.role === 'teacher' && identity.teacherProfileId) {
+      const students = await prisma.studentProfile.findMany({
+        where: {
+          OR: [
+            {
+              enrollments: {
+                some: {
+                  status: 'active',
+                  classGroup: { teacherAssignments: { some: { teacherProfileId: identity.teacherProfileId } } },
+                },
+              },
+            },
+            { teacherOverrides: { some: { teacherProfileId: identity.teacherProfileId, isActive: true } } },
+          ],
+        },
+        include: {
+          user: { select: { id: true, displayName: true, avatar: true } },
+          parentLinks: {
+            include: {
+              parentProfile: {
+                include: { user: { select: { id: true, displayName: true, avatar: true } } },
+              },
+            },
+          },
+        },
+      })
+      for (const sp of students) {
+        addRecipient('kids', sp.user, 'child')
+        for (const p of sp.parentLinks) addRecipient('parents', p.parentProfile?.user, 'parent')
+      }
+    } else if (req.user!.role === 'parent' && identity.parentProfileId) {
+      const links = await prisma.parentChildLink.findMany({
+        where: { parentProfileId: identity.parentProfileId },
+        include: {
+          studentProfile: {
+            include: {
+              user: { select: { id: true, displayName: true, avatar: true } },
+              enrollments: {
+                where: { status: 'active' },
+                include: {
+                  classGroup: {
+                    include: {
+                      teacherAssignments: {
+                        include: {
+                          teacherProfile: { include: { user: { select: { id: true, displayName: true, avatar: true } } } },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      })
+      for (const link of links) {
+        addRecipient('kids', link.studentProfile.user, 'child')
+        for (const enr of link.studentProfile.enrollments) {
+          for (const ta of enr.classGroup.teacherAssignments) {
+            addRecipient('teachers', ta.teacherProfile?.user, 'teacher')
+          }
+        }
+      }
+      if (identity.schoolId) {
+        const schoolUsers = await prisma.user.findMany({
+          where: {
+            roleAssignments: {
+              some: {
+                schoolId: identity.schoolId,
+                role: { in: ['admin', 'principal'] as any },
+              },
+            },
+          },
+          select: {
+            id: true,
+            displayName: true,
+            avatar: true,
+            roleAssignments: { where: { schoolId: identity.schoolId }, select: { role: true } },
+          },
+        })
+        for (const su of schoolUsers) {
+          const role = su.roleAssignments.find((r) => r.role === 'principal')?.role || su.roleAssignments[0]?.role || 'admin'
+          addRecipient('school', su, role)
+        }
+      }
+    } else if (req.user!.role === 'child' && identity.studentProfileId) {
+      const me = await prisma.studentProfile.findUnique({
+        where: { id: identity.studentProfileId },
+        include: {
+          parentLinks: {
+            include: { parentProfile: { include: { user: { select: { id: true, displayName: true, avatar: true } } } } },
+          },
+          enrollments: {
+            where: { status: 'active' },
+            include: {
+              classGroup: {
+                include: {
+                  teacherAssignments: {
+                    include: {
+                      teacherProfile: { include: { user: { select: { id: true, displayName: true, avatar: true } } } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      })
+      if (me) {
+        for (const p of me.parentLinks) addRecipient('parents', p.parentProfile?.user, 'parent')
+        const classGroupIds = me.enrollments.map((e) => e.classGroupId)
+        for (const enr of me.enrollments) {
+          for (const ta of enr.classGroup.teacherAssignments) addRecipient('teachers', ta.teacherProfile?.user, 'teacher')
+        }
+        if (classGroupIds.length) {
+          const classmates = await prisma.studentProfile.findMany({
+            where: {
+              id: { not: identity.studentProfileId },
+              enrollments: { some: { classGroupId: { in: classGroupIds }, status: 'active' } },
+            },
+            include: { user: { select: { id: true, displayName: true, avatar: true } } },
+          })
+          for (const mate of classmates) addRecipient('kids', mate.user, 'child')
+        }
+      }
+      if (identity.schoolId) {
+        const schoolUsers = await prisma.user.findMany({
+          where: {
+            roleAssignments: {
+              some: {
+                schoolId: identity.schoolId,
+                role: { in: ['admin', 'principal'] as any },
+              },
+            },
+          },
+          select: {
+            id: true,
+            displayName: true,
+            avatar: true,
+            roleAssignments: { where: { schoolId: identity.schoolId }, select: { role: true } },
+          },
+        })
+        for (const su of schoolUsers) {
+          const role = su.roleAssignments.find((r) => r.role === 'principal')?.role || su.roleAssignments[0]?.role || 'admin'
+          addRecipient('school', su, role)
+        }
+      }
+    } else if ((req.user!.role === 'admin' || req.user!.role === 'principal') && identity.schoolId) {
+      const schoolUsers = await prisma.user.findMany({
+        where: { roleAssignments: { some: { schoolId: identity.schoolId } } },
+        select: {
+          id: true,
+          displayName: true,
+          avatar: true,
+          roleAssignments: { where: { schoolId: identity.schoolId }, select: { role: true } },
+        },
+      })
+      for (const su of schoolUsers) {
+        const role = su.roleAssignments[0]?.role
+        if (role === 'child') addRecipient('kids', su, 'child')
+        else if (role === 'teacher') addRecipient('teachers', su, 'teacher')
+        else if (role === 'parent') addRecipient('parents', su, 'parent')
+        else if (role === 'admin' || role === 'principal') addRecipient('school', su, role)
+      }
+    }
+
+    const toArray = (m: Map<string, any>) => Array.from(m.values()).sort((a, b) => a.name.localeCompare(b.name))
+    return res.json({
+      kids: toArray(bucket.kids),
+      teachers: toArray(bucket.teachers),
+      parents: toArray(bucket.parents),
+      school: toArray(bucket.school),
+    })
+  } catch (err) {
+    console.error('list recipients error:', err)
+    return res.status(500).json({ error: 'Failed to list recipients' })
+  }
+})
+
 // POST /api/messages/threads
 router.post('/threads', requireAuth, async (req: Request, res: Response) => {
   try {
@@ -453,8 +691,15 @@ router.post('/threads', requireAuth, async (req: Request, res: Response) => {
     }
 
     const participants = Array.from(new Set([canonicalUserId, ...requestedParticipantIds]))
-    if (String(scopeType) === 'direct' && participants.length < 2) {
-      return res.status(400).json({ error: 'Direct thread requires at least 2 participants' })
+    if (String(scopeType) === 'direct' && participants.length !== 2) {
+      return res.status(400).json({ error: 'Direct thread requires exactly 2 participants' })
+    }
+    if (String(scopeType) === 'direct') {
+      const targets = participants.filter((id) => id !== canonicalUserId)
+      for (const targetUserId of targets) {
+        const ok = await canUserDirectMessageTarget(req.user!.id, req.user!.role, targetUserId)
+        if (!ok) return res.status(403).json({ error: 'Insufficient permissions for direct recipient' })
+      }
     }
 
     const existingUsers = participants.length

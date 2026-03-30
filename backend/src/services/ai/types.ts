@@ -28,6 +28,10 @@ export const TASK_PROVIDERS: Record<string, AIProviderName[]> = {
   'weekly-report':      ['gemini', 'claude', 'openai', 'perplexity'],
   'student-report':     ['gemini', 'claude', 'openai', 'perplexity'],
   'recommendations':    ['gemini', 'claude', 'openai', 'perplexity'],
+  /** Long-form creative text — Claude first for quality */
+  'poem-listen-spark':  ['claude', 'gemini', 'openai', 'perplexity'],
+  /** Short tutoring nudge from one-line learner spark */
+  'tutor-hint-spark':   ['gemini', 'claude', 'openai', 'perplexity'],
   'agent-think':        ['gemini', 'claude', 'openai'],
   'agent-chat':         ['gemini', 'claude', 'openai'],
   'caption':            ['gemini', 'claude', 'openai'],

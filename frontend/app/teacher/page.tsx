@@ -11,6 +11,7 @@ import PhotoCapture from '@/components/PhotoCapture'
 import { useToast } from '@/components/Toast'
 import PageTransition from '@/components/PageTransition'
 import TeacherOnboarding from '@/components/TeacherOnboarding'
+import KidAvatar from '@/components/KidAvatar'
 import {
   getClasses, getStudents, getHomework, getSyllabuses, getMessages,
   createClass, createStudent, deleteStudent, createHomework, deleteHomework,
@@ -20,7 +21,8 @@ import {
   generateHomeworkAI, sendParentReports,
   getClassActivity, sendHomeworkReminders, autoSyllabus, getTeacherInterventions,
   createMessageStream, getMyProfile,
-  getMessageThreads, getThreadMessages, createMessageThread, sendThreadMessage,
+  getMessageThreads, getThreadMessages, createMessageThread, sendThreadMessage, lookupMessageRecipient, getMessageRecipients,
+  runAiSparkTask,
 } from '@/lib/api'
 
 // ─── tiny helpers ─────────────────────────────────────────────────────────────
@@ -74,7 +76,11 @@ export default function TeacherDashboard() {
   const [newClassName, setNewClassName] = useState('')
   const [newStudent, setNewStudent] = useState({ name: '', pin: '', avatar: '🦁' })
   const [hwForm, setHwForm] = useState({ title: '', moduleId: '', dueDate: '', starsReward: 5 })
-  const [msgForm, setMsgForm] = useState({ subject: '', body: '' })
+  const [hwSparkLine, setHwSparkLine] = useState('')
+  const [msgForm, setMsgForm] = useState({ subject: '', body: '', toProfileId: '' })
+  const [directRecipient, setDirectRecipient] = useState<any>(null)
+  const [recipientLookupState, setRecipientLookupState] = useState<'idle' | 'loading' | 'error' | 'ok'>('idle')
+  const [recipientGroups, setRecipientGroups] = useState<{ kids: any[]; teachers: any[]; parents: any[]; school: any[] }>({ kids: [], teachers: [], parents: [], school: [] })
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [toast, setToast] = useState('')
@@ -121,6 +127,7 @@ export default function TeacherDashboard() {
   useEffect(() => {
     if (!user) { router.push('/'); return }
     if (role !== 'teacher' && role !== 'admin' && role !== 'principal') { router.push('/'); return }
+    getMessageRecipients().then((rows) => setRecipientGroups(rows || { kids: [], teachers: [], parents: [], school: [] })).catch(() => {})
     load()
   }, [user, role, router])
 
@@ -416,6 +423,37 @@ export default function TeacherDashboard() {
     setBusy(true)
     try {
       const payloadBody = `Subject: ${msgForm.subject}\n\n${msgForm.body}`
+      const targetProfileId = msgForm.toProfileId.trim()
+      if (targetProfileId) {
+        const recipient = await lookupMessageRecipient(targetProfileId)
+        const existing = await getMessageThreads({ scopeType: 'direct' })
+        const directThread = Array.isArray(existing)
+          ? existing.find((th: any) =>
+              Array.isArray(th.participants) &&
+              th.participants.some((p: any) => p?.user?.id === recipient.id)
+            )
+          : null
+        let thread = directThread
+        if (!thread) {
+          thread = await createMessageThread({
+            scopeType: 'direct',
+            participantUserIds: [recipient.id],
+          })
+        }
+        if (!thread?.id) throw new Error('Unable to create direct thread')
+        await sendThreadMessage(thread.id, {
+          body: payloadBody,
+          kind: 'direct_message',
+          priority: 'normal',
+        })
+        setThreadMode({ enabled: true, threadId: thread.id })
+        setMsgForm({ subject: '', body: '', toProfileId: '' })
+        setDirectRecipient(null)
+        setRecipientLookupState('idle')
+        showToast(`Message sent to ${recipient.name}`)
+        await loadClassData(selectedClass.id)
+        return
+      }
       if (threadMode.enabled && threadMode.threadId) {
         await sendThreadMessage(threadMode.threadId, {
           body: payloadBody,
@@ -458,7 +496,7 @@ export default function TeacherDashboard() {
         }
       }
       await loadClassData(selectedClass.id)
-      setMsgForm({ subject: '', body: '' })
+      setMsgForm({ subject: '', body: '', toProfileId: '' })
       showToast('Message sent!')
     } catch (e: any) { showToast(e.message) }
     finally { setBusy(false) }
@@ -896,7 +934,9 @@ export default function TeacherDashboard() {
                             style={{ background: i === 0 ? '#F5B731' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : 'rgba(255,255,255,0.1)', color: i < 3 ? '#000' : '#fff' }}>
                             {i + 1}
                           </div>
-                          <div className="text-xl">{s.avatar || '🧒'}</div>
+                          <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.12)' }}>
+                            <KidAvatar studentId={s.id} ownedItems={s.ownedItems} fallback={s.avatar || '🧒'} size={24} />
+                          </div>
                           <div className="flex-1 font-bold text-sm">{s.name}</div>
                           <div className="text-yellow-400 font-black text-sm">⭐ {s.stars}</div>
                           {s.streak > 0 && <div className="text-orange-400 font-bold text-xs">🔥{s.streak}</div>}
@@ -928,7 +968,9 @@ export default function TeacherDashboard() {
                             : null
                           return (
                             <div key={s.id} className="flex items-center gap-3 rounded-xl p-3" style={{ background: 'var(--app-surface-soft)' }}>
-                              <span className="text-2xl">{s.avatar || '🧒'}</span>
+                              <span className="w-10 h-10 rounded-xl inline-flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.12)' }}>
+                                <KidAvatar studentId={s.id} ownedItems={s.ownedItems} fallback={s.avatar || '🧒'} size={28} />
+                              </span>
                               <div className="flex-1 min-w-0">
                                 <p className="font-black text-sm m-0 truncate">{s.name}</p>
                                 <p className="text-xs font-bold app-muted m-0">
@@ -1101,7 +1143,9 @@ export default function TeacherDashboard() {
                 return (
                   <div key={s.id} className="rounded-2xl overflow-hidden" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}>
                     <div className="p-4 flex items-center gap-3">
-                      <div className="text-3xl">{s.avatar || '🧒'}</div>
+                      <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.14)' }}>
+                        <KidAvatar studentId={s.id} ownedItems={s.ownedItems} fallback={s.avatar || '🧒'} size={38} />
+                      </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <button className="font-black hover:text-purple-300 transition-colors app-pressable" onClick={() => setDeepDiveStudent(s)}>{s.name}</button>
@@ -1397,6 +1441,54 @@ export default function TeacherDashboard() {
             {/* Manual Create HW form */}
             <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}>
               <div className="font-black mb-3">📝 Manual Assignment</div>
+              <div className="rounded-xl p-3 mb-3 space-y-2" style={{ background: 'rgba(94,92,230,0.08)', border: '1px solid rgba(94,92,230,0.2)' }}>
+                <div className="text-[11px] font-black app-muted">AI suggest (one word or short theme — locked school-safe template)</div>
+                <div className="flex gap-2 flex-wrap">
+                  <input
+                    value={hwSparkLine}
+                    onChange={(e) => setHwSparkLine(e.target.value)}
+                    maxLength={220}
+                    placeholder='e.g. "counting to 10" or butterflies'
+                    className="flex-1 min-w-[160px] app-field text-xs font-bold"
+                  />
+                  <button
+                    type="button"
+                    disabled={busy || !hwSparkLine.trim() || !selectedClass}
+                    onClick={async () => {
+                      if (!selectedClass || !hwSparkLine.trim()) return
+                      setBusy(true)
+                      try {
+                        const idea = await runAiSparkTask({
+                          taskId: 'homework-idea-spark',
+                          spark: hwSparkLine.trim(),
+                          grade: selectedClass.grade || 'KG 1',
+                          classId: selectedClass.id,
+                        })
+                        setHwForm((p) => ({
+                          ...p,
+                          title: idea.title || p.title,
+                          moduleId: idea.moduleId || p.moduleId,
+                          starsReward: typeof idea.starsReward === 'number' ? idea.starsReward : p.starsReward,
+                        }))
+                        setHwSparkLine('')
+                        showToast('AI filled title & module — set due date, then assign')
+                      } catch (e: any) {
+                        showToast(e?.message || 'AI suggest failed')
+                      } finally {
+                        setBusy(false)
+                      }
+                    }}
+                    className="min-h-11 px-3 rounded-xl text-xs font-black app-pressable"
+                    style={{
+                      background: 'rgba(94,92,230,0.25)',
+                      color: '#A78BFA',
+                      opacity: busy || !hwSparkLine.trim() || !selectedClass ? 0.5 : 1,
+                    }}
+                  >
+                    ✨ Suggest
+                  </button>
+                </div>
+              </div>
               <div className="space-y-2">
                 <input
                   value={hwForm.title}
@@ -1607,8 +1699,65 @@ export default function TeacherDashboard() {
           <div className="space-y-4">
             {/* Send message form */}
             <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}>
-              <div className="font-black mb-3">📨 Send to Class</div>
+              <div className="font-black mb-3">📨 Send Message</div>
               <div className="space-y-2">
+                <select
+                  value={msgForm.toProfileId}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    setMsgForm(p => ({ ...p, toProfileId: v }))
+                    const allRows = [...recipientGroups.kids, ...recipientGroups.parents, ...recipientGroups.teachers, ...recipientGroups.school]
+                    const picked = allRows.find((r: any) => (r.profileId || r.id) === v) || null
+                    setDirectRecipient(picked)
+                    setRecipientLookupState(v ? 'ok' : 'idle')
+                  }}
+                  className="w-full app-field text-sm"
+                >
+                  <option value="">Class Broadcast (default)</option>
+                  {recipientGroups.kids.length > 0 && <option disabled value="">-- Kids --</option>}
+                  {recipientGroups.kids.map((r: any) => <option key={`kid-${r.id}`} value={r.profileId || r.id}>{r.name} ({r.profileId || r.id})</option>)}
+                  {recipientGroups.parents.length > 0 && <option disabled value="">-- Parents --</option>}
+                  {recipientGroups.parents.map((r: any) => <option key={`parent-${r.id}`} value={r.profileId || r.id}>{r.name} ({r.profileId || r.id})</option>)}
+                </select>
+                <div>
+                  <input
+                    value={msgForm.toProfileId}
+                    onChange={e => {
+                      const v = e.target.value
+                      setMsgForm(p => ({ ...p, toProfileId: v }))
+                      setDirectRecipient(null)
+                      setRecipientLookupState(v.trim() ? 'idle' : 'idle')
+                    }}
+                    onBlur={async () => {
+                      const profileId = msgForm.toProfileId.trim()
+                      if (!profileId) {
+                        setDirectRecipient(null)
+                        setRecipientLookupState('idle')
+                        return
+                      }
+                      try {
+                        setRecipientLookupState('loading')
+                        const userRow = await lookupMessageRecipient(profileId)
+                        setDirectRecipient(userRow)
+                        setRecipientLookupState('ok')
+                      } catch {
+                        setDirectRecipient(null)
+                        setRecipientLookupState('error')
+                      }
+                    }}
+                    placeholder="Recipient Profile ID (optional for direct)"
+                    className="w-full app-field text-sm"
+                  />
+                  {msgForm.toProfileId.trim() ? (
+                    <div className="mt-1 text-[11px] font-bold app-muted">
+                      {recipientLookupState === 'loading' && 'Checking recipient...'}
+                      {recipientLookupState === 'ok' && directRecipient && `Direct: ${directRecipient.name} (${(directRecipient.roles || []).join(', ')})`}
+                      {recipientLookupState === 'error' && 'Recipient not found or not allowed'}
+                    </div>
+                  ) : (
+                    <div className="mt-1 text-[11px] font-bold app-muted">Leave empty to send to full class.</div>
+                  )}
+                </div>
                 <input
                   value={msgForm.subject}
                   onChange={e => setMsgForm(p => ({ ...p, subject: e.target.value }))}
@@ -1624,11 +1773,11 @@ export default function TeacherDashboard() {
                 />
                 <button
                   onClick={handleSendMessage}
-                  disabled={busy || !msgForm.subject || !msgForm.body}
+                  disabled={busy || !msgForm.subject || !msgForm.body || recipientLookupState === 'loading'}
                   className="w-full py-3 rounded-xl font-black text-sm app-pressable"
                   style={{ background: '#4CAF6A', opacity: (!msgForm.subject || !msgForm.body) ? 0.5 : 1 }}
                 >
-                  Send Message
+                  {msgForm.toProfileId.trim() ? 'Send Direct Message' : 'Send Message'}
                 </button>
               </div>
             </div>
@@ -1703,7 +1852,9 @@ export default function TeacherDashboard() {
                           onClick={() => setAttendanceRecords(prev => ({ ...prev, [s.id]: !present }))}
                           className="w-full flex items-center gap-3 rounded-2xl p-3 transition-all active:scale-95 app-pressable"
                           style={{ background: present ? 'rgba(48,209,88,0.15)' : 'rgba(255,69,58,0.15)', border: `1.5px solid ${present ? '#4CAF6A40' : '#E0525240'}` }}>
-                          <div className="text-2xl">{s.avatar}</div>
+                          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.12)' }}>
+                            <KidAvatar studentId={s.id} ownedItems={s.ownedItems} fallback={s.avatar || '🧒'} size={28} />
+                          </div>
                           <div className="flex-1 text-left">
                             <div className="font-black text-sm">{s.name}</div>
                           </div>
@@ -1749,7 +1900,9 @@ export default function TeacherDashboard() {
             <div className="w-full max-w-[430px] rounded-t-3xl pb-10 overflow-hidden" style={{ background: 'var(--app-surface)' }} onClick={e => e.stopPropagation()}>
               {/* Header */}
               <div className="p-5 flex items-center gap-4" style={{ background: 'linear-gradient(135deg, rgba(94,92,230,0.08), rgba(191,90,242,0.06))' }}>
-                <div className="text-4xl">{s.avatar || '🧒'}</div>
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.15)' }}>
+                  <KidAvatar studentId={s.id} ownedItems={s.ownedItems} fallback={s.avatar || '🧒'} size={42} />
+                </div>
                 <div className="flex-1">
                   <div className="font-black text-lg">{s.name}</div>
                   <div className="flex gap-2 mt-1 flex-wrap">

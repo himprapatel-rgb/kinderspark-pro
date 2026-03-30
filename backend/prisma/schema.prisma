@@ -558,6 +558,24 @@ model ActivityPost {
   @@index([teacherId])
 }
 
+// ── AI “spark” generations (locked template + tiny user input) ─────────────
+
+model AiSparkArtifact {
+  id              String   @id @default(cuid())
+  taskId          String
+  templateVersion String   @default("1.0.0")
+  spark           String
+  sparkRole       String
+  requesterId     String
+  title           String?
+  body            String   @db.Text
+  metadata        Json?
+  createdAt       DateTime @default(now())
+
+  @@index([taskId, requesterId])
+  @@index([requesterId, createdAt])
+}
+
 // ── Agent Memory System ──────────────────────────────────────────────────────
 
 model AgentMemory {

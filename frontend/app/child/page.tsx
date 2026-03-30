@@ -5,14 +5,17 @@ import { useAppStore as useStore } from '@/store/appStore'
 import { getHomework, getSyllabuses, getProgress, getRecommendations, getStudentBadges, completeHomework, getDailyMission, completeDailyMission } from '@/lib/api'
 import { MODS } from '@/lib/modules'
 import { selectAdaptiveMission } from '@/lib/missionEngine'
-import { ArrowRight, BookOpen, Bot, Flame, Hash, Palette, PencilLine, PlayCircle, Settings, Share2, Shapes, ShoppingBag, Sparkles, Star, Trophy, UserRound } from 'lucide-react'
+import { ArrowRight, BookOpen, Bot, Feather, Flame, Hash, MessageSquare, Palette, PencilLine, PlayCircle, Settings, Share2, Shapes, ShoppingBag, Sparkles, Star, Trophy, UserRound } from 'lucide-react'
 import PageTransition from '@/components/PageTransition'
 import MissionCelebration from '@/components/MissionCelebration'
+import EmotionalBuddyCard from '@/components/EmotionalBuddyCard'
 import { usePullToRefresh, PullIndicator } from '@/hooks/usePullToRefresh'
 import { playTap, playCorrect, playComplete, playBadge, playSwipe, playLevelUp, playNotification, startBackgroundMusic, stopBackgroundMusic } from '@/lib/sounds'
 import { API_BASE } from '@/lib/api'
 import { hapticTap, hapticSuccess, hapticImpact, nativeShare } from '@/lib/capacitor'
 import { useTranslation } from '@/hooks/useTranslation'
+import { getTodayMood, gentleMode } from '@/lib/emotion'
+import KidAvatar from '@/components/KidAvatar'
 
 // ── Daily Challenge helper ─────────────────────────────────────────────────────
 function getDailyChallenge() {
@@ -63,6 +66,8 @@ export default function ChildPage() {
   const { mod: dailyMod, todayKey } = getDailyChallenge()
 
   const student = currentStudent || user
+  const todayMood = getTodayMood(student?.id)
+  const isGentleMood = gentleMode(todayMood)
 
   const missionDayKey = useMemo(() => {
     if (!student?.id) return ''
@@ -142,21 +147,28 @@ export default function ChildPage() {
   const overallPct = totalCards ? Math.round((doneCards / totalCards) * 100) : 0
   const startTodayHomework = pendingHW[0] || null
   const adaptiveMission = selectAdaptiveMission({ pendingHomework: pendingHW, recommendations, progressMap })
-  const startTodayHref = remoteMission?.route || (startTodayHomework
+  const defaultStartHref = remoteMission?.route || (startTodayHomework
     ? (startTodayHomework.aiGenerated
       ? `/child/tutor?topic=${encodeURIComponent(startTodayHomework.moduleId || 'daily-practice')}`
       : `/child/lesson/${startTodayHomework.moduleId || dailyMod.id}`)
     : adaptiveMission
       ? adaptiveMission.route
       : `/child/lesson/${dailyMod.id}`)
+  const startTodayHref = isGentleMood && !startTodayHomework
+    ? '/child/story'
+    : defaultStartHref
   const startTodayTitle = startTodayHomework
     ? `Start with: ${startTodayHomework.title}`
     : remoteMission?.title
       ? remoteMission.title
       : adaptiveMission
         ? adaptiveMission.title
-        : `Start today's challenge: ${dailyMod.title}`
-  const nextTaskMeta = remoteMission
+        : isGentleMood
+          ? t('child_gentle_title')
+          : `Start today's challenge: ${dailyMod.title}`
+  const nextTaskMeta = isGentleMood && !startTodayHomework
+    ? t('child_gentle_meta')
+    : remoteMission
     ? `${remoteMission.kind} · ${remoteMission.etaMin} min`
     : startTodayHomework
     ? `Homework · ${startTodayHomework.dueDate ? new Date(startTodayHomework.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Due soon'}`
@@ -250,7 +262,9 @@ export default function ChildPage() {
     { label: 'Match', icon: Shapes, path: '/child/match', bg: 'rgba(91,127,232,0.16)', border: 'rgba(91,127,232,0.35)', iconColor: '#4A6ED0' },
     { label: 'Count', icon: Hash, path: '/child/count', bg: 'rgba(76,175,106,0.16)', border: 'rgba(76,175,106,0.35)', iconColor: '#2F9E52' },
     { label: 'Story', icon: BookOpen, path: '/child/story', bg: 'rgba(139,108,193,0.16)', border: 'rgba(139,108,193,0.35)', iconColor: '#7C5AB6' },
+    { label: 'Poem', icon: Feather, path: '/child/poem', bg: 'rgba(245,183,49,0.16)', border: 'rgba(245,183,49,0.35)', iconColor: '#C79012' },
     { label: 'Tutor', icon: Bot, path: '/child/tutor', bg: 'rgba(139,108,193,0.16)', border: 'rgba(139,108,193,0.35)', iconColor: '#7C5AB6' },
+    { label: 'Chat', icon: MessageSquare, path: '/child/messages', bg: 'rgba(76,170,223,0.18)', border: 'rgba(76,170,223,0.35)', iconColor: '#2E8FC2' },
     { label: 'Rank', icon: Trophy, path: '/child/leaderboard', bg: 'rgba(245,183,49,0.18)', border: 'rgba(245,183,49,0.35)', iconColor: '#C79012' },
     { label: 'Shop', icon: ShoppingBag, path: '/child/shop', bg: 'rgba(77,170,223,0.16)', border: 'rgba(77,170,223,0.35)', iconColor: '#2E8FC2' },
   ] as const
@@ -293,7 +307,12 @@ export default function ChildPage() {
                   transform: 'rotate(-3deg)',
                 }}
               >
-                {student?.avatar || '🧒'}
+                <KidAvatar
+                  studentId={student?.id}
+                  ownedItems={(student as any)?.ownedItems}
+                  fallback={student?.avatar || '🧒'}
+                  size={62}
+                />
               </div>
               <div>
                 <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.7)' }}>Welcome back</p>
@@ -494,6 +513,8 @@ export default function ChildPage() {
             </div>
           </div>
         </section>
+
+        <EmotionalBuddyCard />
 
         {/* Imported "learning path" pattern: clear 3-step journey */}
         <div className="rounded-2xl p-3.5" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>

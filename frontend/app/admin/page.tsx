@@ -8,6 +8,7 @@ import TopBarActions from '@/components/TopBarActions'
 import WeatherChip from '@/components/WeatherChip'
 import { getAdminStats, getAdminLeaderboard, getClasses, getClassAnalytics, getPilotMetrics, getSchoolGraph } from '@/lib/api'
 import { BarChart3, BookOpen, GraduationCap, Settings, Sparkles, Trophy, UserRound, Users } from 'lucide-react'
+import KidAvatar from '@/components/KidAvatar'
 
 export default function AdminPage() {
   const router = useRouter()
@@ -240,7 +241,9 @@ export default function AdminPage() {
               <div key={s.id} className="rounded-2xl p-4 flex items-center gap-3"
                 style={{ background: i === 0 ? 'rgba(255,215,10,0.06)' : 'var(--app-surface)', border: i === 0 ? '1px solid rgba(255,215,10,0.2)' : i === 1 ? '1px solid rgba(192,192,192,0.2)' : i === 2 ? '1px solid rgba(205,127,50,0.2)' : '1px solid var(--app-border)' }}>
                 <div className="text-2xl">{medals[i] || `#${i+1}`}</div>
-                <div className="text-2xl">{s.avatar}</div>
+                <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.12)' }}>
+                  <KidAvatar studentId={s.id} ownedItems={s.ownedItems} fallback={s.avatar || '🧒'} size={28} />
+                </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-black text-sm truncate">{s.name}</div>
                   <div className="text-xs font-bold app-muted">{s.class?.name} · {s.aiSessions} AI sessions</div>
@@ -260,7 +263,9 @@ export default function AdminPage() {
               <div key={s.id} className="rounded-2xl p-4 flex items-center gap-3"
                 style={{ background: i < 3 ? 'var(--app-surface)' : 'var(--app-surface-soft)', border: i === 0 ? '1px solid rgba(255,215,10,0.2)' : i === 1 ? '1px solid rgba(192,192,192,0.2)' : i === 2 ? '1px solid rgba(205,127,50,0.2)' : '1px solid var(--app-border)' }}>
                 <div className="w-8 text-center font-black app-muted">{i < 3 ? medals[i] : `#${i+1}`}</div>
-                <div className="text-2xl">{s.avatar}</div>
+                <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.12)' }}>
+                  <KidAvatar studentId={s.id} ownedItems={s.ownedItems} fallback={s.avatar || '🧒'} size={28} />
+                </div>
                 <div className="flex-1">
                   <div className="font-black text-sm">{s.name}</div>
                   <div className="text-xs font-bold app-muted">{s.class?.name} · {s.class?.grade}</div>

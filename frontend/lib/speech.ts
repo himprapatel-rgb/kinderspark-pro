@@ -1,47 +1,107 @@
-// ── KinderSpark Speech Engine ────────────────────────────────────────────────
-// Uses Web Speech API for TTS — no external dependencies, works on all modern browsers
+// KinderSpark Speech Engine
+// Uses Web Speech API with better "natural child-friendly" voice picking.
+
+export type VoiceProfile = 'auto' | 'girl' | 'boy'
+
+const VOICE_PROFILE_KEY = 'ks_voice_profile'
+const VOICE_ENABLED_KEY = 'ks_voice_enabled'
 
 let voiceEnabled = true
 let selectedVoice: SpeechSynthesisVoice | null = null
-let speechRate = 0.78
-let speechPitch = 1.15
+let speechRate = 0.82
+let speechPitch = 1.06
+let voiceProfile: VoiceProfile = 'auto'
 
-// ── Voice Selection (prefer child-friendly voices) ──────────────────────────
-function getBestVoice(): SpeechSynthesisVoice | null {
+function normalize(s: string) {
+  return String(s || '').toLowerCase()
+}
+
+function loadPersistedPrefs() {
+  if (typeof window === 'undefined') return
+  const enabledRaw = localStorage.getItem(VOICE_ENABLED_KEY)
+  if (enabledRaw === '0') voiceEnabled = false
+  const profileRaw = localStorage.getItem(VOICE_PROFILE_KEY)
+  if (profileRaw === 'girl' || profileRaw === 'boy' || profileRaw === 'auto') {
+    voiceProfile = profileRaw
+  }
+}
+
+function scoreVoice(v: SpeechSynthesisVoice, profile: VoiceProfile): number {
+  const n = normalize(v.name)
+  const lang = normalize(v.lang)
+  let score = 0
+
+  // Prefer English first, then close variants.
+  if (lang.startsWith('en-')) score += 30
+  else if (lang.startsWith('en')) score += 20
+
+  // Prefer local/native voices when possible.
+  if (v.localService) score += 8
+
+  // Natural / neural sounding hints.
+  if (/neural|natural|enhanced|premium|wavenet/.test(n)) score += 14
+
+  // Penalize known robotic/legacy voices.
+  if (/espeak|festival|mbrola|robot|desktop/.test(n)) score -= 12
+
+  // Platform-friendly popular voices.
+  if (/samantha|ava|allison|siri/.test(n)) score += 16
+  if (/zira|aria|jenny|guy|davis/.test(n)) score += 14
+  if (/google/.test(n)) score += 10
+
+  // Profile preference.
+  if (profile === 'girl') {
+    if (/female|woman|girl|samantha|ava|allison|zira|jenny|aria|hazel|susan|karen|tessa|moira/.test(n)) score += 18
+    if (/male|man|boy|guy|davis|daniel/.test(n)) score -= 7
+  } else if (profile === 'boy') {
+    if (/male|man|boy|guy|davis|daniel|alex|fred|tom/.test(n)) score += 18
+    if (/female|woman|girl|samantha|ava|allison|zira|jenny|aria/.test(n)) score -= 7
+  } else {
+    // Auto defaults to warm neutral/female-ish for early learners.
+    if (/samantha|ava|allison|zira|jenny|aria|hazel|susan/.test(n)) score += 10
+  }
+
+  return score
+}
+
+function getBestVoice(profile: VoiceProfile = voiceProfile): SpeechSynthesisVoice | null {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null
   const voices = speechSynthesis.getVoices()
   if (!voices.length) return null
 
-  // Prefer these voice names (most child-friendly)
-  const preferred = [
-    'samantha', 'karen', 'kate', 'tessa', 'moira',     // macOS/iOS
-    'microsoft zira', 'microsoft hazel', 'microsoft susan', // Windows
-    'google us english', 'google uk english female',       // Chrome
-  ]
-
-  for (const pref of preferred) {
-    const match = voices.find((v) => v.name.toLowerCase().includes(pref))
-    if (match) return match
+  let best: SpeechSynthesisVoice | null = null
+  let bestScore = -10_000
+  for (const v of voices) {
+    const s = scoreVoice(v, profile)
+    if (s > bestScore) {
+      bestScore = s
+      best = v
+    }
   }
-
-  // Fallback: any English female voice
-  const english = voices.filter((v) => v.lang.startsWith('en'))
-  const female = english.find((v) =>
-    /female|samantha|kate|zira|hazel|susan|karen|tessa/i.test(v.name)
-  )
-  if (female) return female
-
-  // Any English voice
-  return english[0] || voices[0] || null
+  return best || voices[0] || null
 }
 
-// Load voices (they load async on some browsers)
-if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-  speechSynthesis.onvoiceschanged = () => {
-    if (!selectedVoice) selectedVoice = getBestVoice()
+function tuneForProfile(profile: VoiceProfile) {
+  if (profile === 'girl') {
+    speechRate = 0.84
+    speechPitch = 1.10
+  } else if (profile === 'boy') {
+    speechRate = 0.82
+    speechPitch = 0.96
+  } else {
+    speechRate = 0.82
+    speechPitch = 1.05
   }
-  // Try immediate load too
-  selectedVoice = getBestVoice()
+}
+
+// Load voices (async on some browsers)
+if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+  loadPersistedPrefs()
+  tuneForProfile(voiceProfile)
+  speechSynthesis.onvoiceschanged = () => {
+    selectedVoice = getBestVoice(voiceProfile)
+  }
+  selectedVoice = getBestVoice(voiceProfile)
 }
 
 // ── Core speak function ─────────────────────────────────────────────────────
@@ -56,7 +116,7 @@ export function speak(text: string, options?: { rate?: number; pitch?: number; o
   utterance.pitch = options?.pitch ?? speechPitch
   utterance.volume = 1
 
-  if (!selectedVoice) selectedVoice = getBestVoice()
+  if (!selectedVoice) selectedVoice = getBestVoice(voiceProfile)
   if (selectedVoice) utterance.voice = selectedVoice
 
   if (options?.onEnd) {
@@ -109,6 +169,9 @@ export function speakResults(correct: number, total: number) {
 
 export function setVoiceEnabled(enabled: boolean) {
   voiceEnabled = enabled
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(VOICE_ENABLED_KEY, enabled ? '1' : '0')
+  }
   if (!enabled) {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       speechSynthesis.cancel()
@@ -118,6 +181,19 @@ export function setVoiceEnabled(enabled: boolean) {
 
 export function isVoiceEnabled(): boolean {
   return voiceEnabled
+}
+
+export function setVoiceProfile(profile: VoiceProfile) {
+  voiceProfile = profile
+  tuneForProfile(profile)
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(VOICE_PROFILE_KEY, profile)
+  }
+  selectedVoice = getBestVoice(profile)
+}
+
+export function getVoiceProfile(): VoiceProfile {
+  return voiceProfile
 }
 
 export function stopSpeaking() {

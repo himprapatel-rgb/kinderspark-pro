@@ -12,7 +12,7 @@ import ActivityFeed from '@/components/ActivityFeed'
 import {
   getHomework, getMessages, sendMessage, getAISessions, getAttendanceSummary, markAllMessagesRead,
   completeHomework, createMessageStream, getMyProfile, getProgress, getStudentBadges,
-  getMessageThreads, getThreadMessages, createMessageThread, sendThreadMessage,
+  getMessageThreads, getThreadMessages, createMessageThread, sendThreadMessage, lookupMessageRecipient, getMessageRecipients,
   getDailyMission,
 } from '@/lib/api'
 import { MODS } from '@/lib/modules'
@@ -23,6 +23,7 @@ import PageTransition from '@/components/PageTransition'
 import { usePullToRefresh, PullIndicator } from '@/hooks/usePullToRefresh'
 import { hapticTap, hapticSuccess, nativeShare } from '@/lib/capacitor'
 import { useTranslation } from '@/hooks/useTranslation'
+import KidAvatar from '@/components/KidAvatar'
 
 // SVG ring component for circular progress
 function Ring({ pct, color, size = 80, stroke = 8 }: { pct: number; color: string; size?: number; stroke?: number }) {
@@ -67,7 +68,7 @@ export default function ParentPage() {
 
   const [tab, setTab] = useState(0)
   const [student, setStudent] = useState<any>(null)
-  const [children, setChildren] = useState<Array<{ id: string; name: string; avatar?: string; classId?: string }>>([])
+  const [children, setChildren] = useState<Array<{ id: string; name: string; avatar?: string; classId?: string; ownedItems?: string[] }>>([])
   const [homework, setHomework] = useState<any[]>([])
   const [messages, setMessages] = useState<any[]>([])
   const [threadMode, setThreadMode] = useState<{ enabled: boolean; threadId?: string }>({ enabled: false })
@@ -76,6 +77,11 @@ export default function ParentPage() {
   const [loading, setLoading] = useState(true)
   const [showReply, setShowReply] = useState<any>(null)
   const [replyBody, setReplyBody] = useState('')
+  const [directMsgForm, setDirectMsgForm] = useState({ profileId: '', subject: '', body: '' })
+  const [directRecipient, setDirectRecipient] = useState<any>(null)
+  const [directLookupState, setDirectLookupState] = useState<'idle' | 'loading' | 'error' | 'ok'>('idle')
+  const [recipientGroups, setRecipientGroups] = useState<{ kids: any[]; teachers: any[]; parents: any[]; school: any[] }>({ kids: [], teachers: [], parents: [], school: [] })
+  const [directSending, setDirectSending] = useState(false)
   const [markingDone, setMarkingDone] = useState<string | null>(null)
   const [unreadMsgs, setUnreadMsgs] = useState(0)
   const [progressData, setProgressData] = useState<any[]>([])
@@ -89,6 +95,7 @@ export default function ParentPage() {
   useEffect(() => {
     if (!user) { router.push('/'); return }
     if (role !== 'parent') { router.push('/'); return }
+    getMessageRecipients().then((rows) => setRecipientGroups(rows || { kids: [], teachers: [], parents: [], school: [] })).catch(() => {})
     ;(async () => {
       try {
         const profile = await getMyProfile().catch(() => null)
@@ -102,6 +109,7 @@ export default function ParentPage() {
               avatar: sp?.user?.avatar || '🧒',
               classId: activeEnrollment?.classGroup?.legacyClassId || user.classId,
               classGroupId: activeEnrollment?.classGroup?.id || null,
+              ownedItems: sp?.legacyStudent?.ownedItems || [],
             }
           })
           .filter((c: any) => c.id)
@@ -265,6 +273,13 @@ export default function ParentPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const selectChild = (childId: string) => {
+    const next = children.find((c) => c.id === childId)
+    if (!next) return
+    setStudent(next)
+    loadData(next)
   }
 
   const pendingHW = homework.filter(hw => {
@@ -465,6 +480,45 @@ export default function ParentPage() {
     } catch (e: any) { toast.error(e.message) }
   }
 
+  const handleSendDirect = async () => {
+    const profileId = directMsgForm.profileId.trim()
+    if (!profileId || !directMsgForm.subject.trim() || !directMsgForm.body.trim()) return
+    try {
+      setDirectSending(true)
+      const recipient = await lookupMessageRecipient(profileId)
+      const existing = await getMessageThreads({ scopeType: 'direct' })
+      const directThread = Array.isArray(existing)
+        ? existing.find((th: any) =>
+            Array.isArray(th.participants) &&
+            th.participants.some((p: any) => p?.user?.id === recipient.id)
+          )
+        : null
+      let thread = directThread
+      if (!thread) {
+        thread = await createMessageThread({
+          scopeType: 'direct',
+          participantUserIds: [recipient.id],
+        })
+      }
+      if (!thread?.id) throw new Error('Thread unavailable')
+      await sendThreadMessage(thread.id, {
+        body: `Subject: ${directMsgForm.subject.trim()}\n\n${directMsgForm.body.trim()}`,
+        kind: 'direct_message',
+        priority: 'normal',
+      })
+      setThreadMode({ enabled: true, threadId: thread.id })
+      setDirectMsgForm({ profileId: '', subject: '', body: '' })
+      setDirectRecipient(null)
+      setDirectLookupState('idle')
+      toast.success(`Message sent to ${recipient.name}`)
+      await loadData(student)
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to send direct message')
+    } finally {
+      setDirectSending(false)
+    }
+  }
+
   const openQuickReply = (template: string) => {
     trackKpiEvent({ category: 'communication', name: 'parent_quick_reply_used' })
     const teacherMsg = messages.find((m: any) => m.fromId !== student?.id)
@@ -546,23 +600,37 @@ export default function ParentPage() {
               <div className="flex justify-between items-start relative">
                 <div>
                   <div className="text-xs font-bold app-muted mb-1 inline-flex items-center gap-1"><Users size={12} /> Parent View</div>
-                  <div className="text-2xl font-black">{student?.avatar} {student?.name}</div>
+                  <div className="text-2xl font-black inline-flex items-center gap-2">
+                    <KidAvatar
+                      studentId={student?.id}
+                      ownedItems={(student as any)?.ownedItems}
+                      fallback={student?.avatar || '🧒'}
+                      size={30}
+                    />
+                    <span>{student?.name}</span>
+                  </div>
                   {children.length > 1 && (
-                    <select
-                      value={student?.id || ''}
-                      onChange={(e) => {
-                        const next = children.find((c) => c.id === e.target.value)
-                        if (!next) return
-                        setStudent(next)
-                        loadData(next)
-                      }}
-                      className="mt-2 app-field text-xs font-black"
-                      style={{ minWidth: 170 }}
-                    >
-                      {children.map((c) => (
-                        <option key={c.id} value={c.id}>{c.avatar || '🧒'} {c.name}</option>
-                      ))}
-                    </select>
+                    <div className="mt-2 flex items-center gap-2 flex-wrap">
+                      {children.map((c) => {
+                        const selected = c.id === student?.id
+                        return (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onClick={() => selectChild(c.id)}
+                            className="min-h-11 px-2.5 py-1.5 rounded-xl inline-flex items-center gap-2 text-xs font-black app-pressable transition-all"
+                            style={{
+                              background: selected ? 'rgba(48,209,88,0.2)' : 'var(--app-surface-soft)',
+                              border: selected ? '1.5px solid rgba(48,209,88,0.45)' : '1px solid var(--app-border)',
+                              color: selected ? '#9EF0B2' : 'inherit',
+                            }}
+                          >
+                            <KidAvatar studentId={c.id} ownedItems={c.ownedItems} fallback={c.avatar || '🧒'} size={22} />
+                            <span>{c.name}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
                   )}
                   <div className="flex gap-2 mt-2 flex-wrap">
                     <span className="bg-yellow-400/20 text-yellow-300 rounded-full px-3 py-0.5 text-xs font-black">⭐ {student?.stars} stars</span>
@@ -933,6 +1001,102 @@ export default function ParentPage() {
         {tab === 2 && (
           <div className="px-3 pt-2">
             <h2 className="font-black text-lg mb-4 inline-flex items-center gap-2"><MessageSquare size={16} /> Messages</h2>
+            <div className="rounded-2xl p-4 mb-3" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+              <div className="font-black text-sm mb-2">Send by Profile ID</div>
+              <div className="space-y-2">
+                <select
+                  value={directMsgForm.profileId}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    setDirectMsgForm((p) => ({ ...p, profileId: v }))
+                    const allRows = [...recipientGroups.kids, ...recipientGroups.teachers, ...recipientGroups.school]
+                    const picked = allRows.find((r: any) => (r.profileId || r.id) === v) || null
+                    setDirectRecipient(picked)
+                    setDirectLookupState(v ? 'ok' : 'idle')
+                  }}
+                  className="app-input"
+                >
+                  <option value="">Select recipient from your network</option>
+                  {recipientGroups.kids.length > 0 && <option disabled value="">-- Kids --</option>}
+                  {recipientGroups.kids.map((r: any) => <option key={`kid-${r.id}`} value={r.profileId || r.id}>{r.name} ({r.profileId || r.id})</option>)}
+                  {recipientGroups.teachers.length > 0 && <option disabled value="">-- Teachers --</option>}
+                  {recipientGroups.teachers.map((r: any) => <option key={`teacher-${r.id}`} value={r.profileId || r.id}>{r.name} ({r.profileId || r.id})</option>)}
+                  {recipientGroups.school.length > 0 && <option disabled value="">-- School --</option>}
+                  {recipientGroups.school.map((r: any) => <option key={`school-${r.id}`} value={r.profileId || r.id}>{r.name} ({r.profileId || r.id})</option>)}
+                </select>
+                <input
+                  value={directMsgForm.profileId}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    setDirectMsgForm((p) => ({ ...p, profileId: v }))
+                    setDirectRecipient(null)
+                    setDirectLookupState('idle')
+                  }}
+                  onBlur={async () => {
+                    const pid = directMsgForm.profileId.trim()
+                    if (!pid) {
+                      setDirectLookupState('idle')
+                      setDirectRecipient(null)
+                      return
+                    }
+                    try {
+                      setDirectLookupState('loading')
+                      const u = await lookupMessageRecipient(pid)
+                      setDirectRecipient(u)
+                      setDirectLookupState('ok')
+                    } catch {
+                      setDirectRecipient(null)
+                      setDirectLookupState('error')
+                    }
+                  }}
+                  placeholder="Recipient Profile ID"
+                  className="app-input"
+                />
+                <div className="text-[11px] font-bold app-muted">
+                  {directLookupState === 'loading' && 'Checking recipient...'}
+                  {directLookupState === 'ok' && directRecipient && `To: ${directRecipient.name} (${(directRecipient.roles || []).join(', ')})`}
+                  {directLookupState === 'error' && 'Recipient not found or not allowed'}
+                  {directLookupState === 'idle' && 'Parents can message linked kid, teacher, and school users by Profile ID.'}
+                </div>
+                <input
+                  value={directMsgForm.subject}
+                  onChange={(e) => setDirectMsgForm((p) => ({ ...p, subject: e.target.value }))}
+                  placeholder="Subject"
+                  className="app-input"
+                />
+                <textarea
+                  value={directMsgForm.body}
+                  onChange={(e) => setDirectMsgForm((p) => ({ ...p, body: e.target.value }))}
+                  placeholder="Your message..."
+                  rows={3}
+                  className="app-input resize-none"
+                />
+                <button
+                  type="button"
+                  onClick={handleSendDirect}
+                  disabled={
+                    directSending ||
+                    !directMsgForm.profileId.trim() ||
+                    !directMsgForm.subject.trim() ||
+                    !directMsgForm.body.trim() ||
+                    directLookupState === 'loading'
+                  }
+                  className="w-full py-3 rounded-xl font-black app-pressable"
+                  style={{
+                    background: 'var(--app-success)',
+                    color: '#fff',
+                    opacity: (
+                      !directMsgForm.profileId.trim() ||
+                      !directMsgForm.subject.trim() ||
+                      !directMsgForm.body.trim() ||
+                      directLookupState === 'loading'
+                    ) ? 0.55 : 1,
+                  }}
+                >
+                  {directSending ? 'Sending...' : 'Send Direct Message'}
+                </button>
+              </div>
+            </div>
             <div className="space-y-3">
               {messages.map(msg => (
                 <div key={msg.id} className="rounded-2xl p-4"

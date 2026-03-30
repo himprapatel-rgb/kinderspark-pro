@@ -3,6 +3,18 @@
 // now routes through the provider abstraction with automatic fallback.
 
 import { aiComplete } from './router'
+import {
+  buildGenerateLessonPrompt,
+  buildWeeklyReportPrompt,
+  buildTutorFeedbackPrompt,
+  buildSyllabusPrompt,
+  buildStudentReportPrompt,
+  buildHomeworkIdeaPrompt,
+  buildRecommendationsPrompt,
+  buildPoemListenPrompt,
+  buildTutorHintSparkPrompt,
+} from './promptTemplates'
+
 export { getProviderStatus } from './router'
 
 function parseJSON<T>(text: string): T {
@@ -35,20 +47,12 @@ export async function generateLesson(
   topic: string,
   count: number
 ): Promise<Array<{ w: string; e: string; hint: string }>> {
-  const { text } = await aiComplete(
-    'generate-lesson',
-    `You are a kindergarten curriculum designer. Generate exactly ${count} learning flashcards for children aged 3-6 about: "${topic}". Each card needs: word/phrase (w), relevant emoji (e), short child-friendly hint (hint, max 8 words). Respond ONLY with valid JSON array, no markdown: [{"w":"Cat","e":"🐱","hint":"Says meow and loves cuddles!"}]`,
-    { maxTokens: 1024 }
-  )
+  const { text } = await aiComplete('generate-lesson', buildGenerateLessonPrompt(topic, count), { maxTokens: 1024 })
   return parseJSON(text)
 }
 
 export async function generateWeeklyReport(classData: string): Promise<string> {
-  const { text } = await aiComplete(
-    'weekly-report',
-    `Write a warm, encouraging 3-sentence weekly class report for parents. Class data: ${classData}. Be positive and specific.`,
-    { maxTokens: 300 }
-  )
+  const { text } = await aiComplete('weekly-report', buildWeeklyReportPrompt(classData), { maxTokens: 300 })
   return text
 }
 
@@ -71,22 +75,7 @@ export async function generateSyllabusAI(
   grade: string,
   count: number
 ): Promise<GeneratedSyllabus> {
-  const { text } = await aiComplete(
-    'generate-syllabus',
-    `You are a kindergarten curriculum designer. Create a complete learning syllabus for ${grade} on topic: "${topic}".
-Respond ONLY with valid JSON (no markdown):
-{
-  "title": "short catchy title (max 5 words)",
-  "icon": "single most relevant emoji",
-  "color": "a bright hex color e.g. #FF9F0A or #5E5CE6 or #30D158 or #BF5AF2 or #FF6B35",
-  "description": "one sentence description for teachers",
-  "items": [
-    {"word": "item name", "emoji": "relevant emoji", "hint": "child-friendly hint max 8 words"},
-    ... exactly ${count} items
-  ]
-}`,
-    { maxTokens: 1200 }
-  )
+  const { text } = await aiComplete('generate-syllabus', buildSyllabusPrompt(topic, grade, count), { maxTokens: 1200 })
   return parseJSON(text)
 }
 
@@ -113,27 +102,9 @@ export async function generateHomeworkIdea(
   grade: string,
   studentCount: number
 ): Promise<HomeworkIdea> {
-  const { text } = await aiComplete(
-    'generate-homework',
-    `You are a kindergarten teacher creating homework for ${studentCount} children in ${grade}.
-Topic: "${topic}"
-
-Generate a fun, age-appropriate homework assignment. Respond ONLY with valid JSON (no markdown):
-{
-  "title": "fun emoji-rich title (max 8 words)",
-  "description": "one encouraging sentence for parents (max 15 words)",
-  "moduleId": "best matching moduleId from: numbers, numbers2, alphabet, sightwords, colors, shapes, animals, fruits, vehicles, feelings, habits, food, weather",
-  "emoji": "single most relevant emoji",
-  "starsReward": <number 5-15 based on difficulty>,
-  "estimatedMinutes": <number 5-15>,
-  "activities": [
-    {"instruction": "short child-friendly activity (max 10 words)", "emoji": "relevant emoji"},
-    {"instruction": "short child-friendly activity (max 10 words)", "emoji": "relevant emoji"},
-    {"instruction": "short child-friendly activity (max 10 words)", "emoji": "relevant emoji"}
-  ]
-}`,
-    { maxTokens: 600 }
-  )
+  const { text } = await aiComplete('generate-homework', buildHomeworkIdeaPrompt(topic, grade, studentCount), {
+    maxTokens: 600,
+  })
   return parseJSON(text)
 }
 
@@ -145,14 +116,37 @@ export async function generateRecommendations(
 ): Promise<Array<{ title: string; reason: string; moduleId: string }>> {
   const { text } = await aiComplete(
     'recommendations',
-    `You are a kindergarten learning advisor. Based on this student data:
-Name: ${name}, Stars: ${stars}
-Progress: ${progressSummary || 'none yet'}
-Recent AI sessions: ${sessionSummary || 'none yet'}
-
-Recommend exactly 3 learning activities. Choose from these moduleIds: numbers, numbers2, alphabet, sightwords, colors, shapes, animals.
-Respond ONLY with valid JSON array: [{"title":"Learn Colors","reason":"Short encouraging reason (max 10 words)","moduleId":"colors"}]`,
+    buildRecommendationsPrompt(name, stars, progressSummary, sessionSummary),
     { maxTokens: 400 }
   )
   return parseJSON(text)
+}
+
+export interface GeneratedPoemResult {
+  title: string
+  poem: string
+  provider: string
+}
+
+export async function generatePoemFromSpark(spark: string, targetMinutes: number): Promise<GeneratedPoemResult> {
+  const { text, provider } = await aiComplete('poem-listen-spark', buildPoemListenPrompt(spark, targetMinutes), {
+    maxTokens: 4096,
+  })
+  const parsed = parseJSON<{ title: string; poem: string }>(text)
+  if (!parsed?.title || !parsed?.poem) throw new Error('Invalid poem response')
+  return { title: parsed.title, poem: parsed.poem, provider }
+}
+
+export interface TutorHintSparkResult {
+  hint: string
+  provider: string
+}
+
+export async function generateTutorHintFromSpark(spark: string, topicContext: string): Promise<TutorHintSparkResult> {
+  const { text, provider } = await aiComplete('tutor-hint-spark', buildTutorHintSparkPrompt(spark, topicContext), {
+    maxTokens: 220,
+  })
+  const parsed = parseJSON<{ hint: string }>(text)
+  if (!parsed?.hint) throw new Error('Invalid hint response')
+  return { hint: parsed.hint.trim(), provider }
 }

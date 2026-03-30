@@ -1,5 +1,15 @@
 import { Request, Response } from 'express'
-import { generateLesson, generateTutorFeedback, generateRecommendations, generateHomeworkIdea, generateStudentReport, generateSyllabusAI } from '../services/ai'
+import {
+  generateLesson,
+  generateTutorFeedback,
+  generateRecommendations,
+  generateHomeworkIdea,
+  generateStudentReport,
+  generateSyllabusAI,
+} from '../services/ai'
+import { sanitizeSpark } from '../services/ai/spark'
+import { AI_SPARK_TASKS } from '../services/ai/promptTemplates'
+import { runUnifiedSparkTask } from '../services/sparkTaskRunner'
 import { buildClassReport } from '../services/report.service'
 import { sanitizePromptInput } from '../utils/sanitize'
 import prisma from '../prisma/client'
@@ -146,6 +156,108 @@ export async function aiGenerateHomework(req: Request, res: Response) {
         { instruction: 'Give a high five when done!', emoji: '🙌' },
       ],
     })
+  }
+}
+
+const POEM_MINUTES = new Set([3, 4, 5, 6, 7, 8])
+
+export async function aiUnifiedSparkTask(req: Request, res: Response) {
+  if (!req.user?.id) return res.status(401).json({ error: 'Authentication required' })
+  const { taskId, spark, targetMinutes, topic, grade, classId } = req.body || {}
+
+  if (String(taskId) === AI_SPARK_TASKS.HOMEWORK_IDEA) {
+    if (!['teacher', 'admin', 'principal'].includes(req.user.role)) {
+      return res.status(403).json({ error: 'Only teachers and admins can run this task' })
+    }
+  }
+
+  try {
+    const out = await runUnifiedSparkTask({
+      taskId: String(taskId || ''),
+      role: req.user.role || 'child',
+      userId: req.user.id,
+      spark,
+      targetMinutes,
+      topic,
+      grade,
+      classId,
+    })
+    return res.status(201).json({
+      ...out.payload,
+      id: out.artifactId,
+      taskId: out.taskId,
+      templateVersion: out.templateVersion,
+    })
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'AI task failed'
+    if (msg.startsWith('Invalid taskId') || msg.startsWith('Add ')) {
+      return res.status(400).json({ error: msg })
+    }
+    console.error('aiUnifiedSparkTask error:', err)
+    return res.status(500).json({ error: msg })
+  }
+}
+
+export async function aiGeneratePoemSpark(req: Request, res: Response) {
+  if (!req.user?.id) return res.status(401).json({ error: 'Authentication required' })
+  const { spark, targetMinutes: rawMinutes } = req.body
+  const role = req.user.role || 'child'
+  const safeSpark = sanitizeSpark(spark, role)
+  const targetMinutes = typeof rawMinutes === 'number' && POEM_MINUTES.has(rawMinutes) ? rawMinutes : 4
+
+  try {
+    const out = await runUnifiedSparkTask({
+      taskId: AI_SPARK_TASKS.POEM_LISTEN,
+      role,
+      userId: req.user.id,
+      spark,
+      targetMinutes: rawMinutes,
+    })
+    return res.status(201).json({
+      id: out.artifactId,
+      title: out.payload.title,
+      poem: out.payload.poem,
+      targetMinutes: out.payload.targetMinutes,
+      templateVersion: out.templateVersion,
+    })
+  } catch (err) {
+    console.error('aiGeneratePoemSpark error:', err)
+    if (!safeSpark) {
+      return res.status(400).json({ error: 'Add one word or a short line (your idea)' })
+    }
+    return res.status(500).json({
+      error: 'Could not make your poem right now. Try again in a moment!',
+      title: 'Your Spark ✨',
+      poem: `Here is a tiny poem while we try again:\n\nStars are bright,\nDay turns to night,\nYou're learning with all your might! ⭐\n\n(Your idea was: ${safeSpark})`,
+      targetMinutes,
+      fallback: true,
+    })
+  }
+}
+
+export async function aiListSparkArtifacts(req: Request, res: Response) {
+  const taskId = String(req.query.taskId || AI_SPARK_TASKS.POEM_LISTEN)
+  if (!req.user?.id) return res.status(401).json({ error: 'Authentication required' })
+  try {
+    const rows = await prisma.aiSparkArtifact.findMany({
+      where: { taskId, requesterId: req.user.id },
+      orderBy: { createdAt: 'desc' },
+      take: 40,
+      select: {
+        id: true,
+        taskId: true,
+        templateVersion: true,
+        spark: true,
+        title: true,
+        body: true,
+        metadata: true,
+        createdAt: true,
+      },
+    })
+    return res.json(rows)
+  } catch (err) {
+    console.error('aiListSparkArtifacts error:', err)
+    return res.status(500).json({ error: 'Failed to list saved poems' })
   }
 }
 

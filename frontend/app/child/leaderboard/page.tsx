@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
 import { getStudents } from '@/lib/api'
 import { Bot, Flame, Star, Trophy } from 'lucide-react'
+import KidAvatar from '@/components/KidAvatar'
 
 type SortBy = 'stars' | 'streak' | 'aiSessions'
 
@@ -138,13 +139,13 @@ export default function LeaderboardPage() {
                         />
                       )}
                       <div
-                        className="relative w-14 h-14 rounded-2xl flex items-center justify-center text-3xl"
+                        className="relative w-14 h-14 rounded-2xl flex items-center justify-center"
                         style={{
                           background: isMe ? cfg.bg : 'rgba(255,255,255,0.1)',
                           border: isMe ? `2px solid rgba(255,255,255,0.4)` : `2px solid rgba(255,255,255,0.1)`,
                         }}
                       >
-                        {s.avatar}
+                        <KidAvatar studentId={s.id} ownedItems={s.ownedItems} fallback={s.avatar || '🧒'} size={44} />
                       </div>
                       <div className="absolute -top-2 -right-2 text-xl">{RANK_MEDALS[rankIdx]}</div>
                     </div>
@@ -197,10 +198,10 @@ export default function LeaderboardPage() {
                 >
                   <span className="app-muted font-black text-sm w-6 text-center">#{rank}</span>
                   <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
+                    className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
                     style={{ background: 'var(--app-surface-soft)' }}
                   >
-                    {s.avatar}
+                    <KidAvatar studentId={s.id} ownedItems={s.ownedItems} fallback={s.avatar || '🧒'} size={28} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className={`font-black text-sm truncate ${isMe ? '' : ''}`}>
