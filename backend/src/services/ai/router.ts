@@ -5,6 +5,19 @@ import { perplexityProvider } from './providers/perplexity'
 import { geminiProvider }     from './providers/gemini'
 import type { AIProvider, AIProviderName, AICallOptions } from './types'
 import { TASK_PROVIDERS } from './types'
+import { filterAIResponse, AI_FILTERED_FALLBACK } from '../contentFilter.service'
+
+/** When output is blocked, return parseable JSON for structured tasks so callers do not throw. */
+const JSON_TASK_FALLBACK: Record<string, string> = {
+  'generate-lesson': '[]',
+  'generate-syllabus':
+    '{"title":"Let\'s learn!","icon":"⭐","color":"#8B5CF6","description":"Fun practice","items":[]}',
+  'generate-homework':
+    '{"title":"Fun practice","description":"Try your favorite learning game!","moduleId":"numbers","emoji":"⭐","starsReward":5,"estimatedMinutes":10,"activities":[{"instruction":"Count and play!","emoji":"🔢"}]}',
+  recommendations: '[]',
+  'poem-listen-spark': JSON.stringify({ title: 'A little star', poem: AI_FILTERED_FALLBACK }),
+  'tutor-hint-spark': JSON.stringify({ hint: AI_FILTERED_FALLBACK }),
+}
 
 const ALL_PROVIDERS: Record<AIProviderName, AIProvider> = {
   gemini:     geminiProvider,
@@ -43,8 +56,13 @@ export async function aiComplete(
   let lastError: unknown
   for (const name of available) {
     try {
-      const text = await ALL_PROVIDERS[name].complete(prompt, opts)
-      console.log(`[AI] ✅ ${task} → ${name}`)
+      const raw = await ALL_PROVIDERS[name].complete(prompt, opts)
+      const { safe, filtered } = filterAIResponse(raw)
+      let text = filtered
+      if (!safe && task in JSON_TASK_FALLBACK) {
+        text = JSON_TASK_FALLBACK[task]!
+      }
+      console.log(`[AI] ✅ ${task} → ${name}${safe ? '' : ' (output filtered)'}`)
       return { text, provider: name }
     } catch (err) {
       const errMsg = (err as any)?.message ?? ''

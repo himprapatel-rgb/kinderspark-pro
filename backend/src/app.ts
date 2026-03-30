@@ -3,6 +3,7 @@ import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import cookieParser from 'cookie-parser'
+import rateLimit from 'express-rate-limit'
 import { rateLimiter } from './middleware/rateLimit.middleware'
 import { cache } from './middleware/cache.middleware'
 import { authenticate } from './middleware/auth.middleware'
@@ -33,6 +34,15 @@ import { startAgentScheduler } from './services/agentScheduler.service'
 
 const app = express()
 
+/** Broad IP window limit (100 / 15m); skips unauthenticated health probes. */
+const ipWindowLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => req.path === '/health',
+})
+
 app.use(helmet({
   crossOriginEmbedderPolicy: false, // Allow SSE without COEP issues
   contentSecurityPolicy: {
@@ -55,6 +65,7 @@ app.use(cors({
 }))
 app.use(express.json({ limit: '6mb' }))
 app.use(cookieParser())
+app.use(ipWindowLimiter)
 app.use(rateLimiter)
 app.use(authenticate)
 

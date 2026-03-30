@@ -13,8 +13,11 @@ import {
 } from '../controllers/ai.controller'
 import { getProviderStatus } from '../services/ai'
 import { requireAuth, requireRole } from '../middleware/auth.middleware'
+import { aiStudentDailyLimit } from '../middleware/aiRateLimit.middleware'
 
 const router = Router()
+
+router.use(aiStudentDailyLimit)
 
 router.post('/generate-lesson',    requireRole('teacher', 'admin'), aiGenerateLesson)
 router.post('/weekly-report',      requireRole('teacher', 'admin'), aiWeeklyReport)

@@ -14,4 +14,5 @@ RUN npm run build
 
 EXPOSE 4000
 
+# Container entrypoint: start.js runs `prisma migrate deploy` (then db push fallback) before requiring dist/app.js
 CMD ["node", "start.js"]
