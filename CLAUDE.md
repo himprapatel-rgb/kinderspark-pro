@@ -257,8 +257,8 @@ FRONTEND_URL         Railway frontend URL
 - `notification.service.ts` is a stub — push notifications not implemented
 - No input validation library (Zod/Joi) — validate at controllers
 - iOS/native app does not exist yet — app is web-only
-- Profile v1 fields were added to Prisma, but production migration file is not
-  created yet if local `DATABASE_URL` is unreachable; run migration in CI/prod DB.
+- Profile v1 migration: `20260330_profile_contact_fields` — run `prisma migrate deploy`
+  on production after deploy if not already applied.
 
 ---
 
