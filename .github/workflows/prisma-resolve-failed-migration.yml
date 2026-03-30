@@ -1,0 +1,79 @@
+# Run once from Actions → "Prisma — resolve failed migration" → Run workflow
+# when migrate deploy fails with P3009 (failed migration blocks newer ones).
+#
+# For 20260330_ai_spark_artifact: checks if "AiSparkArtifact" exists; marks the
+# migration applied if the table is there, otherwise rolled-back, then deploys pending migrations.
+#
+# Requires repo secret: DATABASE_URL (production PostgreSQL URL).
+
+name: Prisma — resolve failed migration
+
+on:
+  workflow_dispatch:
+    inputs:
+      migration_name:
+        description: 'Folder name under prisma/migrations (e.g. 20260330_ai_spark_artifact)'
+        required: true
+        default: '20260330_ai_spark_artifact'
+      table_name:
+        description: 'PostgreSQL table created by that migration (unquoted name)'
+        required: true
+        default: 'AiSparkArtifact'
+
+jobs:
+  resolve-and-deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Install psql
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y postgresql-client
+
+      - name: Resolve stuck migration then apply pending
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          MIGRATION_NAME: ${{ github.event.inputs.migration_name }}
+          TABLE_NAME: ${{ github.event.inputs.table_name }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DATABASE_URL:-}" ]; then
+            echo "❌ DATABASE_URL secret is not set."
+            exit 1
+          fi
+          EXISTS=$(psql "$DATABASE_URL" -tAc "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = '$TABLE_NAME');")
+          echo "Table $TABLE_NAME exists in public: $EXISTS"
+          if [ "$EXISTS" = "t" ]; then
+            echo "→ Marking $MIGRATION_NAME as applied (schema already matches migration)."
+            npx prisma migrate resolve --applied "$MIGRATION_NAME"
+          else
+            echo "→ Marking $MIGRATION_NAME as rolled back (re-apply on deploy)."
+            npx prisma migrate resolve --rolled-back "$MIGRATION_NAME"
+          fi
+          echo "→ Applying any pending migrations..."
+          npx prisma migrate deploy
+
+      - name: Summary
+        env:
+          MIGRATION_NAME: ${{ github.event.inputs.migration_name }}
+          TABLE_NAME: ${{ github.event.inputs.table_name }}
+        run: |
+          echo "## Prisma migration repair" >> "$GITHUB_STEP_SUMMARY"
+          echo "Resolved \`$MIGRATION_NAME\` using table \`$TABLE_NAME\` probe, then \`migrate deploy\`." >> "$GITHUB_STEP_SUMMARY"
