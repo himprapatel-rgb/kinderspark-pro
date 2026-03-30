@@ -1,11 +1,13 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
 import { saveAISession, updateStudent } from '@/lib/api'
 import { Home, RotateCcw, Star } from 'lucide-react'
-import ConfettiCanvas from '@/components/Confetti'
 import { playCorrect, playWrong, playComplete, playTap, playStar } from '@/lib/sounds'
+
+const ConfettiCanvas = dynamic(() => import('@/components/Confetti'), { ssr: false })
 import { speak } from '@/lib/speech'
 
 // ── Counting Game ───────────────────────────────────────────────────────────

@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { useAppStore as useStore } from '@/store/appStore'
 import { saveAISession, getTutorFeedback, updateStudent, runAiSparkTask, logQuizResponse } from '@/lib/api'
@@ -11,8 +12,9 @@ import {
 } from '@/lib/speech'
 import { getTodayMood, gentleMode } from '@/lib/emotion'
 import { Bot, Home, RotateCcw, Volume2, VolumeX, X, Mic } from 'lucide-react'
-import ConfettiCanvas from '@/components/Confetti'
 import { playCorrect, playWrong, playComplete, playBadge } from '@/lib/sounds'
+
+const ConfettiCanvas = dynamic(() => import('@/components/Confetti'), { ssr: false })
 
 type Phase = 'topics' | 'quiz' | 'results'
 

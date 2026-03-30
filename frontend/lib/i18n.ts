@@ -826,7 +826,11 @@ const translations = {
 
 /** Get a translation for the given key in the given language */
 export function t(key: TranslationKey, lang: SupportedLang = 'en'): string {
-  return translations[lang]?.[key] ?? translations.en[key] ?? key
+  const pack = (translations[lang] ?? translations.en) as Readonly<Record<string, string>>
+  const localized = pack[key as string]
+  if (localized !== undefined) return localized
+  const en = translations.en as Readonly<Record<string, string>>
+  return en[key as string] ?? key
 }
 
 /** Get the full translation dictionary for a language */

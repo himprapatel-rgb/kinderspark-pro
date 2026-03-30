@@ -81,6 +81,7 @@ export default function ProfileManager({ roleLabel }: { roleLabel: string }) {
   const [savingChildSelf, setSavingChildSelf] = useState(false)
   const [savingGuardian, setSavingGuardian] = useState(false)
   const [savingChildLinked, setSavingChildLinked] = useState(false)
+  const [savingLearning, setSavingLearning] = useState(false)
 
   const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
     setToast({ msg, type })

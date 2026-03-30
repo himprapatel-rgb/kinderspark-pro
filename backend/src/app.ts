@@ -83,6 +83,7 @@ app.get('/health', async (_req, res) => {
     dbStatus = 'disconnected'
   }
   const mem = process.memoryUsage()
+  res.setHeader('Cache-Control', 'no-store')
   res.json({
     status: dbStatus === 'connected' ? 'ok' : 'degraded',
     version: '2.0.0',

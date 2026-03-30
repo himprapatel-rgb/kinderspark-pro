@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express'
 import bcrypt from 'bcryptjs'
 import prisma from '../prisma/client'
+import { invalidateCache } from '../middleware/cache.middleware'
 import { requireAuth, requireRole } from '../middleware/auth.middleware'
 import { canParentAccessStudent, canTeacherAccessClass } from '../utils/accessControl'
 
@@ -89,6 +90,7 @@ router.post('/', requireRole('teacher', 'admin'), async (req: Request, res: Resp
         selectedTheme: 'th_def',
       },
     })
+    invalidateCache('/api/students')
     return res.status(201).json(student)
   } catch (err: any) {
     console.error('createStudent error:', err)
@@ -132,6 +134,7 @@ router.put('/:id', async (req: Request, res: Response) => {
     if (selectedTheme !== undefined) updateData.selectedTheme = selectedTheme
 
     const student = await prisma.student.update({ where: { id }, data: updateData })
+    invalidateCache('/api/students')
     return res.json(student)
   } catch (err) {
     console.error('updateStudent error:', err)
@@ -144,6 +147,7 @@ router.delete('/:id', requireRole('teacher', 'admin'), async (req: Request, res:
   try {
     const { id } = req.params
     await prisma.student.delete({ where: { id } })
+    invalidateCache('/api/students')
     return res.json({ success: true })
   } catch (err) {
     console.error('deleteStudent error:', err)
@@ -167,6 +171,7 @@ router.patch('/:id/push-token', async (req: Request, res: Response) => {
     const { token } = req.body
     if (!token) return res.status(400).json({ error: 'token required' })
     await prisma.student.update({ where: { id: req.params.id }, data: { pushToken: token } })
+    invalidateCache('/api/students')
     return res.json({ success: true })
   } catch (err) {
     return res.status(500).json({ error: 'Failed to save push token' })

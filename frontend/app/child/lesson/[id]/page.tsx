@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import dynamic from 'next/dynamic'
 import { useRouter, useParams } from 'next/navigation'
 import { useAppStore as useStore } from '@/store/appStore'
 import { updateProgress, updateStudent, getSyllabus, getProgress } from '@/lib/api'
@@ -13,8 +14,9 @@ import {
 } from '@/lib/learnPath'
 import { speak } from '@/lib/speech'
 import { Home, RotateCcw, Volume2, Map, Sparkles } from 'lucide-react'
-import ConfettiCanvas from '@/components/Confetti'
 import { playComplete, playSwipe, playStar } from '@/lib/sounds'
+
+const ConfettiCanvas = dynamic(() => import('@/components/Confetti'), { ssr: false })
 import { useTranslation } from '@/hooks/useTranslation'
 
 export default function LessonPage() {

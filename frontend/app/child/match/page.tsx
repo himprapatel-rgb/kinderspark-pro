@@ -1,12 +1,14 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
 import { MODS } from '@/lib/modules'
 import { updateProgress, saveAISession } from '@/lib/api'
 import { BookOpen, RefreshCw, Target } from 'lucide-react'
-import ConfettiCanvas from '@/components/Confetti'
 import { playCorrect, playWrong, playComplete } from '@/lib/sounds'
+
+const ConfettiCanvas = dynamic(() => import('@/components/Confetti'), { ssr: false })
 
 const QUESTIONS_PER_ROUND = 10
 const STARS_PER_CORRECT = 3

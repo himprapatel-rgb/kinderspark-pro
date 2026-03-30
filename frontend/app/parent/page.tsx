@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef, useMemo } from 'react'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAppStore as useStore } from '@/store/appStore'
@@ -8,13 +9,13 @@ import TopBarActions from '@/components/TopBarActions'
 import WeatherChip from '@/components/WeatherChip'
 import LocationCard from '@/components/LocationCard'
 import ParentSidebar from '@/components/ParentSidebar'
-import ProgressCharts from '@/components/ProgressCharts'
 import ActivityFeed from '@/components/ActivityFeed'
 import {
   getHomework, getMessages, sendMessage, getAISessions, getAttendanceSummary, markAllMessagesRead,
   completeHomework, createMessageStream, getMyProfile, getProgress, getStudentBadges,
   getMessageThreads, getThreadMessages, createMessageThread, sendThreadMessage, lookupMessageRecipient, getMessageRecipients,
   getDailyMission,
+  deletePrivacyStudentData,
 } from '@/lib/api'
 import { MODS } from '@/lib/modules'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
@@ -25,6 +26,16 @@ import { usePullToRefresh, PullIndicator } from '@/hooks/usePullToRefresh'
 import { hapticTap, hapticSuccess, nativeShare } from '@/lib/capacitor'
 import { useTranslation } from '@/hooks/useTranslation'
 import KidAvatar from '@/components/KidAvatar'
+
+const ProgressCharts = dynamic(() => import('@/components/ProgressCharts'), {
+  ssr: false,
+  loading: () => (
+    <div
+      className="mx-3 mb-4 h-48 rounded-2xl animate-pulse"
+      style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}
+    />
+  ),
+})
 
 // SVG ring component for circular progress
 function Ring({ pct, color, size = 80, stroke = 8 }: { pct: number; color: string; size?: number; stroke?: number }) {

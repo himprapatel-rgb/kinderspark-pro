@@ -1,7 +1,17 @@
 'use client'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
-import SyllabusBuilder from '@/components/SyllabusBuilder'
+
+const SyllabusBuilder = dynamic(() => import('@/components/SyllabusBuilder'), {
+  ssr: false,
+  loading: () => (
+    <div
+      className="rounded-2xl h-64 animate-pulse mx-auto max-w-lg"
+      style={{ background: 'rgba(255,255,255,0.08)' }}
+    />
+  ),
+})
 
 export default function SyllabusBuilderPage() {
   const router = useRouter()
