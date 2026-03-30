@@ -11,6 +11,8 @@ datasource db {
 model School {
   id                String             @id @default(cuid())
   name              String
+  /// Unique 6-character code (A–Z, 2–9) shown at login so PINs are scoped per school.
+  schoolCode        String             @unique @db.VarChar(6)
   status            String             @default("active")
   timezone          String             @default("UTC")
   locale            String             @default("en")

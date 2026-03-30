@@ -21,10 +21,10 @@ async function main() {
   // ── School ────────────────────────────────────────────────────────────────
   const school = await prisma.school.upsert({
     where: { id: 'school-001' },
-    update: { name: 'Sunshine Kindergarten' },
-    create: { id: 'school-001', name: 'Sunshine Kindergarten' },
+    update: { name: 'Sunshine Kindergarten', schoolCode: 'SUN001' },
+    create: { id: 'school-001', name: 'Sunshine Kindergarten', schoolCode: 'SUN001' },
   })
-  console.log('🏫 School:', school.name)
+  console.log('🏫 School:', school.name, '| Code:', school.schoolCode)
 
   // ── Admins (3) ────────────────────────────────────────────────────────────
   const adminsData = [

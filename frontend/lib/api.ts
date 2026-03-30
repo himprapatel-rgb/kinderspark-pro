@@ -97,10 +97,19 @@ async function req(path: string, options?: RequestInit): Promise<any> {
   return res.json()
 }
 
-export async function verifyPin(pin: string, role: string) {
+/** Demo / dev school code (set NEXT_PUBLIC_DEMO_SCHOOL_CODE in .env.local, e.g. SUN001). */
+export function getDemoSchoolCode(): string {
+  return (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_DEMO_SCHOOL_CODE) || 'SUN001'
+}
+
+export async function verifyPin(pin: string, role: string, schoolCode: string) {
+  const code = schoolCode.trim().toUpperCase().replace(/[^A-Z0-9]/g, '')
+  if (code.length !== 6) {
+    throw new Error('School code must be 6 letters or numbers')
+  }
   const data = await req('/auth/pin', {
     method: 'POST',
-    body: JSON.stringify({ pin, role }),
+    body: JSON.stringify({ pin, role, schoolCode: code }),
   })
   if (data.refreshToken) {
     localStorage.setItem('kinderspark-refresh', data.refreshToken)

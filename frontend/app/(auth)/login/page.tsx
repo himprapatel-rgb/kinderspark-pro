@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
-import { verifyPin } from '@/lib/api'
+import { verifyPin, getDemoSchoolCode } from '@/lib/api'
 import Onboarding, { isOnboardingDone } from '@/components/Onboarding'
 import { useTranslation } from '@/hooks/useTranslation'
 
@@ -91,7 +91,7 @@ export default function LoginPage() {
   async function quickLogin(item: typeof DEV_LOGINS[number]) {
     setDevLoading(item.role)
     try {
-      const data = await verifyPin(item.pin, item.role)
+      const data = await verifyPin(item.pin, item.role, getDemoSchoolCode())
       setAuth(data.user, item.role, data.accessToken || data.token)
       if (item.role === 'teacher') router.replace('/teacher')
       else if (item.role === 'admin' || item.role === 'principal')  router.replace('/admin')
@@ -203,6 +203,9 @@ export default function LoginPage() {
         <span className="text-xs font-black uppercase tracking-widest px-1" style={{ color: 'rgba(70, 75, 96, 0.7)' }}>Who are you?</span>
         <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, rgba(70,75,96,0.25), transparent)' }} />
       </div>
+      <p className="text-center text-[11px] font-semibold mb-4 max-w-[360px] mx-auto" style={{ color: 'rgba(70, 75, 96, 0.55)' }}>
+        Next step: your school&apos;s 6-character code (from your teacher), then your PIN.
+      </p>
 
       {/* ── Role cards ── */}
       <div className="w-full max-w-[360px] space-y-3 relative z-10">

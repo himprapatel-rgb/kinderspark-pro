@@ -10,12 +10,19 @@ router.post(
   '/pin',
   authRateLimit,
   (req: Request, res: Response, next: NextFunction) => {
-    const { pin, role } = req.body
+    const { pin, role, schoolCode } = req.body
     if (!pin || typeof pin !== 'string' || pin.length < 4 || pin.length > 6) {
       return res.status(400).json({ error: 'Invalid PIN format' })
     }
     if (!role || !validRoles.includes(role)) {
       return res.status(400).json({ error: 'Invalid role' })
+    }
+    const code =
+      typeof schoolCode === 'string'
+        ? schoolCode.trim().toUpperCase().replace(/[^A-Z0-9]/g, '')
+        : ''
+    if (!code || code.length !== 6) {
+      return res.status(400).json({ error: 'schoolCode must be 6 letters or numbers' })
     }
     next()
   },

@@ -5,6 +5,7 @@ import express from 'express'
 // Note: jest.mock is hoisted so we must not reference outer vars in the factory.
 // We expose `__mockPrisma` via the factory itself.
 
+const mockPrismaSchool = { findUnique: jest.fn() }
 const mockPrismaTeacher = { findMany: jest.fn() }
 const mockPrismaAdmin = { findMany: jest.fn() }
 const mockPrismaStudent = { findMany: jest.fn(), update: jest.fn() }
@@ -22,6 +23,7 @@ const mockPrismaUser = {
 jest.mock('../prisma/client', () => ({
   __esModule: true,
   default: {
+    school: mockPrismaSchool,
     user: mockPrismaUser,
     teacher: mockPrismaTeacher,
     admin: mockPrismaAdmin,
@@ -81,6 +83,7 @@ describe('Auth Controller – POST /api/auth/pin', () => {
   beforeEach(() => {
     app = buildApp()
     jest.clearAllMocks()
+    mockPrismaSchool.findUnique.mockResolvedValue({ id: 'school-1', name: 'Test School', schoolCode: 'SUN001' })
     mockPrismaUser.findMany.mockResolvedValue([])
   })
 
@@ -92,7 +95,7 @@ describe('Auth Controller – POST /api/auth/pin', () => {
 
     const res = await request(app)
       .post('/api/auth/pin')
-      .send({ pin: '1234', role: 'teacher' })
+      .send({ pin: '1234', role: 'teacher', schoolCode: 'SUN001' })
 
     expect(res.status).toBe(200)
     expect(res.body.success).toBe(true)
@@ -107,7 +110,7 @@ describe('Auth Controller – POST /api/auth/pin', () => {
 
     const res = await request(app)
       .post('/api/auth/pin')
-      .send({ pin: 'wrong', role: 'teacher' })
+      .send({ pin: 'wrong', role: 'teacher', schoolCode: 'SUN001' })
 
     expect(res.status).toBe(401)
     expect(res.body.error).toBe('Wrong PIN')
@@ -116,10 +119,19 @@ describe('Auth Controller – POST /api/auth/pin', () => {
   it('returns 400 when pin is missing', async () => {
     const res = await request(app)
       .post('/api/auth/pin')
-      .send({ role: 'teacher' })
+      .send({ role: 'teacher', schoolCode: 'SUN001' })
 
     expect(res.status).toBe(400)
     expect(res.body.error).toMatch(/pin and role required/i)
+  })
+
+  it('returns 400 when schoolCode is missing or invalid', async () => {
+    const res = await request(app)
+      .post('/api/auth/pin')
+      .send({ pin: '1234', role: 'teacher' })
+
+    expect(res.status).toBe(400)
+    expect(String(res.body.error)).toMatch(/schoolCode/i)
   })
 
   it('returns 400 when role is missing', async () => {
@@ -131,14 +143,14 @@ describe('Auth Controller – POST /api/auth/pin', () => {
   })
 
   it('returns 200 with accessToken for valid admin PIN', async () => {
-    const fakeAdmin = { id: 'admin-1', name: 'Admin User', pin: '9999' }
+    const fakeAdmin = { id: 'admin-1', name: 'Admin User', pin: '9999', schoolId: 'school-1' }
     mockPrismaAdmin.findMany.mockResolvedValue([fakeAdmin])
     mockPrismaRefreshToken.create.mockResolvedValue({})
     mockJwtSign.mockReturnValue('fake.admin.token')
 
     const res = await request(app)
       .post('/api/auth/pin')
-      .send({ pin: '9999', role: 'admin' })
+      .send({ pin: '9999', role: 'admin', schoolCode: 'SUN001' })
 
     expect(res.status).toBe(200)
     expect(res.body.success).toBe(true)
@@ -169,7 +181,7 @@ describe('Auth Controller – POST /api/auth/pin', () => {
 
     const res = await request(app)
       .post('/api/auth/pin')
-      .send({ pin: '5678', role: 'child' })
+      .send({ pin: '5678', role: 'child', schoolCode: 'SUN001' })
 
     expect(res.status).toBe(200)
     expect(res.body.success).toBe(true)
@@ -182,7 +194,7 @@ describe('Auth Controller – POST /api/auth/pin', () => {
 
     const res = await request(app)
       .post('/api/auth/pin')
-      .send({ pin: 'bad', role: 'child' })
+      .send({ pin: 'bad', role: 'child', schoolCode: 'SUN001' })
 
     expect(res.status).toBe(401)
   })

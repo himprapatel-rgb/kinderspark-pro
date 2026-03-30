@@ -160,7 +160,7 @@ describe('verifyPin', () => {
     } as Response)
 
     const { verifyPin } = await import('../lib/api')
-    const result = await verifyPin('1234', 'teacher')
+    const result = await verifyPin('1234', 'teacher', 'SUN001')
 
     expect(result.success).toBe(true)
     expect(localStorage.setItem).toHaveBeenCalledWith('kinderspark-refresh', 'the-refresh-token')

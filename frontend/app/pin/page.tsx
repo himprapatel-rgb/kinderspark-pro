@@ -1,7 +1,7 @@
 'use client'
 import { useState, useRef, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { verifyPin, API_BASE } from '@/lib/api'
+import { verifyPin, API_BASE, getDemoSchoolCode } from '@/lib/api'
 import { useAppStore } from '@/store/appStore'
 import { hapticTap, hapticSuccess, hapticError } from '@/lib/capacitor'
 
@@ -13,12 +13,15 @@ const ROLE_META: Record<string, { emoji: string; label: string; grad: string; co
   principal: { emoji: '👑', label: 'Principal', grad: 'linear-gradient(135deg,#8B6CC1,#5B7FE8)', color: '#8B6CC1', glow: 'rgba(191,90,242,0.45)' },
 }
 
+const SCHOOL_STORAGE_KEY = 'kinderspark_school_code'
+
 function PinContent() {
   const router = useRouter()
   const params = useSearchParams()
   const role = params.get('role') || 'child'
   const meta = ROLE_META[role] || ROLE_META.child
 
+  const [schoolCode, setSchoolCode] = useState('')
   const [pin, setPin] = useState(['', '', '', ''])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -32,6 +35,20 @@ function PinContent() {
   ]
 
   const setAuth = useAppStore(s => s.setAuth)
+
+  useEffect(() => {
+    try {
+      const fromStore = sessionStorage.getItem(SCHOOL_STORAGE_KEY)
+      const fromQuery = params.get('school')?.trim().toUpperCase().replace(/[^A-Z0-9]/g, '') ?? ''
+      const initial =
+        (fromQuery.length === 6 ? fromQuery : null) ||
+        fromStore ||
+        getDemoSchoolCode()
+      setSchoolCode(initial.slice(0, 6).toUpperCase())
+    } catch {
+      setSchoolCode(getDemoSchoolCode())
+    }
+  }, [params])
 
   useEffect(() => { refs[0].current?.focus() }, [])
 
@@ -91,14 +108,29 @@ function PinContent() {
     }
   }
 
+  function persistSchoolCode(code: string) {
+    try {
+      sessionStorage.setItem(SCHOOL_STORAGE_KEY, code)
+    } catch {
+      /* ignore */
+    }
+  }
+
   async function submit(pinValue: string) {
+    const code = schoolCode.trim().toUpperCase().replace(/[^A-Z0-9]/g, '')
+    if (code.length !== 6) {
+      setError('Enter your 6-character school code first')
+      hapticError()
+      return
+    }
+    persistSchoolCode(code)
     setLoading(true)
     setError('')
     try {
       // #region agent log
       fetch(`${API_BASE}/diag`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/pin/page.tsx:submit:start',message:'PIN submit start',data:{role,pinLen:pinValue.length},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
       // #endregion
-      const data = await verifyPin(pinValue, role)
+      const data = await verifyPin(pinValue, role, code)
       // #region agent log
       fetch(`${API_BASE}/diag`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/pin/page.tsx:submit:success',message:'PIN submit success',data:{role,hasToken:!!(data.accessToken||data.token)},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
       // #endregion
@@ -175,7 +207,39 @@ function PinContent() {
         >
           {meta.label} Login
         </h2>
-        <p className="text-sm font-semibold" style={{ color: 'rgba(70, 75, 96, 0.85)' }}>Enter your 4-digit PIN</p>
+        <p className="text-sm font-semibold" style={{ color: 'rgba(70, 75, 96, 0.85)' }}>School code, then your 4-digit PIN</p>
+      </div>
+
+      {/* School code (multi-school PIN scope) */}
+      <div className="w-full max-w-[280px] mb-8 relative z-10">
+        <label className="block text-xs font-black uppercase tracking-wider mb-2" style={{ color: 'rgba(70, 75, 96, 0.65)' }}>
+          School code
+        </label>
+        <input
+          type="text"
+          inputMode="text"
+          autoCapitalize="characters"
+          autoCorrect="off"
+          spellCheck={false}
+          maxLength={6}
+          value={schoolCode}
+          onChange={e => {
+            const v = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6)
+            setSchoolCode(v)
+            setError('')
+          }}
+          placeholder="SUN001"
+          className="w-full h-14 px-4 rounded-2xl text-center text-lg font-black tracking-[0.25em] outline-none app-pressable"
+          style={{
+            background: 'rgba(255,255,255,0.9)',
+            border: `2px solid ${schoolCode.length === 6 ? meta.color : 'rgba(120,120,140,0.28)'}`,
+            color: '#1f2233',
+            boxShadow: schoolCode.length === 6 ? `0 4px 16px ${meta.glow}` : 'none',
+          }}
+        />
+        <p className="text-[10px] font-semibold mt-2 text-center" style={{ color: 'rgba(70, 75, 96, 0.5)' }}>
+          From your teacher or school admin · 6 letters or numbers
+        </p>
       </div>
 
       {/* PIN boxes */}
@@ -229,7 +293,12 @@ function PinContent() {
       {/* Submit */}
       <button
         onClick={() => submit(pinStr)}
-        disabled={pinStr.length < 4 || loading || success}
+        disabled={
+          pinStr.length < 4 ||
+          schoolCode.replace(/[^A-Z0-9]/gi, '').length !== 6 ||
+          loading ||
+          success
+        }
         className="w-full max-w-[280px] py-4 rounded-2xl font-black text-base text-white transition-all active:scale-95 disabled:opacity-40 relative z-10 overflow-hidden app-pressable"
         style={{
           background: meta.grad,

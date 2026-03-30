@@ -49,13 +49,29 @@ function setAuthCookies(res: Response, accessToken: string, refreshToken: string
   })
 }
 
+function normalizeSchoolCode(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null
+  const s = raw.trim().toUpperCase().replace(/[^A-Z0-9]/g, '')
+  return s.length === 6 ? s : null
+}
+
 export async function verifyPin(req: Request, res: Response) {
   const { pin, role } = req.body
   if (!pin || !role) return res.status(400).json({ error: 'pin and role required' })
 
+  const schoolCode = normalizeSchoolCode(req.body.schoolCode)
+  if (!schoolCode) {
+    return res.status(400).json({ error: 'schoolCode required (6 letters or numbers)' })
+  }
+
   try {
-    // New identity model (User + RoleAssignment) first.
-    const users = await prisma.user.findMany({
+    const school = await prisma.school.findUnique({ where: { schoolCode } })
+    if (!school) {
+      return res.status(400).json({ error: 'Unknown school code' })
+    }
+
+    // New identity model (User + RoleAssignment) first — scoped to this school.
+    const identityCandidates = await prisma.user.findMany({
       where: {
         pin: { not: null },
         roleAssignments: { some: { role: role as any } },
@@ -63,6 +79,11 @@ export async function verifyPin(req: Request, res: Response) {
       include: { roleAssignments: true },
       take: 200,
     })
+    const users = identityCandidates.filter(
+      u =>
+        u.schoolId === school.id ||
+        (u.roleAssignments?.some(ra => ra.schoolId === school.id) ?? false),
+    )
     for (const u of users) {
       if (!u.pin) continue
       if (await bcrypt.compare(pin, u.pin)) {
@@ -95,7 +116,7 @@ export async function verifyPin(req: Request, res: Response) {
     }
 
     if (role === 'teacher') {
-      const teachers = await prisma.teacher.findMany()
+      const teachers = await prisma.teacher.findMany({ where: { schoolId: school.id } })
       const teacher = (await Promise.all(teachers.map(async t => (await bcrypt.compare(pin, t.pin)) ? t : null))).find(Boolean) ?? null
       if (!teacher) return res.status(401).json({ error: 'Wrong PIN' })
       const token = signAccessToken({ id: teacher.id, role: 'teacher', roles: ['teacher'], name: teacher.name, schoolId: teacher.schoolId || null })
@@ -104,19 +125,39 @@ export async function verifyPin(req: Request, res: Response) {
       return res.json({ success: true, role: 'teacher', token, refreshToken, user: { id: teacher.id, name: teacher.name, avatar: (teacher as any).avatar || '👩‍🏫', profileId: teacher.id, roles: ['teacher'] } })
     }
 
-    if (role === 'admin') {
-      const admins = await prisma.admin.findMany()
+    if (role === 'admin' || role === 'principal') {
+      const admins = await prisma.admin.findMany({ where: { schoolId: school.id } })
       const admin = (await Promise.all(admins.map(async a => (await bcrypt.compare(pin, a.pin)) ? a : null))).find(Boolean) ?? null
       if (!admin) return res.status(401).json({ error: 'Wrong PIN' })
-      const token = signAccessToken({ id: admin.id, role: 'admin', roles: ['admin'], name: admin.name, schoolId: admin.schoolId || null })
-      const refreshToken = await issueRefreshToken(admin.id, 'admin')
+      const activeRole = role === 'principal' ? 'principal' : 'admin'
+      const token = signAccessToken({
+        id: admin.id,
+        role: activeRole,
+        roles: [activeRole],
+        name: admin.name,
+        schoolId: admin.schoolId || null,
+      })
+      const refreshToken = await issueRefreshToken(admin.id, activeRole)
       setAuthCookies(res, token, refreshToken)
-      return res.json({ success: true, role: 'admin', token, refreshToken, user: { id: admin.id, name: admin.name, avatar: '⚙️', profileId: admin.id, roles: ['admin'] } })
+      return res.json({
+        success: true,
+        role: activeRole,
+        token,
+        refreshToken,
+        user: {
+          id: admin.id,
+          name: admin.name,
+          avatar: activeRole === 'principal' ? '👑' : '⚙️',
+          profileId: admin.id,
+          roles: [activeRole],
+        },
+      })
     }
 
-    // child or parent
+    // child or parent (PIN is the child's PIN; class must belong to this school)
     const students = await prisma.student.findMany({
-      include: { class: true, progress: true, feedback: true }
+      where: { class: { schoolId: school.id } },
+      include: { class: true, progress: true, feedback: true },
     })
     const student = (await Promise.all(students.map(async s => (await bcrypt.compare(pin, s.pin)) ? s : null))).find(Boolean) ?? null
     if (!student) return res.status(401).json({ error: 'Wrong PIN' })

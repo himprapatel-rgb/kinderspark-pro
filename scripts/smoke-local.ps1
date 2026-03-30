@@ -54,7 +54,7 @@ try {
 }
 
 try {
-  $body = '{"pin":"1234","role":"teacher"}'
+  $body = '{"pin":"1234","role":"teacher","schoolCode":"SUN001"}'
   Invoke-RestMethod -Uri "$be/api/auth/pin" -Method Post -Body $body -ContentType 'application/json' | Out-Null
   Write-Host "[ OK ] POST /api/auth/pin (teacher demo)" -ForegroundColor Green
 } catch {
