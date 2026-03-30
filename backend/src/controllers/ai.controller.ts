@@ -61,17 +61,72 @@ export async function aiWeeklyReport(req: Request, res: Response) {
   }
 }
 
+function formatTutorMemoryBlock(messages: unknown): string | undefined {
+  if (!Array.isArray(messages)) return undefined
+  const lines: string[] = []
+  for (const m of messages) {
+    if (!m || typeof m !== 'object') continue
+    const role = String((m as { role?: string }).role || '')
+    const content = String((m as { content?: string }).content || '').trim()
+    if (!content) continue
+    if (role === 'user' || role === 'assistant') lines.push(`${role}: ${content}`)
+  }
+  const joined = lines.join('\n')
+  return joined.length ? joined.slice(-2500) : undefined
+}
+
 export async function aiTutorFeedback(req: Request, res: Response) {
-  const { correct, total, topic, maxLevel, studentId: bodyStudentId } = req.body
+  const { correct, total, topic, maxLevel, studentId: bodyStudentId, topicId: bodyTopicId } = req.body
   try {
-    const safeTopic = sanitizePromptInput(topic)
+    const safeLabel = sanitizePromptInput(topic, 200)
+    const safeModuleId =
+      typeof bodyTopicId === 'string' && bodyTopicId.trim() ?
+        sanitizePromptInput(bodyTopicId.trim(), 80) :
+        safeLabel.toLowerCase().replace(/\s+/g, '_').slice(0, 64) || 'general'
     const legacyId = await resolveSparkLearnerLegacyId(req, bodyStudentId)
     let learnerCtx: string | undefined
+    let memoryBlock: string | undefined
+    let priorMessages: Array<{ role: string; content: string }> = []
     if (legacyId) {
       const ctx = await getStudentAgentContext(legacyId)
       if (ctx) learnerCtx = formatStudentAgentContextBlock(ctx).slice(0, 2000)
+      const session = await prisma.tutorSession.findUnique({
+        where: {
+          studentId_moduleId: { studentId: legacyId, moduleId: safeModuleId },
+        },
+        select: { messages: true },
+      })
+      priorMessages =
+        Array.isArray(session?.messages) ?
+          (session!.messages as Array<{ role: string; content: string }>).filter(
+            (m) => m && (m.role === 'user' || m.role === 'assistant') && m.content
+          ) :
+          []
+      memoryBlock = formatTutorMemoryBlock(priorMessages.slice(-16))
     }
-    const feedback = await generateTutorFeedback(correct, total, safeTopic, maxLevel, learnerCtx)
+    const feedback = await generateTutorFeedback(
+      Number(correct) || 0,
+      Number(total) || 1,
+      safeLabel || 'learning',
+      Number(maxLevel) || 1,
+      learnerCtx,
+      memoryBlock,
+    )
+    if (legacyId) {
+      const userLine = `Quiz finished: ${correct}/${total} on "${safeLabel}", level ${maxLevel}.`
+      const nextMessages = [
+        ...priorMessages.slice(-40),
+        { role: 'user', content: userLine },
+        { role: 'assistant', content: feedback },
+      ]
+      await prisma.tutorSession.upsert({
+        where: {
+          studentId_moduleId: { studentId: legacyId, moduleId: safeModuleId },
+        },
+        create: { studentId: legacyId, moduleId: safeModuleId, messages: nextMessages as object[] },
+        update: { messages: nextMessages as object[] },
+      })
+    }
     return res.json({ feedback })
   } catch {
     return res.json({ feedback: 'Amazing effort today! Keep practicing every day and you will be a superstar! 🌟' })
@@ -148,6 +203,12 @@ export async function aiSendParentReports(req: Request, res: Response) {
             classId,
           },
         })
+        const { notifyWeeklyReportForStudent } = await import('../services/messageNotifications.service')
+        notifyWeeklyReportForStudent(
+          student.id,
+          student.preferredName || student.name,
+          report,
+        )
       })
     )
     const sent = results.filter(r => r.status === 'fulfilled').length

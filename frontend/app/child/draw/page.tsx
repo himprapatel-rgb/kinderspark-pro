@@ -2,7 +2,8 @@
 import { useRef, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore as useStore } from '@/store/appStore'
-import { updateStudent } from '@/lib/api'
+import { updateStudent, saveStudentDrawing, getStudentDrawings } from '@/lib/api'
+import { useToast } from '@/components/Toast'
 
 const COLORS = [
   '#E05252', '#F5A623', '#F5B731', '#4CAF6A', '#34C759', '#5B7FE8',
@@ -23,6 +24,11 @@ export default function DrawPage() {
   const [drawing, setDrawing] = useState(false)
   const [saved, setSaved] = useState(false)
   const [hasDrawn, setHasDrawn] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [drawings, setDrawings] = useState<
+    Array<{ id: string; url: string; thumbUrl?: string | null; createdAt?: string }>
+  >([])
+  const toast = useToast()
 
   useEffect(() => {
     if (!student) { router.push('/'); return }
@@ -104,14 +110,27 @@ export default function DrawPage() {
   }
 
   const handleSave = async () => {
-    if (!student || !hasDrawn) return
+    if (!student || !hasDrawn || !canvasRef.current || saving) return
+    setSaving(true)
     try {
-      const newStars = (student.stars || 0) + 5
-      await updateStudent(student.id, { stars: newStars })
+      const base64 = canvasRef.current.toDataURL('image/png')
+      await saveStudentDrawing(student.id, base64)
+      const fresh = (await getStudentDrawings(student.id).catch(() => ({}))) as {
+        drawings?: typeof drawings
+      }
+      setDrawings(fresh.drawings || [])
+      try {
+        const newStars = (student.stars || 0) + 5
+        await updateStudent(student.id, { stars: newStars })
+      } catch {
+        /* star reward best-effort; drawing is already stored */
+      }
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
-    } catch (e) {
-      console.error(e)
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Could not save drawing')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -169,11 +188,32 @@ export default function DrawPage() {
         </div>
 
         {/* Save button */}
-        <button onClick={handleSave} disabled={!hasDrawn}
+        <button
+          onClick={handleSave}
+          disabled={!hasDrawn || saving}
           className="w-full py-4 rounded-2xl font-black text-white transition-all active:scale-95 disabled:opacity-40 app-pressable animate-sparkle-on-hover"
-          style={{ background: saved ? '#4CAF6A' : 'linear-gradient(135deg, #5B7FE8, #8B6CC1)' }}>
-          {saved ? '✅ Saved! +5 ⭐' : '💾 Save Drawing (+5 ⭐)'}
+          style={{ background: saved ? '#4CAF6A' : 'linear-gradient(135deg, #5B7FE8, #8B6CC1)' }}
+        >
+          {saving ? '⏳ Saving…' : saved ? '✅ Saved! +5 ⭐' : '💾 Save Drawing (+5 ⭐)'}
         </button>
+
+        /* eslint-disable-next-line @next/next/no-img-element -- Cloudinary URLs from API */
+        {drawings.length > 0 && (
+          <div>
+            <div className="text-xs font-bold app-muted mb-2">Your gallery</div>
+            <div className="grid grid-cols-3 gap-2">
+              {drawings.map((d) => (
+                <img
+                  key={d.id}
+                  src={d.thumbUrl || d.url}
+                  alt=""
+                  className="w-full aspect-square object-cover rounded-xl opacity-95"
+                  style={{ border: '1px solid var(--app-border)' }}
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

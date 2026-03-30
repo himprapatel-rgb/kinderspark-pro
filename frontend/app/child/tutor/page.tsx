@@ -206,8 +206,16 @@ export default function TutorPage() {
     if (student) {
       setLoadingFeedback(true)
       try {
+        const topicLabel = TUTOR_TOPICS.find(t => t.id === topic)?.label || topic
         const [feedbackRes, sessionRes] = await Promise.all([
-          getTutorFeedback({ correct, total: TOTAL_Q, topic, maxLevel }),
+          getTutorFeedback({
+            correct,
+            total: TOTAL_Q,
+            topic: topicLabel,
+            topicId: topic,
+            studentId: student.id,
+            maxLevel,
+          }),
           saveAISession({ studentId: student.id, topic, correct, total: TOTAL_Q, stars, maxLevel, accuracy }),
           updateStudent(student.id, {
             stars: (student.stars || 0) + stars,

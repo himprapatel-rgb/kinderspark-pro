@@ -83,7 +83,33 @@ model Student {
   feedback      Feedback?
   attendance    Attendance[]
   parentalConsent ParentalConsent?
+  drawings      Drawing[]
+  tutorSessions TutorSession[]
   createdAt     DateTime             @default(now())
+}
+
+model Drawing {
+  id                  String   @id @default(cuid())
+  studentId           String
+  url                 String
+  thumbUrl            String?
+  cloudinaryPublicId  String?
+  createdAt           DateTime @default(now())
+  student             Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, createdAt])
+}
+
+model TutorSession {
+  id        String   @id @default(cuid())
+  studentId String
+  moduleId  String
+  messages  Json     @default("[]")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, moduleId])
 }
 
 /// Verifiable parental consent record (COPPA / GDPR Art. 8 baseline).

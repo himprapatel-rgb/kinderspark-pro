@@ -13,6 +13,10 @@ import {
   canUserAccessThread,
   resolveIdentityContext,
 } from '../utils/accessControl'
+import {
+  notifyLegacyInboxMessageCreated,
+  notifyThreadParticipants,
+} from '../services/messageNotifications.service'
 
 const router = Router()
 
@@ -297,6 +301,9 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
         classId: classId || null,
       },
     })
+
+    const { notifyLegacyInboxMessageCreated } = await import('../services/messageNotifications.service')
+    notifyLegacyInboxMessageCreated(message, String(req.user!.role), req.user!.name || from)
 
     // Broadcast to all SSE clients watching this class in real time
     if (classId) {
@@ -821,6 +828,13 @@ router.post('/threads/:threadId/messages', requireAuth, async (req: Request, res
         ackAt: new Date(),
       },
     })
+
+    notifyThreadParticipants(
+      threadId,
+      canonicalUserId,
+      message.senderUser.displayName || 'Someone',
+      body.slice(0, 500)
+    )
 
     return res.status(201).json(message)
   } catch (err) {

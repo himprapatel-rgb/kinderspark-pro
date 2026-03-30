@@ -33,12 +33,17 @@ export function buildTutorFeedbackPrompt(
   topic: string,
   maxLevel: number,
   learnerContext?: string,
+  memoryBlock?: string,
 ): string {
   const ctx =
     learnerContext?.trim() ?
       `\nLearner context (use name and age-appropriate tone; do not repeat private family details aloud unless natural):\n${learnerContext.trim()}\n`
       : ''
-  return `Give 2 sentences of warm encouraging feedback for a child who got ${correct}/${total} on a ${topic} quiz. Level ${maxLevel}/5. Use simple words matched to the child's age from context when given, otherwise for a ~5-year-old.${ctx}`
+  const mem =
+    memoryBlock?.trim() ?
+      `\nPrior tutor exchanges on this topic (continue the encouragement arc; do not contradict):\n${memoryBlock.trim().slice(0, 2000)}\n`
+      : ''
+  return `Give 2 sentences of warm encouraging feedback for a child who got ${correct}/${total} on a ${topic} quiz. Level ${maxLevel}/5. Use simple words matched to the child's age from context when given, otherwise for a ~5-year-old.${ctx}${mem}`
 }
 
 export function buildSyllabusPrompt(topic: string, grade: string, count: number): string {

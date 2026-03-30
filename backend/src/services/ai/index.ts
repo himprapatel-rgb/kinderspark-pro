@@ -62,10 +62,11 @@ export async function generateTutorFeedback(
   topic: string,
   maxLevel: number,
   learnerContext?: string,
+  memoryBlock?: string,
 ): Promise<string> {
   const { text } = await aiComplete(
     'tutor-feedback',
-    buildTutorFeedbackPrompt(correct, total, topic, maxLevel, learnerContext),
+    buildTutorFeedbackPrompt(correct, total, topic, maxLevel, learnerContext, memoryBlock),
     { maxTokens: 100 }
   )
   return text

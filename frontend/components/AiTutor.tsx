@@ -67,7 +67,9 @@ export default function AiTutor({ studentId, onComplete }: AiTutorProps) {
           correct: totalCorrect,
           total: questions.length,
           topic: topicMeta?.label || topic,
-          maxLevel: maxLevel,
+          topicId: topic,
+          maxLevel,
+          ...(studentId ? { studentId } : {}),
         })
         setFeedback(fb.feedback)
       } catch {

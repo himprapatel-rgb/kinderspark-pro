@@ -416,11 +416,34 @@ export async function generateReport(classId: string) {
   })
 }
 
-export async function getTutorFeedback(data: { correct: number; total: number; topic: string; maxLevel: number }) {
+export async function getTutorFeedback(data: {
+  correct: number
+  total: number
+  topic: string
+  maxLevel: number
+  /** Stable topic id for tutor memory (e.g. module id). */
+  topicId?: string
+  studentId?: string
+}) {
   return req('/ai/tutor-feedback', {
     method: 'POST',
     body: JSON.stringify(data),
   })
+}
+
+export async function saveStudentDrawing(studentId: string, image: string) {
+  return req(`/drawings/${encodeURIComponent(studentId)}`, {
+    method: 'POST',
+    body: JSON.stringify({ image }),
+  })
+}
+
+export async function getStudentDrawings(studentId: string) {
+  return req(`/drawings/${encodeURIComponent(studentId)}`)
+}
+
+export async function deleteStudentDrawing(drawingId: string) {
+  return req(`/drawings/item/${encodeURIComponent(drawingId)}`, { method: 'DELETE' })
 }
 
 export async function getRecommendations(studentId: string) {
