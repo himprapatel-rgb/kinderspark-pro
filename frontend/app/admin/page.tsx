@@ -42,8 +42,8 @@ export default function AdminPage() {
       setClasses(cls)
       setClassAnalytics(Array.isArray(analytics) ? analytics : [])
       getPilotMetrics().then(setPilotMetrics).catch(() => {})
-      if (user?.schoolId) {
-        getSchoolGraph(user.schoolId).then(setSchoolGraph).catch(() => {})
+      if ((user as any)?.schoolId) {
+        getSchoolGraph((user as any).schoolId).then(setSchoolGraph).catch(() => {})
       }
     } catch (e) {
       console.error(e)
@@ -397,7 +397,7 @@ export default function AdminPage() {
           <div className="space-y-4">
             <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
               <div className="font-black text-sm mb-1">School Graph</div>
-              <div className="text-xs font-bold app-muted">Grades -> Class groups -> Teachers and students</div>
+              <div className="text-xs font-bold app-muted">Grades {'->'} Class groups {'->'} Teachers and students</div>
             </div>
             {!schoolGraph?.grades?.length && (
               <InlineEmpty emoji="🏫" text="No graph data yet. Run backfill and assign classes." />

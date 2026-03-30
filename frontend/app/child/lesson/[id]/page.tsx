@@ -2,12 +2,20 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useAppStore as useStore } from '@/store/appStore'
-import { updateProgress, updateStudent, getSyllabus } from '@/lib/api'
-import { MODS } from '@/lib/modules'
+import { updateProgress, updateStudent, getSyllabus, getProgress } from '@/lib/api'
+import { MODS, type Module } from '@/lib/modules'
+import {
+  orderedPathMods,
+  getNextModuleAfter,
+  getRecommendedNextModule,
+  touchPracticeTimestamp,
+  estimateLessonMinutes,
+} from '@/lib/learnPath'
 import { speak } from '@/lib/speech'
-import { Home, RotateCcw, Volume2 } from 'lucide-react'
+import { Home, RotateCcw, Volume2, Map, Sparkles } from 'lucide-react'
 import ConfettiCanvas from '@/components/Confetti'
 import { playComplete, playSwipe, playStar } from '@/lib/sounds'
+import { useTranslation } from '@/hooks/useTranslation'
 
 export default function LessonPage() {
   const router = useRouter()
@@ -17,6 +25,7 @@ export default function LessonPage() {
   const currentStudent = useStore(s => s.currentStudent)
 
   const student = currentStudent || user
+  const { t } = useTranslation()
 
   const [items, setItems] = useState<any[]>([])
   const [title, setTitle] = useState('')
@@ -27,6 +36,7 @@ export default function LessonPage() {
   const [done, setDone] = useState(false)
   const [loading, setLoading] = useState(true)
   const [confetti, setConfetti] = useState(false)
+  const [nextModule, setNextModule] = useState<Module | null>(null)
 
   const isSyllabus = rawId.startsWith('syl_')
   const moduleId = isSyllabus ? rawId : rawId
@@ -61,9 +71,11 @@ export default function LessonPage() {
     setLoading(false)
   }
 
-  const card = items[idx]
   const total = items.length
+  const card = items[idx]
   const pct = total > 0 ? Math.round(((idx + 1) / total) * 100) : 0
+  const sessionEst = estimateLessonMinutes(total)
+  const cardsToGo = Math.max(0, total - idx - 1)
 
   const handleNext = async () => {
     if (idx < total - 1) {
@@ -84,6 +96,7 @@ export default function LessonPage() {
         const newStars = (student.stars || 0) + 10
         const newStreak = (student.streak || 0) + 1
         await updateStudent(student.id, { stars: newStars, streak: newStreak }).catch(() => {})
+        if (!isSyllabus) touchPracticeTimestamp(moduleId)
       }
     }
   }
@@ -91,6 +104,28 @@ export default function LessonPage() {
   const handlePrev = () => {
     if (idx > 0) setIdx(i => i - 1)
   }
+
+  useEffect(() => {
+    if (!done || !student) return
+    const run = async () => {
+      try {
+        const list = await getProgress(student.id)
+        const map: Record<string, number> = {}
+        ;(list || []).forEach((p: any) => {
+          map[p.moduleId] = p.cards
+        })
+        const p = orderedPathMods()
+        if (isSyllabus) {
+          setNextModule(getRecommendedNextModule(p, map))
+        } else {
+          setNextModule(getNextModuleAfter(p, moduleId, map, true))
+        }
+      } catch {
+        setNextModule(null)
+      }
+    }
+    run()
+  }, [done, student, isSyllabus, moduleId])
 
   if (loading) {
     return (
@@ -101,24 +136,70 @@ export default function LessonPage() {
   }
 
   if (done) {
+    const prevStreak = Number((student as any)?.streak ?? 0)
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-6"
-        style={{ background: 'var(--app-bg)' }}>
+      <div
+        className="min-h-screen flex flex-col items-center justify-center px-5 pb-10"
+        style={{ background: 'var(--app-bg)' }}
+      >
         <ConfettiCanvas trigger={confetti} onComplete={() => setConfetti(false)} />
-        <div className="text-7xl mb-4 animate-bounce">🎉</div>
-        <div className="text-3xl font-black mb-2" style={{ color: 'rgb(var(--foreground-rgb))' }}>Amazing!</div>
-        <div className="app-muted font-bold text-center mb-6">
-          You completed {title}!<br />+10 ⭐ stars earned!
+        <div className="text-7xl mb-3 animate-bounce">🎉</div>
+        <div className="text-2xl font-black mb-1 text-center" style={{ color: 'rgb(var(--foreground-rgb))' }}>
+          {t('learn_complete_title')}
         </div>
-        <div className="flex gap-3">
-          <button onClick={() => { setDone(false); setIdx(0) }}
-            className="px-6 py-3 rounded-2xl font-black inline-flex items-center gap-2"
-            style={{ background: color, color: '#fff' }}>
+        <div className="text-base font-black mb-1" style={{ color }}>
+          +10 ⭐ · {t('done')} ✓
+        </div>
+        <div className="app-muted font-bold text-center text-sm mb-1 max-w-xs">{title}</div>
+        {student != null && (
+          <div className="text-xs font-black mb-5 px-3 py-1.5 rounded-full" style={{ background: 'rgba(245,166,35,0.15)', color: '#D4881A' }}>
+            🔥 {prevStreak + 1}d · {t('learn_complete_streak')}
+          </div>
+        )}
+        {student == null && <div className="mb-5" />}
+        <div className="flex flex-col gap-2.5 w-full max-w-sm">
+          {nextModule && (
+            <button
+              type="button"
+              onClick={() => router.push(`/child/lesson/${nextModule.id}`)}
+              className="w-full min-h-11 py-3.5 rounded-2xl font-black text-sm inline-flex items-center justify-center gap-2 app-pressable animate-sparkle-on-hover"
+              style={{
+                background: 'linear-gradient(135deg, var(--app-gold), var(--app-warning))',
+                color: '#2B1F10',
+                boxShadow: '0 6px 20px rgba(245,183,49,0.35)',
+              }}
+            >
+              <Sparkles size={18} />
+              {t('learn_next_lesson')}: {nextModule.icon} {nextModule.title}
+            </button>
+          )}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => router.push('/child/learn')}
+              className="flex-1 min-h-11 py-3 rounded-2xl font-black text-sm inline-flex items-center justify-center gap-2 app-pressable"
+              style={{ background: 'rgba(94,92,230,0.18)', color: '#5B7FE8', border: '1px solid rgba(94,92,230,0.35)' }}
+            >
+              <Map size={16} /> {t('learn_path_title').split(' ')[0]}…
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push('/child')}
+              className="flex-1 min-h-11 py-3 rounded-2xl font-black text-sm inline-flex items-center justify-center gap-2 app-pressable bg-white/12"
+            >
+              <Home size={16} /> Home
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setDone(false)
+              setIdx(0)
+            }}
+            className="w-full py-2.5 rounded-xl font-bold text-sm app-pressable inline-flex items-center justify-center gap-2 app-muted"
+            style={{ background: 'var(--app-surface-soft)' }}
+          >
             <RotateCcw size={16} /> Play Again
-          </button>
-          <button onClick={() => router.push('/child')}
-            className="px-6 py-3 rounded-2xl font-black bg-white/20 inline-flex items-center gap-2">
-            <Home size={16} /> Home
           </button>
         </div>
       </div>
@@ -130,11 +211,15 @@ export default function LessonPage() {
       {/* Header */}
       <div className="flex items-center gap-3 p-4 doodle-surface">
         <button onClick={() => router.push('/child')} className="font-bold app-pressable sticker-bubble px-3 py-1.5" style={{ color: 'rgb(var(--foreground-rgb))' }}>← Back</button>
-        <div className="flex-1">
-          <div className="flex justify-between text-xs font-bold app-muted mb-1">
-            <span>{title}</span>
-            <span>{idx + 1}/{total}</span>
+        <div className="flex-1 min-w-0">
+          <div className="flex justify-between text-xs font-bold app-muted mb-0.5 gap-2">
+            <span className="truncate">{title}</span>
+            <span className="shrink-0">{idx + 1}/{total}</span>
           </div>
+          <p className="text-[10px] font-bold app-muted mb-1">
+            {t('learn_min_estimate').replace('{n}', String(sessionEst))}
+            {total > 0 && idx < total ? ` · ${t('learn_cards_left').replace('{n}', String(cardsToGo))}` : ''}
+          </p>
           <div className="rounded-full h-2" style={{ background: 'rgba(120,120,140,0.18)' }}>
             <div className="h-2 rounded-full transition-all" style={{ width: `${pct}%`, background: color }} />
           </div>

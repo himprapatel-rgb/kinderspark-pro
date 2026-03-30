@@ -44,7 +44,7 @@ export default function ActivityFeed({ classId }: { classId: string }) {
 
   const handleLike = async (postId: string) => {
     if (likedPosts.has(postId)) return
-    setLikedPosts((prev) => new Set([...prev, postId]))
+    setLikedPosts((prev) => new Set(Array.from(prev).concat(postId)))
     setPosts((prev) =>
       prev.map((p) => (p.id === postId ? { ...p, likes: p.likes + 1 } : p))
     )

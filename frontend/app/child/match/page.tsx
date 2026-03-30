@@ -352,8 +352,8 @@ export default function WordMatchPage() {
             else if (selected && isCorrect && feedback === 'wrong') { bg = 'rgba(48,209,88,0.2)'; border = '#4CAF6A'; textColor = '#4CAF6A' }
 
             return (
-              <button className="app-pressable"
-                key={choice}
+              <button
+                    key={choice}
                 onClick={() => handleChoice(choice)}
                 disabled={!!selected}
                 className="rounded-2xl py-4 px-3 font-black text-base transition-all active:scale-95 disabled:cursor-default"
@@ -373,3 +373,4 @@ export default function WordMatchPage() {
     </div>
   )
 }
+

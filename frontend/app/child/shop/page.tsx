@@ -86,7 +86,7 @@ export default function ShopPage() {
             {SHOP_AVS.map(item => {
               const owned = ownedItems.includes(item.id)
               return (
-                <button className="app-pressable" key={item.id}
+                <button key={item.id}
                   onClick={() => handleBuy(item.id, item.price, 'avatar')}
                   disabled={buying === item.id}
                   className="rounded-2xl p-4 flex flex-col items-center gap-1 active:scale-95 transition-all"
@@ -115,7 +115,7 @@ export default function ShopPage() {
               const owned = ownedItems.includes(item.id)
               const active = selectedTheme === item.id
               return (
-                <button className="app-pressable" key={item.id}
+                <button key={item.id}
                   onClick={() => handleBuy(item.id, item.price, 'theme')}
                   disabled={buying === item.id}
                   className="rounded-2xl p-4 flex items-center gap-3 active:scale-95 transition-all"

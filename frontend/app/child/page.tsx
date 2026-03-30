@@ -526,7 +526,7 @@ export default function ChildPage() {
           <div
             className="rounded-3xl overflow-hidden"
             style={{
-              background: 'linear-gradient(135deg, rgba(255,159,10,0.08), rgba(255,107,53,0.06))', border: '1px solid rgba(255,159,10,0.2)',
+              background: 'linear-gradient(135deg, rgba(255,159,10,0.08), rgba(255,107,53,0.06))',
               border: '1.5px solid rgba(255,159,10,0.35)',
               boxShadow: '0 8px 32px rgba(255,107,53,0.2)',
             }}
@@ -699,7 +699,7 @@ export default function ChildPage() {
                 const pct = Math.min(100, Math.round((done / (mod?.items.length || 1)) * 100))
                 const color = mod?.color || '#5B7FE8'
                 return (
-                  <button className="app-pressable"
+                  <button
                     key={i}
                     onClick={() => router.push(`/child/lesson/${rec.moduleId}`)}
                     className="flex-shrink-0 w-36 rounded-2xl p-3.5 text-left active:scale-[0.97] transition-all"
@@ -728,8 +728,8 @@ export default function ChildPage() {
           <h2 className="font-black text-base mb-3 inline-flex items-center gap-2"><PlayCircle size={16} /> Quick Activities</h2>
           <div className="grid grid-cols-3 tablet:grid-cols-6 gap-3">
             {ACTIVITY_ITEMS.map(a => (
-              <button className="app-pressable"
-                key={a.label}
+              <button
+                    key={a.label}
                 onClick={() => router.push(a.path)}
                 className="rounded-2xl p-4 flex flex-col items-center gap-2 active:scale-[0.94] transition-all"
                 style={{ background: a.bg, border: `1.5px solid ${a.border}` }}
@@ -753,7 +753,7 @@ export default function ChildPage() {
                 const total = syl.items?.length || 1
                 const pct = Math.min(100, Math.round((done / total) * 100))
                 return (
-                  <button className="app-pressable"
+                  <button
                     key={syl.id}
                     onClick={() => router.push(`/child/lesson/syl_${syl.id}`)}
                     className="rounded-2xl p-4 text-left active:scale-[0.97] transition-all relative overflow-hidden"
@@ -808,8 +808,8 @@ export default function ChildPage() {
               const pct = Math.min(100, Math.round((done / mod.items.length) * 100))
               const complete = pct === 100
               return (
-                <button className="app-pressable"
-                  key={mod.id}
+                <button
+                    key={mod.id}
                   onClick={() => router.push(`/child/lesson/${mod.id}`)}
                   className="rounded-2xl p-4 text-left active:scale-[0.97] transition-all relative"
                   style={{
@@ -917,9 +917,9 @@ export default function ChildPage() {
               })}
             </div>
 
-            <button className="app-pressable"
+            <button
               onClick={() => setCelebrationBadges([])}
-              className="w-full py-4 rounded-2xl text-black font-black text-base"
+              className="w-full py-4 rounded-2xl text-black font-black text-base app-pressable"
               style={{
                 background: 'linear-gradient(135deg, #F5B731, #F5A623)',
                 boxShadow: '0 6px 24px rgba(255,159,10,0.5)',
@@ -934,3 +934,5 @@ export default function ChildPage() {
     </div>
   )
 }
+
+

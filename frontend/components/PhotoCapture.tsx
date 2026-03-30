@@ -136,9 +136,7 @@ export default function PhotoCapture({ classId, students, onPosted, onClose }: P
                     }`}
                     style={{
                       background: selectedEmoji === t.emoji ? 'rgba(94,92,230,0.2)' : 'var(--app-surface-soft)',
-                      border: '1px solid var(--app-border)',
-                      ringColor: '#5E5CE6',
-                    }}
+                      border: '1px solid var(--app-border)',                    }}
                   >
                     {t.emoji} {t.label}
                   </button>

@@ -115,10 +115,10 @@ function BuilderContent() {
           {card?.hint && <div className="app-muted font-bold text-lg">{card.hint}</div>}
         </div>
         <div className="flex items-center justify-between px-6 pb-10">
-          <button className="app-pressable" onClick={() => setPreviewIdx(i => Math.max(0, i - 1))} disabled={previewIdx === 0}
+          <button onClick={() => setPreviewIdx(i => Math.max(0, i - 1))} disabled={previewIdx === 0}
             className="text-white/60 text-3xl disabled:opacity-30">←</button>
           <div className="app-muted font-bold">{previewIdx + 1} / {cards.length}</div>
-          <button className="app-pressable" onClick={() => setPreviewIdx(i => Math.min(cards.length - 1, i + 1))} disabled={previewIdx === cards.length - 1}
+          <button onClick={() => setPreviewIdx(i => Math.min(cards.length - 1, i + 1))} disabled={previewIdx === cards.length - 1}
             className="text-white/60 text-3xl disabled:opacity-30">→</button>
         </div>
       </div>
@@ -142,7 +142,7 @@ function BuilderContent() {
             <div className="app-muted text-xs font-bold mb-2">Icon</div>
             <div className="flex flex-wrap gap-2">
               {ICONS.map(ic => (
-                <button className="app-pressable" key={ic} onClick={() => setMeta(m => ({...m, icon: ic}))}
+                <button key={ic} onClick={() => setMeta(m => ({...m, icon: ic}))}
                   className={`text-xl p-1.5 rounded-lg ${meta.icon === ic ? 'ring-2 ring-white' : ''}`}
                   style={{ background: meta.icon === ic ? meta.color : 'rgba(70,75,96,0.08)' }}>
                   {ic}
@@ -161,7 +161,7 @@ function BuilderContent() {
             <div className="app-muted text-xs font-bold mb-2">Color</div>
             <div className="flex gap-2 flex-wrap">
               {COLORS.map(c => (
-                <button className="app-pressable" key={c} onClick={() => setMeta(m => ({...m, color: c}))}
+                <button key={c} onClick={() => setMeta(m => ({...m, color: c}))}
                   className={`w-8 h-8 rounded-full ${meta.color === c ? 'ring-2 ring-white ring-offset-1 ring-offset-black' : ''}`}
                   style={{ background: c }} />
               ))}
@@ -191,12 +191,12 @@ function BuilderContent() {
 
         {/* AI & Template buttons */}
         <div className="flex gap-2 mb-4">
-          <button className="app-pressable" onClick={() => setShowAI(true)}
+          <button onClick={() => setShowAI(true)}
             className="flex-1 py-2 rounded-xl text-xs font-black"
             style={{ background: '#8B6CC1' }}>
             🤖 AI Generate
           </button>
-          <button className="app-pressable" onClick={() => setShowTemplate(true)}
+          <button onClick={() => setShowTemplate(true)}
             className="flex-1 py-2 rounded-xl text-xs font-black"
             style={{ background: '#5B7FE8' }}>
             ✨ Templates
@@ -229,12 +229,12 @@ function BuilderContent() {
 
       {/* Bottom buttons */}
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] p-4 border-t flex gap-2" style={{ background: 'rgba(255,255,255,0.94)', borderColor: 'var(--app-border)' }}>
-        <button className="app-pressable" onClick={() => handleSave(false)} disabled={saving}
+        <button onClick={() => handleSave(false)} disabled={saving}
           className="flex-1 py-3 rounded-xl font-black"
           style={{ background: '#5B7FE8' }}>
           {saving ? 'Saving...' : '💾 Save'}
         </button>
-        <button className="app-pressable" onClick={() => handleSave(true)} disabled={saving}
+        <button onClick={() => handleSave(true)} disabled={saving}
           className="flex-1 py-3 rounded-xl font-black"
           style={{ background: '#4CAF6A' }}>
           ✓ Publish
@@ -277,7 +277,7 @@ function BuilderContent() {
             </div>
             <div className="space-y-3">
               {TEMPLATES.map(t => (
-                <button className="app-pressable" key={t.id} onClick={() => applyTemplate(t)}
+                <button key={t.id} onClick={() => applyTemplate(t)}
                   className="w-full flex items-center gap-3 p-4 rounded-2xl text-left"
                   style={{ background: t.color + '22', border: `1px solid ${t.color}44` }}>
                   <div className="text-3xl">{t.icon}</div>

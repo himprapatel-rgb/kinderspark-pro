@@ -69,13 +69,13 @@ export default function ThemeCustomizer() {
             {ACCENTS.map((a) => (
               <button
                 key={a.id}
-                onClick={() => updateSettings({ accent: a.id })}
+                onClick={() => updateSettings({ hc: !settings.hc })}
                 aria-label={`Set accent ${a.id}`}
                 style={{
                   width: 24,
                   height: 24,
                   borderRadius: 999,
-                  border: settings.accent === a.id ? '2px solid #111' : '1px solid rgba(0,0,0,0.2)',
+                  border: '1px solid rgba(0,0,0,0.2)',
                   background: a.color,
                 }}
               />

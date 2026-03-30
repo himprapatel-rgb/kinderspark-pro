@@ -21,9 +21,9 @@ export default function SyllabusBuilderPage() {
         className="p-5 pt-10"
         style={{ background: 'linear-gradient(135deg, #4CAF6A, #5FBF7F)' }}
       >
-        <button className="app-pressable"
+        <button
           onClick={() => router.back()}
-          className="text-sm font-bold mb-4 flex items-center gap-1"
+          className="text-sm font-bold mb-4 flex items-center gap-1 app-pressable"
         >
           ← Back
         </button>
@@ -40,3 +40,4 @@ export default function SyllabusBuilderPage() {
     </div>
   )
 }
+

@@ -244,7 +244,7 @@ export default function AgentsDashboard() {
                 onChange={e => setTaskInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && sendTask()}
                 placeholder="Dispatch a task..."
-                style={{ flex: 1, background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 7, padding: '6px 8px', color: 'white', fontSize: 10, outline: 'none', fontFamily: 'Nunito, sans-serif' }}
+                style={{ flex: 1, background: 'var(--app-surface-soft)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 7, padding: '6px 8px', color: 'white', fontSize: 10, outline: 'none', fontFamily: 'Nunito, sans-serif' }}
               />
               <button onClick={sendTask} disabled={sending || !taskInput.trim()} style={{ background: sending || !taskInput.trim() ? 'rgba(255,255,255,0.06)' : '#5B7FE8', border: 'none', borderRadius: 7, padding: '6px 9px', color: 'white', fontWeight: 900, fontSize: 11, cursor: sending || !taskInput.trim() ? 'default' : 'pointer', fontFamily: 'Nunito, sans-serif', transition: 'background 0.15s' }}>
                 {sending ? '…' : '→'}
@@ -339,7 +339,7 @@ export default function AgentsDashboard() {
 
               {/* DM input */}
               <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.06)', background: '#13101f', flexShrink: 0 }}>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)', border: `1px solid ${selectedAgent.color}30`, borderRadius: 12, padding: '4px 4px 4px 12px', transition: 'border-color 0.2s' }}>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', background: 'var(--app-surface-soft)', border: `1px solid ${selectedAgent.color}30`, borderRadius: 12, padding: '4px 4px 4px 12px', transition: 'border-color 0.2s' }}>
                   <span style={{ fontSize: 15 }}>🧑‍💻</span>
                   <input
                     value={dmInput}
@@ -496,3 +496,4 @@ export default function AgentsDashboard() {
     </div>
   )
 }
+

@@ -1,5 +1,5 @@
 'use client'
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { createElement, useState, useRef, useEffect, useCallback } from 'react'
 
 // ── Pull-to-Refresh Hook ────────────────────────────────────────────────────
 // Provides mobile-native pull-to-refresh behaviour for any scrollable page.
@@ -96,28 +96,28 @@ export function PullIndicator({
 }) {
   if (progress <= 0 && !refreshing) return null
 
-  return (
-    <div
-      className="flex items-center justify-center transition-all duration-150"
-      style={{
+  return createElement(
+    'div',
+    {
+      className: 'flex items-center justify-center transition-all duration-150',
+      style: {
         height: refreshing ? 48 : Math.max(0, pullDistance),
         overflow: 'hidden',
-      }}
-    >
-      <div
-        className={`w-8 h-8 rounded-full border-3 flex items-center justify-center ${refreshing ? 'animate-spin' : ''}`}
-        style={{
+      },
+    },
+    createElement(
+      'div',
+      {
+        className: `w-8 h-8 rounded-full border-3 flex items-center justify-center ${refreshing ? 'animate-spin' : ''}`,
+        style: {
           borderWidth: 3,
           borderColor: `rgba(77,170,223,${progress * 0.5})`,
           borderTopColor: progress >= 1 || refreshing ? 'var(--app-accent)' : `rgba(77,170,223,${progress})`,
           transform: `scale(${0.5 + progress * 0.5}) rotate(${progress * 360}deg)`,
           transition: refreshing ? 'none' : 'transform 0.1s ease',
-        }}
-      >
-        {progress >= 1 && !refreshing && (
-          <span className="text-xs">↓</span>
-        )}
-      </div>
-    </div>
+        },
+      },
+      progress >= 1 && !refreshing ? createElement('span', { className: 'text-xs' }, '↓') : null
+    )
   )
 }

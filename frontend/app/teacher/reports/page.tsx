@@ -46,8 +46,8 @@ function ReportsContent() {
           {classes.length > 0 ? (
             <div className="space-y-2">
               {classes.map(cls => (
-                <button className="app-pressable"
-                  key={cls.id}
+                <button
+                    key={cls.id}
                   onClick={() => setClassId(cls.id)}
                   className="w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold text-sm transition-all"
                   style={{
@@ -111,3 +111,4 @@ export default function ReportsPage() {
     </Suspense>
   )
 }
+

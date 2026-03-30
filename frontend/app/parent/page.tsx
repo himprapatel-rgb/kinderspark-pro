@@ -972,7 +972,7 @@ export default function ParentPage() {
               onChange={e => setReplyBody(e.target.value)}
               className="app-input mb-3 resize-none" />
             <div className="mb-3 flex flex-wrap gap-2">
-              {QUICK_PARENT_REPLIES.map((q) => (
+              {quickReplies.map((q: string) => (
                 <button
                   key={q}
                   onClick={() => setReplyBody(q)}
