@@ -1,8 +1,11 @@
-# Run once from Actions → "Prisma — resolve failed migration" → Run workflow
-# when migrate deploy fails with P3009 (failed migration blocks newer ones).
+# Run from Actions → "Prisma — resolve failed migration" when migrate deploy
+# hits P3009/P3018 (failed migration or duplicate column after db push).
 #
-# For 20260330_ai_spark_artifact: checks if "AiSparkArtifact" exists; marks the
-# migration applied if the table is there, otherwise rolled-back, then deploys pending migrations.
+# 1) Optional: resolves the workflow inputs migration if it is unfinished
+#    (finished_at IS NULL): --applied if table exists, else --rolled-back.
+# 2) Always: if 20260330_profile_contact_fields is unfinished and Student +
+#    ParentProfile already have the expected columns, marks it applied.
+# 3) Runs prisma migrate deploy.
 #
 # Requires repo secret: DATABASE_URL (production PostgreSQL URL).
 
@@ -47,7 +50,7 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y postgresql-client
 
-      - name: Resolve stuck migration then apply pending
+      - name: Resolve stuck migrations then apply pending
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           MIGRATION_NAME: ${{ github.event.inputs.migration_name }}
@@ -58,16 +61,44 @@ jobs:
             echo "❌ DATABASE_URL secret is not set."
             exit 1
           fi
-          EXISTS=$(psql "$DATABASE_URL" -tAc "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = '$TABLE_NAME');")
-          echo "Table $TABLE_NAME exists in public: $EXISTS"
-          if [ "$EXISTS" = "t" ]; then
-            echo "→ Marking $MIGRATION_NAME as applied (schema already matches migration)."
-            npx prisma migrate resolve --applied "$MIGRATION_NAME"
+
+          failed_unfinished() {
+            local name="$1"
+            psql "$DATABASE_URL" -tAc "SELECT EXISTS (SELECT 1 FROM \"_prisma_migrations\" WHERE migration_name = '$name' AND finished_at IS NULL);"
+          }
+
+          # User-configured migration (default: ai spark artifact)
+          UNFIN=$(failed_unfinished "$MIGRATION_NAME" | tr -d '[:space:]')
+          if [ "$UNFIN" = "t" ]; then
+            EXISTS=$(psql "$DATABASE_URL" -tAc "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = '$TABLE_NAME');")
+            echo "Unfinished migration $MIGRATION_NAME — table $TABLE_NAME exists: $EXISTS"
+            if [ "$EXISTS" = "t" ]; then
+              npx prisma migrate resolve --applied "$MIGRATION_NAME"
+            else
+              npx prisma migrate resolve --rolled-back "$MIGRATION_NAME"
+            fi
           else
-            echo "→ Marking $MIGRATION_NAME as rolled back (re-apply on deploy)."
-            npx prisma migrate resolve --rolled-back "$MIGRATION_NAME"
+            echo "No unfinished row for $MIGRATION_NAME (skip generic resolve)."
           fi
-          echo "→ Applying any pending migrations..."
+
+          # Profile v1 migration: columns often already exist after prisma db push
+          PROF_UNFIN=$(failed_unfinished "20260330_profile_contact_fields" | tr -d '[:space:]')
+          if [ "$PROF_UNFIN" = "t" ]; then
+            STU=$(psql "$DATABASE_URL" -tAc "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'Student' AND column_name IN ('preferredName','photoUrl','addressLine1','addressLine2','city','state','postalCode','country','parentName','parentPhone','emergencyPhone','notes');")
+            PAR=$(psql "$DATABASE_URL" -tAc "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'ParentProfile' AND column_name IN ('phone','alternatePhone','addressLine1','addressLine2','city','state','postalCode','country','photoUrl');")
+            echo "Unfinished 20260330_profile_contact_fields — Student cols=$STU (expect 12), ParentProfile cols=$PAR (expect 9)"
+            if [ "$STU" -eq 12 ] && [ "$PAR" -eq 9 ]; then
+              echo "→ Marking 20260330_profile_contact_fields applied (schema already matches)."
+              npx prisma migrate resolve --applied 20260330_profile_contact_fields
+            else
+              echo "⚠️ Profile migration is stuck but Student/ParentProfile columns are not all present ($STU/12 and $PAR/9). Fix the DB or migration manually."
+              exit 1
+            fi
+          else
+            echo "No unfinished 20260330_profile_contact_fields (skip profile resolve)."
+          fi
+
+          echo "→ prisma migrate deploy"
           npx prisma migrate deploy
 
       - name: Summary
@@ -76,4 +107,4 @@ jobs:
           TABLE_NAME: ${{ github.event.inputs.table_name }}
         run: |
           echo "## Prisma migration repair" >> "$GITHUB_STEP_SUMMARY"
-          echo "Resolved \`$MIGRATION_NAME\` using table \`$TABLE_NAME\` probe, then \`migrate deploy\`." >> "$GITHUB_STEP_SUMMARY"
+          echo "Checked \`$MIGRATION_NAME\` / \`$TABLE_NAME\`, profile field counts, then \`migrate deploy\`." >> "$GITHUB_STEP_SUMMARY"
