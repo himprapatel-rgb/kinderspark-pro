@@ -60,6 +60,15 @@ async function canReadProgress(req: Request, studentId: string): Promise<boolean
   return false
 }
 
+/** Writes (PUT progress, quiz-response) only from the child themselves or a linked parent. */
+async function canWriteProgress(req: Request, studentId: string): Promise<boolean> {
+  const u = req.user
+  if (!u) return false
+  if (u.role === 'child' && u.id === studentId) return true
+  if (u.role === 'parent') return canParentAccessStudent(u.id, studentId)
+  return false
+}
+
 /** Log one quiz answer and refresh aggregates on Progress for that module. */
 router.post('/quiz-response', async (req: Request, res: Response) => {
   try {
@@ -69,8 +78,8 @@ router.post('/quiz-response', async (req: Request, res: Response) => {
     }
     const sid = String(studentId)
     const mid = String(moduleId)
-    if (!(await canReadProgress(req, sid))) {
-      return res.status(403).json({ error: 'Insufficient permissions' })
+    if (!(await canWriteProgress(req, sid))) {
+      return res.status(403).json({ error: 'Only the student or their parent can log quiz responses' })
     }
 
     await ensureLegacyStudent(sid)
@@ -150,8 +159,8 @@ router.get('/:studentId', async (req: Request, res: Response) => {
 router.put('/:studentId/:moduleId', async (req: Request, res: Response) => {
   try {
     const { studentId, moduleId } = req.params
-    if (!(await canReadProgress(req, studentId))) {
-      return res.status(403).json({ error: 'Insufficient permissions' })
+    if (!(await canWriteProgress(req, studentId))) {
+      return res.status(403).json({ error: 'Only the student or their parent can update progress' })
     }
     const { cards } = req.body
     if (cards === undefined) return res.status(400).json({ error: 'cards required' })

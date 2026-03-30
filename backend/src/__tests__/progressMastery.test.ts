@@ -25,4 +25,16 @@ describe('computeMasteryLevel', () => {
   it('clamps score into mastery decision', () => {
     expect(computeMasteryLevel(79, 2, 0, 0)).toBe('in_progress')
   })
+
+  it('handles attempts=0 with score from prior cards only', () => {
+    expect(computeMasteryLevel(0, 0, 5, 0)).toBe('in_progress')
+  })
+
+  it('handles totalQuestions=0 and no other signals as not_started', () => {
+    expect(computeMasteryLevel(0, 0, 0, 0)).toBe('not_started')
+  })
+
+  it('mastered wins even when attempts is 0 if score >= 80', () => {
+    expect(computeMasteryLevel(85, 0, 0, 0)).toBe('mastered')
+  })
 })

@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore as useStore } from '@/store/appStore'
-import { saveAISession, getTutorFeedback, updateStudent, runAiSparkTask } from '@/lib/api'
+import { saveAISession, getTutorFeedback, updateStudent, runAiSparkTask, logQuizResponse } from '@/lib/api'
 import { TUTOR_TOPICS, QB } from '@/lib/modules'
 import {
   speak, speakQuestion, speakEncouragement, speakAnswer,
@@ -151,6 +151,15 @@ export default function TutorPage() {
     setSelected(choice)
     setAnswered(true)
     const isCorrect = choice === currentQ.a
+    if (student?.id && topic) {
+      void logQuizResponse({
+        studentId: student.id,
+        moduleId: `tutor:${topic}`,
+        questionId: `q${qIdx}`,
+        answer: choice,
+        isCorrect,
+      }).catch(() => {})
+    }
     if (isCorrect) {
       playCorrect()
       const newCorrect = correct + 1

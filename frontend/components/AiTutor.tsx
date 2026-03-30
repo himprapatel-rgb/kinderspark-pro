@@ -1,7 +1,7 @@
 'use client'
 import { useState, useCallback } from 'react'
 import { TUTOR_TOPICS, QB } from '@/lib/modules'
-import { getTutorFeedback, saveAISession } from '@/lib/api'
+import { getTutorFeedback, saveAISession, logQuizResponse } from '@/lib/api'
 
 interface AiTutorProps {
   studentId?: string
@@ -44,6 +44,15 @@ export default function AiTutor({ studentId, onComplete }: AiTutorProps) {
 
     const q = questions[qIndex]
     const isCorrect = choice === q.a
+    if (studentId && topic) {
+      void logQuizResponse({
+        studentId,
+        moduleId: `tutor:${topic}`,
+        questionId: `q${qIndex}`,
+        answer: choice,
+        isCorrect,
+      }).catch(() => {})
+    }
     if (isCorrect) {
       setCorrect((c) => c + 1)
       const newLevel = Math.min(5, level + 1)
