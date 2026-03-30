@@ -77,6 +77,7 @@ model Student {
   classId       String
   class         Class                @relation(fields: [classId], references: [id])
   progress      Progress[]
+  quizResponses QuizResponse[]
   completions   HomeworkCompletion[]
   aiSessionLogs AISession[]
   badges        Badge[]
@@ -199,14 +200,36 @@ model HomeworkCompletion {
 }
 
 model Progress {
-  id        String   @id @default(cuid())
-  studentId String
-  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  moduleId  String
-  cards     Int      @default(0)
-  updatedAt DateTime @updatedAt
+  id                 String    @id @default(cuid())
+  studentId          String
+  student            Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  moduleId           String
+  cards              Int       @default(0)
+  score              Int       @default(0)
+  attempts           Int       @default(0)
+  correctAnswers     Int       @default(0)
+  totalQuestions     Int       @default(0)
+  timeSpentSeconds   Int       @default(0)
+  masteryLevel       String    @default("not_started")
+  lastAttemptAt      DateTime?
+  updatedAt          DateTime  @updatedAt
 
   @@unique([studentId, moduleId])
+  @@index([studentId])
+}
+
+model QuizResponse {
+  id         String   @id @default(cuid())
+  studentId  String
+  moduleId   String
+  questionId String   @default("")
+  answer     String   @db.Text
+  isCorrect  Boolean
+  createdAt  DateTime @default(now())
+  student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, moduleId])
+  @@index([studentId, createdAt])
 }
 
 model Message {

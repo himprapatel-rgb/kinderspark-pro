@@ -361,10 +361,38 @@ export async function getProgress(studentId: string) {
   return req(`/progress/${studentId}`)
 }
 
-export async function updateProgress(studentId: string, moduleId: string, cards: number) {
+export async function updateProgress(
+  studentId: string,
+  moduleId: string,
+  cards: number,
+  extra?: {
+    lessonTotal?: number
+    score?: number
+    attempts?: number
+    incrementAttempt?: boolean
+    correctAnswers?: number
+    totalQuestions?: number
+    timeSpentSeconds?: number
+    addTimeSeconds?: number
+    lastAttemptAt?: string
+  }
+) {
   return req(`/progress/${studentId}/${moduleId}`, {
     method: 'PUT',
-    body: JSON.stringify({ cards }),
+    body: JSON.stringify({ cards, ...extra }),
+  })
+}
+
+export async function logQuizResponse(data: {
+  studentId: string
+  moduleId: string
+  questionId?: string
+  answer: string
+  isCorrect: boolean
+}) {
+  return req('/progress/quiz-response', {
+    method: 'POST',
+    body: JSON.stringify(data),
   })
 }
 

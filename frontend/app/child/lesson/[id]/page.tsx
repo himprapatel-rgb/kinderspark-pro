@@ -83,7 +83,7 @@ export default function LessonPage() {
       setIdx(i => i + 1)
       // Update progress
       if (student) {
-        await updateProgress(student.id, moduleId, idx + 1).catch(() => {})
+        await updateProgress(student.id, moduleId, idx + 1, { lessonTotal: total }).catch(() => {})
       }
     } else {
       // Finished
@@ -92,7 +92,7 @@ export default function LessonPage() {
       setConfetti(true)
       if (student) {
         playStar()
-        await updateProgress(student.id, moduleId, total).catch(() => {})
+        await updateProgress(student.id, moduleId, total, { lessonTotal: total }).catch(() => {})
         const newStars = (student.stars || 0) + 10
         const newStreak = (student.streak || 0) + 1
         await updateStudent(student.id, { stars: newStars, streak: newStreak }).catch(() => {})

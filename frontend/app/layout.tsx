@@ -6,6 +6,7 @@ import PwaUpdateBanner from '@/components/PwaUpdateBanner';
 import NativeBridge from '@/components/NativeBridge';
 import ThemeCustomizer from '@/components/ThemeCustomizer';
 import { ToastProvider } from '@/components/Toast';
+import ClientRoot from '@/components/ClientRoot';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -60,9 +61,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         </a>
         <ToastProvider>
           <AccessibilityProvider>
+            <ClientRoot>
             <main id="ks-main" tabIndex={-1} className="min-h-screen outline-none">
               {children}
             </main>
+            </ClientRoot>
             <ThemeCustomizer />
           </AccessibilityProvider>
         </ToastProvider>

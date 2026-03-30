@@ -24,6 +24,7 @@ import {
   getMessageThreads, getThreadMessages, createMessageThread, sendThreadMessage, lookupMessageRecipient, getMessageRecipients,
   runAiSparkTask,
 } from '@/lib/api'
+import { MODS } from '@/lib/modules'
 
 // ─── tiny helpers ─────────────────────────────────────────────────────────────
 const fmt = (d: string) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
@@ -1927,6 +1928,34 @@ export default function TeacherDashboard() {
                   </div>
                 ))}
               </div>
+              {(s.progress || []).length > 0 && (
+                <div className="px-4 pb-3">
+                  <div className="text-xs font-bold app-muted mb-2">MODULE PROGRESS</div>
+                  <div className="space-y-2 max-h-44 overflow-y-auto">
+                    {(s.progress || []).map((p: any) => {
+                      const mod = MODS.find(m => m.id === p.moduleId)
+                      const label = mod?.title || p.moduleId
+                      const scoreN = typeof p.score === 'number' ? p.score : 0
+                      const attemptsN = typeof p.attempts === 'number' ? p.attempts : 0
+                      const sec = typeof p.timeSpentSeconds === 'number' ? p.timeSpentSeconds : 0
+                      const mastery = String(p.masteryLevel || '—')
+                      return (
+                        <div
+                          key={p.id}
+                          className="rounded-xl p-2.5 text-xs"
+                          style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}
+                        >
+                          <div className="font-black text-sm">{label}</div>
+                          <div className="font-bold app-muted mt-0.5">
+                            Score {scoreN}% · {mastery} · {attemptsN} attempt{attemptsN === 1 ? '' : 's'}
+                            {sec > 0 ? ` · ${sec}s` : ''}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
               {/* Recent AI sessions */}
               {(s.aiSessionLogs || []).length > 0 && (
                 <div className="px-4 pb-3">

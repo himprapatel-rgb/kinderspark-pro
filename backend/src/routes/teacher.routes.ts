@@ -9,7 +9,7 @@ router.use(requireRole('teacher', 'admin'))
 // GET /api/teacher/me
 router.get('/me', async (req: Request, res: Response) => {
   try {
-    const user = (req as any).user
+    const user = req.user
     if (!user || user.role !== 'teacher') {
       return res.status(401).json({ error: 'Teacher authentication required' })
     }

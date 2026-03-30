@@ -33,8 +33,10 @@ import assignmentsRoutes from './routes/assignments.routes'
 import relationshipsRoutes from './routes/relationships.routes'
 import diagRoutes from './routes/diag.routes'
 import { startAgentScheduler } from './services/agentScheduler.service'
+import { logStartupEnvHints } from './config/startupEnv'
 
 const app = express()
+logStartupEnvHints()
 
 /** Broad IP window limit (100 / 15m); skips unauthenticated health probes. */
 const ipWindowLimiter = rateLimit({

@@ -341,7 +341,9 @@ export default function ParentPage() {
     progressData.forEach((p: any) => {
       const mod = MODS.find(m => m.id === p.moduleId)
       if (mod) {
-        moduleMap[p.moduleId] = Math.round((p.cards / mod.items.length) * 100)
+        const pctFromCards = Math.round((p.cards / mod.items.length) * 100)
+        const hasScore = typeof p.score === 'number'
+        moduleMap[p.moduleId] = hasScore ? Math.min(100, Math.max(0, p.score)) : pctFromCards
       }
     })
 
@@ -990,6 +992,38 @@ export default function ParentPage() {
                 bestLevel={student?.aiBestLevel || 1}
                 badges={chartBadges}
               />
+            )}
+
+            {progressData.length > 0 && (
+              <div className="mt-4 mb-4">
+                <div className="text-xs font-bold app-muted mb-2">MODULE MASTERY</div>
+                <div className="space-y-2">
+                  {progressData.map((p: any) => {
+                    const mod = MODS.find(m => m.id === p.moduleId)
+                    const label = mod?.title || p.moduleId
+                    const mastery = String(p.masteryLevel || 'not_started')
+                    const masteryLabel =
+                      mastery === 'mastered' ? 'Mastered' : mastery === 'in_progress' ? 'In progress' : 'Not started'
+                    const scoreN = typeof p.score === 'number' ? p.score : 0
+                    const attemptsN = typeof p.attempts === 'number' ? p.attempts : 0
+                    const sec = typeof p.timeSpentSeconds === 'number' ? p.timeSpentSeconds : 0
+                    return (
+                      <div
+                        key={p.id || `${p.moduleId}-${p.updatedAt}`}
+                        className="rounded-2xl p-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between"
+                        style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}
+                      >
+                        <div className="font-black text-sm">{label}</div>
+                        <div className="text-xs font-bold app-muted">
+                          Score {scoreN}% · {masteryLabel}
+                          {attemptsN > 0 ? ` · ${attemptsN} attempt${attemptsN === 1 ? '' : 's'}` : ''}
+                          {sec > 0 ? ` · ${Math.max(1, Math.round(sec / 60))} min practiced` : ''}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
             )}
 
             {/* AI Tutor Sessions list */}
