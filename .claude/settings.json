@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "defaultMode": "plan"
+  },
+  "alwaysThinkingEnabled": true,
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "A file was just edited or written. Look at the file path in the tool input: tool_input = $ARGUMENTS. Check if this change affects any of the following core areas of KinderSpark Pro:\n1. A new database model or field was added/changed (backend/prisma/schema.prisma)\n2. A new API route or endpoint was added (backend/src/routes/)\n3. A new frontend page or route was added (frontend/app/)\n4. A new service or controller was added (backend/src/services/ or controllers/)\n5. A new environment variable is needed\n6. A new learning module was added (frontend/lib/modules.ts)\n7. A new GitHub Actions workflow was added (.github/workflows/)\n8. A security rule changed\n9. A design system rule changed\n10. A Known Gap was fixed\n\nIf YES to any of the above, output this exact message so Claude knows to update CLAUDE.md:\n{\"additionalContext\": \"MEMORY UPDATE REQUIRED: The file just edited touches a core area. You MUST now update /CLAUDE.md to reflect this change before finishing your task. Keep the update concise (1-2 lines). Do not skip this step.\"}\n\nIf NO, output nothing.",
+            "statusMessage": "Checking if CLAUDE.md needs updating..."
+          }
+        ]
+      }
+    ]
+  }
+}
