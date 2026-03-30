@@ -1,15 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
-
-const JWT_SECRET = process.env.JWT_SECRET || 'kinderspark-secret'
-
-// Warn loudly at startup if using the weak default secret
-if (JWT_SECRET === 'kinderspark-secret') {
-  console.warn('[SECURITY] JWT_SECRET is using the default weak value. Set a strong JWT_SECRET in your .env file.')
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('Refusing to start with default JWT_SECRET in production')
-  }
-}
+import { getJwtSecret } from '../config/jwtSecret'
 
 export interface AuthUser {
   id: string
@@ -27,12 +18,14 @@ declare global {
   }
 }
 
-/** Populates req.user from Bearer token or cookie (does not reject on missing token) */
-export function authenticate(req: Request, _res: Response, next: NextFunction) {
+/**
+ * Populates req.user from Bearer token or cookie.
+ * Invalid Bearer → 401. Stale httpOnly cookie only (no Bearer) → clear cookie and continue so login still works.
+ */
+export function authenticate(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization
-  const bearerToken = authHeader && authHeader.startsWith('Bearer ')
-    ? authHeader.slice(7)
-    : null
+  const bearerToken =
+    authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() || null : null
 
   const tokenFromCookie = req.cookies?.kinderspark_token
   const token = bearerToken || tokenFromCookie
@@ -40,10 +33,18 @@ export function authenticate(req: Request, _res: Response, next: NextFunction) {
   if (!token) return next()
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as AuthUser
+    const decoded = jwt.verify(token, getJwtSecret()) as AuthUser
     req.user = decoded
   } catch {
-    // Invalid token — still pass through for public routes
+    if (bearerToken) {
+      return res.status(401).json({ error: 'Invalid or expired token' })
+    }
+    res.clearCookie('kinderspark_token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+    })
+    return next()
   }
   next()
 }

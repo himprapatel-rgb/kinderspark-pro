@@ -1,8 +1,11 @@
+import { getJwtSecret } from './jwtSecret'
+
 /**
  * Log production configuration gaps at startup (non-fatal).
- * Critical secrets are still enforced in auth middleware where applicable.
+ * JWT secret is validated via getJwtSecret() (throws in production if weak/default).
  */
 export function logStartupEnvHints(): void {
+  getJwtSecret()
   const prod = process.env.NODE_ENV === 'production'
 
   if (prod && !process.env.DATABASE_URL) {
@@ -21,7 +24,4 @@ export function logStartupEnvHints(): void {
     console.warn('[env] FRONTEND_URL / NEXT_PUBLIC_APP_URL not set — email links may use fallback host.')
   }
 
-  if (prod && (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'kinderspark-secret')) {
-    console.error('[env] JWT_SECRET must be set to a strong value in production.')
-  }
 }

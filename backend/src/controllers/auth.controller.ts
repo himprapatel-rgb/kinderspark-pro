@@ -4,8 +4,7 @@ import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
 import prisma from '../prisma/client'
 import { checkAndAwardBadges } from '../services/badge.service'
-
-const JWT_SECRET = process.env.JWT_SECRET || 'kinderspark-secret'
+import { getJwtSecret } from '../config/jwtSecret'
 const ACCESS_TOKEN_TTL = '2h'
 const REFRESH_TOKEN_TTL_DAYS = 30
 
@@ -17,13 +16,13 @@ function generateProfileId(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // no 0,O,1,I to avoid confusion
   let id = 'KS-'
   for (let i = 0; i < 6; i++) {
-    id += chars.charAt(Math.floor(Math.random() * chars.length))
+    id += chars[crypto.randomInt(0, chars.length)]
   }
   return id
 }
 
 function signAccessToken(payload: Record<string, unknown>) {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: ACCESS_TOKEN_TTL })
+  return jwt.sign(payload, getJwtSecret(), { expiresIn: ACCESS_TOKEN_TTL })
 }
 
 async function issueRefreshToken(userId: string, role: string): Promise<string> {
@@ -264,13 +263,38 @@ export async function revokeRefreshToken(req: Request, res: Response) {
 }
 
 export async function registerUser(req: Request, res: Response) {
-  const { displayName, pin, role, email, avatar } = req.body
+  const { displayName, pin, role, email, avatar, schoolCode: rawSchoolCode } = req.body
 
   if (!displayName || !pin || !role) {
     return res.status(400).json({ error: 'displayName, pin, and role are required' })
   }
 
   try {
+    let childSchoolId: string | null = null
+    let childClassId: string | null = null
+    if (role === 'child') {
+      const code = normalizeSchoolCode(rawSchoolCode)
+      if (!code) {
+        return res.status(400).json({ error: 'schoolCode required (6 letters or numbers) for child registration' })
+      }
+      const school = await prisma.school.findUnique({ where: { schoolCode: code } })
+      if (!school) {
+        return res.status(400).json({ error: 'Unknown school code' })
+      }
+      const cls = await prisma.class.findFirst({
+        where: { schoolId: school.id },
+        orderBy: { createdAt: 'asc' },
+        select: { id: true },
+      })
+      if (!cls) {
+        return res.status(400).json({
+          error: 'This school has no class yet — ask a teacher or admin to create one.',
+        })
+      }
+      childSchoolId = school.id
+      childClassId = cls.id
+    }
+
     const pinHash = await bcrypt.hash(pin, 10)
 
     // Generate a unique profile ID (retry up to 10 times if collision)
@@ -302,6 +326,7 @@ export async function registerUser(req: Request, res: Response) {
         displayName: displayName.trim(),
         pin: pinHash,
         email: email || null,
+        schoolId: childSchoolId,
         avatar: avatar || (role === 'child' ? '🧒' : role === 'teacher' ? '👩‍🏫' : role === 'parent' ? '👨‍👩‍👧' : '⚙️'),
       },
     })
@@ -311,28 +336,27 @@ export async function registerUser(req: Request, res: Response) {
       data: {
         userId: user.id,
         role: role as any,
+        schoolId: childSchoolId,
       },
     })
 
-    // If child role, also create a Student record for backward compat
-    if (role === 'child') {
-      // Find any existing class to assign to (first available)
-      const firstClass = await prisma.class.findFirst({ orderBy: { createdAt: 'asc' } })
-      if (firstClass) {
-        await prisma.student.create({
+    // If child role, also create a Student record for backward compat (class must be in the same school)
+    if (role === 'child' && childClassId) {
+      await prisma.student
+        .create({
           data: {
             name: displayName.trim(),
             age: 5,
             avatar: avatar || '🧒',
             pin: pinHash,
-            classId: firstClass.id,
+            classId: childClassId,
             stars: 0,
             streak: 0,
             ownedItems: ['av_def', 'th_def'],
             selectedTheme: 'th_def',
           },
-        }).catch(() => {}) // Non-fatal if it fails
-      }
+        })
+        .catch(() => {}) // Non-fatal if it fails
     }
 
     // Issue tokens

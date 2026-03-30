@@ -279,7 +279,14 @@ async function runAllAgents() {
 
 // ── Scheduler ─────────────────────────────────────────────────────────────────
 
+let schedulerStarted = false
+
 export function startAgentScheduler() {
+  if (schedulerStarted) {
+    console.warn('[AgentScheduler] Already started — ignoring duplicate startAgentScheduler()')
+    return
+  }
+  schedulerStarted = true
   if (ALL_AGENTS.length === 0) {
     console.warn('[AgentScheduler] ⚠️ No agents loaded from config — check frontend/public/agents-config.json path')
   }

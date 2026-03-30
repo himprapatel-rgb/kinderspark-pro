@@ -17,10 +17,9 @@ import {
   notifyLegacyInboxMessageCreated,
   notifyThreadParticipants,
 } from '../services/messageNotifications.service'
+import { getJwtSecret } from '../config/jwtSecret'
 
 const router = Router()
-
-const JWT_SECRET = process.env.JWT_SECRET || 'kinderspark-secret'
 
 async function getRequesterClassId(userId: string): Promise<string | null> {
   const student = await prisma.student.findUnique({
@@ -133,7 +132,7 @@ router.get('/stream', async (req: Request, res: Response) => {
     return
   }
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as AuthUser
+    const decoded = jwt.verify(token, getJwtSecret()) as AuthUser
     // Attach so downstream code could use it if needed
     req.user = decoded
     if (decoded.role === 'child') {

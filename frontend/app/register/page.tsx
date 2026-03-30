@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
-import { registerAccount } from '@/lib/api'
+import { registerAccount, getDemoSchoolCode } from '@/lib/api'
 
 const ROLES = [
   { id: 'child',   emoji: '🧒', label: "I'm a Kid",     color: '#F5A623', grad: 'linear-gradient(135deg,#F5A623,#D4881A)' },
@@ -31,6 +31,7 @@ export default function RegisterPage() {
   const [error, setError] = useState('')
   const [profileId, setProfileId] = useState('')
   const [parentConsent, setParentConsent] = useState(false)
+  const [childSchoolCode, setChildSchoolCode] = useState(getDemoSchoolCode)
 
   const selectedRole = ROLES.find(r => r.id === role)
 
@@ -44,6 +45,13 @@ export default function RegisterPage() {
     if (!name.trim() || name.trim().length < 2) {
       setError('Name must be at least 2 characters')
       return
+    }
+    if (role === 'child') {
+      const code = childSchoolCode.trim().toUpperCase().replace(/[^A-Z0-9]/g, '')
+      if (code.length !== 6) {
+        setError('School code must be 6 letters or numbers (ask your teacher)')
+        return
+      }
     }
     setError('')
     setStep('pin')
@@ -110,12 +118,17 @@ export default function RegisterPage() {
     setLoading(true)
     setError('')
     try {
+      const code =
+        role === 'child'
+          ? childSchoolCode.trim().toUpperCase().replace(/[^A-Z0-9]/g, '')
+          : ''
       const result = await registerAccount({
         displayName: name.trim(),
         pin: pinValue,
         role,
         email: email.trim() || undefined,
         avatar,
+        ...(role === 'child' && code ? { schoolCode: code } : {}),
       })
       setProfileId(result.profileId || result.user?.id || '')
       setAuth(result.user, role, result.token)
@@ -323,7 +336,12 @@ export default function RegisterPage() {
 
             <button
               onClick={submitInfo}
-              disabled={!name.trim() || name.trim().length < 2 || (role === 'child' && !parentConsent)}
+              disabled={
+                !name.trim() ||
+                name.trim().length < 2 ||
+                (role === 'child' &&
+                  (childSchoolCode.replace(/[^A-Z0-9]/g, '').length !== 6 || !parentConsent))
+              }
               className="w-full py-4 rounded-2xl font-black text-base text-white transition-all active:scale-95 disabled:opacity-40 app-pressable"
               style={{ background: accentGrad, boxShadow: `0 6px 28px ${accentColor}30` }}
             >

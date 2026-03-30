@@ -123,6 +123,8 @@ export async function registerAccount(data: {
   role: string
   email?: string
   avatar?: string
+  /** Required when role is `child` — must match a school in the database. */
+  schoolCode?: string
 }) {
   const result = await req('/auth/register', {
     method: 'POST',

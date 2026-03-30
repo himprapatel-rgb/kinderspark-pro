@@ -1,5 +1,5 @@
 import 'dotenv/config'
-import express from 'express'
+import express, { type ErrorRequestHandler, type NextFunction, type Request, type Response } from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import cookieParser from 'cookie-parser'
@@ -34,6 +34,7 @@ import relationshipsRoutes from './routes/relationships.routes'
 import diagRoutes from './routes/diag.routes'
 import { startAgentScheduler } from './services/agentScheduler.service'
 import { logStartupEnvHints } from './config/startupEnv'
+import prisma from './prisma/client'
 
 const app = express()
 logStartupEnvHints()
@@ -77,10 +78,7 @@ app.get('/health', async (_req, res) => {
   const start = Date.now()
   let dbStatus = 'connected'
   try {
-    const { PrismaClient } = await import('@prisma/client')
-    const p = new PrismaClient()
-    await p.$queryRaw`SELECT 1`
-    await p.$disconnect()
+    await prisma.$queryRaw`SELECT 1`
   } catch {
     dbStatus = 'disconnected'
   }
@@ -124,10 +122,22 @@ app.use('/api/activity', activityRoutes)
 app.use('/api/privacy', privacyRoutes)
 app.use('/api/drawings', drawingRoutes)
 
-app.use((err: any, _req: any, res: any, _next: any) => {
+const globalErrorHandler: ErrorRequestHandler = (
+  err: unknown,
+  _req: Request,
+  res: Response,
+  _next: NextFunction,
+) => {
   console.error(err)
-  res.status(err.status || 500).json({ error: err.message || 'Internal server error' })
-})
+  const status =
+    err && typeof err === 'object' && 'status' in err && typeof (err as { status: unknown }).status === 'number'
+      ? (err as { status: number }).status
+      : 500
+  const rawMessage = err instanceof Error ? err.message : 'Internal server error'
+  const message = status === 500 ? 'Internal server error' : rawMessage
+  res.status(status).json({ error: message })
+}
+app.use(globalErrorHandler)
 
 const PORT = process.env.PORT || 4000
 app.listen(PORT, () => {
