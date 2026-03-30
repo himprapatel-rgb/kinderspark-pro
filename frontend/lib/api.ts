@@ -573,6 +573,30 @@ export async function deleteMyAccount() {
   return req('/profiles/me', { method: 'DELETE' })
 }
 
+/** Extended student record + linked guardian summaries (GET /profiles/student/:id) */
+export async function getStudentProfile(studentId: string) {
+  return req(`/profiles/student/${encodeURIComponent(studentId)}`)
+}
+
+export async function patchStudentProfile(studentId: string, data: Record<string, unknown>) {
+  return req(`/profiles/student/${encodeURIComponent(studentId)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  })
+}
+
+/** Parent guardian profile (GET/PATCH /profiles/guardian/me) */
+export async function getGuardianProfile() {
+  return req('/profiles/guardian/me')
+}
+
+export async function patchGuardianProfile(data: Record<string, unknown>) {
+  return req('/profiles/guardian/me', {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  })
+}
+
 export async function getSchoolOverview(schoolId: string) {
   return req(`/schools/${encodeURIComponent(schoolId)}/overview`)
 }

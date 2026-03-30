@@ -47,9 +47,21 @@ model Class {
 model Student {
   id            String               @id @default(cuid())
   name          String
+  preferredName String?
   age           Int                  @default(5)
   avatar        String               @default("👧")
+  photoUrl      String?
   pin           String
+  addressLine1  String?
+  addressLine2  String?
+  city          String?
+  state         String?
+  postalCode    String?
+  country       String?
+  parentName    String?
+  parentPhone   String?
+  emergencyPhone String?
+  notes         String?
   stars         Int                  @default(0)
   streak        Int                  @default(0)
   grade         String?
@@ -335,6 +347,15 @@ model ParentProfile {
   user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   schoolId        String?
   school          School?           @relation(fields: [schoolId], references: [id])
+  phone           String?
+  alternatePhone  String?
+  addressLine1    String?
+  addressLine2    String?
+  city            String?
+  state           String?
+  postalCode      String?
+  country         String?
+  photoUrl        String?
   children        ParentChildLink[]
   legacyStudentId String?
   createdAt       DateTime          @default(now())

@@ -8,6 +8,7 @@ import cron from 'node-cron'
 import { PrismaClient } from '@prisma/client'
 import { aiComplete } from './ai/router'
 import * as mem from './agentMemory.service'
+import { buildLearnerDigestForAgentPrompt } from './studentAgentContext.service'
 import agentsConfigJson from '../agents-config.json'
 
 const prisma = new PrismaClient()
@@ -29,10 +30,14 @@ interface PlatformSnapshot {
   avgStars: number; avgStreak: number
   hwTotal: number; hwDone: number
   aiSessionsToday: number; aiSessionsTotal: number
-  atRisk: string[]; churned: string[]; neverLogged: string[]
-  topStudents: { name: string; stars: number; streak: number; avatar: string }[]
+  atRisk: { id: string; name: string }[]
+  churned: { id: string; name: string }[]
+  neverLogged: { id: string; name: string }[]
+  topStudents: { id: string; name: string; age: number; stars: number; streak: number; avatar: string }[]
   avgAccuracy: number; avgLevel: number
   classBreakdown: { name: string; students: number; active: number; avgStars: number }[]
+  /** Name, age, class, linked caregivers, learning patterns — for internal agent prompts */
+  learnerDigest: string
 }
 
 async function getPlatformSnapshot(): Promise<PlatformSnapshot> {
@@ -43,14 +48,14 @@ async function getPlatformSnapshot(): Promise<PlatformSnapshot> {
     topStudents, recentSessions,
     classRows,
   ] = await Promise.all([
-    prisma.student.findMany({ select: { name: true, avatar: true, stars: true, streak: true, lastLoginAt: true } }),
+    prisma.student.findMany({ select: { id: true, name: true, avatar: true, stars: true, streak: true, lastLoginAt: true } }),
     prisma.homework.count(),
     prisma.homeworkCompletion.count(),
     prisma.aISession.count({ where: { createdAt: { gt: new Date(Date.now() - 86400_000) } } }),
     prisma.aISession.count(),
     prisma.teacher.count(),
     prisma.class.count(),
-    prisma.student.findMany({ orderBy: { stars: 'desc' }, take: 5, select: { name: true, stars: true, streak: true, avatar: true } }),
+    prisma.student.findMany({ orderBy: { stars: 'desc' }, take: 5, select: { id: true, name: true, age: true, stars: true, streak: true, avatar: true } }),
     prisma.aISession.findMany({ orderBy: { createdAt: 'desc' }, take: 50, select: { maxLevel: true, correct: true, total: true } }),
     prisma.class.findMany({ include: { students: { select: { stars: true, lastLoginAt: true } } } }),
   ])
@@ -60,9 +65,9 @@ async function getPlatformSnapshot(): Promise<PlatformSnapshot> {
   const activeThisHour  = studentRows.filter(s => s.lastLoginAt && now - new Date(s.lastLoginAt).getTime() < 3600_000).length
   const avgStars        = studentRows.length ? Math.round(studentRows.reduce((a, s) => a + s.stars, 0) / studentRows.length) : 0
   const avgStreak       = studentRows.length ? Math.round(studentRows.reduce((a, s) => a + s.streak, 0) / studentRows.length) : 0
-  const atRisk          = studentRows.filter(s => s.lastLoginAt && now - new Date(s.lastLoginAt).getTime() > 3 * 86400_000 && now - new Date(s.lastLoginAt).getTime() < 7 * 86400_000).map(s => s.name)
-  const churned         = studentRows.filter(s => s.lastLoginAt && now - new Date(s.lastLoginAt).getTime() > 7 * 86400_000).map(s => s.name)
-  const neverLogged     = studentRows.filter(s => !s.lastLoginAt).map(s => s.name)
+  const atRisk          = studentRows.filter(s => s.lastLoginAt && now - new Date(s.lastLoginAt).getTime() > 3 * 86400_000 && now - new Date(s.lastLoginAt).getTime() < 7 * 86400_000).map(s => ({ id: s.id, name: s.name }))
+  const churned         = studentRows.filter(s => s.lastLoginAt && now - new Date(s.lastLoginAt).getTime() > 7 * 86400_000).map(s => ({ id: s.id, name: s.name }))
+  const neverLogged     = studentRows.filter(s => !s.lastLoginAt).map(s => ({ id: s.id, name: s.name }))
   const avgAccuracy     = recentSessions.length ? Math.round(recentSessions.reduce((a, s) => a + (s.total > 0 ? s.correct / s.total : 0), 0) / recentSessions.length * 100) : 0
   const avgLevel        = recentSessions.length ? parseFloat((recentSessions.reduce((a, s) => a + s.maxLevel, 0) / recentSessions.length).toFixed(1)) : 0
   const classBreakdown  = classRows.map(c => ({
@@ -72,12 +77,21 @@ async function getPlatformSnapshot(): Promise<PlatformSnapshot> {
     avgStars: c.students.length ? Math.round(c.students.reduce((a, s) => a + s.stars, 0) / c.students.length) : 0,
   }))
 
+  const digestIds = [
+    ...topStudents.map(s => s.id),
+    ...atRisk.map(s => s.id),
+    ...churned.map(s => s.id),
+    ...neverLogged.map(s => s.id),
+  ]
+  const learnerDigest = (await buildLearnerDigestForAgentPrompt(digestIds)).slice(0, 6000)
+
   return {
     students: studentRows.length, activeToday, activeThisHour,
     teachers, classes, avgStars, avgStreak,
     hwTotal, hwDone, aiSessionsToday: aiToday, aiSessionsTotal: aiTotal,
     atRisk, churned, neverLogged, topStudents,
     avgAccuracy, avgLevel, classBreakdown,
+    learnerDigest,
   }
 }
 
@@ -91,11 +105,12 @@ async function agentSpeak(
   importance: mem.MemoryEntry['importance'] = 1,
 ) {
   const hwRate     = snap.hwTotal > 0 ? Math.round(snap.hwDone / snap.hwTotal * 100) : 0
-  const topStr     = snap.topStudents.slice(0, 3).map(s => `${s.avatar}${s.name}(${s.stars}⭐,${s.streak}d streak)`).join(', ')
+  const topStr     = snap.topStudents.slice(0, 3).map(s => `${s.avatar}${s.name} age${s.age}(${s.stars}⭐,${s.streak}d)`).join(', ')
   const classStr   = snap.classBreakdown.map(c => `${c.name}: ${c.students} students, ${c.active} active, avg ${c.avgStars}⭐`).join(' | ')
-  const atRiskStr  = snap.atRisk.join(', ') || 'none'
-  const churnedStr = snap.churned.join(', ') || 'none'
-  const neverStr   = snap.neverLogged.join(', ') || 'none'
+  const atRiskStr  = snap.atRisk.map(s => s.name).join(', ') || 'none'
+  const churnedStr = snap.churned.map(s => s.name).join(', ') || 'none'
+  const neverStr   = snap.neverLogged.map(s => s.name).join(', ') || 'none'
+  const digestStr  = snap.learnerDigest.trim() || 'No extended per-learner digest (empty roster or lookup skipped).'
   const dailyCost  = (snap.aiSessionsToday * 0.002).toFixed(3)
 
   const prompt = `
@@ -115,6 +130,9 @@ Live platform data:
 - Top students: ${topStr}
 - Classes: ${classStr || 'none yet'}
 - Estimated API cost today: $${dailyCost}
+
+Learner-level context (names, ages, classes, caregivers linked in app, learning patterns — internal ops only):
+${digestStr}
 
 ${toAgent ? `Reply to or start a conversation with ${toAgent.name} (${toAgent.desc}).` : 'Share an update relevant to your role with the whole team.'}
 
@@ -176,7 +194,7 @@ async function runRoundTable() {
 
     const hwRate    = snap.hwTotal > 0 ? Math.round(snap.hwDone / snap.hwTotal * 100) : 0
     const topStr    = snap.topStudents.slice(0, 2).map(s => `${s.name}(${s.stars}⭐)`).join(', ')
-    const atRiskStr = snap.atRisk.join(', ') || 'none'
+    const atRiskStr = snap.atRisk.map(s => s.name).join(', ') || 'none'
 
     const prompt = `
 You are ${speaker.name} ${speaker.icon} — an AI agent on KinderSpark Pro. Your job: ${speaker.desc}

@@ -60,11 +60,12 @@ export async function generateTutorFeedback(
   correct: number,
   total: number,
   topic: string,
-  maxLevel: number
+  maxLevel: number,
+  learnerContext?: string,
 ): Promise<string> {
   const { text } = await aiComplete(
     'tutor-feedback',
-    `Give 2 sentences of warm encouraging feedback for a child who got ${correct}/${total} on a ${topic} quiz. Level ${maxLevel}/5. Use simple words for a 5-year-old.`,
+    buildTutorFeedbackPrompt(correct, total, topic, maxLevel, learnerContext),
     { maxTokens: 100 }
   )
   return text
@@ -85,13 +86,12 @@ export async function generateStudentReport(
   hwDone: number,
   hwTotal: number,
   aiSessions: number,
-  aiBestLevel: number
+  aiBestLevel: number,
+  learnerContext?: string,
 ): Promise<string> {
   const { text } = await aiComplete(
     'student-report',
-    `Write a warm, 2-sentence weekly progress report for parents of ${studentName}.
-Stats: ${stars} stars earned, ${hwDone}/${hwTotal} homework completed, ${aiSessions} AI tutor sessions, reached AI level ${aiBestLevel}/5.
-Be encouraging, specific, and positive. Start with "Dear Parents,".`,
+    buildStudentReportPrompt(studentName, stars, hwDone, hwTotal, aiSessions, aiBestLevel, learnerContext),
     { maxTokens: 150 }
   )
   return text
@@ -112,11 +112,12 @@ export async function generateRecommendations(
   name: string,
   stars: number,
   progressSummary: string,
-  sessionSummary: string
+  sessionSummary: string,
+  learnerContext?: string,
 ): Promise<Array<{ title: string; reason: string; moduleId: string }>> {
   const { text } = await aiComplete(
     'recommendations',
-    buildRecommendationsPrompt(name, stars, progressSummary, sessionSummary),
+    buildRecommendationsPrompt(name, stars, progressSummary, sessionSummary, learnerContext),
     { maxTokens: 400 }
   )
   return parseJSON(text)
@@ -128,10 +129,18 @@ export interface GeneratedPoemResult {
   provider: string
 }
 
-export async function generatePoemFromSpark(spark: string, targetMinutes: number): Promise<GeneratedPoemResult> {
-  const { text, provider } = await aiComplete('poem-listen-spark', buildPoemListenPrompt(spark, targetMinutes), {
-    maxTokens: 4096,
-  })
+export async function generatePoemFromSpark(
+  spark: string,
+  targetMinutes: number,
+  learnerContext?: string,
+): Promise<GeneratedPoemResult> {
+  const { text, provider } = await aiComplete(
+    'poem-listen-spark',
+    buildPoemListenPrompt(spark, targetMinutes, learnerContext),
+    {
+      maxTokens: 4096,
+    },
+  )
   const parsed = parseJSON<{ title: string; poem: string }>(text)
   if (!parsed?.title || !parsed?.poem) throw new Error('Invalid poem response')
   return { title: parsed.title, poem: parsed.poem, provider }
@@ -142,10 +151,18 @@ export interface TutorHintSparkResult {
   provider: string
 }
 
-export async function generateTutorHintFromSpark(spark: string, topicContext: string): Promise<TutorHintSparkResult> {
-  const { text, provider } = await aiComplete('tutor-hint-spark', buildTutorHintSparkPrompt(spark, topicContext), {
-    maxTokens: 220,
-  })
+export async function generateTutorHintFromSpark(
+  spark: string,
+  topicContext: string,
+  learnerContext?: string,
+): Promise<TutorHintSparkResult> {
+  const { text, provider } = await aiComplete(
+    'tutor-hint-spark',
+    buildTutorHintSparkPrompt(spark, topicContext, learnerContext),
+    {
+      maxTokens: 220,
+    },
+  )
   const parsed = parseJSON<{ hint: string }>(text)
   if (!parsed?.hint) throw new Error('Invalid hint response')
   return { hint: parsed.hint.trim(), provider }

@@ -157,7 +157,7 @@ jobs:
       - name: Deploy frontend service
         run: |
           railway up \
-            --service kinderspark-frontend \
+            --service kinderspark-pro \
             --detach
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}

@@ -76,8 +76,10 @@ export interface Homework {
 export interface Student {
   id: string
   name: string
+  preferredName?: string | null
   age: number
   avatar: string
+  photoUrl?: string | null
   pin: string
   stars: number
   streak: number
@@ -89,6 +91,16 @@ export interface Student {
   selectedTheme: string
   lastLoginAt?: string | null
   classId: string
+  addressLine1?: string | null
+  addressLine2?: string | null
+  city?: string | null
+  state?: string | null
+  postalCode?: string | null
+  country?: string | null
+  parentName?: string | null
+  parentPhone?: string | null
+  emergencyPhone?: string | null
+  notes?: string | null
   class?: Class
   progress?: Progress[]
   feedback?: Feedback | null

@@ -116,8 +116,13 @@ Core models: `School → Class → Student`, `Homework`, `HomeworkCompletion`,
 `Message`, `Feedback`, `Badge`, `Attendance`, `Teacher`, `Admin`,
 `RefreshToken`, `AgentMemory`, `AgentConversation`
 
-Key Student fields: `id, name, age, avatar, pin, stars, streak, grade,
-aiStars, aiSessions, aiBestLevel, ownedItems[], selectedTheme, classId`
+Key Student fields: `id, name, preferredName?, age, avatar, photoUrl?, pin, stars,
+streak, grade, aiStars, aiSessions, aiBestLevel, ownedItems[], selectedTheme,
+addressLine1?, addressLine2?, city?, state?, postalCode?, country?,
+parentName?, parentPhone?, emergencyPhone?, notes?, classId`
+
+Key ParentProfile fields: `phone?, alternatePhone?, photoUrl?, addressLine1?,
+addressLine2?, city?, state?, postalCode?, country?`
 
 ---
 
@@ -144,6 +149,8 @@ GET    /api/agents/memories
 POST   /api/agents/conversations
 GET    /api/messages/recipients
 GET    /api/messages/recipients/lookup?profileId=
+GET/PATCH /api/profiles/student/:studentId
+GET/PATCH /api/profiles/guardian/me
 ```
 
 ---
@@ -250,6 +257,8 @@ FRONTEND_URL         Railway frontend URL
 - `notification.service.ts` is a stub — push notifications not implemented
 - No input validation library (Zod/Joi) — validate at controllers
 - iOS/native app does not exist yet — app is web-only
+- Profile v1 fields were added to Prisma, but production migration file is not
+  created yet if local `DATABASE_URL` is unreachable; run migration in CI/prod DB.
 
 ---
 

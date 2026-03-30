@@ -12,8 +12,18 @@ import {
   type UnifiedSparkTaskId,
   UNIFIED_SPARK_TASK_IDS,
 } from './ai/promptTemplates'
+import { formatStudentAgentContextBlock, getStudentAgentContext } from './studentAgentContext.service'
 
 const POEM_MINUTES = new Set([3, 4, 5, 6, 7, 8])
+const LEARNER_CTX_MAX = 2000
+
+async function learnerContextBlockForSpark(legacyStudentId?: string): Promise<string | undefined> {
+  if (!legacyStudentId?.trim()) return undefined
+  const ctx = await getStudentAgentContext(legacyStudentId.trim())
+  if (!ctx) return undefined
+  const block = formatStudentAgentContextBlock(ctx)
+  return block.length <= LEARNER_CTX_MAX ? block : `${block.slice(0, LEARNER_CTX_MAX)}…`
+}
 
 function isUnifiedTaskId(id: string): id is UnifiedSparkTaskId {
   return (UNIFIED_SPARK_TASK_IDS as readonly string[]).includes(id)
@@ -28,6 +38,8 @@ export interface RunUnifiedSparkParams {
   topic?: unknown
   grade?: unknown
   classId?: string
+  /** Legacy `Student.id` — loads name, age, class, caregivers, learning history for prompts */
+  legacyStudentId?: string
 }
 
 export interface RunUnifiedSparkResult {
@@ -53,7 +65,8 @@ export async function runUnifiedSparkTask(params: RunUnifiedSparkParams): Promis
       typeof params.targetMinutes === 'number' && POEM_MINUTES.has(params.targetMinutes)
         ? params.targetMinutes
         : 4
-    const result = await generatePoemFromSpark(safeSpark, targetMinutes)
+    const learnerCtx = await learnerContextBlockForSpark(params.legacyStudentId)
+    const result = await generatePoemFromSpark(safeSpark, targetMinutes, learnerCtx)
     const wordCount = result.poem.trim().split(/\s+/).filter(Boolean).length
     const row = await prisma.aiSparkArtifact.create({
       data: {
@@ -87,7 +100,8 @@ export async function runUnifiedSparkTask(params: RunUnifiedSparkParams): Promis
     const safeSpark = sanitizeSpark(params.spark, role)
     if (!safeSpark) throw new Error('Add one short line about what feels tricky')
     const topicLine = sanitizePromptInput(params.topic ?? '', 100) || 'learning'
-    const result = await generateTutorHintFromSpark(safeSpark, topicLine)
+    const learnerCtx = await learnerContextBlockForSpark(params.legacyStudentId)
+    const result = await generateTutorHintFromSpark(safeSpark, topicLine, learnerCtx)
     const row = await prisma.aiSparkArtifact.create({
       data: {
         taskId,

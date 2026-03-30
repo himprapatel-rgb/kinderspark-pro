@@ -1,7 +1,16 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { getMyProfile, updateMyProfile, logoutApi, deleteMyAccount } from '@/lib/api'
+import {
+  getMyProfile,
+  updateMyProfile,
+  logoutApi,
+  deleteMyAccount,
+  getStudentProfile,
+  patchStudentProfile,
+  getGuardianProfile,
+  patchGuardianProfile,
+} from '@/lib/api'
 import { useAppStore } from '@/store/appStore'
 import SoundSettings from '@/components/SoundSettings'
 import LanguageSelector from '@/components/LanguageSelector'
@@ -25,6 +34,8 @@ export default function ProfileManager({ roleLabel }: { roleLabel: string }) {
   const role = useAppStore(s => s.role)
   const setUser = useAppStore(s => s.setUser)
   const logout = useAppStore(s => s.logout)
+  const currentStudent = useAppStore(s => s.currentStudent)
+  const children = useAppStore(s => s.children)
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
@@ -37,6 +48,39 @@ export default function ProfileManager({ roleLabel }: { roleLabel: string }) {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [deleteInput, setDeleteInput] = useState('')
   const [deleting, setDeleting] = useState(false)
+
+  const [detailLoading, setDetailLoading] = useState(false)
+  const [childSelfForm, setChildSelfForm] = useState({ preferredName: '', avatar: '', photoUrl: '' })
+  const [guardianForm, setGuardianForm] = useState({
+    phone: '',
+    alternatePhone: '',
+    addressLine1: '',
+    addressLine2: '',
+    city: '',
+    state: '',
+    postalCode: '',
+    country: '',
+    photoUrl: '',
+  })
+  const [childLinkedForm, setChildLinkedForm] = useState({
+    preferredName: '',
+    avatar: '',
+    photoUrl: '',
+    addressLine1: '',
+    addressLine2: '',
+    city: '',
+    state: '',
+    postalCode: '',
+    country: '',
+    parentName: '',
+    parentPhone: '',
+    emergencyPhone: '',
+    notes: '',
+  })
+  const [selectedChildId, setSelectedChildId] = useState('')
+  const [savingChildSelf, setSavingChildSelf] = useState(false)
+  const [savingGuardian, setSavingGuardian] = useState(false)
+  const [savingChildLinked, setSavingChildLinked] = useState(false)
 
   const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
     setToast({ msg, type })
@@ -70,6 +114,93 @@ export default function ProfileManager({ roleLabel }: { roleLabel: string }) {
       }
     })()
   }, [user, router])
+
+  useEffect(() => {
+    if (!user || role !== 'child') return
+    let cancelled = false
+    setDetailLoading(true)
+    ;(async () => {
+      try {
+        const s = await getStudentProfile(user.id)
+        if (cancelled) return
+        setChildSelfForm({
+          preferredName: s.preferredName ?? '',
+          avatar: s.avatar ?? '',
+          photoUrl: s.photoUrl ?? '',
+        })
+      } catch {
+        if (!cancelled) showToast(t('profile_load_failed'), 'error')
+      } finally {
+        if (!cancelled) setDetailLoading(false)
+      }
+    })()
+    return () => { cancelled = true }
+  }, [user, role, t])
+
+  useEffect(() => {
+    if (!user || role !== 'parent') return
+    let cancelled = false
+    setDetailLoading(true)
+    ;(async () => {
+      try {
+        const g = await getGuardianProfile()
+        if (cancelled) return
+        setGuardianForm({
+          phone: g.phone ?? '',
+          alternatePhone: g.alternatePhone ?? '',
+          addressLine1: g.addressLine1 ?? '',
+          addressLine2: g.addressLine2 ?? '',
+          city: g.city ?? '',
+          state: g.state ?? '',
+          postalCode: g.postalCode ?? '',
+          country: g.country ?? '',
+          photoUrl: g.photoUrl ?? '',
+        })
+      } catch {
+        if (!cancelled) showToast(t('profile_load_failed'), 'error')
+      } finally {
+        if (!cancelled) setDetailLoading(false)
+      }
+    })()
+    return () => { cancelled = true }
+  }, [user, role, t])
+
+  useEffect(() => {
+    if (!user || role !== 'parent') return
+    const sid = selectedChildId || currentStudent?.id || children[0]?.id
+    if (!sid) return
+    let cancelled = false
+    if (!selectedChildId) setSelectedChildId(sid)
+    ;(async () => {
+      try {
+        const s = await getStudentProfile(sid)
+        if (cancelled) return
+        setChildLinkedForm({
+          preferredName: s.preferredName ?? '',
+          avatar: s.avatar ?? '',
+          photoUrl: s.photoUrl ?? '',
+          addressLine1: s.addressLine1 ?? '',
+          addressLine2: s.addressLine2 ?? '',
+          city: s.city ?? '',
+          state: s.state ?? '',
+          postalCode: s.postalCode ?? '',
+          country: s.country ?? '',
+          parentName: s.parentName ?? '',
+          parentPhone: s.parentPhone ?? '',
+          emergencyPhone: s.emergencyPhone ?? '',
+          notes: s.notes ?? '',
+        })
+      } catch {
+        if (!cancelled) showToast(t('profile_load_failed'), 'error')
+      }
+    })()
+    return () => { cancelled = true }
+  }, [user, role, selectedChildId, currentStudent?.id, children, t])
+
+  const inputProps = {
+    className: 'w-full px-4 py-3 rounded-xl text-sm font-bold outline-none transition-all min-h-11',
+    style: { background: 'rgba(245,245,250,0.8)', border: '2px solid rgba(120,120,140,0.15)', color: '#1f2233' },
+  }
 
   const save = async () => {
     setBusy(true)
@@ -113,6 +244,49 @@ export default function ProfileManager({ roleLabel }: { roleLabel: string }) {
       navigator.clipboard?.writeText(profileId)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  const saveChildLearningProfile = async () => {
+    if (role !== 'child' || !user) return
+    setSavingLearning(true)
+    try {
+      await patchStudentProfile(user.id, {
+        preferredName: childSelfForm.preferredName || null,
+        avatar: childSelfForm.avatar || null,
+        photoUrl: childSelfForm.photoUrl || null,
+      })
+      showToast(t('profile_details_saved'), 'success')
+    } catch (e: any) {
+      showToast(e.message || 'Failed to save', 'error')
+    } finally {
+      setSavingLearning(false)
+    }
+  }
+
+  const saveGuardianDetails = async () => {
+    if (role !== 'parent') return
+    setSavingLearning(true)
+    try {
+      await patchGuardianProfile(guardianForm)
+      showToast(t('profile_details_saved'), 'success')
+    } catch (e: any) {
+      showToast(e.message || 'Failed to save', 'error')
+    } finally {
+      setSavingLearning(false)
+    }
+  }
+
+  const saveChildLinkedDetails = async () => {
+    if (role !== 'parent' || !selectedChildId) return
+    setSavingLearning(true)
+    try {
+      await patchStudentProfile(selectedChildId, { ...childLinkedForm })
+      showToast(t('profile_details_saved'), 'success')
+    } catch (e: any) {
+      showToast(e.message || 'Failed to save', 'error')
+    } finally {
+      setSavingLearning(false)
     }
   }
 
@@ -229,6 +403,213 @@ export default function ProfileManager({ roleLabel }: { roleLabel: string }) {
             </button>
           </div>
         </div>
+
+        {role === 'child' && (
+          <div
+            className="rounded-2xl p-5 mb-4"
+            style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(120,120,140,0.15)', boxShadow: '0 4px 20px rgba(30,40,70,0.08)' }}
+          >
+            <h2 className="text-sm font-black uppercase tracking-wider mb-4" style={{ color: 'rgba(70,75,96,0.5)' }}>
+              {t('profile_learning_card_title')}
+            </h2>
+            {detailLoading ? (
+              <p className="text-xs font-semibold mb-3" style={{ color: 'rgba(70,75,96,0.45)' }}>{t('loading')}</p>
+            ) : null}
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-black uppercase tracking-wider mb-1 block" style={{ color: rc.color }}>{t('profile_field_preferred_name')}</label>
+                <input {...inputProps} value={childSelfForm.preferredName} onChange={(e) => setChildSelfForm((p) => ({ ...p, preferredName: e.target.value }))} />
+              </div>
+              <div>
+                <label className="text-xs font-black uppercase tracking-wider mb-1 block" style={{ color: 'rgba(70,75,96,0.45)' }}>{t('choose_avatar')}</label>
+                <input {...inputProps} value={childSelfForm.avatar} onChange={(e) => setChildSelfForm((p) => ({ ...p, avatar: e.target.value }))} placeholder="Emoji" />
+              </div>
+              <div>
+                <label className="text-xs font-black uppercase tracking-wider mb-1 block" style={{ color: 'rgba(70,75,96,0.45)' }}>{t('profile_field_photo_url')}</label>
+                <input {...inputProps} value={childSelfForm.photoUrl} onChange={(e) => setChildSelfForm((p) => ({ ...p, photoUrl: e.target.value }))} placeholder="https://…" />
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={saveChildLearningProfile}
+              disabled={savingLearning || detailLoading}
+              className="w-full mt-4 py-3.5 rounded-xl font-black text-white transition-all active:scale-95 disabled:opacity-60 app-pressable min-h-11"
+              style={{ background: rc.grad, boxShadow: `0 4px 20px ${rc.color}25` }}
+            >
+              {savingLearning ? t('loading') : t('profile_save_details')}
+            </button>
+          </div>
+        )}
+
+        {role === 'parent' && (
+          <>
+            <div
+              className="rounded-2xl p-5 mb-4"
+              style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(120,120,140,0.15)', boxShadow: '0 4px 20px rgba(30,40,70,0.08)' }}
+            >
+              <h2 className="text-sm font-black uppercase tracking-wider mb-4" style={{ color: 'rgba(70,75,96,0.5)' }}>
+                {t('profile_guardian_card_title')}
+              </h2>
+              {detailLoading ? (
+                <p className="text-xs font-semibold mb-3" style={{ color: 'rgba(70,75,96,0.45)' }}>{t('loading')}</p>
+              ) : null}
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-black uppercase tracking-wider mb-1 block" style={{ color: rc.color }}>{t('profile_field_phone')}</label>
+                  <input {...inputProps} inputMode="tel" value={guardianForm.phone} onChange={(e) => setGuardianForm((p) => ({ ...p, phone: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="text-xs font-black uppercase tracking-wider mb-1 block" style={{ color: 'rgba(70,75,96,0.45)' }}>{t('profile_field_alt_phone')}</label>
+                  <input {...inputProps} inputMode="tel" value={guardianForm.alternatePhone} onChange={(e) => setGuardianForm((p) => ({ ...p, alternatePhone: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="text-xs font-black uppercase tracking-wider mb-1 block" style={{ color: 'rgba(70,75,96,0.45)' }}>{t('profile_field_photo_url')}</label>
+                  <input {...inputProps} value={guardianForm.photoUrl} onChange={(e) => setGuardianForm((p) => ({ ...p, photoUrl: e.target.value }))} placeholder="https://…" />
+                </div>
+                <div>
+                  <label className="text-xs font-black uppercase tracking-wider mb-1 block" style={{ color: 'rgba(70,75,96,0.45)' }}>{t('profile_field_address1')}</label>
+                  <input {...inputProps} value={guardianForm.addressLine1} onChange={(e) => setGuardianForm((p) => ({ ...p, addressLine1: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="text-xs font-black uppercase tracking-wider mb-1 block" style={{ color: 'rgba(70,75,96,0.45)' }}>{t('profile_field_address2')}</label>
+                  <input {...inputProps} value={guardianForm.addressLine2} onChange={(e) => setGuardianForm((p) => ({ ...p, addressLine2: e.target.value }))} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-black uppercase tracking-wider mb-1 block" style={{ color: 'rgba(70,75,96,0.45)' }}>{t('profile_field_city')}</label>
+                    <input {...inputProps} value={guardianForm.city} onChange={(e) => setGuardianForm((p) => ({ ...p, city: e.target.value }))} />
+                  </div>
+                  <div>
+                    <label className="text-xs font-black uppercase tracking-wider mb-1 block" style={{ color: 'rgba(70,75,96,0.45)' }}>{t('profile_field_state')}</label>
+                    <input {...inputProps} value={guardianForm.state} onChange={(e) => setGuardianForm((p) => ({ ...p, state: e.target.value }))} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-black uppercase tracking-wider mb-1 block" style={{ color: 'rgba(70,75,96,0.45)' }}>{t('profile_field_postal')}</label>
+                    <input {...inputProps} value={guardianForm.postalCode} onChange={(e) => setGuardianForm((p) => ({ ...p, postalCode: e.target.value }))} />
+                  </div>
+                  <div>
+                    <label className="text-xs font-black uppercase tracking-wider mb-1 block" style={{ color: 'rgba(70,75,96,0.45)' }}>{t('profile_field_country')}</label>
+                    <input {...inputProps} value={guardianForm.country} onChange={(e) => setGuardianForm((p) => ({ ...p, country: e.target.value }))} />
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={saveGuardianDetails}
+                disabled={savingGuardian || detailLoading}
+                className="w-full mt-4 py-3.5 rounded-xl font-black text-white transition-all active:scale-95 disabled:opacity-60 app-pressable min-h-11"
+                style={{ background: rc.grad, boxShadow: `0 4px 20px ${rc.color}25` }}
+              >
+                {savingGuardian ? t('loading') : t('profile_save_details')}
+              </button>
+            </div>
+
+            {children.length > 1 && (
+              <div className="mb-4">
+                <label className="text-xs font-black uppercase tracking-wider mb-1 block px-1" style={{ color: 'rgba(70,75,96,0.5)' }}>{t('profile_which_child')}</label>
+                <select
+                  className={inputProps.className}
+                  style={inputProps.style}
+                  value={selectedChildId || currentStudent?.id || children[0]?.id || ''}
+                  onChange={(e) => setSelectedChildId(e.target.value)}
+                >
+                  {children.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div
+              className="rounded-2xl p-5 mb-4"
+              style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(120,120,140,0.15)', boxShadow: '0 4px 20px rgba(30,40,70,0.08)' }}
+            >
+              <h2 className="text-sm font-black uppercase tracking-wider mb-4" style={{ color: 'rgba(70,75,96,0.5)' }}>
+                {t('profile_child_card_title')}
+              </h2>
+              {!selectedChildId && !currentStudent?.id && children.length === 0 ? (
+                <p className="text-xs font-semibold" style={{ color: 'rgba(70,75,96,0.45)' }}>{t('no_data')}</p>
+              ) : (
+                <>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-xs font-black uppercase tracking-wider mb-1 block" style={{ color: rc.color }}>{t('profile_field_preferred_name')}</label>
+                      <input {...inputProps} value={childLinkedForm.preferredName} onChange={(e) => setChildLinkedForm((p) => ({ ...p, preferredName: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-black uppercase tracking-wider mb-1 block" style={{ color: 'rgba(70,75,96,0.45)' }}>{t('choose_avatar')}</label>
+                      <input {...inputProps} value={childLinkedForm.avatar} onChange={(e) => setChildLinkedForm((p) => ({ ...p, avatar: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-black uppercase tracking-wider mb-1 block" style={{ color: 'rgba(70,75,96,0.45)' }}>{t('profile_field_photo_url')}</label>
+                      <input {...inputProps} value={childLinkedForm.photoUrl} onChange={(e) => setChildLinkedForm((p) => ({ ...p, photoUrl: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-black uppercase tracking-wider mb-1 block" style={{ color: 'rgba(70,75,96,0.45)' }}>{t('profile_field_address1')}</label>
+                      <input {...inputProps} value={childLinkedForm.addressLine1} onChange={(e) => setChildLinkedForm((p) => ({ ...p, addressLine1: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-black uppercase tracking-wider mb-1 block" style={{ color: 'rgba(70,75,96,0.45)' }}>{t('profile_field_address2')}</label>
+                      <input {...inputProps} value={childLinkedForm.addressLine2} onChange={(e) => setChildLinkedForm((p) => ({ ...p, addressLine2: e.target.value }))} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs font-black uppercase tracking-wider mb-1 block" style={{ color: 'rgba(70,75,96,0.45)' }}>{t('profile_field_city')}</label>
+                        <input {...inputProps} value={childLinkedForm.city} onChange={(e) => setChildLinkedForm((p) => ({ ...p, city: e.target.value }))} />
+                      </div>
+                      <div>
+                        <label className="text-xs font-black uppercase tracking-wider mb-1 block" style={{ color: 'rgba(70,75,96,0.45)' }}>{t('profile_field_state')}</label>
+                        <input {...inputProps} value={childLinkedForm.state} onChange={(e) => setChildLinkedForm((p) => ({ ...p, state: e.target.value }))} />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs font-black uppercase tracking-wider mb-1 block" style={{ color: 'rgba(70,75,96,0.45)' }}>{t('profile_field_postal')}</label>
+                        <input {...inputProps} value={childLinkedForm.postalCode} onChange={(e) => setChildLinkedForm((p) => ({ ...p, postalCode: e.target.value }))} />
+                      </div>
+                      <div>
+                        <label className="text-xs font-black uppercase tracking-wider mb-1 block" style={{ color: 'rgba(70,75,96,0.45)' }}>{t('profile_field_country')}</label>
+                        <input {...inputProps} value={childLinkedForm.country} onChange={(e) => setChildLinkedForm((p) => ({ ...p, country: e.target.value }))} />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-black uppercase tracking-wider mb-1 block" style={{ color: 'rgba(70,75,96,0.45)' }}>{t('profile_field_parent_name')}</label>
+                      <input {...inputProps} value={childLinkedForm.parentName} onChange={(e) => setChildLinkedForm((p) => ({ ...p, parentName: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-black uppercase tracking-wider mb-1 block" style={{ color: 'rgba(70,75,96,0.45)' }}>{t('profile_field_parent_phone')}</label>
+                      <input {...inputProps} inputMode="tel" value={childLinkedForm.parentPhone} onChange={(e) => setChildLinkedForm((p) => ({ ...p, parentPhone: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-black uppercase tracking-wider mb-1 block" style={{ color: 'rgba(70,75,96,0.45)' }}>{t('profile_field_emergency_phone')}</label>
+                      <input {...inputProps} inputMode="tel" value={childLinkedForm.emergencyPhone} onChange={(e) => setChildLinkedForm((p) => ({ ...p, emergencyPhone: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-black uppercase tracking-wider mb-1 block" style={{ color: 'rgba(70,75,96,0.45)' }}>{t('profile_field_notes')}</label>
+                      <textarea
+                        className={`${inputProps.className} min-h-[88px] resize-y`}
+                        style={inputProps.style}
+                        value={childLinkedForm.notes}
+                        onChange={(e) => setChildLinkedForm((p) => ({ ...p, notes: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={saveChildLinkedDetails}
+                    disabled={savingChildLinked || !selectedChildId}
+                    className="w-full mt-4 py-3.5 rounded-xl font-black text-white transition-all active:scale-95 disabled:opacity-60 app-pressable min-h-11"
+                    style={{ background: rc.grad, boxShadow: `0 4px 20px ${rc.color}25` }}
+                  >
+                    {savingChildLinked ? t('loading') : t('profile_save_details')}
+                  </button>
+                </>
+              )}
+            </div>
+          </>
+        )}
 
         {/* ── Sound & Music Settings ── */}
         <div
