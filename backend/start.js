@@ -14,17 +14,18 @@ function run(cmd) {
 }
 
 // ── Schema sync ───────────────────────────────────────────────────────────────
-// db push is the safest way to ensure all schema columns/tables exist.
-// It adds anything missing without touching existing data.
-console.log('==> Syncing database schema with prisma db push...');
+// 1) Prefer proper migrations in production (Railway, etc.)
+console.log('==> prisma migrate deploy...');
+if (!run('npx prisma migrate deploy')) {
+  console.warn('==> migrate deploy failed or nothing to apply — continuing');
+}
+// 2) db push fills any drift / legacy DBs that never had clean migration history
+console.log('==> prisma db push (skip-generate)...');
 if (!run('npx prisma db push --skip-generate')) {
-  console.error('==> db push failed — trying migrate deploy as fallback...');
-  if (!run('npx prisma migrate deploy')) {
-    console.error('==> migrate deploy also failed — resolving and retrying...');
-    run('npx prisma migrate resolve --applied 20260327_ecosystem_phase2_safe_messaging');
-    run('npx prisma migrate resolve --applied 20260327_full_ecosystem_profiles');
-    run('npx prisma migrate deploy');
-  }
+  console.error('==> db push failed — last-resort migrate resolve + deploy...');
+  run('npx prisma migrate resolve --applied 20260327_ecosystem_phase2_safe_messaging');
+  run('npx prisma migrate resolve --applied 20260327_full_ecosystem_profiles');
+  run('npx prisma migrate deploy');
 }
 console.log('==> Schema sync done');
 
