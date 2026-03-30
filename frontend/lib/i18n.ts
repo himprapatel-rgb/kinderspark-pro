@@ -79,6 +79,23 @@ const translations = {
     parent_copilot_mission_sub: 'Suggested mission for today.',
     parent_copilot_open: 'Open',
     parent_copilot_all_caught_up: 'No pending homework today. Great job staying on track.',
+    parent_privacy_banner_title: 'Parental consent',
+    parent_privacy_banner_body:
+      'We need a recorded “yes” from a parent or guardian for this child’s account (COPPA-style rules).',
+    parent_privacy_record_consent: 'Record consent',
+    parent_privacy_consent_recorded: 'Consent on file',
+    parent_privacy_delete_data: 'Delete my child’s data',
+    parent_privacy_delete_confirm_title: 'Delete all of this child’s data?',
+    parent_privacy_delete_confirm_body:
+      'This permanently removes the child account, progress, homework, AI sessions, and related records. This cannot be undone.',
+    consent_page_title: 'Parental consent',
+    consent_page_sub:
+      'By submitting, you confirm you are the parent or legal guardian and you agree to our Privacy Policy and this child’s use of KinderSpark.',
+    consent_parent_name_label: 'Your full name',
+    consent_parent_email_label: 'Your email',
+    consent_submit: 'Submit consent',
+    consent_saving: 'Saving…',
+    consent_done_back: 'Back to dashboard',
     parent_quick_r1: 'Thanks! We will complete this tonight.',
     parent_quick_r2: 'Could you share a simpler version for home practice?',
     parent_quick_r3: 'My child found this hard. Any 5-minute tip for us?',

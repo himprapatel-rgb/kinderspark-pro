@@ -25,6 +25,7 @@ import feedbackRoutes from './routes/feedback'
 import agentRoutes from './routes/agents.routes'
 import ecosystemRoutes from './routes/ecosystem.routes'
 import activityRoutes from './routes/activity.routes'
+import privacyRoutes from './routes/privacy.routes'
 import profilesRoutes from './routes/profiles.routes'
 import schoolsRoutes from './routes/schools.routes'
 import assignmentsRoutes from './routes/assignments.routes'
@@ -117,6 +118,7 @@ app.use('/api/schools', schoolsRoutes)
 app.use('/api/assignments', assignmentsRoutes)
 app.use('/api/relationships', relationshipsRoutes)
 app.use('/api/activity', activityRoutes)
+app.use('/api/privacy', privacyRoutes)
 
 app.use((err: any, _req: any, res: any, _next: any) => {
   console.error(err)

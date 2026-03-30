@@ -163,6 +163,34 @@ export async function deleteStudent(id: string) {
   return req(`/students/${id}`, { method: 'DELETE' })
 }
 
+/** Parent/teacher/admin: COPPA/GDPR consent status for a roster `Student` id. Returns null if not a student record or inaccessible. */
+export async function getPrivacyConsent(studentId: string): Promise<{
+  hasConsent: boolean
+  consent: { id: string; studentId: string; parentName: string; parentEmail: string; consentedAt: string } | null
+} | null> {
+  try {
+    return await req(`/privacy/consent/${encodeURIComponent(studentId)}`)
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : ''
+    if (msg.includes('Student not found') || msg.includes('HTTP 404') || msg.includes('do not have access'))
+      return null
+    throw e
+  }
+}
+
+export async function postPrivacyConsent(body: {
+  studentId: string
+  parentName: string
+  parentEmail: string
+}) {
+  return req('/privacy/consent', { method: 'POST', body: JSON.stringify(body) })
+}
+
+/** Parent or admin: hard-delete child `Student` row and related data (GDPR erasure). */
+export async function deletePrivacyStudentData(studentId: string) {
+  return req(`/privacy/student/${encodeURIComponent(studentId)}`, { method: 'DELETE' })
+}
+
 export async function getClasses() {
   return req('/classes')
 }

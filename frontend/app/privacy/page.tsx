@@ -75,9 +75,11 @@ export default function PrivacyPolicyPage() {
 
           <Section title="7. Account Deletion">
             Users can delete their account and all associated data at any time from the
-            Profile section of the app (Settings → Account → Delete Account). Upon deletion,
-            all personal data, learning progress, and associated records are permanently removed
-            from our servers within 30 days.
+            Profile section of the app (Settings → Account → Delete Account). Parents can request
+            erasure of a child&apos;s roster account and related learning data from the Parent dashboard
+            (delete child data). Upon deletion,
+            personal data, learning progress, and associated records are permanently removed
+            from our servers, subject to any limited legal retention requirements.
           </Section>
 
           <Section title="8. Parental Rights">
@@ -88,6 +90,11 @@ export default function PrivacyPolicyPage() {
               <li>Refuse further collection of their child&apos;s data</li>
               <li>Contact us with any privacy concerns</li>
             </ul>
+            <p className="mt-3">
+              Where required, we record verifiable parental consent (parent or guardian name, email, time, and request IP)
+              when a parent confirms a child&apos;s use of the service. Parents can record consent and request deletion of
+              the child&apos;s account from the Parent dashboard in the app.
+            </p>
           </Section>
 
           <Section title="9. Third-Party Services">

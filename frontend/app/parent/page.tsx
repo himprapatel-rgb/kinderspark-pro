@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useAppStore as useStore } from '@/store/appStore'
 import { Loading, InlineEmpty } from '@/components/UIStates'
 import TopBarActions from '@/components/TopBarActions'
@@ -86,6 +87,7 @@ export default function ParentPage() {
   const [unreadMsgs, setUnreadMsgs] = useState(0)
   const [progressData, setProgressData] = useState<any[]>([])
   const [badgesData, setBadgesData] = useState<any[]>([])
+  const [consentInfo, setConsentInfo] = useState<{ hasConsent: boolean } | null>(null)
   const { permission: notifPermission, subscribe: subscribeNotif } = usePushNotifications(student?.id ?? user?.id)
 
   // SSE / fallback polling refs
@@ -646,6 +648,59 @@ export default function ParentPage() {
                 </div>
               </div>
             </div>
+
+            {consentInfo && student?.id && (
+              <div
+                className="mx-3 mb-4 rounded-2xl p-4"
+                style={{ background: 'rgba(94,92,230,0.08)', border: '1px solid rgba(94,92,230,0.25)' }}
+              >
+                <div className="flex items-start gap-3">
+                  <span className="text-xl shrink-0" aria-hidden>
+                    🛡️
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-black text-sm mb-1">{t('parent_privacy_banner_title')}</div>
+                    {!consentInfo.hasConsent ? (
+                      <>
+                        <p className="text-xs font-bold app-muted leading-relaxed mb-3">{t('parent_privacy_banner_body')}</p>
+                        <Link
+                          href={`/parent/consent?studentId=${encodeURIComponent(student.id)}`}
+                          className="inline-flex min-h-10 items-center px-3 rounded-xl text-xs font-black app-pressable active:scale-95"
+                          style={{ background: 'rgba(94,92,230,0.25)', color: '#c4b5fd' }}
+                        >
+                          {t('parent_privacy_record_consent')}
+                        </Link>
+                      </>
+                    ) : (
+                      <p className="text-xs font-bold text-emerald-600 dark:text-green-300">{t('parent_privacy_consent_recorded')}</p>
+                    )}
+                    <div className="mt-3 pt-3 border-t" style={{ borderColor: 'var(--app-border)' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          toast.confirm(
+                            `${t('parent_privacy_delete_confirm_title')}\n\n${t('parent_privacy_delete_confirm_body')}`,
+                            async () => {
+                              try {
+                                await deletePrivacyStudentData(student.id)
+                                toast.info('Data removed. Reloading…')
+                                window.location.assign('/parent')
+                              } catch (e: unknown) {
+                                toast.error(e instanceof Error ? e.message : 'Delete failed')
+                              }
+                            }
+                          )
+                        }}
+                        className="text-xs font-black app-pressable underline decoration-dotted"
+                        style={{ color: '#fca5a5' }}
+                      >
+                        {t('parent_privacy_delete_data')}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Parent co-pilot: today action + plain-language insight */}
             <div className="mx-3 mb-4 rounded-2xl p-4" style={{ background: 'rgba(48,209,88,0.12)', border: '1px solid rgba(48,209,88,0.3)' }}>

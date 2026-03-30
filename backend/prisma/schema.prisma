@@ -82,7 +82,19 @@ model Student {
   badges        Badge[]
   feedback      Feedback?
   attendance    Attendance[]
+  parentalConsent ParentalConsent?
   createdAt     DateTime             @default(now())
+}
+
+/// Verifiable parental consent record (COPPA / GDPR Art. 8 baseline).
+model ParentalConsent {
+  id          String   @id @default(cuid())
+  studentId   String   @unique
+  parentName  String
+  parentEmail String
+  consentedAt DateTime @default(now())
+  ipAddress   String   @default("unknown")
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
 
 model Badge {
