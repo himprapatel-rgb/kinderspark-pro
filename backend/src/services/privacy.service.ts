@@ -1,10 +1,21 @@
 import prisma from '../prisma/client'
+import { deleteCloudinaryImage } from './storage.service'
 
 /**
  * Hard-delete a child account and related user-scoped data (GDPR right to erasure).
  * Order matters: clear artifacts and tokens, strip optional legacy links, then Student CASCADE.
  */
 export async function deleteStudentAndRelatedData(studentId: string): Promise<void> {
+  const drawings = await prisma.drawing.findMany({
+    where: { studentId },
+    select: { cloudinaryPublicId: true },
+  })
+  for (const d of drawings) {
+    if (d.cloudinaryPublicId) {
+      await deleteCloudinaryImage(d.cloudinaryPublicId).catch(() => {})
+    }
+  }
+
   await prisma.$transaction(async (tx) => {
     await tx.aiSparkArtifact.deleteMany({ where: { requesterId: studentId } });
     await tx.refreshToken.deleteMany({ where: { userId: studentId } });
