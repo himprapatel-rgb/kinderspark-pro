@@ -7,6 +7,7 @@ import rateLimit from 'express-rate-limit'
 import { rateLimiter } from './middleware/rateLimit.middleware'
 import { authenticate } from './middleware/auth.middleware'
 import { enforceCsrf } from './middleware/csrf.middleware'
+import { seedDemoData } from './services/seed.service'
 import authRoutes from './routes/auth.routes'
 import studentRoutes from './routes/student.routes'
 import teacherRoutes from './routes/teacher.routes'
@@ -153,18 +154,11 @@ app.listen(PORT, async () => {
   startAgentScheduler()
 
   // Auto-seed demo data if the database has no school yet.
-  // Uses upsert — safe to run on every cold start; won't overwrite real data.
+  // Uses compiled seed.service.ts — no ts-node needed in production.
   try {
     const schoolCount = await prisma.school.count()
     if (schoolCount === 0) {
-      console.log('[startup] No schools found — running demo seed...')
-      const { execSync } = require('child_process')
-      execSync('npx ts-node prisma/seed.ts', {
-        cwd: process.cwd().endsWith('dist') ? require('path').join(process.cwd(), '..') : process.cwd(),
-        stdio: 'inherit',
-        env: { ...process.env },
-      })
-      console.log('[startup] Demo seed complete ✓')
+      await seedDemoData()
     }
   } catch (err) {
     console.warn('[startup] Auto-seed failed (non-fatal):', (err as any)?.message?.slice(0, 200))
