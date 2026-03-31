@@ -135,7 +135,7 @@ router.get('/memory/:agentId', agentAuth, async (req, res) => {
 })
 
 // GET /api/agents/memory — all memories (Mission Control)
-router.get('/memory', dashboardAuth, async (req, res) => {
+router.get('/memory', dashboardAdminOrAgentAuth, async (req, res) => {
   const limit = parseLimitedInt(req.query.limit, 100, 200)
   try {
     res.json(await mem.getAllMemories(limit))
@@ -218,7 +218,7 @@ router.get('/inbox/:agentId', agentAuth, async (req, res) => {
 })
 
 // GET /api/agents/conversations — all conversations (Mission Control)
-router.get('/conversations', dashboardAuth, async (req, res) => {
+router.get('/conversations', dashboardAdminOrAgentAuth, async (req, res) => {
   const limit = parseLimitedInt(req.query.limit, 50, 200)
   try {
     res.json(await mem.getAllConversations(limit))
@@ -250,7 +250,7 @@ router.get('/stats', dashboardAuth, async (_req, res) => {
 // ────────────────────────────────────────────────────────────────────────────
 
 // GET /api/agents/runs
-router.get('/runs', dashboardAuth, async (_req, res) => {
+router.get('/runs', dashboardAdminOrAgentAuth, async (_req, res) => {
   if (!GITHUB_TOKEN) return res.json([])
   try {
     const r = await fetch(`${GH_API}/actions/runs?per_page=50`, { headers: GH_HEADERS })
@@ -260,7 +260,7 @@ router.get('/runs', dashboardAuth, async (_req, res) => {
 })
 
 // GET /api/agents/issues
-router.get('/issues', dashboardAuth, async (req, res) => {
+router.get('/issues', dashboardAdminOrAgentAuth, async (req, res) => {
   if (!GITHUB_TOKEN) return res.json([])
   const requestedState = req.query.state
   const allowedStates = new Set(['open', 'closed', 'all'])
