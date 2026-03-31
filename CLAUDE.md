@@ -352,6 +352,9 @@ Agent dashboard: `/dashboard/agents`
 DATABASE_URL           PostgreSQL connection string
 ANTHROPIC_API_KEY      Anthropic API key
 JWT_SECRET             JWT signing secret
+AGENT_SECRET           Required secret for agent-authenticated routes (no fallback)
+AGENT_TRIGGER_WORKFLOWS Comma-separated allowlist for /api/agents/trigger workflows
+AGENT_ALLOWED_ISSUE_LABELS Comma-separated allowlist for /api/agents/issue labels
 FRONTEND_URL           CORS allowed origin
 ANTHROPIC_MODEL        (optional) override Claude model
 VAPID_PUBLIC_KEY       Web push notifications
@@ -375,6 +378,28 @@ ANTHROPIC_API_KEY      For all agent workflows
 BACKEND_URL            Railway backend URL
 FRONTEND_URL           Railway frontend URL
 ```
+
+---
+
+## Agent Routes Hardening Status (2026-03-31)
+
+`backend/src/routes/agents.routes.ts` hardening Issues 1-10 are implemented and pushed.
+
+Completed:
+- Issue 1: `agentAuth` now rejects missing/invalid `x-agent-secret` with 401.
+- Issue 2: `dashboardAuth` now requires valid agent secret OR authenticated JWT role (`admin`/`teacher`).
+- Issue 3: removed insecure `AGENT_SECRET` fallback (`ks-agent-secret`); fail-closed behavior added.
+- Issue 4: request validation added for params/query/body across agent endpoints.
+- Issue 5: `/ask` no longer fails silently; logs + mission control alert on async errors.
+- Issue 6: `/trigger` locked down to admin-or-agent-secret + workflow allowlist.
+- Issue 7: `/issue` hardened with stricter auth and payload constraints + label allowlist.
+- Issue 8: sensitive dashboard reads (`/memory`, `/conversations`, `/runs`, `/issues`) now admin-or-agent-secret.
+- Issue 9: `/feed` SSE stabilized with heartbeat, reconnect hint, overlap guard, timeout abort, and robust cleanup.
+- Issue 10: removed `any` usage in this route; replaced with concrete/unknown-safe typing.
+
+Notes:
+- Route-level lint is clean.
+- Backend-wide TypeScript errors still exist in unrelated Prisma-typed files (`ai.controller.ts`, `modules.controller.ts`, `cache.service.ts`) and are pre-existing.
 
 ---
 
