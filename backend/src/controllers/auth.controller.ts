@@ -5,8 +5,11 @@ import crypto from 'crypto'
 import prisma from '../prisma/client'
 import { checkAndAwardBadges } from '../services/badge.service'
 import { getJwtSecret } from '../config/jwtSecret'
+import { computePinFingerprint } from '../utils/pinFingerprint'
 const ACCESS_TOKEN_TTL = '2h'
 const REFRESH_TOKEN_TTL_DAYS = 30
+const PIN_LOCK_MAX_ATTEMPTS = 5
+const PIN_LOCK_MINUTES = 15
 
 /**
  * Generate a unique human-readable Profile ID like "KS-A7X9K2"
@@ -54,6 +57,53 @@ function normalizeSchoolCode(raw: unknown): string | null {
   return s.length === 6 ? s : null
 }
 
+function requestIp(req: Request): string {
+  return req.ip || req.socket.remoteAddress || 'unknown'
+}
+
+function throttleKey(schoolCode: string, role: string, ip: string): string {
+  return `${schoolCode}:${role}:${ip}`
+}
+
+async function enforcePinThrottleOrReject(
+  req: Request,
+  res: Response,
+  schoolCode: string,
+  role: string,
+): Promise<string | null> {
+  const ip = requestIp(req)
+  const key = throttleKey(schoolCode, role, ip)
+  const existing = await prisma.pinLoginThrottle.findUnique({ where: { key } })
+  if (existing?.lockedUntil && existing.lockedUntil > new Date()) {
+    const retryAfterSec = Math.max(1, Math.ceil((existing.lockedUntil.getTime() - Date.now()) / 1000))
+    res.status(429).json({
+      error: 'Too many failed PIN attempts. Please try again later.',
+      retryAfter: retryAfterSec,
+    })
+    return null
+  }
+  return key
+}
+
+async function registerPinFailure(key: string, schoolCode: string, role: string, ip: string): Promise<void> {
+  const current = await prisma.pinLoginThrottle.findUnique({ where: { key } })
+  const attempts = (current?.attempts || 0) + 1
+  const lockedUntil =
+    attempts >= PIN_LOCK_MAX_ATTEMPTS
+      ? new Date(Date.now() + PIN_LOCK_MINUTES * 60 * 1000)
+      : null
+
+  await prisma.pinLoginThrottle.upsert({
+    where: { key },
+    create: { key, schoolCode, role, ip, attempts, lockedUntil },
+    update: { attempts, lockedUntil },
+  })
+}
+
+async function clearPinFailure(key: string): Promise<void> {
+  await prisma.pinLoginThrottle.delete({ where: { key } }).catch(() => {})
+}
+
 export async function verifyPin(req: Request, res: Response) {
   const { pin, role } = req.body
   if (!pin || !role) return res.status(400).json({ error: 'pin and role required' })
@@ -68,12 +118,17 @@ export async function verifyPin(req: Request, res: Response) {
     if (!school) {
       return res.status(400).json({ error: 'Unknown school code' })
     }
+    const ip = requestIp(req)
+    const key = await enforcePinThrottleOrReject(req, res, schoolCode, String(role))
+    if (!key) return
+    const pinFingerprint = computePinFingerprint(String(pin))
 
     // New identity model (User + RoleAssignment) first — scoped to this school.
     const identityCandidates = await prisma.user.findMany({
       where: {
         pin: { not: null },
         roleAssignments: { some: { role: role as any } },
+        OR: [{ pinFingerprint }, { pinFingerprint: null }],
       },
       include: { roleAssignments: true },
       take: 200,
@@ -86,6 +141,7 @@ export async function verifyPin(req: Request, res: Response) {
     for (const u of users) {
       if (!u.pin) continue
       if (await bcrypt.compare(pin, u.pin)) {
+        await clearPinFailure(key)
         const roles = u.roleAssignments.map(r => String(r.role))
         const activeRole = roles.includes(role) ? role : roles[0] || role
         const token = signAccessToken({
@@ -115,9 +171,18 @@ export async function verifyPin(req: Request, res: Response) {
     }
 
     if (role === 'teacher') {
-      const teachers = await prisma.teacher.findMany({ where: { schoolId: school.id } })
+      const teachers = await prisma.teacher.findMany({
+        where: {
+          schoolId: school.id,
+          OR: [{ pinFingerprint }, { pinFingerprint: null }],
+        },
+      })
       const teacher = (await Promise.all(teachers.map(async t => (await bcrypt.compare(pin, t.pin)) ? t : null))).find(Boolean) ?? null
-      if (!teacher) return res.status(401).json({ error: 'Wrong PIN' })
+      if (!teacher) {
+        await registerPinFailure(key, schoolCode, String(role), ip)
+        return res.status(401).json({ error: 'Wrong PIN' })
+      }
+      await clearPinFailure(key)
       const token = signAccessToken({ id: teacher.id, role: 'teacher', roles: ['teacher'], name: teacher.name, schoolId: teacher.schoolId || null })
       const refreshToken = await issueRefreshToken(teacher.id, 'teacher')
       setAuthCookies(res, token, refreshToken)
@@ -125,9 +190,18 @@ export async function verifyPin(req: Request, res: Response) {
     }
 
     if (role === 'admin' || role === 'principal') {
-      const admins = await prisma.admin.findMany({ where: { schoolId: school.id } })
+      const admins = await prisma.admin.findMany({
+        where: {
+          schoolId: school.id,
+          OR: [{ pinFingerprint }, { pinFingerprint: null }],
+        },
+      })
       const admin = (await Promise.all(admins.map(async a => (await bcrypt.compare(pin, a.pin)) ? a : null))).find(Boolean) ?? null
-      if (!admin) return res.status(401).json({ error: 'Wrong PIN' })
+      if (!admin) {
+        await registerPinFailure(key, schoolCode, String(role), ip)
+        return res.status(401).json({ error: 'Wrong PIN' })
+      }
+      await clearPinFailure(key)
       const activeRole = role === 'principal' ? 'principal' : 'admin'
       const token = signAccessToken({
         id: admin.id,
@@ -155,11 +229,18 @@ export async function verifyPin(req: Request, res: Response) {
 
     // child or parent (PIN is the child's PIN; class must belong to this school)
     const students = await prisma.student.findMany({
-      where: { class: { schoolId: school.id } },
+      where: {
+        class: { schoolId: school.id },
+        OR: [{ pinFingerprint }, { pinFingerprint: null }],
+      },
       include: { class: true, progress: true, feedback: true },
     })
     const student = (await Promise.all(students.map(async s => (await bcrypt.compare(pin, s.pin)) ? s : null))).find(Boolean) ?? null
-    if (!student) return res.status(401).json({ error: 'Wrong PIN' })
+    if (!student) {
+      await registerPinFailure(key, schoolCode, String(role), ip)
+      return res.status(401).json({ error: 'Wrong PIN' })
+    }
+    await clearPinFailure(key)
 
     // Compute streak: +1 if last login was yesterday, reset to 1 if gap > 1 day, keep if same day
     const now = new Date()
@@ -296,6 +377,7 @@ export async function registerUser(req: Request, res: Response) {
     }
 
     const pinHash = await bcrypt.hash(pin, 10)
+    const pinFingerprint = computePinFingerprint(String(pin))
 
     // Generate a unique profile ID (retry up to 10 times if collision)
     let profileId = ''
@@ -325,6 +407,7 @@ export async function registerUser(req: Request, res: Response) {
         id: profileId,
         displayName: displayName.trim(),
         pin: pinHash,
+        pinFingerprint,
         email: email || null,
         schoolId: childSchoolId,
         avatar: avatar || (role === 'child' ? '🧒' : role === 'teacher' ? '👩‍🏫' : role === 'parent' ? '👨‍👩‍👧' : '⚙️'),
@@ -349,6 +432,7 @@ export async function registerUser(req: Request, res: Response) {
             age: 5,
             avatar: avatar || '🧒',
             pin: pinHash,
+            pinFingerprint,
             classId: childClassId,
             stars: 0,
             streak: 0,

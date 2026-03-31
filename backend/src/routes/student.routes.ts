@@ -4,6 +4,7 @@ import prisma from '../prisma/client'
 import { invalidateCache } from '../middleware/cache.middleware'
 import { requireAuth, requireRole } from '../middleware/auth.middleware'
 import { canParentAccessStudent, canTeacherAccessClass } from '../utils/accessControl'
+import { computePinFingerprint } from '../utils/pinFingerprint'
 
 const router = Router()
 router.use(requireAuth)
@@ -77,12 +78,14 @@ router.post('/', requireRole('teacher', 'admin'), async (req: Request, res: Resp
       return res.status(400).json({ error: 'name, pin, and classId are required' })
     }
     const pinHash = await bcrypt.hash(pin, 10)
+    const pinFingerprint = computePinFingerprint(String(pin))
     const student = await prisma.student.create({
       data: {
         name,
         age: age || 5,
         avatar: avatar || '👧',
         pin: pinHash,
+        pinFingerprint,
         stars: stars || 0,
         streak: streak || 0,
         classId,

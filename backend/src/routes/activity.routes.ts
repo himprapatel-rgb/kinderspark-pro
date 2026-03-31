@@ -3,6 +3,7 @@ import prisma from '../prisma/client'
 import { requireAuth } from '../middleware/auth.middleware'
 import { requireRole } from '../middleware/role.middleware'
 import { aiComplete } from '../services/ai/router'
+import { uploadActivityPostImage, deleteCloudinaryImage } from '../services/storage.service'
 
 const router = Router()
 router.use(requireAuth)
@@ -19,6 +20,23 @@ router.post('/', requireRole('teacher', 'admin'), async (req: Request, res: Resp
     // Validate image data isn't too large (max ~5MB base64)
     if (imageData.length > 7_000_000) {
       return res.status(400).json({ error: 'Image too large. Max 5MB.' })
+    }
+
+    let imageUrl = ''
+    let thumbUrl: string | null = null
+    let cloudinaryPublicId: string | null = null
+    try {
+      const uploaded = await uploadActivityPostImage(classId, imageData)
+      imageUrl = uploaded.url
+      thumbUrl = uploaded.thumbUrl
+      cloudinaryPublicId = uploaded.publicId
+    } catch (e: any) {
+      const msg = e?.message || String(e)
+      if (msg.includes('Cloudinary is not configured')) {
+        return res.status(503).json({ error: 'Image upload is temporarily unavailable.' })
+      }
+      console.error('Activity Cloudinary upload error:', e)
+      return res.status(500).json({ error: 'Failed to upload image' })
     }
 
     let finalCaption = caption || ''
@@ -134,6 +152,9 @@ router.delete('/:id', requireRole('teacher', 'admin'), async (req: Request, res:
     if (!post) return res.status(404).json({ error: 'Post not found' })
     if (post.teacherId !== req.user!.id && req.user!.role !== 'admin') {
       return res.status(403).json({ error: 'Not your post' })
+    }
+    if (post.cloudinaryPublicId) {
+      await deleteCloudinaryImage(post.cloudinaryPublicId).catch(() => {})
     }
     await prisma.activityPost.delete({ where: { id } })
     res.json({ success: true })

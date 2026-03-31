@@ -40,6 +40,31 @@ export async function uploadDrawingBuffer(
   return { url: result.secure_url, thumbUrl, publicId: result.public_id }
 }
 
+/** Teacher activity feed — same signing as drawings, separate folder for lifecycle/ACL. */
+export async function uploadActivityPostImage(
+  classId: string,
+  base64Image: string,
+): Promise<{ url: string; thumbUrl: string; publicId: string }> {
+  ensureConfig()
+  const dataUri = base64Image.startsWith('data:') ? base64Image : `data:image/jpeg;base64,${base64Image}`
+
+  const result = await cloudinary.uploader.upload(dataUri, {
+    folder: `kinderspark/activity/${classId}`,
+    resource_type: 'image',
+    transformation: [{ quality: 'auto', fetch_format: 'auto' }],
+  })
+
+  const thumbUrl = cloudinary.url(result.public_id, {
+    width: 400,
+    height: 400,
+    crop: 'limit',
+    fetch_format: 'auto',
+    secure: true,
+  })
+
+  return { url: result.secure_url, thumbUrl, publicId: result.public_id }
+}
+
 export async function deleteCloudinaryImage(publicId: string): Promise<void> {
   if (!publicId) return
   if (!configured()) return

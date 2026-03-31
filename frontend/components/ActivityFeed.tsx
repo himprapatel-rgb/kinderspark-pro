@@ -9,7 +9,8 @@ interface ActivityPost {
   caption: string
   aiCaption: boolean
   emoji: string
-  imageData: string
+  imageUrl?: string
+  thumbUrl?: string | null
   studentTags: string[]
   likes: number
   createdAt: string
@@ -115,14 +116,23 @@ export default function ActivityFeed({ classId }: { classId: string }) {
           {/* Image */}
           <div className="px-3 pb-2">
             <div className="rounded-xl overflow-hidden" style={{ maxHeight: 300 }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={post.imageData}
-                alt={post.caption}
-                className="w-full object-cover"
-                style={{ maxHeight: 300 }}
-                loading="lazy"
-              />
+              {post.imageUrl || post.thumbUrl ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={post.imageUrl || post.thumbUrl || ''}
+                  alt={post.caption}
+                  className="w-full object-cover"
+                  style={{ maxHeight: 300 }}
+                  loading="lazy"
+                />
+              ) : (
+                <div
+                  className="w-full flex items-center justify-center text-5xl py-16"
+                  style={{ background: 'var(--app-surface-soft)' }}
+                >
+                  {post.emoji}
+                </div>
+              )}
             </div>
           </div>
 

@@ -54,6 +54,7 @@ model Student {
   avatar        String               @default("👧")
   photoUrl      String?
   pin           String
+  pinFingerprint String?              @db.VarChar(64)
   addressLine1  String?
   addressLine2  String?
   city          String?
@@ -87,6 +88,10 @@ model Student {
   drawings      Drawing[]
   tutorSessions TutorSession[]
   createdAt     DateTime             @default(now())
+
+  @@index([classId])
+  @@index([classId, lastLoginAt])
+  @@index([pinFingerprint])
 }
 
 model Drawing {
@@ -185,6 +190,9 @@ model Homework {
   class       Class                @relation(fields: [classId], references: [id])
   completions HomeworkCompletion[]
   createdAt   DateTime             @default(now())
+
+  @@index([classId, dueDate])
+  @@index([syllabusId])
 }
 
 model HomeworkCompletion {
@@ -243,6 +251,10 @@ model Message {
   classId   String?
   class     Class?   @relation(fields: [classId], references: [id])
   createdAt DateTime @default(now())
+
+  @@index([classId, createdAt])
+  @@index([to, read])
+  @@index([fromId])
 }
 
 model Feedback {
@@ -271,16 +283,22 @@ model Teacher {
   id        String   @id @default(cuid())
   name      String
   pin       String
+  pinFingerprint String? @db.VarChar(64)
   schoolId  String?
   createdAt DateTime @default(now())
+
+  @@index([pinFingerprint])
 }
 
 model Admin {
   id        String   @id @default(cuid())
   name      String
   pin       String
+  pinFingerprint String? @db.VarChar(64)
   schoolId  String?
   createdAt DateTime @default(now())
+
+  @@index([pinFingerprint])
 }
 
 model Attendance {
@@ -295,6 +313,9 @@ model Attendance {
   createdAt DateTime @default(now())
 
   @@unique([classId, studentId, date])
+  @@index([date])
+  @@index([studentId, date])
+  @@index([classId, date])
 }
 
 model RefreshToken {
@@ -319,6 +340,7 @@ model User {
   displayName           String
   email                 String?             @unique
   pin                   String?
+  pinFingerprint        String?             @db.VarChar(64)
   avatar                String?
   schoolId              String?
   school                School?             @relation(fields: [schoolId], references: [id])
@@ -337,6 +359,21 @@ model User {
   MessageReceipt        MessageReceipt[]
 
   @@index([schoolId])
+  @@index([pinFingerprint])
+}
+
+model PinLoginThrottle {
+  /// Composite key: `${schoolCode}:${role}:${ip}`
+  key        String   @id
+  schoolCode String   @db.VarChar(6)
+  role       String
+  ip         String
+  attempts   Int      @default(0)
+  lockedUntil DateTime?
+  updatedAt  DateTime @updatedAt
+
+  @@index([schoolCode, role])
+  @@index([ip, updatedAt])
 }
 
 model RoleAssignment {
@@ -626,17 +663,19 @@ model MessageReceipt {
 // ── Activity Feed (Photo Sharing) ────────────────────────────────────────────
 
 model ActivityPost {
-  id          String   @id @default(cuid())
-  classId     String
-  class       Class    @relation(fields: [classId], references: [id])
-  teacherId   String
-  imageData   String   @db.Text // base64-encoded image
-  caption     String   @db.Text // AI-generated or teacher-written caption
-  aiCaption   Boolean  @default(false) // was caption AI-generated?
-  studentTags String[] @default([]) // tagged student IDs
-  emoji       String   @default("📸")
-  likes       Int      @default(0)
-  createdAt   DateTime @default(now())
+  id                 String   @id @default(cuid())
+  classId            String
+  class              Class    @relation(fields: [classId], references: [id])
+  teacherId          String
+  imageUrl           String   @default("")
+  thumbUrl           String?
+  cloudinaryPublicId String?
+  caption            String   @db.Text
+  aiCaption          Boolean  @default(false)
+  studentTags        String[] @default([])
+  emoji              String   @default("📸")
+  likes              Int      @default(0)
+  createdAt          DateTime @default(now())
 
   @@index([classId, createdAt])
   @@index([teacherId])
@@ -678,6 +717,7 @@ model AgentMemory {
   @@index([agentId])
   @@index([createdAt])
   @@index([importance])
+  @@index([agentId, importance, createdAt])
 }
 
 model AgentConversation {

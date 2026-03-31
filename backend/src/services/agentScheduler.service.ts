@@ -292,6 +292,18 @@ export function startAgentScheduler() {
   }
   console.log(`[AgentScheduler] 🤖 Starting ${ALL_AGENTS.length} autonomous agents...`)
 
+  // Expired refresh tokens (table bloat)
+  cron.schedule('23 4 * * *', async () => {
+    try {
+      const r = await prisma.refreshToken.deleteMany({
+        where: { expiresAt: { lt: new Date() } },
+      })
+      if (r.count > 0) console.log(`[AgentScheduler] Pruned ${r.count} expired refresh tokens`)
+    } catch (e: unknown) {
+      console.warn('[AgentScheduler] refresh token cleanup failed:', e)
+    }
+  })
+
   // Round-table chat every 10 minutes (was 3 — throttled for free tier)
   cron.schedule('*/10 * * * *', runRoundTable)
 

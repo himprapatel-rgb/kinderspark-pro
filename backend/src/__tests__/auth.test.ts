@@ -15,6 +15,11 @@ const mockPrismaRefreshToken = {
   delete: jest.fn(),
   deleteMany: jest.fn(),
 }
+const mockPrismaPinLoginThrottle = {
+  findUnique: jest.fn(),
+  upsert: jest.fn(),
+  delete: jest.fn(),
+}
 const mockPrismaUser = {
   findMany: jest.fn(),
   findUnique: jest.fn(),
@@ -29,6 +34,7 @@ jest.mock('../prisma/client', () => ({
     admin: mockPrismaAdmin,
     student: mockPrismaStudent,
     refreshToken: mockPrismaRefreshToken,
+    pinLoginThrottle: mockPrismaPinLoginThrottle,
   },
 }))
 
@@ -85,6 +91,9 @@ describe('Auth Controller – POST /api/auth/pin', () => {
     jest.clearAllMocks()
     mockPrismaSchool.findUnique.mockResolvedValue({ id: 'school-1', name: 'Test School', schoolCode: 'SUN001' })
     mockPrismaUser.findMany.mockResolvedValue([])
+    mockPrismaPinLoginThrottle.findUnique.mockResolvedValue(null)
+    mockPrismaPinLoginThrottle.upsert.mockResolvedValue({})
+    mockPrismaPinLoginThrottle.delete.mockResolvedValue({})
   })
 
   it('returns 200 with accessToken for valid teacher PIN', async () => {
@@ -197,6 +206,22 @@ describe('Auth Controller – POST /api/auth/pin', () => {
       .send({ pin: 'bad', role: 'child', schoolCode: 'SUN001' })
 
     expect(res.status).toBe(401)
+  })
+
+  it('returns 429 when PIN login is temporarily locked for IP+school+role', async () => {
+    const future = new Date(Date.now() + 60_000)
+    mockPrismaPinLoginThrottle.findUnique.mockResolvedValue({
+      key: 'SUN001:teacher:127.0.0.1',
+      lockedUntil: future,
+      attempts: 5,
+    })
+
+    const res = await request(app)
+      .post('/api/auth/pin')
+      .send({ pin: '1234', role: 'teacher', schoolCode: 'SUN001' })
+
+    expect(res.status).toBe(429)
+    expect(res.body.error).toMatch(/too many failed pin attempts/i)
   })
 })
 
