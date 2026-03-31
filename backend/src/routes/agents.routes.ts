@@ -29,9 +29,7 @@ function agentAuth(req: any, res: any, next: any) {
 function dashboardAuth(req: any, res: any, next: any) {
   const secret = req.headers['x-agent-secret']
   if (secret === AGENT_SECRET) return next()
-  // Also allow unauthenticated in dev (no JWT) — dashboard is internal tool
-  if (!req.headers['authorization']) return next()
-  next()
+  return requireAuth(req, res, () => requireRole('admin', 'teacher')(req, res, next))
 }
 
 // ────────────────────────────────────────────────────────────────────────────
