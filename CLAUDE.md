@@ -76,15 +76,17 @@ kinderspark-pro/
 │       ├── app.ts                 ← Express app + route mounting
 │       ├── controllers/           ← thin request handlers
 │       │   ├── auth.controller.ts
-│       │   ├── ai.controller.ts
+│       │   ├── ai.controller.ts   ← DB-first lesson lookup; AI only for custom topics
 │       │   ├── homework.controller.ts
-│       │   └── syllabus.controller.ts
+│       │   ├── syllabus.controller.ts
+│       │   └── modules.controller.ts ← CurriculumModule + QuizQuestion endpoints
 │       ├── services/              ← business logic + external calls
-│       │   ├── claude.service.ts  ← Anthropic API wrapper
+│       │   ├── claude.service.ts  ← re-export of ai/ (real logic in services/ai/)
+│       │   ├── cache.service.ts   ← makeCacheKey, getCachedResponse, setCachedResponse
 │       │   ├── badge.service.ts   ← achievement system
 │       │   ├── report.service.ts  ← AI weekly report generation
 │       │   └── agentScheduler.service.ts ← autonomous agent orchestrator
-│       ├── routes/                ← route definitions (15 files)
+│       ├── routes/                ← route definitions (16 files)
 │       └── middleware/
 │           ├── auth.middleware.ts ← JWT decode
 │           ├── role.middleware.ts ← role enforcement
@@ -100,8 +102,8 @@ kinderspark-pro/
     │   └── dashboard/agents/      ← agent control room
     ├── components/ui/             ← Button, Modal, Toast, TabBar
     ├── lib/
-    │   ├── api.ts                 ← all API fetch calls (single source)
-    │   ├── modules.ts             ← 12 built-in learning modules
+    │   ├── api.ts                 ← all API fetch calls (38+ functions)
+    │   ├── modules.ts             ← 18 built-in learning modules + shop items
     │   ├── speech.ts              ← text-to-speech
     │   └── i18n.ts                ← translations
     └── store/appStore.ts          ← Zustand: user, role, token, settings
@@ -116,13 +118,14 @@ Core models: `School → Class → Student`, `Homework`, `HomeworkCompletion`,
 `Message`, `Feedback`, `Badge`, `Attendance`, `Teacher`, `Admin`,
 `RefreshToken`, `AgentMemory`, `AgentConversation`
 
-Key Student fields: `id, name, preferredName?, age, avatar, photoUrl?, pin, stars,
-streak, grade, aiStars, aiSessions, aiBestLevel, ownedItems[], selectedTheme,
-addressLine1?, addressLine2?, city?, state?, postalCode?, country?,
-parentName?, parentPhone?, emergencyPhone?, notes?, classId`
+Cache & Curriculum models (added 2026-03-31):
+- `CurriculumModule` — all 18 built-in modules with items JSON (DB source of truth)
+- `LessonCache` — AI-generated lessons for custom topics (unique by moduleId+language+difficulty)
+- `QuizQuestion` — pre-seeded quiz questions per module (never need AI for standard quizzes)
+- `AIResponseCache` — SHA-256 keyed cache for all AI responses (TTL by type)
 
-Key ParentProfile fields: `phone?, alternatePhone?, photoUrl?, addressLine1?,
-addressLine2?, city?, state?, postalCode?, country?`
+Key Student fields: `id, name, age, avatar, pin, stars, streak, grade,
+aiStars, aiSessions, aiBestLevel, ownedItems[], selectedTheme, classId`
 
 ---
 
@@ -142,15 +145,14 @@ GET/PUT/DELETE /api/students/:id
 GET    /api/classes
 POST   /api/homework
 GET    /api/homework?classId=
-POST   /api/ai/generate-lesson
+POST   /api/ai/generate-lesson    ← DB-first: module items → LessonCache → AI
 POST   /api/ai/weekly-report
 POST   /api/ai/tutor-feedback
 GET    /api/agents/memories
 POST   /api/agents/conversations
-GET    /api/messages/recipients
-GET    /api/messages/recipients/lookup?profileId=
-GET/PATCH /api/profiles/student/:studentId
-GET/PATCH /api/profiles/guardian/me
+GET    /api/modules               ← all active CurriculumModules
+GET    /api/modules/:moduleId     ← single module with items
+GET    /api/modules/:moduleId/questions?difficulty=&language=  ← quiz questions
 ```
 
 ---
@@ -182,7 +184,20 @@ GET/PATCH /api/profiles/guardian/me
 ## AI Integration Rules
 
 - Model: `claude-sonnet-4-6` (override via `ANTHROPIC_MODEL` env var)
-- All Claude calls go through `backend/src/services/claude.service.ts`
+- All Claude calls go through `backend/src/services/ai/` (claude.service.ts is a re-export)
+- AI has 3-provider fallback chain: Claude → OpenAI → Perplexity (`ai/router.ts`)
+
+### HARDCORE RULE — Every AI Response MUST Be Cached (see `.claude/rules/ai-cache.md`)
+Every AI function MUST follow this 3-step pattern — NO EXCEPTIONS:
+1. `makeCacheKey(type, { ...allInputParams })` — before calling AI
+2. `getCachedResponse(key)` — return immediately if cache hit
+3. `setCachedResponse(key, type, text, model)` — save BEFORE returning
+All 7 AI functions in `ai/index.ts` implement this. Any new AI function must too.
+
+- **DB-first lesson strategy**: check `CurriculumModule` → check `LessonCache` → call AI
+- Standard modules (18 built-in) are served from DB — zero AI calls
+- Custom topic lessons are cached in `LessonCache` after first AI call
+- Cache TTLs: lesson/syllabus=7d, homework=3d, report/feedback=1d, recommendations=12h
 - Always include `"child aged 3-6"` in prompts for appropriate language
 - Lesson generation: request strict JSON output (no markdown fences)
 - Max tokens: 100–1024 (keep small for latency + cost)
@@ -193,8 +208,11 @@ GET/PATCH /api/profiles/guardian/me
 
 ## Learning Modules (lib/modules.ts)
 
-12 built-in modules: `numbers`, `numbers2`, `letters`, `words`, `words2`,
-`words3`, `animals`, `colors`, `fruits`, `body`, `feelings`, `habits`
+18 built-in modules: `numbers`, `numbers2`, `letters`, `words`, `words2`,
+`words3`, `colors`, `animals`, `fruits`, `shapes`, `food`, `vehicles`,
+`weather`, `body`, `family`, `feelings`, `habits`, `manners`
+
+Shop items: 9 avatars (`av_def`–`av_dragon`) + 6 themes (`th_def`–`th_galaxy`)
 
 ---
 
@@ -213,7 +231,7 @@ GET/PATCH /api/profiles/guardian/me
 
 ## Agent System
 
-45+ autonomous GitHub Actions agents. Key ones:
+48 autonomous GitHub Actions agents (40 domain agents + 8 infra/deploy). Key ones:
 - `health-monitor.yml` — every 15 min, checks uptime
 - `claude-agent.yml` — triggered by issues or `/claude` comments
 - `agent-frontend.yml` — label: `frontend`, `design`, `ui`
@@ -251,14 +269,13 @@ FRONTEND_URL         Railway frontend URL
 
 ---
 
-## Known Gaps (as of 2026-03-28)
+## Known Gaps (as of 2026-03-31)
 
-- No backend tests — all services need unit/integration tests
-- `notification.service.ts` is a stub — push notifications not implemented
-- No input validation library (Zod/Joi) — validate at controllers
+- No backend tests — Jest is installed but no test files written yet
+- No input validation library (Zod/Joi) — validate manually at controllers
 - iOS/native app does not exist yet — app is web-only
-- Profile v1 migration: `20260330_profile_contact_fields` — run `prisma migrate deploy`
-  on production after deploy if not already applied.
+- `notification.service.ts` requires `VAPID_PUBLIC_KEY` + `VAPID_PRIVATE_KEY` env vars to be set on Railway for push to work
+- `claude.service.ts` is a 3-line re-export — real AI logic lives in `backend/src/services/ai/`
 
 ---
 

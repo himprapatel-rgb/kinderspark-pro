@@ -738,3 +738,67 @@ model AgentConversation {
   @@index([fromAgentId])
   @@index([createdAt])
 }
+
+// ── Curriculum & Lesson Cache System ────────────────────────────────────────
+
+model CurriculumModule {
+  id        String          @id @default(cuid())
+  moduleId  String          @unique              // e.g. "animals", "colors"
+  title     String
+  icon      String
+  color     String          @default("#5E5CE6")
+  type      String          @default("items")    // numbers|letters|words|items
+  items     Json                                 // [{w, e, hint}] — source of truth
+  active    Boolean         @default(true)
+  order     Int             @default(0)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  lessons   LessonCache[]
+  questions QuizQuestion[]
+
+  @@index([active])
+}
+
+model LessonCache {
+  id         String           @id @default(cuid())
+  moduleId   String
+  module     CurriculumModule @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
+  language   String           @default("en")
+  difficulty Int              @default(1)
+  items      Json                                // AI-generated [{w, e, hint}]
+  hitCount   Int              @default(0)
+  createdAt  DateTime         @default(now())
+
+  @@unique([moduleId, language, difficulty])
+  @@index([moduleId])
+}
+
+model QuizQuestion {
+  id         String           @id @default(cuid())
+  moduleId   String
+  module     CurriculumModule @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
+  question   String
+  options    Json                                // ["Cat","Dog","Bird","Fish"]
+  correctIdx Int
+  emoji      String           @default("⭐")
+  difficulty Int              @default(1)
+  language   String           @default("en")
+  createdAt  DateTime         @default(now())
+
+  @@index([moduleId, difficulty, language])
+}
+
+model AIResponseCache {
+  id        String   @id @default(cuid())
+  cacheKey  String   @unique              // hash of prompt params
+  type      String                        // lesson|feedback|report|homework|syllabus
+  response  String   @db.Text
+  model     String
+  hitCount  Int      @default(0)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([cacheKey])
+  @@index([expiresAt])
+  @@index([type])
+}

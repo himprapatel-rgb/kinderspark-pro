@@ -1,45 +1,43 @@
-name: 🌍 Localization & Cultural Agent
+name: 🌍 Multilingual AI Agent
 
 on:
   schedule:
-    # Runs every 1st of the month to check upcoming holidays
-    - cron: '0 6 1 * *'
+    - cron: '0 4 * * 0'
+  push:
+    paths:
+      - 'translations/master.json'
+      - 'frontend/lib/i18n.ts'
+      - 'frontend/lib/modules.ts'
   issues:
     types: [labeled]
   workflow_dispatch:
     inputs:
-      triggered_by:
-        description: "Agent that assigned this task (leave blank for manual run)"
-        required: false
-        default: ""
-      agent_task:
-        description: "Task assigned by another agent"
-        required: false
-        default: ""
-
-      country:
-        description: 'Target country/region (e.g. India, UAE, UK, USA)'
-        required: false
-        default: 'global'
       task:
-        description: 'Localization task'
+        description: 'Specific translation task (leave blank for full sync)'
         required: false
+        default: ''
+      add_language:
+        description: 'Add a new language code (e.g. ja, ko, id, bn)'
+        required: false
+        default: ''
 
 permissions:
   contents: write
   issues: write
+  pull-requests: write
 
 jobs:
-  localization-agent:
-    name: Localization & Cultural Relevance Agent
+  multilingual-agent:
+    name: Multilingual AI Agent
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     if: |
       github.event_name == 'workflow_dispatch' ||
       github.event_name == 'schedule' ||
-      contains(github.event.label.name, 'localization') ||
+      github.event_name == 'push' ||
       contains(github.event.label.name, 'i18n') ||
-      contains(github.event.label.name, 'cultural')
+      contains(github.event.label.name, 'localization') ||
+      contains(github.event.label.name, 'translation')
 
     steps:
       - uses: actions/checkout@v4
@@ -47,85 +45,89 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
       - name: Configure git
         run: |
-          git config user.name  "KinderSpark Localization Agent"
-          git config user.email "i18n-agent@kinderspark.ai"
+          git config user.name  "KinderSpark i18n Agent"
+          git config user.email "i18n@kinderspark.ai"
           git checkout -b "claude/i18n-$(date +%s)"
 
-
-      - name: 🧠 Load memory
-        id: memory
-        run: |
-          node monitoring/agent-memory.js read localization-agent 2>/dev/null || true
-          node monitoring/agent-memory.js inbox localization-agent 2>/dev/null || true
-        env:
-          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
-          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
-      - name: Run Localization Agent
+      - name: Run Multilingual AI Agent
         uses: anthropics/claude-code-action@beta
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          task: |
-            # ── INBOX PRIORITY ──────────────────────────────────────
-            ${{ github.event.inputs.agent_task != '' && format('🚨 ASSIGNED TASK (from {0}):\n{1}\n\nComplete this FIRST. When done, resolve the conversation in agent-memory.', github.event.inputs.triggered_by, github.event.inputs.agent_task) || '' }}
-
-            YOUR MEMORY (past runs context): ${{ steps.memory.outputs.memory_context }}
-            YOUR INBOX (messages from other agents): ${{ steps.memory.outputs.inbox_context }}
-
-            You are the LOCALIZATION & CULTURAL RELEVANCE AGENT for KinderSpark Pro.
-
-            YOUR ROLE: Make KinderSpark culturally relevant for different countries, regions,
-            and adapt content for upcoming holidays and school calendars.
-
-            TARGET COUNTRY/REGION: ${{ github.event.inputs.country || 'global' }}
-            TODAY: Run `date` to get current date.
-
-            THE APP has:
-            - frontend/lib/i18n.ts — translation system (en, hi, ar currently)
-            - frontend/app/child/page.tsx — Daily Challenge (date-seeded from MODS)
-            - backend/prisma/schema.prisma — Syllabus model with country field
-            - Word modules in frontend/lib/modules.ts
-
-            YOUR TASKS:
-
-            1. **Holiday & Cultural Themes**: Check what major holidays/events are coming up in the
-               next 30 days globally (Eid, Diwali, Christmas, Holi, Lunar New Year, etc.).
-               For each upcoming holiday:
-               - Add a themed Daily Challenge variant
-               - Add culturally relevant emojis/words to the word bank if not present
-               - Open a GitHub issue with label "cultural-theme" for major UI theme suggestions
-
-            2. **Language Expansion**: Review frontend/lib/i18n.ts.
-               - Check if any new UI strings are missing translations
-               - Add missing translations for existing languages (en, hi, ar)
-               - If ${{ github.event.inputs.country }} suggests a new language is needed,
-                 add the language skeleton
-
-            3. **Regional Content**: Based on target country:
-               - UAE/Gulf: Arabic RTL support, Islamic calendar awareness, local curriculum topics
-               - India: Hindi, Diwali/Holi themes, CBSE/ICSE curriculum alignment, regional languages
-               - UK: British English spelling, UK curriculum (KS1/KS2), British holidays
-               - USA: Common Core alignment, US holidays, American English
-               - Global: Focus on universal content that works everywhere
-
-            4. **School Calendar Awareness**: Create GitHub issues for:
-               - Back-to-school season content (Aug/Sep)
-               - End-of-year celebration features (May/Jun)
-               - Summer learning mode suggestions
-
-            Commit changes with "i18n: <description>", push.
-            Create GitHub issues with label "localization" for bigger suggestions.
           allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
-          max_turns: "25"
+          max_turns: "40"
+          task: |
+            You are the MULTILINGUAL AI AGENT for KinderSpark Pro.
+            Your job: keep ALL translations perfectly in sync across Web, iOS, and Android.
 
-      - run: git push -u origin HEAD || echo "Nothing to push"
+            TODAY: Run `date` to get current date.
+            MANUAL TASK: "${{ github.event.inputs.task }}"
+            ADD LANGUAGE: "${{ github.event.inputs.add_language }}"
 
-      - name: 🧠 Save memory
-        if: always()
-        run: |
-          node monitoring/agent-memory.js write localization-agent \
-            "summary" 2 "Localization Agent run complete $(date +%Y-%m-%d)." 2>/dev/null || true
-        env:
-          BACKEND_URL:  ${{ secrets.BACKEND_URL }}
-          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
+            ## STEP 1 — Audit translations/master.json
+            Read translations/master.json.
+            Run: node translations/sync.js --check
+            Note any missing translation keys.
+
+            ## STEP 2 — Scan for new untranslated strings
+            Search for hardcoded English strings in frontend pages that should use t():
+            Run: grep -rn "\"[A-Z][a-z]" frontend/app/ --include="*.tsx" | grep -v "import\|//\|t(\|className\|href\|src\|type\|key=" | head -30
+            Identify strings that should be translation keys but are hardcoded.
+
+            ## STEP 3 — Fill ALL missing translations using Claude AI
+            For every key missing a translation in master.json, generate the correct translation.
+            Rules:
+            - Child education app — keep language simple, age-appropriate (children 4-10)
+            - Encouraging, positive, joyful tone
+            - Keep emojis exactly as-is
+            - RTL languages (ar, ur): ensure natural right-to-left phrasing
+            - Hindi/Chinese: common everyday vocabulary, not formal/academic
+            Update translations/master.json with all missing values.
+
+            ## STEP 4 — Add new language if requested
+            If ADD LANGUAGE is set (e.g. "ja"):
+            1. Add language to _meta.languages array in master.json
+            2. Add to _meta.rtlLanguages if it is RTL
+            3. Translate ALL existing keys to the new language
+            4. Update sync.js with the new language name and flag emoji
+
+            ## STEP 5 — Sync all platforms
+            Run: node translations/sync.js
+            This generates:
+            - frontend/lib/i18n.ts (Web / Next.js)
+            - translations/ios/*/Localizable.strings (iOS)
+            - translations/android/*/strings.xml (Android)
+            Confirm output shows no errors.
+
+            ## STEP 6 — Update database language support
+            Read backend/prisma/schema.prisma.
+            The Student model has a settings object. Check if language codes need updating.
+            Read frontend/store/appStore.ts to see the settings.lang field.
+            If the app only accepts old language codes (en|fr|es|ar|ur), update validation
+            in backend/src/routes/student.routes.ts to accept the full new language list.
+
+            ## STEP 7 — Update frontend language selector
+            Read frontend/app/child/settings/page.tsx.
+            Ensure the language picker displays ALL languages from i18n.ts LOCALES array.
+            If languages are missing from the UI, add them to the selector.
+
+            ## STEP 8 — Verify RTL support
+            Read frontend/app/layout.tsx and frontend/app/child/layout.tsx.
+            RTL languages (ar, ur) require dir="rtl" on the html/body element.
+            If RTL switching is missing or incomplete, add it:
+            - Read settings.lang from Zustand store
+            - Apply dir="rtl" when lang is "ar" or "ur"
+
+            ## STEP 9 — Commit and push ALL changes
+            Stage all modified files.
+            Commit: git add translations/ frontend/lib/i18n.ts frontend/app/child/settings/page.tsx && git commit -m "i18n: sync all translations — web + iOS + Android [auto $(date +%Y-%m-%d)]"
+            Push: git push -u origin HEAD
+
+      - name: Push if changes exist
+        run: git diff --quiet && git diff --staged --quiet || git push -u origin HEAD || true
