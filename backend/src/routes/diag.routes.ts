@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express'
+import { requireRole } from '../middleware/auth.middleware'
 
 const router = Router()
 
@@ -23,8 +24,8 @@ router.post('/', async (req: Request, res: Response) => {
   }
 })
 
-// GET /api/diag/recent — fetch recent instrumentation (last 200)
-router.get('/recent', (_req: Request, res: Response) => {
+// GET /api/diag/recent — fetch recent instrumentation (last 200) — admin/principal only
+router.get('/recent', requireRole('admin', 'principal'), (_req: Request, res: Response) => {
   res.json({ ok: true, count: RECENT.length, events: RECENT.slice(-MAX_EVENTS) })
 })
 

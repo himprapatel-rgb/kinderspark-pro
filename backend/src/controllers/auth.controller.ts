@@ -6,6 +6,7 @@ import prisma from '../prisma/client'
 import { checkAndAwardBadges } from '../services/badge.service'
 import { getJwtSecret } from '../config/jwtSecret'
 import { computePinFingerprint } from '../utils/pinFingerprint'
+import { sanitizePromptInput } from '../utils/sanitize'
 const ACCESS_TOKEN_TTL = '2h'
 const REFRESH_TOKEN_TTL_DAYS = 30
 const PIN_LOCK_MAX_ATTEMPTS = 3
@@ -351,7 +352,8 @@ export async function revokeRefreshToken(req: Request, res: Response) {
 }
 
 export async function registerUser(req: Request, res: Response) {
-  const { displayName, pin, role, email, avatar, schoolCode: rawSchoolCode } = req.body
+  const { pin, role, email, avatar, schoolCode: rawSchoolCode } = req.body
+  const displayName = sanitizePromptInput(String(req.body.displayName || ''))
 
   if (!displayName || !pin || !role) {
     return res.status(400).json({ error: 'displayName, pin, and role are required' })
