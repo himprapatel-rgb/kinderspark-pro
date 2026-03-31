@@ -99,7 +99,7 @@ export default function ParentPage() {
   const [progressData, setProgressData] = useState<any[]>([])
   const [badgesData, setBadgesData] = useState<any[]>([])
   const [consentInfo, setConsentInfo] = useState<{ hasConsent: boolean } | null>(null)
-  const { permission: notifPermission, subscribe: subscribeNotif } = usePushNotifications(student?.id ?? user?.id)
+  const { permission: notifPermission, subscribe: subscribeNotif } = usePushNotifications(student?.id)
 
   // SSE / fallback polling refs
   const sseRef = useRef<EventSource | null>(null)
@@ -886,7 +886,7 @@ export default function ParentPage() {
             </div>
 
             {/* Push notification opt-in banner */}
-            {notifPermission !== 'granted' && notifPermission !== 'denied' && (
+            {student?.id && notifPermission !== 'granted' && notifPermission !== 'denied' && (
               <div className="mx-3 mb-4 rounded-2xl p-4 flex items-center gap-3" style={{ background: 'linear-gradient(135deg, rgba(48,209,88,0.06), rgba(67,198,172,0.04))', border: '1px solid #4CAF6A40' }}>
                 <div className="text-2xl shrink-0"><Bell size={20} style={{ color: 'var(--app-success)' }} /></div>
                 <div className="flex-1 min-w-0">
@@ -894,7 +894,8 @@ export default function ParentPage() {
                   <div className="text-xs font-bold app-muted">Get notified when homework is due</div>
                 </div>
                 <button
-                  onClick={subscribeNotif}
+                  type="button"
+                  onClick={() => subscribeNotif()}
                   className="px-3 py-2 rounded-xl text-xs font-black shrink-0 active:scale-95 transition-all app-pressable"
                   style={{ background: '#4CAF6A', color: '#fff' }}
                 >
