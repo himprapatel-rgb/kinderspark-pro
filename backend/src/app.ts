@@ -38,6 +38,7 @@ import prisma from './prisma/client'
 
 const app = express()
 logStartupEnvHints()
+app.set('trust proxy', 1)
 
 /** Broad IP window limit (100 / 15m); skips unauthenticated health probes. */
 const ipWindowLimiter = rateLimit({

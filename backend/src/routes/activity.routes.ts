@@ -83,7 +83,9 @@ Return ONLY the caption text, nothing else.`
       data: {
         classId,
         teacherId: req.user!.id,
-        imageData,
+        imageUrl,
+        thumbUrl,
+        cloudinaryPublicId,
         caption: finalCaption,
         aiCaption: isAiCaption,
         studentTags: studentTags || [],
@@ -91,10 +93,12 @@ Return ONLY the caption text, nothing else.`
       },
     })
 
-    // Return without the full imageData to save bandwidth
+    // Return compact image URLs for fast feed rendering.
     res.status(201).json({
       id: post.id,
       classId: post.classId,
+      imageUrl: post.imageUrl,
+      thumbUrl: post.thumbUrl,
       caption: post.caption,
       aiCaption: post.aiCaption,
       emoji: post.emoji,

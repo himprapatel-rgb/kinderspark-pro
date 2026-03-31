@@ -5,13 +5,11 @@
  */
 
 import cron from 'node-cron'
-import { PrismaClient } from '@prisma/client'
+import prisma from '../prisma/client'
 import { aiComplete } from './ai/router'
 import * as mem from './agentMemory.service'
 import { buildLearnerDigestForAgentPrompt } from './studentAgentContext.service'
 import agentsConfigJson from '../agents-config.json'
-
-const prisma = new PrismaClient()
 
 // ── Load agent registry from shared config ────────────────────────────────────
 
@@ -282,6 +280,11 @@ async function runAllAgents() {
 let schedulerStarted = false
 
 export function startAgentScheduler() {
+  const enabled = process.env.ENABLE_AGENT_SCHEDULER === 'true'
+  if (!enabled) {
+    console.log('[AgentScheduler] Disabled (set ENABLE_AGENT_SCHEDULER=true to enable)')
+    return
+  }
   if (schedulerStarted) {
     console.warn('[AgentScheduler] Already started — ignoring duplicate startAgentScheduler()')
     return
