@@ -10,7 +10,7 @@ const router = Router()
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN
 const GITHUB_REPO  = process.env.GITHUB_REPO || 'himprapatel-rgb/kinderspark-pro'
 const GH_API       = `https://api.github.com/repos/${GITHUB_REPO}`
-const AGENT_SECRET = process.env.AGENT_SECRET || 'ks-agent-secret'
+const AGENT_SECRET = process.env.AGENT_SECRET?.trim()
 
 const GH_HEADERS = {
   Authorization: `Bearer ${GITHUB_TOKEN}`,
@@ -20,6 +20,7 @@ const GH_HEADERS = {
 
 // ── Agent auth middleware (workflows use AGENT_SECRET, not JWT) ────────────
 function agentAuth(req: any, res: any, next: any) {
+  if (!AGENT_SECRET) return res.status(503).json({ error: 'Agent auth not configured' })
   const secret = req.headers['x-agent-secret']
   if (secret === AGENT_SECRET) return next()
   return res.status(401).json({ error: 'Unauthorized' })
@@ -28,7 +29,7 @@ function agentAuth(req: any, res: any, next: any) {
 // ── Dev/dashboard read access — agent secret OR JWT admin/teacher ───────────
 function dashboardAuth(req: any, res: any, next: any) {
   const secret = req.headers['x-agent-secret']
-  if (secret === AGENT_SECRET) return next()
+  if (AGENT_SECRET && secret === AGENT_SECRET) return next()
   return requireAuth(req, res, () => requireRole('admin', 'teacher')(req, res, next))
 }
 
