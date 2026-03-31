@@ -101,6 +101,8 @@ cd backend
 npx prisma db seed
 ```
 
+For **Railway / production**, use **[SEED_PRODUCTION.md](./SEED_PRODUCTION.md)** (private DB URLs usually require seeding inside the backend container).
+
 ---
 
 ## Production warning

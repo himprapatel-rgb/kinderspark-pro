@@ -35,7 +35,8 @@ Railway Project: kinderspark-pro
 DATABASE_URL=<from PostgreSQL plugin>
 PORT=4000
 NODE_ENV=production
-ANTHROPIC_API_KEY=sk-ant-api03-...
+ANTHROPIC_API_KEY=<your-anthropic-key>
+AGENT_SECRET=<strong-random-secret>
 FRONTEND_URL=https://kinderspark-frontend.up.railway.app
 JWT_SECRET=your-super-secret-jwt-key-here
 ```
@@ -58,15 +59,15 @@ NODE_ENV=production
 
 ### 5. Seed the Database (first deploy only)
 
-In Railway dashboard → Backend service → **Shell**:
+See **[docs/SEED_PRODUCTION.md](docs/SEED_PRODUCTION.md)** for full instructions.
+
+**Summary:** Run seed **inside** the **Express backend** container (private `DATABASE_URL` is not reachable from your laptop). Use `RUN_DB_SEED_ON_START=true` for one deploy, or open **Shell / SSH** on the backend service and run:
+
 ```bash
-npx ts-node prisma/seed.ts
+./node_modules/.bin/prisma generate && ./node_modules/.bin/prisma db seed
 ```
 
-Or from local with Railway CLI:
-```bash
-railway run --service kinderspark-backend npx ts-node prisma/seed.ts
-```
+Test accounts after seed: **[docs/QA_TEST_ACCOUNTS.md](docs/QA_TEST_ACCOUNTS.md)** (school code `SUN001`).
 
 ## Environment Variables Reference
 
