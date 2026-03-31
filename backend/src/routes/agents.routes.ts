@@ -18,6 +18,8 @@ const GH_HEADERS = {
   'Content-Type': 'application/json',
 }
 
+type AnyRecord = Record<string, unknown>
+
 // ── Agent auth middleware (workflows use AGENT_SECRET, not JWT) ────────────
 function agentAuth(req: any, res: any, next: any) {
   if (!AGENT_SECRET) return res.status(503).json({ error: 'Agent auth not configured' })
@@ -33,21 +35,69 @@ function dashboardAuth(req: any, res: any, next: any) {
   return requireAuth(req, res, () => requireRole('admin', 'teacher')(req, res, next))
 }
 
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0
+}
+
+function isOptionalString(value: unknown): value is string | undefined {
+  return value === undefined || typeof value === 'string'
+}
+
+function parseLimitedInt(input: unknown, fallback: number, max: number): number {
+  const parsed = Number(input)
+  if (!Number.isFinite(parsed) || parsed <= 0) return fallback
+  return Math.min(Math.floor(parsed), max)
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === 'string')
+}
+
+function isMemoryType(value: unknown): value is 'observation' | 'decision' | 'finding' | 'action' | 'summary' | 'error' {
+  return typeof value === 'string' && ['observation', 'decision', 'finding', 'action', 'summary', 'error'].includes(value)
+}
+
+function isMessageType(value: unknown): value is 'alert' | 'handoff' | 'question' | 'update' | 'broadcast' | 'fix' {
+  return typeof value === 'string' && ['alert', 'handoff', 'question', 'update', 'broadcast', 'fix'].includes(value)
+}
+
+function isImportance(value: unknown): value is 1 | 2 | 3 | 4 {
+  const num = Number(value)
+  return Number.isInteger(num) && num >= 1 && num <= 4
+}
+
 // ────────────────────────────────────────────────────────────────────────────
 // MEMORY ENDPOINTS
 // ────────────────────────────────────────────────────────────────────────────
 
 // POST /api/agents/memory — agent writes a memory entry
 router.post('/memory', agentAuth, async (req, res) => {
+  if (!req.body || typeof req.body !== 'object') return res.status(400).json({ error: 'Invalid request body' })
   const { agentId, agentName, agentIcon, agentColor,
-          type, content, metadata, runId, importance } = req.body
-  if (!agentId || !content) return res.status(400).json({ error: 'agentId + content required' })
+          type, content, metadata, runId, importance } = req.body as AnyRecord
+  if (!isNonEmptyString(agentId) || !isNonEmptyString(content)) {
+    return res.status(400).json({ error: 'agentId + content required' })
+  }
+  if (!isOptionalString(agentName) || !isOptionalString(agentIcon) || !isOptionalString(agentColor) || !isOptionalString(runId)) {
+    return res.status(400).json({ error: 'Invalid request fields' })
+  }
+  if (type !== undefined && !isMemoryType(type)) return res.status(400).json({ error: 'Invalid memory type' })
+  if (metadata !== undefined && (typeof metadata !== 'object' || metadata === null || Array.isArray(metadata))) {
+    return res.status(400).json({ error: 'metadata must be an object' })
+  }
+  if (importance !== undefined && !isImportance(importance)) {
+    return res.status(400).json({ error: 'importance must be an integer from 1 to 4' })
+  }
+  const safeType: 'observation' | 'decision' | 'finding' | 'action' | 'summary' | 'error' = isMemoryType(type) ? type : 'observation'
+  const safeImportance: 1 | 2 | 3 | 4 = isImportance(importance) ? importance : 1
   try {
     const entry = await mem.writeMemory({
       agentId, agentName: agentName || agentId,
       agentIcon: agentIcon || '🤖', agentColor: agentColor || '#5E5CE6',
-      type: type || 'observation', content,
-      metadata, runId, importance: importance || 1,
+      type: safeType, content,
+      metadata: metadata as Record<string, unknown> | undefined,
+      runId,
+      importance: safeImportance,
     })
     res.json(entry)
   } catch (e: any) {
@@ -57,7 +107,8 @@ router.post('/memory', agentAuth, async (req, res) => {
 
 // GET /api/agents/memory/:agentId — agent reads its own memory
 router.get('/memory/:agentId', agentAuth, async (req, res) => {
-  const limit = Math.min(Number(req.query.limit) || 20, 50)
+  if (!isNonEmptyString(req.params.agentId)) return res.status(400).json({ error: 'agentId required' })
+  const limit = parseLimitedInt(req.query.limit, 20, 50)
   try {
     res.json(await mem.readMemory(req.params.agentId, limit))
   } catch (e: any) {
@@ -67,7 +118,7 @@ router.get('/memory/:agentId', agentAuth, async (req, res) => {
 
 // GET /api/agents/memory — all memories (Mission Control)
 router.get('/memory', dashboardAuth, async (req, res) => {
-  const limit = Math.min(Number(req.query.limit) || 100, 200)
+  const limit = parseLimitedInt(req.query.limit, 100, 200)
   try {
     res.json(await mem.getAllMemories(limit))
   } catch (e: any) {
@@ -90,15 +141,24 @@ router.get('/critical', agentAuth, async (_req, res) => {
 
 // POST /api/agents/message — agent sends a message to another agent
 router.post('/message', agentAuth, async (req, res) => {
+  if (!req.body || typeof req.body !== 'object') return res.status(400).json({ error: 'Invalid request body' })
   const { fromAgentId, fromName, fromIcon, fromColor,
-          toAgentId, toName, message, msgType } = req.body
-  if (!fromAgentId || !message) return res.status(400).json({ error: 'fromAgentId + message required' })
+          toAgentId, toName, message, msgType } = req.body as AnyRecord
+  if (!isNonEmptyString(fromAgentId) || !isNonEmptyString(message)) {
+    return res.status(400).json({ error: 'fromAgentId + message required' })
+  }
+  if (!isOptionalString(fromName) || !isOptionalString(fromIcon) || !isOptionalString(fromColor) ||
+      !isOptionalString(toAgentId) || !isOptionalString(toName) || !isOptionalString(msgType)) {
+    return res.status(400).json({ error: 'Invalid request fields' })
+  }
+  if (msgType !== undefined && !isMessageType(msgType)) return res.status(400).json({ error: 'Invalid message type' })
+  const safeMessageType: 'alert' | 'handoff' | 'question' | 'update' | 'broadcast' | 'fix' = isMessageType(msgType) ? msgType : 'update'
   try {
     const msg = await mem.sendMessage({
       fromAgentId, fromName: fromName || fromAgentId,
       fromIcon: fromIcon || '🤖', fromColor: fromColor || '#5E5CE6',
       toAgentId: toAgentId || 'all', toName: toName || 'All Agents',
-      message, msgType: msgType || 'update',
+      message, msgType: safeMessageType,
     })
     res.json(msg)
   } catch (e: any) {
@@ -108,12 +168,20 @@ router.post('/message', agentAuth, async (req, res) => {
 
 // POST /api/agents/broadcast — broadcast to all agents
 router.post('/broadcast', agentAuth, async (req, res) => {
-  const { fromAgentId, fromName, fromIcon, fromColor, message, msgType } = req.body
-  if (!fromAgentId || !message) return res.status(400).json({ error: 'fromAgentId + message required' })
+  if (!req.body || typeof req.body !== 'object') return res.status(400).json({ error: 'Invalid request body' })
+  const { fromAgentId, fromName, fromIcon, fromColor, message, msgType } = req.body as AnyRecord
+  if (!isNonEmptyString(fromAgentId) || !isNonEmptyString(message)) {
+    return res.status(400).json({ error: 'fromAgentId + message required' })
+  }
+  if (!isOptionalString(fromName) || !isOptionalString(fromIcon) || !isOptionalString(fromColor) || !isOptionalString(msgType)) {
+    return res.status(400).json({ error: 'Invalid request fields' })
+  }
+  if (msgType !== undefined && !isMessageType(msgType)) return res.status(400).json({ error: 'Invalid message type' })
+  const safeBroadcastType: 'alert' | 'handoff' | 'question' | 'update' | 'broadcast' | 'fix' = isMessageType(msgType) ? msgType : 'broadcast'
   try {
     const msg = await mem.broadcast(
       { id: fromAgentId, name: fromName || fromAgentId, icon: fromIcon || '🤖', color: fromColor || '#5E5CE6' },
-      message, msgType || 'broadcast'
+      message, safeBroadcastType
     )
     res.json(msg)
   } catch (e: any) {
@@ -123,6 +191,7 @@ router.post('/broadcast', agentAuth, async (req, res) => {
 
 // GET /api/agents/inbox/:agentId — agent reads its inbox
 router.get('/inbox/:agentId', agentAuth, async (req, res) => {
+  if (!isNonEmptyString(req.params.agentId)) return res.status(400).json({ error: 'agentId required' })
   try {
     res.json(await mem.getInbox(req.params.agentId, 20))
   } catch (e: any) {
@@ -132,7 +201,7 @@ router.get('/inbox/:agentId', agentAuth, async (req, res) => {
 
 // GET /api/agents/conversations — all conversations (Mission Control)
 router.get('/conversations', dashboardAuth, async (req, res) => {
-  const limit = Math.min(Number(req.query.limit) || 50, 200)
+  const limit = parseLimitedInt(req.query.limit, 50, 200)
   try {
     res.json(await mem.getAllConversations(limit))
   } catch (e: any) {
@@ -175,7 +244,9 @@ router.get('/runs', dashboardAuth, async (_req, res) => {
 // GET /api/agents/issues
 router.get('/issues', dashboardAuth, async (req, res) => {
   if (!GITHUB_TOKEN) return res.json([])
-  const state = (req.query.state as string) || 'all'
+  const requestedState = req.query.state
+  const allowedStates = new Set(['open', 'closed', 'all'])
+  const state = typeof requestedState === 'string' && allowedStates.has(requestedState) ? requestedState : 'all'
   try {
     const r = await fetch(
       `${GH_API}/issues?state=${state}&per_page=30&labels=agent-auto,critical,weekly-report,security,performance`,
@@ -226,18 +297,27 @@ router.get('/feed', requireAuth, requireRole('admin', 'teacher'), async (_req, r
 // POST /api/agents/trigger — manually trigger a workflow
 router.post('/trigger', dashboardAuth, async (req, res) => {
   if (!GITHUB_TOKEN) return res.status(503).json({ error: 'GitHub token not configured' })
-  const { workflow, inputs = {} } = req.body as { workflow: string; inputs?: Record<string, string> }
-  if (!workflow) return res.status(400).json({ error: 'workflow required' })
+  if (!req.body || typeof req.body !== 'object') return res.status(400).json({ error: 'Invalid request body' })
+  const { workflow, inputs = {} } = req.body as { workflow?: unknown; inputs?: unknown }
+  if (!isNonEmptyString(workflow)) return res.status(400).json({ error: 'workflow required' })
+  if (typeof inputs !== 'object' || inputs === null || Array.isArray(inputs)) {
+    return res.status(400).json({ error: 'inputs must be an object' })
+  }
+  const inputValues = Object.values(inputs as Record<string, unknown>)
+  if (!inputValues.every((value) => typeof value === 'string')) {
+    return res.status(400).json({ error: 'inputs values must be strings' })
+  }
+  const safeInputs = inputs as Record<string, string>
   try {
     const r = await fetch(`${GH_API}/actions/workflows/${workflow}/dispatches`, {
       method: 'POST', headers: GH_HEADERS,
-      body: JSON.stringify({ ref: 'main', inputs }),
+      body: JSON.stringify({ ref: 'main', inputs: safeInputs }),
     })
     if (r.status === 204) {
       // Log trigger in memory
       await mem.broadcast(
         { id: 'mission-control', name: 'Mission Control', icon: '🛸', color: '#5E5CE6' },
-        `Manually triggered **${workflow}** ${inputs.task ? `with task: "${inputs.task.slice(0, 80)}"` : ''}`,
+        `Manually triggered **${workflow}** ${safeInputs.task ? `with task: "${safeInputs.task.slice(0, 80)}"` : ''}`,
         'update'
       )
       res.json({ ok: true })
@@ -253,9 +333,16 @@ router.post('/trigger', dashboardAuth, async (req, res) => {
 // Agent responds instantly via Claude API. If the message is a task/command,
 // Claude appends [TRIGGER_WORKFLOW] and we dispatch the real agent workflow.
 router.post('/ask', dashboardAuth, async (req, res) => {
+  if (!req.body || typeof req.body !== 'object') return res.status(400).json({ error: 'Invalid request body' })
   const { agentId, agentName, agentIcon, agentColor, message,
-          agentDesc, agentTrigger, agentWorkflow } = req.body
-  if (!agentId || !message) return res.status(400).json({ error: 'agentId + message required' })
+          agentDesc, agentTrigger, agentWorkflow } = req.body as AnyRecord
+  if (!isNonEmptyString(agentId) || !isNonEmptyString(message)) {
+    return res.status(400).json({ error: 'agentId + message required' })
+  }
+  if (!isOptionalString(agentName) || !isOptionalString(agentIcon) || !isOptionalString(agentColor) ||
+      !isOptionalString(agentDesc) || !isOptionalString(agentTrigger) || !isOptionalString(agentWorkflow)) {
+    return res.status(400).json({ error: 'Invalid request fields' })
+  }
 
   // Return immediately so the UI feels snappy — all AI work is fire-and-forget
   res.json({ ok: true })
@@ -327,8 +414,11 @@ CRITICAL RULES:
 // POST /api/agents/issue — create a GitHub issue → agent picks it up
 router.post('/issue', dashboardAuth, async (req, res) => {
   if (!GITHUB_TOKEN) return res.status(503).json({ error: 'GitHub token not configured' })
-  const { title, body, labels = [] } = req.body as { title: string; body: string; labels?: string[] }
-  if (!title) return res.status(400).json({ error: 'title required' })
+  if (!req.body || typeof req.body !== 'object') return res.status(400).json({ error: 'Invalid request body' })
+  const { title, body, labels = [] } = req.body as { title?: unknown; body?: unknown; labels?: unknown }
+  if (!isNonEmptyString(title)) return res.status(400).json({ error: 'title required' })
+  if (body !== undefined && typeof body !== 'string') return res.status(400).json({ error: 'body must be a string' })
+  if (!isStringArray(labels)) return res.status(400).json({ error: 'labels must be a string array' })
   try {
     const r = await fetch(`${GH_API}/issues`, {
       method: 'POST', headers: GH_HEADERS,
