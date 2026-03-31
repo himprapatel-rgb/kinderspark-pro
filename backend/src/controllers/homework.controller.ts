@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
 import prisma from '../prisma/client'
-import { sendPushNotification } from '../services/notification.service'
+import { notifyStudentPushSubscribers } from '../services/notification.service'
 import { checkAndAwardBadges } from '../services/badge.service'
 import { canParentAccessStudent, canTeacherAccessClass } from '../utils/accessControl'
 
@@ -58,16 +58,21 @@ export async function createHomework(req: Request, res: Response) {
       },
     })
 
-    // Notify all students in the class (fire-and-forget)
-    prisma.student.findMany({ where: { classId } }).then(students =>
-      Promise.all(students.filter(s => s.pushToken).map(s =>
-        sendPushNotification(s.pushToken!, {
-          title: `📚 New Homework${aiGenerated ? ' ✨' : ''}!`,
-          body: `"${title}" is due ${dueDate} — earn ⭐${starsReward ?? 5} stars!`,
-          url: '/child',
-        })
-      ))
-    ).catch(() => {})
+    // Notify students + linked parent devices (fire-and-forget)
+    prisma.student
+      .findMany({ where: { classId }, select: { id: true } })
+      .then((students) =>
+        Promise.all(
+          students.map((s) =>
+            notifyStudentPushSubscribers(s.id, {
+              title: `📚 New Homework${aiGenerated ? ' ✨' : ''}!`,
+              body: `"${title}" is due ${dueDate} — earn ⭐${starsReward ?? 5} stars!`,
+              url: '/child',
+            })
+          )
+        )
+      )
+      .catch(() => {})
 
     return res.status(201).json(hw)
   } catch (err) {
@@ -117,16 +122,15 @@ export async function completeHomework(req: Request, res: Response) {
     const stars = hw.starsReward ?? 5
     const student = await prisma.student.findUnique({ where: { id: studentId } })
     if (student) {
-      const updatedStudent = await prisma.student.update({
+      await prisma.student.update({
         where: { id: studentId },
         data: { stars: student.stars + stars },
       })
-      if (student.pushToken) {
-        await sendPushNotification(student.pushToken, {
-          title: 'Homework Complete! 🎉',
-          body: `${student.name} completed "${hw.title}" and earned ${stars} stars!`,
-        })
-      }
+      await notifyStudentPushSubscribers(studentId, {
+        title: 'Homework Complete! 🎉',
+        body: `${student.name} completed "${hw.title}" and earned ${stars} stars!`,
+        url: '/parent',
+      })
       // Check how many homework this student has completed (for first_homework badge)
       const hwCount = await prisma.homeworkCompletion.count({
         where: { studentId, done: true },
@@ -170,14 +174,14 @@ export async function sendReminders(req: Request, res: Response) {
       })
       const completedSet = new Set(completedIds.map((c: any) => c.studentId))
       const pending = hw.class.students.filter((s: any) => !completedSet.has(s.id))
-      await Promise.all(pending.filter((s: any) => s.pushToken).map((s: any) => {
+      for (const s of pending) {
         sent++
-        return sendPushNotification(s.pushToken, {
+        await notifyStudentPushSubscribers(s.id, {
           title: '⏰ Homework Due Tomorrow!',
           body: `"${hw.title}" is due tomorrow — earn ⭐${hw.starsReward} stars!`,
           url: '/child',
         })
-      }))
+      }
     }
     return res.json({ sent, homeworkCount: dueHomework.length })
   } catch (err) {

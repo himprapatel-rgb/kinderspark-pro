@@ -84,10 +84,11 @@ model Student {
   badges        Badge[]
   feedback      Feedback?
   attendance    Attendance[]
-  parentalConsent ParentalConsent?
-  drawings      Drawing[]
-  tutorSessions TutorSession[]
-  createdAt     DateTime             @default(now())
+  parentalConsent     ParentalConsent?
+  drawings            Drawing[]
+  tutorSessions       TutorSession[]
+  webPushSubscriptions WebPushSubscription[]
+  createdAt           DateTime             @default(now())
 
   @@index([classId])
   @@index([classId, lastLoginAt])
@@ -127,6 +128,22 @@ model ParentalConsent {
   consentedAt DateTime @default(now())
   ipAddress   String   @default("unknown")
   student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+/// Browser Web Push subscription (student device and/or parent app).
+model WebPushSubscription {
+  id               String   @id @default(cuid())
+  endpoint         String   @unique
+  subscriptionJson String
+  studentId        String?
+  student          Student?        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  parentProfileId  String?
+  parentProfile    ParentProfile?  @relation(fields: [parentProfileId], references: [id], onDelete: Cascade)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([studentId])
+  @@index([parentProfileId])
 }
 
 /// Geofence opt-in per authenticated subject (value of JWT `req.user.id`).
@@ -474,10 +491,11 @@ model ParentProfile {
   postalCode      String?
   country         String?
   photoUrl        String?
-  children        ParentChildLink[]
-  legacyStudentId String?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  children                ParentChildLink[]
+  legacyStudentId         String?
+  webPushSubscriptions    WebPushSubscription[]
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
 
   @@index([schoolId])
 }

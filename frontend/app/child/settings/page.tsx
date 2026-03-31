@@ -36,6 +36,7 @@ export default function SettingsPage() {
 
   const acc = settings.large ? 'text-lg' : 'text-sm'
   const { permission, subscribe } = usePushNotifications(
+    'student',
     user?.legacyStudentId || student?.id || user?.id
   )
 
