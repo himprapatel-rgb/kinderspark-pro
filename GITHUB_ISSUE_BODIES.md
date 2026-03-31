@@ -2,6 +2,11 @@
 
 Use each block as a new GitHub issue.
 
+## Agent Control Plane Hardening
+
+- For the `agents.routes.ts` hardening batch, use `AGENTS_HARDENING_BACKLOG.md`.
+- It includes a Cursor master prompt plus 10 copy-paste issue bodies in execution order.
+
 ---
 
 ## 1) [P0] Add Cross-Role Smoke Test Suite
