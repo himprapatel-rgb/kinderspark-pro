@@ -19,11 +19,17 @@ declare global {
 }
 
 /**
- * Populates req.user from Bearer token or cookie.
- * Invalid Bearer → 401. Stale httpOnly cookie only (no Bearer) → clear cookie and continue so login still works.
+ * Populates req.user from `kinderspark_token` cookie or `Authorization: Bearer` (alternate clients only).
+ * Invalid cookie → clear `kinderspark_token` and continue (no Bearer) so a stale cookie does not block login.
  */
 export function authenticate(req: Request, res: Response, next: NextFunction) {
-  const token = req.cookies?.kinderspark_token
+  let token = req.cookies?.kinderspark_token
+  if (!token) {
+    const auth = req.headers.authorization
+    if (typeof auth === 'string' && auth.startsWith('Bearer ')) {
+      token = auth.slice(7).trim()
+    }
+  }
 
   if (!token) return next()
 

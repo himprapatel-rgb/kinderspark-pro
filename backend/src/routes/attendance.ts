@@ -130,18 +130,20 @@ router.get('/summary', async (req: Request, res: Response) => {
   }
 })
 
-// ── Geofenced attendance scaffold (in-memory; opt-in consent) ────────────────
-const GEOFENCE_CONSENT: Record<string, boolean> = {}
-type GeofenceEvt = { userId: string; type: 'enter' | 'exit'; at: number; regionLabel?: string }
-const GEOFENCE_EVENTS: GeofenceEvt[] = []
-const GEOFENCE_MAX = 200
+// ── Geofenced attendance (persisted; opt-in consent) ─────────────────────────
+const GEOFENCE_MAX_EVENTS_PER_USER = 200
 
 // POST /api/attendance/geofence/consent  body: { enabled: boolean }
 router.post('/geofence/consent', async (req: Request, res: Response) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Authentication required' })
     const enabled = !!req.body?.enabled
-    GEOFENCE_CONSENT[req.user.id] = enabled
+    const authUserId = req.user.id
+    await prisma.geofenceUserConsent.upsert({
+      where: { authUserId },
+      create: { authUserId, enabled },
+      update: { enabled },
+    })
     return res.json({ ok: true, enabled })
   } catch (err) {
     console.error('geofenceConsent error:', err)
@@ -153,21 +155,41 @@ router.post('/geofence/consent', async (req: Request, res: Response) => {
 router.post('/geofence/event', async (req: Request, res: Response) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Authentication required' })
-    if (!GEOFENCE_CONSENT[req.user.id]) {
+    const authUserId = req.user.id
+    const consentRow = await prisma.geofenceUserConsent.findUnique({
+      where: { authUserId },
+      select: { enabled: true },
+    })
+    if (!consentRow?.enabled) {
       return res.status(403).json({ error: 'Geofence consent is off' })
     }
     const type = req.body?.type
     if (type !== 'enter' && type !== 'exit') {
       return res.status(400).json({ error: 'type must be enter or exit' })
     }
-    const evt: GeofenceEvt = {
-      userId: req.user.id,
-      type,
-      at: Date.now(),
-      regionLabel: typeof req.body?.regionLabel === 'string' ? req.body.regionLabel : undefined,
-    }
-    GEOFENCE_EVENTS.push(evt)
-    if (GEOFENCE_EVENTS.length > GEOFENCE_MAX) GEOFENCE_EVENTS.splice(0, GEOFENCE_EVENTS.length - GEOFENCE_MAX)
+    const regionLabel = typeof req.body?.regionLabel === 'string' ? req.body.regionLabel : null
+
+    await prisma.$transaction(async (tx) => {
+      await tx.geofenceUserEvent.create({
+        data: { authUserId, type, regionLabel },
+      })
+      const count = await tx.geofenceUserEvent.count({ where: { authUserId } })
+      if (count > GEOFENCE_MAX_EVENTS_PER_USER) {
+        const toDrop = count - GEOFENCE_MAX_EVENTS_PER_USER
+        const oldest = await tx.geofenceUserEvent.findMany({
+          where: { authUserId },
+          orderBy: { occurredAt: 'asc' },
+          take: toDrop,
+          select: { id: true },
+        })
+        if (oldest.length > 0) {
+          await tx.geofenceUserEvent.deleteMany({
+            where: { id: { in: oldest.map((o) => o.id) } },
+          })
+        }
+      }
+    })
+
     return res.json({ ok: true })
   } catch (err) {
     console.error('geofenceEvent error:', err)
@@ -179,8 +201,24 @@ router.post('/geofence/event', async (req: Request, res: Response) => {
 router.get('/geofence/events', async (req: Request, res: Response) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Authentication required' })
-    const mine = GEOFENCE_EVENTS.filter((e) => e.userId === req.user!.id)
-    return res.json({ events: mine.slice(-50), consent: !!GEOFENCE_CONSENT[req.user.id] })
+    const authUserId = req.user.id
+    const consentRow = await prisma.geofenceUserConsent.findUnique({
+      where: { authUserId },
+      select: { enabled: true },
+    })
+    const rows = await prisma.geofenceUserEvent.findMany({
+      where: { authUserId },
+      orderBy: { occurredAt: 'desc' },
+      take: 50,
+      select: { type: true, regionLabel: true, occurredAt: true },
+    })
+    const events = rows.map((r) => ({
+      userId: authUserId,
+      type: r.type as 'enter' | 'exit',
+      at: r.occurredAt.getTime(),
+      regionLabel: r.regionLabel ?? undefined,
+    }))
+    return res.json({ events: events.reverse(), consent: !!consentRow?.enabled })
   } catch (err) {
     console.error('geofenceEvents error:', err)
     return res.status(500).json({ error: 'Failed to list events' })

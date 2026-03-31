@@ -16,7 +16,12 @@ function configured(): boolean {
 
 export async function sendEmail(to: string, subject: string, html: string): Promise<void> {
   if (!configured()) {
-    console.warn('[email] SENDGRID_API_KEY not set — skipping send')
+    const msg = '[email] SENDGRID_API_KEY not set — outbound email skipped (no SendGrid)'
+    if (process.env.NODE_ENV === 'production') {
+      console.error(msg, { destinationPresent: Boolean(to && to.includes('@')) })
+    } else {
+      console.warn(msg)
+    }
     return
   }
   if (!to || !to.includes('@')) return
