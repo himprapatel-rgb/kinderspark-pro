@@ -14,25 +14,36 @@ function run(cmd) {
 }
 
 // ── Schema sync ───────────────────────────────────────────────────────────────
-// 1) Prefer proper migrations in production (Railway, etc.)
+const isProd = process.env.NODE_ENV === 'production';
+const allowDbPush = process.env.ALLOW_DB_PUSH_ON_START === 'true';
+const runSeed = process.env.RUN_DB_SEED_ON_START === 'true';
+
 console.log('==> prisma migrate deploy...');
 if (!run('npx prisma migrate deploy')) {
   console.warn('==> migrate deploy failed or nothing to apply — continuing');
 }
-// 2) db push fills any drift / legacy DBs that never had clean migration history
-console.log('==> prisma db push (skip-generate)...');
-if (!run('npx prisma db push --skip-generate')) {
-  console.error('==> db push failed — last-resort migrate resolve + deploy...');
-  run('npx prisma migrate resolve --applied 20260327_ecosystem_phase2_safe_messaging');
-  run('npx prisma migrate resolve --applied 20260327_full_ecosystem_profiles');
-  run('npx prisma migrate deploy');
+
+if (!isProd || allowDbPush) {
+  console.log('==> prisma db push (skip-generate)...');
+  if (!run('npx prisma db push --skip-generate')) {
+    console.error('==> db push failed — last-resort migrate resolve + deploy...');
+    run('npx prisma migrate resolve --applied 20260327_ecosystem_phase2_safe_messaging');
+    run('npx prisma migrate resolve --applied 20260327_full_ecosystem_profiles');
+    run('npx prisma migrate deploy');
+  }
+} else {
+  console.log('==> Skipping db push in production (set ALLOW_DB_PUSH_ON_START=true to enable)');
 }
 console.log('==> Schema sync done');
 
 // ── Seed ──────────────────────────────────────────────────────────────────────
-console.log('==> Running prisma db seed...');
-if (!run('npx prisma db seed')) {
-  console.error('==> Seed failed (non-fatal, continuing...)');
+if (!isProd || runSeed) {
+  console.log('==> Running prisma db seed...');
+  if (!run('npx prisma db seed')) {
+    console.error('==> Seed failed (non-fatal, continuing...)');
+  }
+} else {
+  console.log('==> Skipping db seed in production (set RUN_DB_SEED_ON_START=true to enable)');
 }
 
 // ── Start ─────────────────────────────────────────────────────────────────────
