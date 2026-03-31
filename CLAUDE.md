@@ -236,10 +236,10 @@ POST   /api/agents/conversations
 
 ## Security Rules — NEVER VIOLATE
 
-1. **JWT is cookie-only** — `httpOnly`, `sameSite: strict`; never in Authorization header
+1. **JWT primary transport is cookie-only** — `httpOnly` `kinderspark_token`; `authenticate` also accepts `Authorization: Bearer` for compatibility — prefer cookies for web; do not add new Bearer-first flows without explicit CSRF/strategy
 2. **Use `req.user.id` from JWT** — never trust client-supplied user IDs
 3. **bcrypt all PINs** — never store plaintext PINs
-4. **PIN throttle** — `PinLoginThrottle` model tracks failed attempts; lock after 5 fails
+4. **PIN throttle** — `PinLoginThrottle` model tracks failed attempts; lock after **3** failed attempts per **30** minutes (see `auth.controller.ts`)
 5. **Sanitize AI inputs** — use `sanitizePromptInput()` from `backend/src/utils/sanitize.ts`
 6. **Content filter** — run child content through `contentFilter.service.ts` before storing
 7. **All routes need `requireAuth`** middleware
@@ -247,7 +247,7 @@ POST   /api/agents/conversations
 9. **Use `accessControl.ts`** for RBAC — never hand-roll permission checks
 10. **Never disable `rateLimiter`** or `aiRateLimit` middleware
 11. **No SQL injection** — always use Prisma ORM, never raw queries with user input
-12. **CSRF required on state change** — for authenticated cookie sessions, all `POST`/`PUT`/`PATCH`/`DELETE` require `x-csrf-token` matching `kinderspark_csrf`
+12. **CSRF required on state change** — when `kinderspark_token` or `kinderspark_refresh` cookies are present, mutating requests require `x-csrf-token` matching `kinderspark_csrf`. Requests authenticated **only** via `Authorization: Bearer` (no session cookies) **skip** CSRF middleware — treat Bearer as a separate client contract; web app should use cookies + CSRF.
 
 ---
 
@@ -434,11 +434,48 @@ Operational notes:
 
 ---
 
+## Code-Verified Product Status (source: actual routes/services)
+
+### Implemented and wired (representative evidence)
+
+| Area | Notes |
+|------|--------|
+| Auth | `auth.middleware.ts` — JWT from `httpOnly` `kinderspark_token` cookie; also accepts Bearer for legacy/alternate clients |
+| CSRF | `csrf.middleware.ts` — enforces `x-csrf-token` vs `kinderspark_csrf` when session cookies present (see rule 12) |
+| Email | `email.service.ts` — SendGrid; skips gracefully if `SENDGRID_API_KEY` missing (warns in logs) |
+| AI safety | `contentFilter.service.ts` — regex blocks on AI output |
+| TTS | `tts.service.ts` — Google → OpenAI → Azure cascade + cache; falls back to Web Speech if no provider keys |
+| Attendance | `attendance.ts` — CRUD, summaries, geofence **routes** exist |
+| AI HTTP API | `ai.routes.ts` + `services/ai/index.ts` — lesson, reports, tutor, homework, syllabus, spark flows |
+| Privacy erasure | `privacy.service.ts` — cascading delete incl. Cloudinary |
+| Push library | `notification.service.ts` — `web-push` + VAPID helpers exist |
+| Health | `app.ts` — `GET /health` pings DB, returns memory/uptime |
+
+### Gaps / incomplete (verified in code)
+
+| Severity | Issue | Evidence |
+|----------|--------|----------|
+| **High** | Push not end-to-end | `push.routes.ts` exposes only `GET /vapid-public-key` — no `POST` to persist subscriptions; homework/grading routes do not call `sendHomeworkReminder` / `sendGradeNotification` |
+| **High** | Geofence data ephemeral | `attendance.ts` — `GEOFENCE_EVENTS` + consent are **in-memory**; capped at 200 events globally; lost on restart |
+| **Medium** | Email silent when misconfigured | `email.service.ts` returns early if no `SENDGRID_API_KEY` — no user-facing error |
+| **Medium** | TTS degrades without keys | All provider keys optional → browser Web Speech fallback for lesson audio |
+| **Medium** | CSRF + Bearer | Mutating requests with **only** Bearer token (no cookies) bypass CSRF (see rule 12) |
+| **Medium** | Legacy route surface | `app.ts` mounts backward-compat: `/api/classes`, `/api/ai-sessions`, `/api/feedback` — audit auth on changes |
+| **Medium** | No service worker | No `public/sw.js` / SW registration in root layout for offline/push client |
+
+### Frontend route coverage
+
+Role portals exist under `frontend/app/`: `child/`, `parent/`, `teacher/`, `admin/`, `principal/`, `pin/`, `register/`, `dashboard/`, `privacy/`, `terms/`.
+
+---
+
 ## Known Gaps (as of 2026-03-31)
 
 - iOS app exists (Capacitor Xcode project) but not yet in App Store
+- **Push:** VAPID keys + subscription storage + route wiring needed for production push (see Code-Verified table)
+- **Geofence:** move off in-memory arrays to DB if persistence is required
 - `SENDGRID_API_KEY`, `CLOUDINARY_URL`, `OPENAI_API_KEY` need to be set on Railway for those features to work
-- `VAPID_PUBLIC_KEY` + `VAPID_PRIVATE_KEY` required on Railway for push notifications
+- `VAPID_PUBLIC_KEY` + `VAPID_PRIVATE_KEY` required on Railway for push notifications (client subscribe flow still missing)
 - TTS human voices need env vars set on Railway: `GOOGLE_TTS_API_KEY`, `OPENAI_API_KEY`, or `AZURE_TTS_KEY` — app falls back to Web Speech API until at least one is set
 
 ---
