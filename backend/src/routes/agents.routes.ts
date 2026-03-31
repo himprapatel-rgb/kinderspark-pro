@@ -11,6 +11,12 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN
 const GITHUB_REPO  = process.env.GITHUB_REPO || 'himprapatel-rgb/kinderspark-pro'
 const GH_API       = `https://api.github.com/repos/${GITHUB_REPO}`
 const AGENT_SECRET = process.env.AGENT_SECRET?.trim()
+const AGENT_TRIGGER_WORKFLOWS = new Set(
+  (process.env.AGENT_TRIGGER_WORKFLOWS || 'agent-localization.yml')
+    .split(',')
+    .map((name) => name.trim())
+    .filter(Boolean)
+)
 
 const GH_HEADERS = {
   Authorization: `Bearer ${GITHUB_TOKEN}`,
@@ -33,6 +39,12 @@ function dashboardAuth(req: any, res: any, next: any) {
   const secret = req.headers['x-agent-secret']
   if (AGENT_SECRET && secret === AGENT_SECRET) return next()
   return requireAuth(req, res, () => requireRole('admin', 'teacher')(req, res, next))
+}
+
+function dashboardAdminOrAgentAuth(req: any, res: any, next: any) {
+  const secret = req.headers['x-agent-secret']
+  if (AGENT_SECRET && secret === AGENT_SECRET) return next()
+  return requireAuth(req, res, () => requireRole('admin')(req, res, next))
 }
 
 function isNonEmptyString(value: unknown): value is string {
@@ -295,11 +307,14 @@ router.get('/feed', requireAuth, requireRole('admin', 'teacher'), async (_req, r
 })
 
 // POST /api/agents/trigger — manually trigger a workflow
-router.post('/trigger', dashboardAuth, async (req, res) => {
+router.post('/trigger', dashboardAdminOrAgentAuth, async (req, res) => {
   if (!GITHUB_TOKEN) return res.status(503).json({ error: 'GitHub token not configured' })
   if (!req.body || typeof req.body !== 'object') return res.status(400).json({ error: 'Invalid request body' })
   const { workflow, inputs = {} } = req.body as { workflow?: unknown; inputs?: unknown }
   if (!isNonEmptyString(workflow)) return res.status(400).json({ error: 'workflow required' })
+  if (!AGENT_TRIGGER_WORKFLOWS.has(workflow)) {
+    return res.status(403).json({ error: 'workflow not allowed' })
+  }
   if (typeof inputs !== 'object' || inputs === null || Array.isArray(inputs)) {
     return res.status(400).json({ error: 'inputs must be an object' })
   }
