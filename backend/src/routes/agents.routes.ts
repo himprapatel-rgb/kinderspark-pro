@@ -17,6 +17,12 @@ const AGENT_TRIGGER_WORKFLOWS = new Set(
     .map((name) => name.trim())
     .filter(Boolean)
 )
+const AGENT_ALLOWED_ISSUE_LABELS = new Set(
+  (process.env.AGENT_ALLOWED_ISSUE_LABELS || 'agent-auto,critical,weekly-report,security,performance')
+    .split(',')
+    .map((name) => name.trim())
+    .filter(Boolean)
+)
 
 const GH_HEADERS = {
   Authorization: `Bearer ${GITHUB_TOKEN}`,
@@ -440,13 +446,19 @@ CRITICAL RULES:
 })
 
 // POST /api/agents/issue — create a GitHub issue → agent picks it up
-router.post('/issue', dashboardAuth, async (req, res) => {
+router.post('/issue', dashboardAdminOrAgentAuth, async (req, res) => {
   if (!GITHUB_TOKEN) return res.status(503).json({ error: 'GitHub token not configured' })
   if (!req.body || typeof req.body !== 'object') return res.status(400).json({ error: 'Invalid request body' })
   const { title, body, labels = [] } = req.body as { title?: unknown; body?: unknown; labels?: unknown }
   if (!isNonEmptyString(title)) return res.status(400).json({ error: 'title required' })
+  if (title.length > 160) return res.status(400).json({ error: 'title too long' })
   if (body !== undefined && typeof body !== 'string') return res.status(400).json({ error: 'body must be a string' })
+  if (typeof body === 'string' && body.length > 10_000) return res.status(400).json({ error: 'body too long' })
   if (!isStringArray(labels)) return res.status(400).json({ error: 'labels must be a string array' })
+  if (labels.length > 10) return res.status(400).json({ error: 'too many labels' })
+  if (!labels.every((label) => AGENT_ALLOWED_ISSUE_LABELS.has(label))) {
+    return res.status(400).json({ error: 'one or more labels are not allowed' })
+  }
   try {
     const r = await fetch(`${GH_API}/issues`, {
       method: 'POST', headers: GH_HEADERS,
