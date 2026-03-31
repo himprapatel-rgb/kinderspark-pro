@@ -57,7 +57,7 @@ function importanceLabel(n: number) {
 function KeyGate({ children }: { children: React.ReactNode }) {
   const params = useSearchParams()
   const key = params.get('key') || ''
-  const devKey = process.env.NEXT_PUBLIC_DEVELOPER_KEY || 'ks-dev-2026'
+  const devKey = process.env.NEXT_PUBLIC_DEVELOPER_KEY || ''
 
   if (!key || key !== devKey) {
     return (

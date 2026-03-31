@@ -17,7 +17,8 @@ router.get('/me', async (req: Request, res: Response) => {
       where: { id: user.id },
     })
     if (!teacher) return res.status(404).json({ error: 'Teacher not found' })
-    return res.json(teacher)
+    const { pin, pinFingerprint, pushToken, ...safe } = teacher as any
+    return res.json(safe)
   } catch (err) {
     console.error('getTeacher error:', err)
     return res.status(500).json({ error: 'Failed to get teacher info' })

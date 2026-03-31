@@ -27,7 +27,9 @@ router.get('/', requireRole('teacher', 'admin'), async (req: Request, res: Respo
       include: { progress: true, feedback: true, class: true },
       orderBy: { name: 'asc' },
     })
-    return res.json(students)
+    // Strip sensitive fields — never send PIN hashes or PII over the wire
+    const safe = students.map(({ pin, pinFingerprint, pushToken, parentPhone, emergencyPhone, addressLine1, addressLine2, ...s }: any) => s)
+    return res.json(safe)
   } catch (err) {
     console.error('getStudents error:', err)
     return res.status(500).json({ error: 'Failed to get students' })
@@ -59,7 +61,8 @@ router.get('/:id', async (req: Request, res: Response) => {
       },
     })
     if (!student) return res.status(404).json({ error: 'Student not found' })
-    return res.json(student)
+    const { pin, pinFingerprint, pushToken, parentPhone, emergencyPhone, addressLine1, addressLine2, ...safe } = student as any
+    return res.json(safe)
   } catch (err) {
     console.error('getStudent error:', err)
     return res.status(500).json({ error: 'Failed to get student' })
