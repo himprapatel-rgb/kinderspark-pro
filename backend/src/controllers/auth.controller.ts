@@ -40,13 +40,13 @@ function setAuthCookies(res: Response, accessToken: string, refreshToken: string
   res.cookie('kinderspark_token', accessToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    sameSite: 'lax',
     maxAge: 2 * 60 * 60 * 1000 // 2 hours
   })
   res.cookie('kinderspark_refresh', refreshToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    sameSite: 'lax',
     path: '/api/auth',
     maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
   })
