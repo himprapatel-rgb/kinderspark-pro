@@ -34,10 +34,11 @@ import diagRoutes from './routes/diag.routes'
 import moduleRoutes from './routes/modules.routes'
 import ttsRoutes from './routes/tts.routes'
 import { startAgentScheduler } from './services/agentScheduler.service'
-import { logStartupEnvHints } from './config/startupEnv'
+import { logStartupEnvHints, validateStartupEnvOrThrow } from './config/startupEnv'
 import prisma from './prisma/client'
 
 const app = express()
+validateStartupEnvOrThrow()
 logStartupEnvHints()
 app.set('trust proxy', 1)
 

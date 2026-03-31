@@ -1,5 +1,6 @@
 import request from 'supertest'
 import express, { Request, Response, NextFunction } from 'express'
+import { canParentAccessStudent } from '../utils/accessControl'
 
 const mockProgress = {
   findMany: jest.fn(),
@@ -131,6 +132,30 @@ describe('progress routes', () => {
     })
     expect(res.status).toBe(403)
     expect(mockQuizResponse.create).not.toHaveBeenCalled()
+  })
+
+  it('PUT allows linked parent to update child progress', async () => {
+    ;(canParentAccessStudent as jest.Mock).mockResolvedValueOnce(true)
+    const app = buildApp('parent', 'parent-1')
+    const res = await request(app).put('/api/progress/stu-child/numbers').send({ cards: 4 })
+    expect(res.status).toBe(200)
+    expect(mockProgress.upsert).toHaveBeenCalled()
+  })
+
+  it('PUT forbids unlinked parent from updating child progress', async () => {
+    ;(canParentAccessStudent as jest.Mock).mockResolvedValueOnce(false)
+    const app = buildApp('parent', 'parent-2')
+    const res = await request(app).put('/api/progress/stu-child/numbers').send({ cards: 4 })
+    expect(res.status).toBe(403)
+    expect(mockProgress.upsert).not.toHaveBeenCalled()
+  })
+
+  it('GET forbids unlinked parent from reading child progress', async () => {
+    ;(canParentAccessStudent as jest.Mock).mockResolvedValueOnce(false)
+    const app = buildApp('parent', 'parent-2')
+    const res = await request(app).get('/api/progress/stu-child')
+    expect(res.status).toBe(403)
+    expect(mockProgress.findMany).not.toHaveBeenCalled()
   })
 
   it('GET allows teacher to read class student progress', async () => {

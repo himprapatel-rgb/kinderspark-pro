@@ -32,12 +32,12 @@ KinderSpark Pro is a full-stack educational platform built for kindergarten clas
 
 **Four roles, one platform:**
 
-| Role | PIN | Access |
-|------|-----|--------|
-| 👩‍🏫 **Teacher** | `1234` | Manage classes, assign homework, build syllabuses, send messages, generate AI reports |
-| 👨‍👩‍👧 **Parent** | child PIN | Monitor child progress, view homework, read teacher messages, reply |
-| 🌟 **Child** | `1111`–`5555` | Learn through interactive lessons, AI tutor sessions, drawing, letter tracing, star shop |
-| 👑 **Admin** | `9999` | School-wide oversight — all classes, teachers, students, leaderboards |
+| Role | Login Method | Access |
+|------|--------------|--------|
+| 👩‍🏫 **Teacher** | School-scoped secure PIN | Manage classes, assign homework, build syllabuses, send messages, generate AI reports |
+| 👨‍👩‍👧 **Parent** | Linked parent account + child relationship checks | Monitor child progress, view homework, read teacher messages, reply |
+| 🌟 **Child** | School-scoped secure PIN | Learn through interactive lessons, AI tutor sessions, drawing, letter tracing, star shop |
+| 👑 **Admin** | School-scoped secure PIN | School-wide oversight — all classes, teachers, students, leaderboards |
 
 ---
 
@@ -236,7 +236,7 @@ Base URL: `http://localhost:4000/api`
 
 ```json
 // POST /api/auth/pin
-{ "pin": "1234", "role": "teacher" }
+{ "pin": "<secure-pin>", "role": "teacher", "schoolCode": "ABC123" }
 
 // Response
 { "role": "teacher", "user": { "id": "...", "name": "Ms. Sarah Johnson" } }
@@ -397,17 +397,10 @@ cd frontend && npm run dev
 
 Open **http://localhost:3000** in your browser.
 
-### Demo Login PINs
+### Local Seed Access (Development Only)
 
-| Role | PIN | Name |
-|------|-----|------|
-| 👩‍🏫 Teacher | `1234` | Ms. Sarah Johnson |
-| 👑 Admin | `9999` | School Admin |
-| 👧 Child/Parent | `1111` | Emma Wilson |
-| 👦 Child/Parent | `2222` | Liam Chen |
-| 🧒 Child/Parent | `3333` | Sofia Martinez |
-| 🦸 Child/Parent | `4444` | Noah Patel |
-| 🧙 Child/Parent | `5555` | Zara Ahmed |
+Seeded users are intended for local development and test environments only.
+Do not reuse or publish static PINs in staging/production environments.
 
 ---
 
@@ -424,7 +417,7 @@ PORT=4000
 NODE_ENV=development
 
 # Anthropic Claude AI
-ANTHROPIC_API_KEY=sk-ant-api03-...
+ANTHROPIC_API_KEY=<set-your-own-secret>
 
 # CORS
 FRONTEND_URL=http://localhost:3000
