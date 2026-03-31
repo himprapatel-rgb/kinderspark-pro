@@ -408,7 +408,20 @@ CRITICAL RULES:
         }),
       }).catch(() => {/* non-blocking */})
     }
-  } catch { /* silent — response already sent */ }
+  } catch (e: any) {
+    // Response is already sent, so surface async failures through logs and agent feed.
+    const message = e instanceof Error ? e.message : String(e)
+    console.error('[agents:/ask] async failure', { agentId, error: message })
+    try {
+      await mem.broadcast(
+        { id: 'mission-control', name: 'Mission Control', icon: '🛸', color: '#5E5CE6' },
+        `Agent ask failed for ${agentName || agentId}: ${message.slice(0, 180)}`,
+        'alert'
+      )
+    } catch {
+      // Avoid recursive failure loops from observability path.
+    }
+  }
 })
 
 // POST /api/agents/issue — create a GitHub issue → agent picks it up
