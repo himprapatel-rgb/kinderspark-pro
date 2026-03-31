@@ -31,6 +31,7 @@ import schoolsRoutes from './routes/schools.routes'
 import assignmentsRoutes from './routes/assignments.routes'
 import relationshipsRoutes from './routes/relationships.routes'
 import diagRoutes from './routes/diag.routes'
+import moduleRoutes from './routes/modules.routes'
 import { startAgentScheduler } from './services/agentScheduler.service'
 import { logStartupEnvHints } from './config/startupEnv'
 import prisma from './prisma/client'
@@ -122,6 +123,7 @@ app.use('/api/relationships', relationshipsRoutes)
 app.use('/api/activity', activityRoutes)
 app.use('/api/privacy', privacyRoutes)
 app.use('/api/drawings', drawingRoutes)
+app.use('/api/modules', moduleRoutes)
 
 const globalErrorHandler: ErrorRequestHandler = (
   err: unknown,
