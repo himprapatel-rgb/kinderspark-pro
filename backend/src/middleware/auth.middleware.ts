@@ -23,12 +23,7 @@ declare global {
  * Invalid Bearer → 401. Stale httpOnly cookie only (no Bearer) → clear cookie and continue so login still works.
  */
 export function authenticate(req: Request, res: Response, next: NextFunction) {
-  const authHeader = req.headers.authorization
-  const bearerToken =
-    authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() || null : null
-
-  const tokenFromCookie = req.cookies?.kinderspark_token
-  const token = bearerToken || tokenFromCookie
+  const token = req.cookies?.kinderspark_token
 
   if (!token) return next()
 
@@ -36,13 +31,10 @@ export function authenticate(req: Request, res: Response, next: NextFunction) {
     const decoded = jwt.verify(token, getJwtSecret()) as AuthUser
     req.user = decoded
   } catch {
-    if (bearerToken) {
-      return res.status(401).json({ error: 'Invalid or expired token' })
-    }
     res.clearCookie('kinderspark_token', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: 'strict',
     })
     return next()
   }

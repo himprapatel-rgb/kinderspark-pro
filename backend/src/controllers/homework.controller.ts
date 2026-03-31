@@ -15,7 +15,14 @@ export async function listHomework(req: Request, res: Response) {
     const homework = await prisma.homework.findMany({
       where,
       include: {
-        completions: { include: { student: true } },
+        completions: {
+          select: {
+            id: true,
+            done: true,
+            completedAt: true,
+            student: { select: { id: true, name: true, avatar: true, stars: true } },
+          },
+        },
         syllabus: { include: { items: { orderBy: { order: 'asc' } } } },
       },
       orderBy: { createdAt: 'desc' },
@@ -188,7 +195,12 @@ export async function getCompletions(req: Request, res: Response) {
     }
     const completions = await prisma.homeworkCompletion.findMany({
       where: { homeworkId: id },
-      include: { student: true },
+      select: {
+        id: true,
+        done: true,
+        completedAt: true,
+        student: { select: { id: true, name: true, avatar: true, stars: true } },
+      },
     })
     return res.json(completions)
   } catch (err) {

@@ -53,10 +53,13 @@ export async function aiComplete(
     )
   }
 
+  const withTimeout = (p: Promise<string>, ms: number): Promise<string> =>
+    Promise.race([p, new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`AI provider timed out after ${ms}ms`)), ms))])
+
   let lastError: unknown
   for (const name of available) {
     try {
-      const raw = await ALL_PROVIDERS[name].complete(prompt, opts)
+      const raw = await withTimeout(ALL_PROVIDERS[name].complete(prompt, opts), 30_000)
       const { safe, filtered } = filterAIResponse(raw)
       let text = filtered
       if (!safe && task in JSON_TASK_FALLBACK) {
