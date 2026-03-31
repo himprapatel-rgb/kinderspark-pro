@@ -129,6 +129,24 @@ model ParentalConsent {
   student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
 
+/// Geofence opt-in per authenticated subject (value of JWT `req.user.id`).
+model GeofenceUserConsent {
+  id         String   @id @default(cuid())
+  authUserId String   @unique
+  enabled    Boolean  @default(false)
+  updatedAt  DateTime @updatedAt
+}
+
+model GeofenceUserEvent {
+  id          String   @id @default(cuid())
+  authUserId  String
+  type        String
+  regionLabel String?
+  occurredAt  DateTime @default(now())
+
+  @@index([authUserId, occurredAt])
+}
+
 model Badge {
   id        String   @id @default(cuid())
   studentId String

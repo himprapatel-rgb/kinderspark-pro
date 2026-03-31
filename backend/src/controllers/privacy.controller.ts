@@ -84,8 +84,8 @@ export async function postConsent(req: Request, res: Response): Promise<void> {
       res.status(401).json({ error: 'Not authenticated' });
       return;
     }
-    if (role !== 'parent' && role !== 'admin') {
-      res.status(403).json({ error: 'Only a parent or admin can record consent' });
+    if (role !== 'parent' && role !== 'admin' && role !== 'principal') {
+      res.status(403).json({ error: 'Only a parent, admin, or principal can record consent' });
       return;
     }
 
