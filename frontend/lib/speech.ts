@@ -1,5 +1,11 @@
 // KinderSpark Speech Engine
-// Uses Web Speech API with better "natural child-friendly" voice picking.
+//
+// Priority order:
+//   1. Google Cloud TTS  (human quality, primary)   via POST /api/tts
+//   2. OpenAI TTS        (human quality, secondary) via POST /api/tts
+//   3. Web Speech API    (robotic, offline fallback)
+//
+// Audio is cached server-side — same text never hits the API twice.
 
 export type VoiceProfile = 'auto' | 'girl' | 'boy'
 
@@ -12,9 +18,10 @@ let speechRate = 0.82
 let speechPitch = 1.06
 let voiceProfile: VoiceProfile = 'auto'
 
-function normalize(s: string) {
-  return String(s || '').toLowerCase()
-}
+// Track whether the API TTS is working (skip retries after first confirmed fail)
+let apiTTSAvailable: boolean | null = null  // null = not yet tested
+
+// ── Persist prefs ─────────────────────────────────────────────────────────
 
 function loadPersistedPrefs() {
   if (typeof window === 'undefined') return
@@ -26,30 +33,24 @@ function loadPersistedPrefs() {
   }
 }
 
+// ── Web Speech (fallback) ─────────────────────────────────────────────────
+
+function normalize(s: string) {
+  return String(s || '').toLowerCase()
+}
+
 function scoreVoice(v: SpeechSynthesisVoice, profile: VoiceProfile): number {
   const n = normalize(v.name)
   const lang = normalize(v.lang)
   let score = 0
-
-  // Prefer English first, then close variants.
   if (lang.startsWith('en-')) score += 30
   else if (lang.startsWith('en')) score += 20
-
-  // Prefer local/native voices when possible.
   if (v.localService) score += 8
-
-  // Natural / neural sounding hints.
   if (/neural|natural|enhanced|premium|wavenet/.test(n)) score += 14
-
-  // Penalize known robotic/legacy voices.
   if (/espeak|festival|mbrola|robot|desktop/.test(n)) score -= 12
-
-  // Platform-friendly popular voices.
   if (/samantha|ava|allison|siri/.test(n)) score += 16
   if (/zira|aria|jenny|guy|davis/.test(n)) score += 14
   if (/google/.test(n)) score += 10
-
-  // Profile preference.
   if (profile === 'girl') {
     if (/female|woman|girl|samantha|ava|allison|zira|jenny|aria|hazel|susan|karen|tessa|moira/.test(n)) score += 18
     if (/male|man|boy|guy|davis|daniel/.test(n)) score -= 7
@@ -57,10 +58,8 @@ function scoreVoice(v: SpeechSynthesisVoice, profile: VoiceProfile): number {
     if (/male|man|boy|guy|davis|daniel|alex|fred|tom/.test(n)) score += 18
     if (/female|woman|girl|samantha|ava|allison|zira|jenny|aria/.test(n)) score -= 7
   } else {
-    // Auto defaults to warm neutral/female-ish for early learners.
     if (/samantha|ava|allison|zira|jenny|aria|hazel|susan/.test(n)) score += 10
   }
-
   return score
 }
 
@@ -68,138 +67,163 @@ function getBestVoice(profile: VoiceProfile = voiceProfile): SpeechSynthesisVoic
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null
   const voices = speechSynthesis.getVoices()
   if (!voices.length) return null
-
   let best: SpeechSynthesisVoice | null = null
   let bestScore = -10_000
   for (const v of voices) {
     const s = scoreVoice(v, profile)
-    if (s > bestScore) {
-      bestScore = s
-      best = v
-    }
+    if (s > bestScore) { bestScore = s; best = v }
   }
   return best || voices[0] || null
 }
 
 function tuneForProfile(profile: VoiceProfile) {
-  if (profile === 'girl') {
-    speechRate = 0.84
-    speechPitch = 1.10
-  } else if (profile === 'boy') {
-    speechRate = 0.82
-    speechPitch = 0.96
-  } else {
-    speechRate = 0.82
-    speechPitch = 1.05
-  }
+  if (profile === 'girl')      { speechRate = 0.84; speechPitch = 1.10 }
+  else if (profile === 'boy')  { speechRate = 0.82; speechPitch = 0.96 }
+  else                         { speechRate = 0.82; speechPitch = 1.05 }
 }
 
-// Load voices (async on some browsers)
-if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-  loadPersistedPrefs()
-  tuneForProfile(voiceProfile)
-  speechSynthesis.onvoiceschanged = () => {
-    selectedVoice = getBestVoice(voiceProfile)
-  }
-  selectedVoice = getBestVoice(voiceProfile)
-}
-
-// ── Core speak function ─────────────────────────────────────────────────────
-export function speak(text: string, options?: { rate?: number; pitch?: number; onEnd?: () => void }) {
+function webSpeakFallback(text: string, options?: { rate?: number; pitch?: number; onEnd?: () => void }) {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
-  if (!voiceEnabled) return
-
   speechSynthesis.cancel()
-
   const utterance = new SpeechSynthesisUtterance(text)
   utterance.rate = options?.rate ?? speechRate
   utterance.pitch = options?.pitch ?? speechPitch
   utterance.volume = 1
-
   if (!selectedVoice) selectedVoice = getBestVoice(voiceProfile)
   if (selectedVoice) utterance.voice = selectedVoice
-
-  if (options?.onEnd) {
-    utterance.onend = options.onEnd
-  }
-
+  if (options?.onEnd) utterance.onend = options.onEnd
   speechSynthesis.speak(utterance)
 }
 
-// ── Convenience functions for the tutor ─────────────────────────────────────
+// ── API TTS (Google → OpenAI) ─────────────────────────────────────────────
 
-/** Speak a question with appropriate pacing */
+async function apiSpeak(text: string, onEnd?: () => void): Promise<boolean> {
+  if (apiTTSAvailable === false) return false
+  if (typeof window === 'undefined') return false
+
+  try {
+    const apiBase = (window as any).__NEXT_DATA__?.runtimeConfig?.NEXT_PUBLIC_API_URL
+      || process.env.NEXT_PUBLIC_API_URL
+      || ''
+
+    const res = await fetch(`${apiBase}/api/tts`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text,
+        language: getLanguage(),
+        profile: voiceProfile,
+      }),
+    })
+
+    const data = await res.json()
+
+    // Server told us no provider is configured — don't retry
+    if (data.fallback) {
+      apiTTSAvailable = false
+      return false
+    }
+
+    if (!data.dataUrl) return false
+
+    apiTTSAvailable = true
+
+    const audio = new Audio(data.dataUrl)
+    audio.playbackRate = 0.92
+    if (onEnd) audio.onended = onEnd
+    await audio.play()
+    return true
+  } catch {
+    // Network error or not authenticated — use fallback silently
+    return false
+  }
+}
+
+// Detect current language from app store (best-effort)
+function getLanguage(): string {
+  if (typeof window === 'undefined') return 'en'
+  try {
+    const raw = localStorage.getItem('kinderspark-store')
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      return parsed?.state?.settings?.lang || 'en'
+    }
+  } catch {}
+  return 'en'
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+
+if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+  loadPersistedPrefs()
+  tuneForProfile(voiceProfile)
+  speechSynthesis.onvoiceschanged = () => { selectedVoice = getBestVoice(voiceProfile) }
+  selectedVoice = getBestVoice(voiceProfile)
+}
+
+// ── Core speak function ───────────────────────────────────────────────────
+
+export function speak(text: string, options?: { rate?: number; pitch?: number; onEnd?: () => void }) {
+  if (typeof window === 'undefined') return
+  if (!voiceEnabled) return
+
+  // Try API TTS first (human voice), fall back to Web Speech
+  apiSpeak(text, options?.onEnd).then((used) => {
+    if (!used) webSpeakFallback(text, options)
+  })
+}
+
+// ── Convenience functions ─────────────────────────────────────────────────
+
 export function speakQuestion(text: string, onEnd?: () => void) {
   speak(text, { rate: 0.72, pitch: 1.1, onEnd })
 }
 
-/** Speak encouragement (slightly faster, higher pitch) */
 export function speakEncouragement(text: string) {
   speak(text, { rate: 0.85, pitch: 1.25 })
 }
 
-/** Speak the correct answer slowly for learning */
 export function speakAnswer(text: string) {
   speak(text, { rate: 0.65, pitch: 1.0 })
 }
 
-/** Speak a greeting (warm, slow) */
 export function speakGreeting(name: string) {
   speak(`Hi ${name}! Ready to learn? Let's go!`, { rate: 0.7, pitch: 1.2 })
 }
 
-/** Speak topic introduction */
 export function speakTopicIntro(topicLabel: string) {
   speak(`Let's practice ${topicLabel}! Think carefully and choose the right answer.`, { rate: 0.75, pitch: 1.15 })
 }
 
-/** Speak results summary */
 export function speakResults(correct: number, total: number) {
   const pct = Math.round((correct / total) * 100)
-  if (pct >= 80) {
-    speak(`Amazing! You got ${correct} out of ${total}! You are a superstar!`, { rate: 0.8, pitch: 1.3 })
-  } else if (pct >= 60) {
-    speak(`Good job! You got ${correct} out of ${total}. Keep practicing!`, { rate: 0.8, pitch: 1.15 })
-  } else {
-    speak(`You got ${correct} out of ${total}. Don't worry, practice makes perfect!`, { rate: 0.75, pitch: 1.1 })
-  }
+  if (pct >= 80) speak(`Amazing! You got ${correct} out of ${total}! You are a superstar!`, { rate: 0.8, pitch: 1.3 })
+  else if (pct >= 60) speak(`Good job! You got ${correct} out of ${total}. Keep practicing!`, { rate: 0.8, pitch: 1.15 })
+  else speak(`You got ${correct} out of ${total}. Don't worry, practice makes perfect!`, { rate: 0.75, pitch: 1.1 })
 }
 
-// ── Controls ────────────────────────────────────────────────────────────────
+// ── Controls ──────────────────────────────────────────────────────────────
 
 export function setVoiceEnabled(enabled: boolean) {
   voiceEnabled = enabled
-  if (typeof window !== 'undefined') {
-    localStorage.setItem(VOICE_ENABLED_KEY, enabled ? '1' : '0')
-  }
-  if (!enabled) {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      speechSynthesis.cancel()
-    }
-  }
+  if (typeof window !== 'undefined') localStorage.setItem(VOICE_ENABLED_KEY, enabled ? '1' : '0')
+  if (!enabled && typeof window !== 'undefined' && 'speechSynthesis' in window) speechSynthesis.cancel()
 }
 
-export function isVoiceEnabled(): boolean {
-  return voiceEnabled
-}
+export function isVoiceEnabled(): boolean { return voiceEnabled }
 
 export function setVoiceProfile(profile: VoiceProfile) {
   voiceProfile = profile
   tuneForProfile(profile)
-  if (typeof window !== 'undefined') {
-    localStorage.setItem(VOICE_PROFILE_KEY, profile)
-  }
+  if (typeof window !== 'undefined') localStorage.setItem(VOICE_PROFILE_KEY, profile)
   selectedVoice = getBestVoice(profile)
 }
 
-export function getVoiceProfile(): VoiceProfile {
-  return voiceProfile
-}
+export function getVoiceProfile(): VoiceProfile { return voiceProfile }
 
 export function stopSpeaking() {
-  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-    speechSynthesis.cancel()
-  }
+  if (typeof window !== 'undefined' && 'speechSynthesis' in window) speechSynthesis.cancel()
 }
 
 export function isSpeaking(): boolean {
@@ -207,10 +231,5 @@ export function isSpeaking(): boolean {
   return speechSynthesis.speaking
 }
 
-export function setSpeechRate(rate: number) {
-  speechRate = Math.max(0.5, Math.min(1.5, rate))
-}
-
-export function setSpeechPitch(pitch: number) {
-  speechPitch = Math.max(0.5, Math.min(2.0, pitch))
-}
+export function setSpeechRate(rate: number) { speechRate = Math.max(0.5, Math.min(1.5, rate)) }
+export function setSpeechPitch(pitch: number) { speechPitch = Math.max(0.5, Math.min(2.0, pitch)) }

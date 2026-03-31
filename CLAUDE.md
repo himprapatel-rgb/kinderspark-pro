@@ -358,7 +358,10 @@ VAPID_PUBLIC_KEY       Web push notifications
 VAPID_PRIVATE_KEY      Web push notifications
 SENDGRID_API_KEY       Email sending
 CLOUDINARY_URL         Image/drawing storage
-OPENAI_API_KEY         (optional) AI fallback provider
+OPENAI_API_KEY         AI fallback provider + OpenAI TTS (secondary voice)
+GOOGLE_TTS_API_KEY     Google Cloud TTS — primary human voice (free 1M chars/mo)
+AZURE_TTS_KEY          Microsoft Azure TTS — tertiary voice (free 500K chars/mo)
+AZURE_TTS_REGION       Azure region e.g. eastus (default: eastus)
 ```
 
 ### Frontend (Railway)
@@ -381,7 +384,7 @@ FRONTEND_URL           Railway frontend URL
 - `SENDGRID_API_KEY`, `CLOUDINARY_URL`, `OPENAI_API_KEY` need to be set on Railway for those features to work
 - `VAPID_PUBLIC_KEY` + `VAPID_PRIVATE_KEY` required on Railway for push notifications
 - `@google/generative-ai` package not installed — Gemini provider will fail until added
-- TTS uses browser Web Speech API — robotic voice; no human-quality TTS service yet
+- TTS human voices need env vars set on Railway: `GOOGLE_TTS_API_KEY`, `OPENAI_API_KEY`, or `AZURE_TTS_KEY` — app falls back to Web Speech API until at least one is set
 
 ---
 
