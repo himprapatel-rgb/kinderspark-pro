@@ -34,6 +34,12 @@ cd /app
 ./node_modules/.bin/prisma db seed
 ```
 
+If `prisma db seed` fails with `ts-node ENOENT`, use the local binary (same as `npm run prisma:seed`):
+
+```sh
+./node_modules/.bin/ts-node prisma/seed.ts
+```
+
 If `prisma` is not under `/app`, run `pwd` and `ls` first; root directory depends on the image.
 
 ## Option C — Railway CLI: link the correct service

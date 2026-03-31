@@ -8,7 +8,7 @@
     "migrate:deploy": "prisma migrate deploy",
     "prisma:migrate": "prisma migrate dev",
     "prisma:generate": "prisma generate",
-    "prisma:seed": "ts-node prisma/seed.ts",
+    "prisma:seed": "npx ts-node prisma/seed.ts",
     "prisma:backfill-ecosystem": "ts-node prisma/backfill-ecosystem.ts",
     "prisma:verify-ecosystem": "ts-node prisma/verify-ecosystem.ts",
     "smoke:release": "node scripts/release-smoke.js",
@@ -18,7 +18,7 @@
     "test:coverage": "jest --coverage"
   },
   "prisma": {
-    "seed": "ts-node prisma/seed.ts"
+    "seed": "npx ts-node prisma/seed.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
