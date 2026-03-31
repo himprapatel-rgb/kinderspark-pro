@@ -64,6 +64,7 @@ export async function createHomework(req: Request, res: Response) {
         sendPushNotification(s.pushToken!, {
           title: `📚 New Homework${aiGenerated ? ' ✨' : ''}!`,
           body: `"${title}" is due ${dueDate} — earn ⭐${starsReward ?? 5} stars!`,
+          url: '/child',
         })
       ))
     ).catch(() => {})
@@ -174,6 +175,7 @@ export async function sendReminders(req: Request, res: Response) {
         return sendPushNotification(s.pushToken, {
           title: '⏰ Homework Due Tomorrow!',
           body: `"${hw.title}" is due tomorrow — earn ⭐${hw.starsReward} stars!`,
+          url: '/child',
         })
       }))
     }

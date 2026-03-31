@@ -165,6 +165,27 @@ export async function verifyPin(req: Request, res: Response) {
         })
         const refreshToken = await issueRefreshToken(u.id, activeRole)
         setAuthCookies(res, token, refreshToken)
+
+        let legacyStudentId: string | null = null
+        if (activeRole === 'child') {
+          const sp = await prisma.studentProfile.findUnique({
+            where: { userId: u.id },
+            select: { legacyStudentId: true },
+          })
+          if (sp?.legacyStudentId) {
+            legacyStudentId = sp.legacyStudentId
+          } else if (u.pinFingerprint) {
+            const st = await prisma.student.findFirst({
+              where: {
+                pinFingerprint: u.pinFingerprint,
+                class: { schoolId: school.id },
+              },
+              select: { id: true },
+            })
+            legacyStudentId = st?.id ?? null
+          }
+        }
+
         return res.json({
           success: true,
           role: activeRole,
@@ -175,6 +196,7 @@ export async function verifyPin(req: Request, res: Response) {
             schoolId: u.schoolId || null,
             profileId: u.id,
             roles,
+            ...(legacyStudentId ? { legacyStudentId } : {}),
           },
         })
       }
