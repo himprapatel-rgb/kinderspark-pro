@@ -390,6 +390,215 @@ async function main() {
   }
   console.log(`💬 Messages: ${msgs.length}`)
 
+  // ── Curriculum Modules (18 modules — source of truth in DB) ─────────────
+  console.log('\n📚 Seeding curriculum modules...')
+  const modules = [
+    { moduleId: 'numbers',  title: 'Numbers 1–10', icon: '🔢', color: '#5E5CE6', type: 'numbers', order: 0,
+      items: [
+        { w: 'One',   e: '1️⃣', hint: '1 apple' },       { w: 'Two',   e: '2️⃣', hint: '2 balloons' },
+        { w: 'Three', e: '3️⃣', hint: '3 stars' },        { w: 'Four',  e: '4️⃣', hint: '4 wheels' },
+        { w: 'Five',  e: '5️⃣', hint: '5 fingers' },      { w: 'Six',   e: '6️⃣', hint: '6 legs on insect' },
+        { w: 'Seven', e: '7️⃣', hint: '7 days in week' }, { w: 'Eight', e: '8️⃣', hint: '8 legs on spider' },
+        { w: 'Nine',  e: '9️⃣', hint: '9 planets' },      { w: 'Ten',   e: '🔟', hint: '10 toes' },
+      ]},
+    { moduleId: 'numbers2', title: 'Numbers 11–20', icon: '🔣', color: '#BF5AF2', type: 'numbers', order: 1,
+      items: [
+        { w: 'Eleven',    e: '1️⃣1️⃣', hint: '11 players in football' }, { w: 'Twelve',   e: '1️⃣2️⃣', hint: '12 months in year' },
+        { w: 'Thirteen',  e: '1️⃣3️⃣', hint: 'A baker\'s dozen' },        { w: 'Fourteen', e: '1️⃣4️⃣', hint: '14 days in 2 weeks' },
+        { w: 'Fifteen',   e: '1️⃣5️⃣', hint: '15 minutes in quarter hour' }, { w: 'Sixteen', e: '1️⃣6️⃣', hint: '16 crayons in a box' },
+        { w: 'Seventeen', e: '1️⃣7️⃣', hint: '17 is a prime number' }, { w: 'Eighteen', e: '1️⃣8️⃣', hint: '18 holes in golf' },
+        { w: 'Nineteen',  e: '1️⃣9️⃣', hint: '19 is almost 20' },       { w: 'Twenty',   e: '2️⃣0️⃣', hint: '20 toes and fingers' },
+      ]},
+    { moduleId: 'letters',  title: 'Letters A–Z', icon: '🔤', color: '#FF9F0A', type: 'letters', order: 2,
+      items: [
+        { w: 'A', e: '🍎', hint: 'A for Apple' }, { w: 'B', e: '🐝', hint: 'B for Bee' },
+        { w: 'C', e: '🐱', hint: 'C for Cat' },   { w: 'D', e: '🐶', hint: 'D for Dog' },
+        { w: 'E', e: '🥚', hint: 'E for Egg' },   { w: 'F', e: '🐟', hint: 'F for Fish' },
+        { w: 'G', e: '🍇', hint: 'G for Grape' }, { w: 'H', e: '🏠', hint: 'H for House' },
+        { w: 'I', e: '🍦', hint: 'I for Ice cream' }, { w: 'J', e: '🃏', hint: 'J for Joker' },
+        { w: 'K', e: '🪁', hint: 'K for Kite' },  { w: 'L', e: '🦁', hint: 'L for Lion' },
+        { w: 'M', e: '🌙', hint: 'M for Moon' },  { w: 'N', e: '👃', hint: 'N for Nose' },
+        { w: 'O', e: '🐙', hint: 'O for Octopus' }, { w: 'P', e: '🍕', hint: 'P for Pizza' },
+        { w: 'Q', e: '👑', hint: 'Q for Queen' }, { w: 'R', e: '🌈', hint: 'R for Rainbow' },
+        { w: 'S', e: '⭐', hint: 'S for Star' },  { w: 'T', e: '🐢', hint: 'T for Turtle' },
+        { w: 'U', e: '☂️', hint: 'U for Umbrella' }, { w: 'V', e: '🌋', hint: 'V for Volcano' },
+        { w: 'W', e: '🐋', hint: 'W for Whale' }, { w: 'X', e: '🎸', hint: 'X for Xylophone' },
+        { w: 'Y', e: '🪀', hint: 'Y for Yo-yo' }, { w: 'Z', e: '🦓', hint: 'Z for Zebra' },
+      ]},
+    { moduleId: 'words',    title: 'Sight Words', icon: '📝', color: '#30D158', type: 'words', order: 3,
+      items: [
+        { w: 'the', e: '👉', hint: 'Most used word' }, { w: 'and', e: '➕', hint: 'Joins two things' },
+        { w: 'is',  e: '✅', hint: 'Something exists' }, { w: 'in',  e: '📦', hint: 'Inside something' },
+        { w: 'it',  e: '👆', hint: 'Points to a thing' }, { w: 'of',  e: '🔗', hint: 'Belongs to' },
+        { w: 'to',  e: '➡️', hint: 'Going somewhere' }, { w: 'a',   e: '1️⃣', hint: 'One of something' },
+        { w: 'I',   e: '🙋', hint: 'Means yourself' },   { w: 'you', e: '👤', hint: 'The person listening' },
+      ]},
+    { moduleId: 'words2',   title: '2-Letter Words', icon: '✏️', color: '#FF453A', type: 'words', order: 4,
+      items: [
+        { w: 'at', e: '📍', hint: 'at the park' }, { w: 'up', e: '⬆️', hint: 'look up' },
+        { w: 'go', e: '🏃', hint: 'ready to go' }, { w: 'do', e: '✅', hint: 'what to do' },
+        { w: 'so', e: '🤷', hint: 'and so...' },   { w: 'no', e: '❌', hint: 'means stop' },
+        { w: 'my', e: '🙋', hint: 'belongs to me' }, { w: 'us', e: '👫', hint: 'you and me' },
+        { w: 'we', e: '👨‍👩‍👧', hint: 'all together' }, { w: 'he', e: '👦', hint: 'a boy' },
+      ]},
+    { moduleId: 'words3',   title: '3-Letter Words', icon: '📖', color: '#FF9F0A', type: 'words', order: 5,
+      items: [
+        { w: 'cat', e: '🐱', hint: 'says meow' }, { w: 'dog', e: '🐶', hint: 'says woof' },
+        { w: 'sun', e: '☀️', hint: 'shines bright' }, { w: 'red', e: '🔴', hint: 'a colour' },
+        { w: 'big', e: '🐘', hint: 'large size' },    { w: 'cup', e: '☕', hint: 'hold a drink' },
+        { w: 'hat', e: '🎩', hint: 'wear on head' },  { w: 'run', e: '🏃', hint: 'move fast' },
+        { w: 'hop', e: '🐇', hint: 'jump jump' },     { w: 'sit', e: '🪑', hint: 'rest here' },
+      ]},
+    { moduleId: 'colors',   title: 'Colors', icon: '🎨', color: '#FF6B6B', type: 'items', order: 6,
+      items: [
+        { w: 'Red',    e: '🔴', hint: 'Colour of roses' },    { w: 'Blue',   e: '🔵', hint: 'Colour of sky' },
+        { w: 'Yellow', e: '🟡', hint: 'Colour of sun' },      { w: 'Green',  e: '🟢', hint: 'Colour of grass' },
+        { w: 'Orange', e: '🟠', hint: 'Colour of orange fruit' }, { w: 'Purple', e: '🟣', hint: 'Mix of red and blue' },
+        { w: 'Pink',   e: '🩷', hint: 'Light red colour' },   { w: 'Black',  e: '⚫', hint: 'Darkest colour' },
+        { w: 'White',  e: '⚪', hint: 'Lightest colour' },    { w: 'Brown',  e: '🟤', hint: 'Colour of chocolate' },
+      ]},
+    { moduleId: 'animals',  title: 'Animals', icon: '🐾', color: '#30D158', type: 'items', order: 7,
+      items: [
+        { w: 'Cat',      e: '🐱', hint: 'Says meow' },        { w: 'Dog',     e: '🐶', hint: 'Says woof' },
+        { w: 'Lion',     e: '🦁', hint: 'King of jungle' },   { w: 'Elephant',e: '🐘', hint: 'Biggest land animal' },
+        { w: 'Monkey',   e: '🐒', hint: 'Loves bananas' },    { w: 'Penguin', e: '🐧', hint: 'Cannot fly' },
+        { w: 'Giraffe',  e: '🦒', hint: 'Very long neck' },   { w: 'Rabbit',  e: '🐇', hint: 'Loves to hop' },
+        { w: 'Bear',     e: '🐻', hint: 'Loves honey' },      { w: 'Tiger',   e: '🐯', hint: 'Has stripes' },
+      ]},
+    { moduleId: 'fruits',   title: 'Fruits', icon: '🍎', color: '#FF453A', type: 'items', order: 8,
+      items: [
+        { w: 'Apple',      e: '🍎', hint: 'Red and sweet' },      { w: 'Banana',     e: '🍌', hint: 'Yellow fruit' },
+        { w: 'Orange',     e: '🍊', hint: 'Citrus fruit' },       { w: 'Mango',      e: '🥭', hint: 'Tropical and sweet' },
+        { w: 'Grape',      e: '🍇', hint: 'Grows in bunch' },     { w: 'Strawberry', e: '🍓', hint: 'Red and heart-shaped' },
+        { w: 'Watermelon', e: '🍉', hint: 'Green outside red inside' }, { w: 'Pineapple', e: '🍍', hint: 'Spiky tropical fruit' },
+        { w: 'Peach',      e: '🍑', hint: 'Soft and fuzzy' },     { w: 'Cherry',     e: '🍒', hint: 'Comes in pairs' },
+      ]},
+    { moduleId: 'shapes',   title: 'Shapes', icon: '🔷', color: '#FF9F0A', type: 'items', order: 9,
+      items: [
+        { w: 'Circle',    e: '⭕', hint: 'Round like a ball' },    { w: 'Square',    e: '🟥', hint: '4 equal sides' },
+        { w: 'Triangle',  e: '🔺', hint: '3 sides' },              { w: 'Rectangle', e: '▬', hint: '2 long 2 short sides' },
+        { w: 'Star',      e: '⭐', hint: '5 points' },             { w: 'Heart',     e: '❤️', hint: 'Symbol of love' },
+        { w: 'Diamond',   e: '💎', hint: '4 equal slanted sides' },{ w: 'Oval',      e: '🥚', hint: 'Stretched circle' },
+        { w: 'Pentagon',  e: '⬠', hint: '5 sides' },              { w: 'Hexagon',   e: '⬡', hint: '6 sides like honeycomb' },
+      ]},
+    { moduleId: 'food',     title: 'Food', icon: '🍔', color: '#FF9F0A', type: 'items', order: 10,
+      items: [
+        { w: 'Pizza',   e: '🍕', hint: 'Round with cheese' }, { w: 'Bread',  e: '🍞', hint: 'Made from flour' },
+        { w: 'Rice',    e: '🍚', hint: 'Tiny white grains' }, { w: 'Egg',    e: '🥚', hint: 'Comes from hens' },
+        { w: 'Milk',    e: '🥛', hint: 'White drink from cows' }, { w: 'Cake',  e: '🎂', hint: 'Sweet birthday treat' },
+        { w: 'Cookie',  e: '🍪', hint: 'Baked sweet snack' }, { w: 'Carrot', e: '🥕', hint: 'Orange vegetable' },
+        { w: 'Soup',    e: '🍲', hint: 'Hot liquid food' },   { w: 'Ice Cream', e: '🍦', hint: 'Cold and sweet' },
+      ]},
+    { moduleId: 'vehicles', title: 'Vehicles', icon: '🚗', color: '#5E5CE6', type: 'items', order: 11,
+      items: [
+        { w: 'Car',        e: '🚗', hint: 'Has 4 wheels' },      { w: 'Bus',       e: '🚌', hint: 'Carries many people' },
+        { w: 'Bicycle',    e: '🚲', hint: 'You pedal it' },      { w: 'Airplane',  e: '✈️', hint: 'Flies in sky' },
+        { w: 'Train',      e: '🚂', hint: 'Runs on tracks' },    { w: 'Boat',      e: '⛵', hint: 'Floats on water' },
+        { w: 'Helicopter', e: '🚁', hint: 'Has spinning blades' }, { w: 'Rocket',  e: '🚀', hint: 'Goes to space' },
+        { w: 'Truck',      e: '🚛', hint: 'Carries big loads' }, { w: 'Motorcycle', e: '🏍️', hint: 'Has 2 wheels' },
+      ]},
+    { moduleId: 'weather',  title: 'Weather', icon: '⛅', color: '#0A84FF', type: 'items', order: 12,
+      items: [
+        { w: 'Sunny',   e: '☀️', hint: 'Warm and bright' },  { w: 'Rainy',   e: '🌧️', hint: 'Drops fall from sky' },
+        { w: 'Cloudy',  e: '☁️', hint: 'Sky is grey' },      { w: 'Snowy',   e: '❄️', hint: 'Cold white flakes' },
+        { w: 'Windy',   e: '💨', hint: 'Air moves fast' },   { w: 'Stormy',  e: '⛈️', hint: 'Thunder and lightning' },
+        { w: 'Rainbow', e: '🌈', hint: 'After the rain' },   { w: 'Foggy',   e: '🌫️', hint: 'Hard to see far' },
+        { w: 'Hot',     e: '🥵', hint: 'Very warm day' },    { w: 'Cold',    e: '🥶', hint: 'Wrap up warm!' },
+      ]},
+    { moduleId: 'body',     title: 'Body Parts', icon: '👁️', color: '#FF6B6B', type: 'items', order: 13,
+      items: [
+        { w: 'Head',    e: '🧠', hint: 'Helps you think' },   { w: 'Eyes',   e: '👀', hint: 'You see with these' },
+        { w: 'Ears',    e: '👂', hint: 'You hear with these' }, { w: 'Nose',  e: '👃', hint: 'You smell with this' },
+        { w: 'Mouth',   e: '👄', hint: 'You eat and talk' },  { w: 'Hands',  e: '🙌', hint: 'You clap and wave' },
+        { w: 'Feet',    e: '🦶', hint: 'You walk and dance' }, { w: 'Teeth', e: '🦷', hint: 'Help you chew food' },
+      ]},
+    { moduleId: 'family',   title: 'Family', icon: '👨‍👩‍👧', color: '#FF9F0A', type: 'items', order: 14,
+      items: [
+        { w: 'Mum',         e: '👩', hint: 'Your mother' },    { w: 'Dad',         e: '👨', hint: 'Your father' },
+        { w: 'Baby',        e: '👶', hint: 'Smallest in family' }, { w: 'Sister', e: '👧', hint: 'A girl sibling' },
+        { w: 'Brother',     e: '👦', hint: 'A boy sibling' },  { w: 'Grandma',     e: '👵', hint: 'Mum\'s or Dad\'s mum' },
+        { w: 'Grandpa',     e: '👴', hint: 'Mum\'s or Dad\'s dad' }, { w: 'Family', e: '👨‍👩‍👧', hint: 'All together with love' },
+      ]},
+    { moduleId: 'feelings', title: 'Feelings', icon: '😊', color: '#FF453A', type: 'items', order: 15,
+      items: [
+        { w: 'Happy',     e: '😊', hint: 'Feeling great' },    { w: 'Sad',       e: '😢', hint: 'Want to cry' },
+        { w: 'Angry',     e: '😠', hint: 'Feeling mad' },      { w: 'Excited',   e: '🤩', hint: 'Can\'t wait!' },
+        { w: 'Tired',     e: '😴', hint: 'Need to sleep' },    { w: 'Scared',    e: '😨', hint: 'Feeling very afraid' },
+        { w: 'Surprised', e: '😲', hint: 'Wow, did not expect that' }, { w: 'Proud', e: '😤', hint: 'Did something great' },
+      ]},
+    { moduleId: 'habits',   title: 'Good Habits', icon: '🌟', color: '#30D158', type: 'items', order: 16,
+      items: [
+        { w: 'Brush Teeth', e: '🪥', hint: 'Twice every day' }, { w: 'Wash Hands', e: '🧼', hint: 'Before eating' },
+        { w: 'Exercise',    e: '🏃', hint: 'Move your body' },   { w: 'Read Books', e: '📚', hint: 'Learn every day' },
+        { w: 'Sleep Early', e: '🛏️', hint: 'Rest your body' },  { w: 'Eat Veggies', e: '🥦', hint: 'Stay healthy' },
+        { w: 'Be Kind',     e: '💛', hint: 'Treat others well' }, { w: 'Drink Water', e: '💧', hint: '8 glasses daily' },
+      ]},
+    { moduleId: 'manners',  title: 'Manners', icon: '💝', color: '#BF5AF2', type: 'items', order: 17,
+      items: [
+        { w: 'Please',     e: '🙏', hint: 'Ask politely' },    { w: 'Thank You',   e: '💛', hint: 'Show gratitude' },
+        { w: 'Sorry',      e: '😔', hint: 'When you made a mistake' }, { w: 'Excuse Me', e: '🤚', hint: 'Get attention politely' },
+        { w: 'Share',      e: '🤝', hint: 'Give some to others' }, { w: 'Listen',     e: '👂', hint: 'Pay attention' },
+        { w: 'Smile',      e: '😊', hint: 'Make others happy' }, { w: 'Help',       e: '🆘', hint: 'Support others' },
+      ]},
+  ]
+
+  for (const mod of modules) {
+    await prisma.curriculumModule.upsert({
+      where: { moduleId: mod.moduleId },
+      update: { title: mod.title, icon: mod.icon, color: mod.color, type: mod.type, items: mod.items, order: mod.order },
+      create: { moduleId: mod.moduleId, title: mod.title, icon: mod.icon, color: mod.color, type: mod.type, items: mod.items, order: mod.order },
+    })
+  }
+  console.log(`  ✅ ${modules.length} curriculum modules seeded`)
+
+  // ── Quiz Questions (pre-seeded — no AI needed for basic quizzes) ──────────
+  console.log('❓ Seeding quiz questions...')
+  const quizData: Array<{ moduleId: string; question: string; options: string[]; correctIdx: number; emoji: string; difficulty: number }> = [
+    // Numbers
+    { moduleId: 'numbers', question: 'How many fingers on one hand?', options: ['Three','Four','Five','Six'], correctIdx: 2, emoji: '✋', difficulty: 1 },
+    { moduleId: 'numbers', question: 'What number comes after 4?',    options: ['3','5','6','7'],              correctIdx: 1, emoji: '5️⃣', difficulty: 1 },
+    { moduleId: 'numbers', question: 'How many wheels does a car have?', options: ['2','3','4','6'],           correctIdx: 2, emoji: '🚗', difficulty: 1 },
+    { moduleId: 'numbers', question: 'What is 2 + 2?',                options: ['3','4','5','6'],              correctIdx: 1, emoji: '➕', difficulty: 2 },
+    { moduleId: 'numbers', question: 'What comes before 8?',          options: ['6','7','9','10'],             correctIdx: 1, emoji: '7️⃣', difficulty: 2 },
+    // Letters
+    { moduleId: 'letters', question: 'Which letter does "Apple" start with?', options: ['B','C','A','D'], correctIdx: 2, emoji: '🍎', difficulty: 1 },
+    { moduleId: 'letters', question: 'Which letter does "Dog" start with?',   options: ['B','D','G','P'], correctIdx: 1, emoji: '🐶', difficulty: 1 },
+    { moduleId: 'letters', question: 'Which letter does "Sun" start with?',   options: ['T','S','N','M'], correctIdx: 1, emoji: '☀️', difficulty: 1 },
+    { moduleId: 'letters', question: 'Which letter does "Fish" start with?',  options: ['H','E','F','B'], correctIdx: 2, emoji: '🐟', difficulty: 1 },
+    // Colors
+    { moduleId: 'colors', question: 'What colour is the sky?',    options: ['Red','Green','Blue','Yellow'],  correctIdx: 2, emoji: '☀️', difficulty: 1 },
+    { moduleId: 'colors', question: 'What colour is grass?',      options: ['Blue','Green','Pink','Orange'], correctIdx: 1, emoji: '🌿', difficulty: 1 },
+    { moduleId: 'colors', question: 'What colour is the sun?',    options: ['Purple','Blue','Red','Yellow'], correctIdx: 3, emoji: '☀️', difficulty: 1 },
+    { moduleId: 'colors', question: 'What colour is a strawberry?', options: ['Yellow','Orange','Red','Green'], correctIdx: 2, emoji: '🍓', difficulty: 1 },
+    // Animals
+    { moduleId: 'animals', question: 'Which animal says "Meow"?',      options: ['Dog','Cat','Cow','Duck'],     correctIdx: 1, emoji: '🐱', difficulty: 1 },
+    { moduleId: 'animals', question: 'Which animal is the biggest?',   options: ['Cat','Rabbit','Elephant','Dog'], correctIdx: 2, emoji: '🐘', difficulty: 1 },
+    { moduleId: 'animals', question: 'Which animal has a very long neck?', options: ['Bear','Lion','Giraffe','Tiger'], correctIdx: 2, emoji: '🦒', difficulty: 1 },
+    { moduleId: 'animals', question: 'Which animal cannot fly?',       options: ['Eagle','Penguin','Parrot','Owl'], correctIdx: 1, emoji: '🐧', difficulty: 2 },
+    // Fruits
+    { moduleId: 'fruits', question: 'Which fruit is yellow?',     options: ['Apple','Banana','Grape','Strawberry'], correctIdx: 1, emoji: '🍌', difficulty: 1 },
+    { moduleId: 'fruits', question: 'Which fruit is red?',         options: ['Banana','Orange','Apple','Mango'],    correctIdx: 2, emoji: '🍎', difficulty: 1 },
+    { moduleId: 'fruits', question: 'Which fruit grows in a bunch?', options: ['Apple','Banana','Grapes','Mango'],  correctIdx: 2, emoji: '🍇', difficulty: 1 },
+    // Shapes
+    { moduleId: 'shapes', question: 'Which shape is round?',      options: ['Square','Triangle','Circle','Rectangle'], correctIdx: 2, emoji: '⭕', difficulty: 1 },
+    { moduleId: 'shapes', question: 'How many sides does a triangle have?', options: ['2','3','4','5'], correctIdx: 1, emoji: '🔺', difficulty: 1 },
+    { moduleId: 'shapes', question: 'How many sides does a square have?',   options: ['3','4','5','6'], correctIdx: 1, emoji: '🟥', difficulty: 1 },
+    // Feelings
+    { moduleId: 'feelings', question: 'How do you feel on your birthday?', options: ['Sad','Tired','Excited','Angry'], correctIdx: 2, emoji: '🎂', difficulty: 1 },
+    { moduleId: 'feelings', question: 'You dropped your ice cream. How do you feel?', options: ['Happy','Sad','Excited','Proud'], correctIdx: 1, emoji: '🍦', difficulty: 1 },
+    // Vehicles
+    { moduleId: 'vehicles', question: 'Which vehicle flies in the sky?', options: ['Car','Bus','Train','Airplane'], correctIdx: 3, emoji: '✈️', difficulty: 1 },
+    { moduleId: 'vehicles', question: 'Which vehicle runs on tracks?',   options: ['Truck','Boat','Train','Car'],    correctIdx: 2, emoji: '🚂', difficulty: 1 },
+    // Manners
+    { moduleId: 'manners', question: 'What do you say when someone helps you?', options: ['Sorry','Please','Thank You','Excuse Me'], correctIdx: 2, emoji: '💛', difficulty: 1 },
+    { moduleId: 'manners', question: 'What do you say before asking for something?', options: ['Thank You','Please','Sorry','Goodbye'], correctIdx: 1, emoji: '🙏', difficulty: 1 },
+  ]
+
+  for (const q of quizData) {
+    await prisma.quizQuestion.create({ data: q }).catch(() => {}) // skip if exists
+  }
+  console.log(`  ✅ ${quizData.length} quiz questions seeded`)
+
   // ── Summary ───────────────────────────────────────────────────────────────
   console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
   console.log('  ✅ Seed complete!  Sunshine Kindergarten — UAT Roster')
