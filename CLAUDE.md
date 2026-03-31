@@ -100,8 +100,8 @@ kinderspark-pro/
     │   └── dashboard/agents/      ← agent control room
     ├── components/ui/             ← Button, Modal, Toast, TabBar
     ├── lib/
-    │   ├── api.ts                 ← all API fetch calls (single source)
-    │   ├── modules.ts             ← 12 built-in learning modules
+    │   ├── api.ts                 ← all API fetch calls (38+ functions)
+    │   ├── modules.ts             ← 18 built-in learning modules + shop items
     │   ├── speech.ts              ← text-to-speech
     │   └── i18n.ts                ← translations
     └── store/appStore.ts          ← Zustand: user, role, token, settings
@@ -173,7 +173,8 @@ POST   /api/agents/conversations
 ## AI Integration Rules
 
 - Model: `claude-sonnet-4-6` (override via `ANTHROPIC_MODEL` env var)
-- All Claude calls go through `backend/src/services/claude.service.ts`
+- All Claude calls go through `backend/src/services/ai/` (claude.service.ts is a re-export)
+- AI has 3-provider fallback chain: Claude → OpenAI → Perplexity (`ai/router.ts`)
 - Always include `"child aged 3-6"` in prompts for appropriate language
 - Lesson generation: request strict JSON output (no markdown fences)
 - Max tokens: 100–1024 (keep small for latency + cost)
@@ -184,8 +185,11 @@ POST   /api/agents/conversations
 
 ## Learning Modules (lib/modules.ts)
 
-12 built-in modules: `numbers`, `numbers2`, `letters`, `words`, `words2`,
-`words3`, `animals`, `colors`, `fruits`, `body`, `feelings`, `habits`
+18 built-in modules: `numbers`, `numbers2`, `letters`, `words`, `words2`,
+`words3`, `colors`, `animals`, `fruits`, `shapes`, `food`, `vehicles`,
+`weather`, `body`, `family`, `feelings`, `habits`, `manners`
+
+Shop items: 9 avatars (`av_def`–`av_dragon`) + 6 themes (`th_def`–`th_galaxy`)
 
 ---
 
@@ -204,7 +208,7 @@ POST   /api/agents/conversations
 
 ## Agent System
 
-45+ autonomous GitHub Actions agents. Key ones:
+48 autonomous GitHub Actions agents (40 domain agents + 8 infra/deploy). Key ones:
 - `health-monitor.yml` — every 15 min, checks uptime
 - `claude-agent.yml` — triggered by issues or `/claude` comments
 - `agent-frontend.yml` — label: `frontend`, `design`, `ui`
@@ -242,12 +246,13 @@ FRONTEND_URL         Railway frontend URL
 
 ---
 
-## Known Gaps (as of 2026-03-28)
+## Known Gaps (as of 2026-03-31)
 
-- No backend tests — all services need unit/integration tests
-- `notification.service.ts` is a stub — push notifications not implemented
-- No input validation library (Zod/Joi) — validate at controllers
+- No backend tests — Jest is installed but no test files written yet
+- No input validation library (Zod/Joi) — validate manually at controllers
 - iOS/native app does not exist yet — app is web-only
+- `notification.service.ts` requires `VAPID_PUBLIC_KEY` + `VAPID_PRIVATE_KEY` env vars to be set on Railway for push to work
+- `claude.service.ts` is a 3-line re-export — real AI logic lives in `backend/src/services/ai/`
 
 ---
 
