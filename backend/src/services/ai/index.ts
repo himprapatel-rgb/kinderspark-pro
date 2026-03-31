@@ -1,9 +1,19 @@
 // ── Multi-provider AI service ─────────────────────────────────────────────
 // Drop-in replacement for claude.service.ts — same function signatures,
 // now routes through the provider abstraction with automatic fallback.
+//
+// ██████████████████████████████████████████████████████████████████████████
+// HARDCORE RULE: Every AI response MUST be cached before returning.
+// Check cache before calling AI. Save to cache after getting AI response.
+// See .claude/rules/ai-cache.md for the full rule.
+// ██████████████████████████████████████████████████████████████████████████
 
 import { aiComplete } from './router'
+import { makeCacheKey, getCachedResponse, setCachedResponse } from '../cache.service'
+
 export { getProviderStatus } from './router'
+
+const AI_MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6'
 
 function parseJSON<T>(text: string): T {
   const clean = text.replace(/```json|```/g, '').trim()
@@ -35,20 +45,30 @@ export async function generateLesson(
   topic: string,
   count: number
 ): Promise<Array<{ w: string; e: string; hint: string }>> {
+  const cacheKey = makeCacheKey('lesson', { topic, count })
+  const cached = await getCachedResponse(cacheKey)
+  if (cached) return parseJSON(cached)
+
   const { text } = await aiComplete(
     'generate-lesson',
     `You are a kindergarten curriculum designer. Generate exactly ${count} learning flashcards for children aged 3-6 about: "${topic}". Each card needs: word/phrase (w), relevant emoji (e), short child-friendly hint (hint, max 8 words). Respond ONLY with valid JSON array, no markdown: [{"w":"Cat","e":"🐱","hint":"Says meow and loves cuddles!"}]`,
     { maxTokens: 1024 }
   )
+  await setCachedResponse(cacheKey, 'lesson', text, AI_MODEL)
   return parseJSON(text)
 }
 
 export async function generateWeeklyReport(classData: string): Promise<string> {
+  const cacheKey = makeCacheKey('report', { classData })
+  const cached = await getCachedResponse(cacheKey)
+  if (cached) return cached
+
   const { text } = await aiComplete(
     'weekly-report',
     `Write a warm, encouraging 3-sentence weekly class report for parents. Class data: ${classData}. Be positive and specific.`,
     { maxTokens: 300 }
   )
+  await setCachedResponse(cacheKey, 'report', text, AI_MODEL)
   return text
 }
 
@@ -58,11 +78,16 @@ export async function generateTutorFeedback(
   topic: string,
   maxLevel: number
 ): Promise<string> {
+  const cacheKey = makeCacheKey('feedback', { correct, total, topic, maxLevel })
+  const cached = await getCachedResponse(cacheKey)
+  if (cached) return cached
+
   const { text } = await aiComplete(
     'tutor-feedback',
     `Give 2 sentences of warm encouraging feedback for a child who got ${correct}/${total} on a ${topic} quiz. Level ${maxLevel}/5. Use simple words for a 5-year-old.`,
     { maxTokens: 100 }
   )
+  await setCachedResponse(cacheKey, 'feedback', text, AI_MODEL)
   return text
 }
 
@@ -71,6 +96,10 @@ export async function generateSyllabusAI(
   grade: string,
   count: number
 ): Promise<GeneratedSyllabus> {
+  const cacheKey = makeCacheKey('syllabus', { topic, grade, count })
+  const cached = await getCachedResponse(cacheKey)
+  if (cached) return parseJSON(cached)
+
   const { text } = await aiComplete(
     'generate-syllabus',
     `You are a kindergarten curriculum designer. Create a complete learning syllabus for ${grade} on topic: "${topic}".
@@ -87,6 +116,7 @@ Respond ONLY with valid JSON (no markdown):
 }`,
     { maxTokens: 1200 }
   )
+  await setCachedResponse(cacheKey, 'syllabus', text, AI_MODEL)
   return parseJSON(text)
 }
 
@@ -98,6 +128,10 @@ export async function generateStudentReport(
   aiSessions: number,
   aiBestLevel: number
 ): Promise<string> {
+  const cacheKey = makeCacheKey('report', { studentName, stars, hwDone, hwTotal, aiSessions, aiBestLevel })
+  const cached = await getCachedResponse(cacheKey)
+  if (cached) return cached
+
   const { text } = await aiComplete(
     'student-report',
     `Write a warm, 2-sentence weekly progress report for parents of ${studentName}.
@@ -105,6 +139,7 @@ Stats: ${stars} stars earned, ${hwDone}/${hwTotal} homework completed, ${aiSessi
 Be encouraging, specific, and positive. Start with "Dear Parents,".`,
     { maxTokens: 150 }
   )
+  await setCachedResponse(cacheKey, 'report', text, AI_MODEL)
   return text
 }
 
@@ -113,6 +148,10 @@ export async function generateHomeworkIdea(
   grade: string,
   studentCount: number
 ): Promise<HomeworkIdea> {
+  const cacheKey = makeCacheKey('homework', { topic, grade, studentCount })
+  const cached = await getCachedResponse(cacheKey)
+  if (cached) return parseJSON(cached)
+
   const { text } = await aiComplete(
     'generate-homework',
     `You are a kindergarten teacher creating homework for ${studentCount} children in ${grade}.
@@ -134,6 +173,7 @@ Generate a fun, age-appropriate homework assignment. Respond ONLY with valid JSO
 }`,
     { maxTokens: 600 }
   )
+  await setCachedResponse(cacheKey, 'homework', text, AI_MODEL)
   return parseJSON(text)
 }
 
@@ -143,6 +183,10 @@ export async function generateRecommendations(
   progressSummary: string,
   sessionSummary: string
 ): Promise<Array<{ title: string; reason: string; moduleId: string }>> {
+  const cacheKey = makeCacheKey('recommendations', { name, stars, progressSummary, sessionSummary })
+  const cached = await getCachedResponse(cacheKey)
+  if (cached) return parseJSON(cached)
+
   const { text } = await aiComplete(
     'recommendations',
     `You are a kindergarten learning advisor. Based on this student data:
@@ -154,5 +198,6 @@ Recommend exactly 3 learning activities. Choose from these moduleIds: numbers, n
 Respond ONLY with valid JSON array: [{"title":"Learn Colors","reason":"Short encouraging reason (max 10 words)","moduleId":"colors"}]`,
     { maxTokens: 400 }
   )
+  await setCachedResponse(cacheKey, 'recommendations', text, AI_MODEL)
   return parseJSON(text)
 }

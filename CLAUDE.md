@@ -186,10 +186,18 @@ GET    /api/modules/:moduleId/questions?difficulty=&language=  ← quiz question
 - Model: `claude-sonnet-4-6` (override via `ANTHROPIC_MODEL` env var)
 - All Claude calls go through `backend/src/services/ai/` (claude.service.ts is a re-export)
 - AI has 3-provider fallback chain: Claude → OpenAI → Perplexity (`ai/router.ts`)
+
+### HARDCORE RULE — Every AI Response MUST Be Cached (see `.claude/rules/ai-cache.md`)
+Every AI function MUST follow this 3-step pattern — NO EXCEPTIONS:
+1. `makeCacheKey(type, { ...allInputParams })` — before calling AI
+2. `getCachedResponse(key)` — return immediately if cache hit
+3. `setCachedResponse(key, type, text, model)` — save BEFORE returning
+All 7 AI functions in `ai/index.ts` implement this. Any new AI function must too.
+
 - **DB-first lesson strategy**: check `CurriculumModule` → check `LessonCache` → call AI
 - Standard modules (18 built-in) are served from DB — zero AI calls
 - Custom topic lessons are cached in `LessonCache` after first AI call
-- Use `cache.service.ts` for all AI response caching (`makeCacheKey`, `getCached/SetCached`)
+- Cache TTLs: lesson/syllabus=7d, homework=3d, report/feedback=1d, recommendations=12h
 - Always include `"child aged 3-6"` in prompts for appropriate language
 - Lesson generation: request strict JSON output (no markdown fences)
 - Max tokens: 100–1024 (keep small for latency + cost)
