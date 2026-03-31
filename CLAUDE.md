@@ -49,7 +49,7 @@ cd frontend && npm run build
 # Database
 cd backend && npx prisma migrate dev    # run new migrations
 cd backend && npx prisma generate       # regenerate client after schema change
-cd backend && npx prisma db seed        # seed demo data
+cd backend && npx prisma db seed        # seed demo/UAT data (uses npx ts-node)
 cd backend && npx prisma studio         # GUI browser
 ```
 
@@ -416,6 +416,21 @@ Completed:
 - Frontend API client (`frontend/lib/api.ts`) sends `x-csrf-token` automatically on state-changing requests.
 - Structured AI responses (lesson/syllabus/homework/recommendations) are validated before cache write in `services/ai/index.ts`.
 - CSRF middleware tests added in `backend/src/__tests__/csrf.middleware.test.ts`.
+
+---
+
+## UAT Seed Status (2026-03-31)
+
+Completed:
+- Production DB seed executed successfully on Railway backend service (`kinderspark-backend`) via SSH.
+- Seeded school code is `SUN001` (Sunshine Kindergarten) with full UAT roster (admins, teachers, students, parent login via child PIN).
+- Canonical QA login reference added: `docs/QA_TEST_ACCOUNTS.md`.
+- Production seed runbook added: `docs/SEED_PRODUCTION.md`.
+- `backend/package.json` seed commands updated to `npx ts-node prisma/seed.ts` to avoid `ts-node` PATH issues in containers.
+
+Operational notes:
+- Railway project contains both frontend (`kinderspark-pro`) and backend (`kinderspark-backend`) services; seed must run on backend service.
+- If `RUN_DB_SEED_ON_START=true` is used for one-shot seed deploys, set it back to `false` after successful seed.
 
 ---
 
