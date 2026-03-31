@@ -5,11 +5,21 @@ export const API_BASE =
 // Keep internal alias so nothing below breaks
 const BASE = API_BASE
 
-/** Read the CSRF token from the kinderspark_csrf cookie (httpOnly=false, JS-readable) */
-function getCsrfToken(): string {
-  if (typeof document === 'undefined') return ''
-  const match = document.cookie.match(/(?:^|;\s*)kinderspark_csrf=([^;]+)/)
-  return match ? decodeURIComponent(match[1]) : ''
+function getCsrfToken(): string | null {
+  if (typeof document === 'undefined') return null
+  const part = document.cookie
+    .split('; ')
+    .find((row) => row.startsWith('kinderspark_csrf='))
+  if (!part) return null
+  return decodeURIComponent(part.split('=')[1] || '')
+}
+
+function withCsrfHeader(method: string | undefined, headers: Record<string, string>): Record<string, string> {
+  const m = (method || 'GET').toUpperCase()
+  if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(m)) return headers
+  const csrf = getCsrfToken()
+  if (!csrf) return headers
+  return { ...headers, 'x-csrf-token': csrf }
 }
 
 let isRefreshing = false
@@ -23,10 +33,10 @@ async function tryRefresh(): Promise<boolean> {
   }
   isRefreshing = true
   try {
-    const csrfToken = getCsrfToken()
+    const headers = withCsrfHeader('POST', { 'Content-Type': 'application/json' })
     const res = await fetch(`${BASE}/auth/refresh`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}) },
+      headers,
       credentials: 'include',
     })
     const ok = res.ok
@@ -43,19 +53,21 @@ async function tryRefresh(): Promise<boolean> {
 }
 
 async function req(path: string, options?: RequestInit): Promise<any> {
-  const method = (options?.method || 'GET').toUpperCase()
-  const csrfToken = getCsrfToken()
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  // Send CSRF token on all state-changing requests so the backend CSRF middleware accepts them
-  if (method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS' && csrfToken) {
-    headers['x-csrf-token'] = csrfToken
+  const requestHeaders: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options?.headers as Record<string, string> | undefined),
   }
-  const res = await fetch(`${BASE}${path}`, { headers, credentials: 'include', ...options })
+  const headers = withCsrfHeader(options?.method, requestHeaders)
+  const res = await fetch(`${BASE}${path}`, { ...options, headers, credentials: 'include' })
 
   if (res.status === 401) {
     const refreshed = await tryRefresh()
     if (refreshed) {
-      const retry = await fetch(`${BASE}${path}`, { headers, credentials: 'include', ...options })
+      const retryHeaders = withCsrfHeader(options?.method, {
+        'Content-Type': 'application/json',
+        ...(options?.headers as Record<string, string> | undefined),
+      })
+      const retry = await fetch(`${BASE}${path}`, { ...options, headers: retryHeaders, credentials: 'include' })
       if (!retry.ok) {
         const error = await retry.json().catch(() => ({ error: 'Request failed' }))
         throw new Error(error.error || `HTTP ${retry.status}`)
@@ -513,6 +525,18 @@ export async function savePushToken(studentId: string, token: string) {
   return req(`/students/${studentId}/push-token`, {
     method: 'PATCH',
     body: JSON.stringify({ token }),
+  })
+}
+
+/** Persists Web Push subscription for a student device or parent profile (multi-device). */
+export async function postPushSubscribe(body: {
+  scope: 'student' | 'parent'
+  studentId?: string
+  subscription: string
+}) {
+  return req('/push/subscribe', {
+    method: 'POST',
+    body: JSON.stringify(body),
   })
 }
 

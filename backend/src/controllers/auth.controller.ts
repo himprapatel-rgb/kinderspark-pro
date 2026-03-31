@@ -9,8 +9,8 @@ import { computePinFingerprint } from '../utils/pinFingerprint'
 import { sanitizePromptInput } from '../utils/sanitize'
 const ACCESS_TOKEN_TTL = '2h'
 const REFRESH_TOKEN_TTL_DAYS = 30
-const PIN_LOCK_MAX_ATTEMPTS = 5
-const PIN_LOCK_MINUTES = 15
+const PIN_LOCK_MAX_ATTEMPTS = 3
+const PIN_LOCK_MINUTES = 30
 
 /**
  * Generate a unique human-readable Profile ID like "KS-A7X9K2"
@@ -29,6 +29,10 @@ function signAccessToken(payload: Record<string, unknown>) {
   return jwt.sign(payload, getJwtSecret(), { expiresIn: ACCESS_TOKEN_TTL })
 }
 
+function issueCsrfToken(): string {
+  return crypto.randomBytes(24).toString('hex')
+}
+
 async function issueRefreshToken(userId: string, role: string): Promise<string> {
   const token = crypto.randomBytes(40).toString('hex')
   const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_DAYS * 86400 * 1000)
@@ -37,6 +41,7 @@ async function issueRefreshToken(userId: string, role: string): Promise<string> 
 }
 
 function setAuthCookies(res: Response, accessToken: string, refreshToken: string) {
+  const csrfToken = issueCsrfToken()
   res.cookie('kinderspark_token', accessToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -49,6 +54,12 @@ function setAuthCookies(res: Response, accessToken: string, refreshToken: string
     sameSite: 'lax',
     path: '/api/auth',
     maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+  })
+  res.cookie('kinderspark_csrf', csrfToken, {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 30 * 24 * 60 * 60 * 1000,
   })
 }
 
@@ -154,6 +165,27 @@ export async function verifyPin(req: Request, res: Response) {
         })
         const refreshToken = await issueRefreshToken(u.id, activeRole)
         setAuthCookies(res, token, refreshToken)
+
+        let legacyStudentId: string | null = null
+        if (activeRole === 'child') {
+          const sp = await prisma.studentProfile.findUnique({
+            where: { userId: u.id },
+            select: { legacyStudentId: true },
+          })
+          if (sp?.legacyStudentId) {
+            legacyStudentId = sp.legacyStudentId
+          } else if (u.pinFingerprint) {
+            const st = await prisma.student.findFirst({
+              where: {
+                pinFingerprint: u.pinFingerprint,
+                class: { schoolId: school.id },
+              },
+              select: { id: true },
+            })
+            legacyStudentId = st?.id ?? null
+          }
+        }
+
         return res.json({
           success: true,
           role: activeRole,
@@ -164,6 +196,7 @@ export async function verifyPin(req: Request, res: Response) {
             schoolId: u.schoolId || null,
             profileId: u.id,
             roles,
+            ...(legacyStudentId ? { legacyStudentId } : {}),
           },
         })
       }
@@ -330,10 +363,12 @@ export async function revokeRefreshToken(req: Request, res: Response) {
     await prisma.refreshToken.deleteMany({ where: { token: refreshToken } })
     res.clearCookie('kinderspark_token')
     res.clearCookie('kinderspark_refresh', { path: '/api/auth' })
+    res.clearCookie('kinderspark_csrf')
     return res.json({ success: true })
   } catch {
     res.clearCookie('kinderspark_token')
     res.clearCookie('kinderspark_refresh', { path: '/api/auth' })
+    res.clearCookie('kinderspark_csrf')
     return res.json({ success: true })
   }
 }

@@ -49,7 +49,7 @@ cd frontend && npm run build
 # Database
 cd backend && npx prisma migrate dev    # run new migrations
 cd backend && npx prisma generate       # regenerate client after schema change
-cd backend && npx prisma db seed        # seed demo data
+cd backend && npx prisma db seed        # seed demo/UAT data (uses npx ts-node)
 cd backend && npx prisma studio         # GUI browser
 ```
 
@@ -236,10 +236,10 @@ POST   /api/agents/conversations
 
 ## Security Rules — NEVER VIOLATE
 
-1. **JWT is cookie-only** — `httpOnly`, `sameSite: strict`; never in Authorization header
+1. **JWT primary transport is cookie-only** — `httpOnly` `kinderspark_token`; `authenticate` also accepts `Authorization: Bearer` for compatibility — prefer cookies for web; do not add new Bearer-first flows without explicit CSRF/strategy
 2. **Use `req.user.id` from JWT** — never trust client-supplied user IDs
 3. **bcrypt all PINs** — never store plaintext PINs
-4. **PIN throttle** — `PinLoginThrottle` model tracks failed attempts; lock after 5 fails
+4. **PIN throttle** — `PinLoginThrottle` model tracks failed attempts; lock after **3** failed attempts per **30** minutes (see `auth.controller.ts`)
 5. **Sanitize AI inputs** — use `sanitizePromptInput()` from `backend/src/utils/sanitize.ts`
 6. **Content filter** — run child content through `contentFilter.service.ts` before storing
 7. **All routes need `requireAuth`** middleware
@@ -247,6 +247,7 @@ POST   /api/agents/conversations
 9. **Use `accessControl.ts`** for RBAC — never hand-roll permission checks
 10. **Never disable `rateLimiter`** or `aiRateLimit` middleware
 11. **No SQL injection** — always use Prisma ORM, never raw queries with user input
+12. **CSRF required on state change** — when `kinderspark_token` or `kinderspark_refresh` cookies are present, mutating requests require `x-csrf-token` matching `kinderspark_csrf`. Requests authenticated **only** via `Authorization: Bearer` (no session cookies) **skip** CSRF middleware — treat Bearer as a separate client contract; web app should use cookies + CSRF.
 
 ---
 
@@ -352,6 +353,9 @@ Agent dashboard: `/dashboard/agents`
 DATABASE_URL           PostgreSQL connection string
 ANTHROPIC_API_KEY      Anthropic API key
 JWT_SECRET             JWT signing secret
+AGENT_SECRET           Required secret for agent-authenticated routes (no fallback)
+AGENT_TRIGGER_WORKFLOWS Comma-separated allowlist for /api/agents/trigger workflows
+AGENT_ALLOWED_ISSUE_LABELS Comma-separated allowlist for /api/agents/issue labels
 FRONTEND_URL           CORS allowed origin
 ANTHROPIC_MODEL        (optional) override Claude model
 VAPID_PUBLIC_KEY       Web push notifications
@@ -378,12 +382,100 @@ FRONTEND_URL           Railway frontend URL
 
 ---
 
+## Agent Routes Hardening Status (2026-03-31)
+
+`backend/src/routes/agents.routes.ts` hardening Issues 1-10 are implemented and pushed.
+
+Completed:
+- Issue 1: `agentAuth` now rejects missing/invalid `x-agent-secret` with 401.
+- Issue 2: `dashboardAuth` now requires valid agent secret OR authenticated JWT role (`admin`/`teacher`).
+- Issue 3: removed insecure `AGENT_SECRET` fallback (`ks-agent-secret`); fail-closed behavior added.
+- Issue 4: request validation added for params/query/body across agent endpoints.
+- Issue 5: `/ask` no longer fails silently; logs + mission control alert on async errors.
+- Issue 6: `/trigger` locked down to admin-or-agent-secret + workflow allowlist.
+- Issue 7: `/issue` hardened with stricter auth and payload constraints + label allowlist.
+- Issue 8: sensitive dashboard reads (`/memory`, `/conversations`, `/runs`, `/issues`) now admin-or-agent-secret.
+- Issue 9: `/feed` SSE stabilized with heartbeat, reconnect hint, overlap guard, timeout abort, and robust cleanup.
+- Issue 10: removed `any` usage in this route; replaced with concrete/unknown-safe typing.
+
+Notes:
+- Route-level lint is clean.
+- Backend-wide TypeScript errors still exist in unrelated Prisma-typed files (`ai.controller.ts`, `modules.controller.ts`, `cache.service.ts`) and are pre-existing.
+
+---
+
+## Security Hardening Status (2026-03-31)
+
+Completed:
+- `cache.service.ts` cache keys are now deterministic (sorted params before SHA-256).
+- `accessControl.ts` removed permissive `parentUserId === studentId` bypass.
+- PIN lock policy tightened to 3 failed attempts per 30 minutes.
+- Frontend store no longer persists auth `token` in localStorage (`partialize` removed token).
+- CSRF middleware added (`backend/src/middleware/csrf.middleware.ts`) and mounted globally in `app.ts`.
+- Auth flow now issues/clears `kinderspark_csrf` cookie alongside auth cookies.
+- Frontend API client (`frontend/lib/api.ts`) sends `x-csrf-token` automatically on state-changing requests.
+- Structured AI responses (lesson/syllabus/homework/recommendations) are validated before cache write in `services/ai/index.ts`.
+- CSRF middleware tests added in `backend/src/__tests__/csrf.middleware.test.ts`.
+
+---
+
+## UAT Seed Status (2026-03-31)
+
+Completed:
+- Production DB seed executed successfully on Railway backend service (`kinderspark-backend`) via SSH.
+- Seeded school code is `SUN001` (Sunshine Kindergarten) with full UAT roster (admins, teachers, students, parent login via child PIN).
+- Canonical QA login reference added: `docs/QA_TEST_ACCOUNTS.md`.
+- Production seed runbook added: `docs/SEED_PRODUCTION.md`.
+- `backend/package.json` seed commands updated to `npx ts-node prisma/seed.ts` to avoid `ts-node` PATH issues in containers.
+
+Operational notes:
+- Railway project contains both frontend (`kinderspark-pro`) and backend (`kinderspark-backend`) services; seed must run on backend service.
+- If `RUN_DB_SEED_ON_START=true` is used for one-shot seed deploys, set it back to `false` after successful seed.
+
+---
+
+## Code-Verified Product Status (source: actual routes/services)
+
+### Implemented and wired (representative evidence)
+
+| Area | Notes |
+|------|--------|
+| Auth | `auth.middleware.ts` — JWT from `httpOnly` `kinderspark_token` cookie; also accepts Bearer for legacy/alternate clients |
+| CSRF | `csrf.middleware.ts` — enforces `x-csrf-token` vs `kinderspark_csrf` when session cookies present (see rule 12) |
+| Email | `email.service.ts` — SendGrid; skips gracefully if `SENDGRID_API_KEY` missing (warns in logs) |
+| AI safety | `contentFilter.service.ts` — regex blocks on AI output |
+| TTS | `tts.service.ts` — Google → OpenAI → Azure cascade + cache; falls back to Web Speech if no provider keys |
+| Attendance | `attendance.ts` — CRUD, summaries, geofence **routes** exist |
+| AI HTTP API | `ai.routes.ts` + `services/ai/index.ts` — lesson, reports, tutor, homework, syllabus, spark flows |
+| Privacy erasure | `privacy.service.ts` — cascading delete incl. Cloudinary |
+| Push library | `notification.service.ts` — `web-push` + VAPID helpers exist |
+| Health | `app.ts` — `GET /health` pings DB, returns memory/uptime |
+
+### Gaps / incomplete (verified in code)
+
+| Severity | Issue | Evidence |
+|----------|--------|----------|
+| **High** | Push not end-to-end | `push.routes.ts` exposes only `GET /vapid-public-key` — no `POST` to persist subscriptions; homework/grading routes do not call `sendHomeworkReminder` / `sendGradeNotification` |
+| **High** | Geofence data ephemeral | `attendance.ts` — `GEOFENCE_EVENTS` + consent are **in-memory**; capped at 200 events globally; lost on restart |
+| **Medium** | Email silent when misconfigured | `email.service.ts` returns early if no `SENDGRID_API_KEY` — no user-facing error |
+| **Medium** | TTS degrades without keys | All provider keys optional → browser Web Speech fallback for lesson audio |
+| **Medium** | CSRF + Bearer | Mutating requests with **only** Bearer token (no cookies) bypass CSRF (see rule 12) |
+| **Medium** | Legacy route surface | `app.ts` mounts backward-compat: `/api/classes`, `/api/ai-sessions`, `/api/feedback` — audit auth on changes |
+| **Medium** | No service worker | No `public/sw.js` / SW registration in root layout for offline/push client |
+
+### Frontend route coverage
+
+Role portals exist under `frontend/app/`: `child/`, `parent/`, `teacher/`, `admin/`, `principal/`, `pin/`, `register/`, `dashboard/`, `privacy/`, `terms/`.
+
+---
+
 ## Known Gaps (as of 2026-03-31)
 
 - iOS app exists (Capacitor Xcode project) but not yet in App Store
+- **Push:** VAPID keys + subscription storage + route wiring needed for production push (see Code-Verified table)
+- **Geofence:** move off in-memory arrays to DB if persistence is required
 - `SENDGRID_API_KEY`, `CLOUDINARY_URL`, `OPENAI_API_KEY` need to be set on Railway for those features to work
-- `VAPID_PUBLIC_KEY` + `VAPID_PRIVATE_KEY` required on Railway for push notifications
-- `@google/generative-ai` package not installed — Gemini provider will fail until added
+- `VAPID_PUBLIC_KEY` + `VAPID_PRIVATE_KEY` required on Railway for push notifications (client subscribe flow still missing)
 - TTS human voices need env vars set on Railway: `GOOGLE_TTS_API_KEY`, `OPENAI_API_KEY`, or `AZURE_TTS_KEY` — app falls back to Web Speech API until at least one is set
 
 ---

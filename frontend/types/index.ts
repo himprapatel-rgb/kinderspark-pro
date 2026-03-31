@@ -178,6 +178,9 @@ export interface User {
   roles?: string[]
   avatar?: string
   profileId?: string
+  /** Legacy `Student.id` when the account is a User child (PIN matches User first). Used for homework/push APIs. */
+  legacyStudentId?: string | null
+  schoolId?: string | null
   email?: string
   stars?: number
   streak?: number

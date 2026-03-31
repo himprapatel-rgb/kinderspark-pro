@@ -5,6 +5,7 @@ import { invalidateCache } from '../middleware/cache.middleware'
 import { requireAuth, requireRole } from '../middleware/auth.middleware'
 import { canParentAccessStudent, canTeacherAccessClass } from '../utils/accessControl'
 import { computePinFingerprint } from '../utils/pinFingerprint'
+import { resolveStudentIdForPushToken } from '../utils/webPushTarget'
 
 const router = Router()
 router.use(requireAuth)
@@ -164,19 +165,28 @@ router.delete('/:id', requireRole('teacher', 'admin'), async (req: Request, res:
 // PATCH /api/students/:id/push-token
 router.patch('/:id/push-token', async (req: Request, res: Response) => {
   try {
-    if (
-      req.user?.role !== 'teacher' &&
-      req.user?.role !== 'admin' &&
-      !canAccessOwnStudent(req, req.params.id)
-    ) {
-      return res.status(403).json({ error: 'Insufficient permissions' })
-    }
-    if (req.user?.role === 'parent' && !(await canParentAccessStudent(req.user.id, req.params.id))) {
-      return res.status(403).json({ error: 'Insufficient permissions' })
-    }
     const { token } = req.body
     if (!token) return res.status(400).json({ error: 'token required' })
-    await prisma.student.update({ where: { id: req.params.id }, data: { pushToken: token } })
+
+    const resolved = await resolveStudentIdForPushToken(req, req.params.id)
+    if ('error' in resolved) {
+      return res.status(resolved.status).json({ error: resolved.error })
+    }
+
+    const sid = resolved.studentId
+    await prisma.student.update({ where: { id: sid }, data: { pushToken: token } })
+    try {
+      const parsed = JSON.parse(token) as { endpoint?: string }
+      if (typeof parsed?.endpoint === 'string' && parsed.endpoint) {
+        await prisma.webPushSubscription.upsert({
+          where: { endpoint: parsed.endpoint },
+          create: { endpoint: parsed.endpoint, subscriptionJson: token, studentId: sid, parentProfileId: null },
+          update: { subscriptionJson: token, studentId: sid, parentProfileId: null },
+        })
+      }
+    } catch {
+      /* token not JSON — legacy opaque token */
+    }
     invalidateCache('/api/students')
     return res.json({ success: true })
   } catch (err) {

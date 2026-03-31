@@ -175,7 +175,6 @@ export const useAppStore = create<AppStore>()(
       partialize: (state) => ({
         user: state.user,
         role: state.role,
-        token: state.token,
         currentStudent: state.currentStudent,
         availableRoles: state.availableRoles,
         activeProfile: state.activeProfile,

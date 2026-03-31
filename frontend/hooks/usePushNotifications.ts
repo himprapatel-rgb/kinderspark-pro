@@ -1,8 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { API_BASE } from '@/lib/api';
+import { API_BASE, postPushSubscribe } from '@/lib/api';
 
-export function usePushNotifications(studentId?: string) {
+export function usePushNotifications(scope: 'student' | 'parent', studentId?: string) {
   const [permission, setPermission] = useState<NotificationPermission>('default');
 
   useEffect(() => {
@@ -13,9 +13,12 @@ export function usePushNotifications(studentId?: string) {
 
   async function subscribe() {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    if (scope === 'student' && !studentId) return;
 
+    await navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
     const reg = await navigator.serviceWorker.ready;
-    const vapidRes = await fetch(`${API_BASE}/push/vapid-public-key`);
+
+    const vapidRes = await fetch(`${API_BASE}/push/vapid-public-key`, { credentials: 'include' });
     const { publicKey } = await vapidRes.json();
     if (!publicKey) return;
 
@@ -28,14 +31,12 @@ export function usePushNotifications(studentId?: string) {
       applicationServerKey: urlBase64ToUint8Array(publicKey)
     });
 
-    if (studentId) {
-      await fetch(`${API_BASE}/students/${studentId}/push-token`, {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: JSON.stringify(sub) })
-      });
-    }
+    const subscription = JSON.stringify(sub);
+    await postPushSubscribe({
+      scope,
+      ...(scope === 'student' ? { studentId } : {}),
+      subscription,
+    });
   }
 
   return { permission, subscribe };

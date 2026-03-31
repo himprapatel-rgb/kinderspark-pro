@@ -99,7 +99,7 @@ export default function ParentPage() {
   const [progressData, setProgressData] = useState<any[]>([])
   const [badgesData, setBadgesData] = useState<any[]>([])
   const [consentInfo, setConsentInfo] = useState<{ hasConsent: boolean } | null>(null)
-  const { permission: notifPermission, subscribe: subscribeNotif } = usePushNotifications(student?.id ?? user?.id)
+  const { permission: notifPermission, subscribe: subscribeNotif } = usePushNotifications('parent')
 
   // SSE / fallback polling refs
   const sseRef = useRef<EventSource | null>(null)
@@ -894,7 +894,8 @@ export default function ParentPage() {
                   <div className="text-xs font-bold app-muted">Get notified when homework is due</div>
                 </div>
                 <button
-                  onClick={subscribeNotif}
+                  type="button"
+                  onClick={() => subscribeNotif()}
                   className="px-3 py-2 rounded-xl text-xs font-black shrink-0 active:scale-95 transition-all app-pressable"
                   style={{ background: '#4CAF6A', color: '#fff' }}
                 >

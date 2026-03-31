@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser'
 import rateLimit from 'express-rate-limit'
 import { rateLimiter } from './middleware/rateLimit.middleware'
 import { authenticate } from './middleware/auth.middleware'
+import { enforceCsrf } from './middleware/csrf.middleware'
 import authRoutes from './routes/auth.routes'
 import studentRoutes from './routes/student.routes'
 import teacherRoutes from './routes/teacher.routes'
@@ -34,10 +35,11 @@ import diagRoutes from './routes/diag.routes'
 import moduleRoutes from './routes/modules.routes'
 import ttsRoutes from './routes/tts.routes'
 import { startAgentScheduler } from './services/agentScheduler.service'
-import { logStartupEnvHints } from './config/startupEnv'
+import { logStartupEnvHints, validateStartupEnvOrThrow } from './config/startupEnv'
 import prisma from './prisma/client'
 
 const app = express()
+validateStartupEnvOrThrow()
 logStartupEnvHints()
 app.set('trust proxy', 1)
 
@@ -75,6 +77,7 @@ app.use(cookieParser())
 app.use(ipWindowLimiter)
 app.use(rateLimiter)
 app.use(authenticate)
+app.use(enforceCsrf)
 
 app.get('/health', async (_req, res) => {
   const start = Date.now()

@@ -35,7 +35,10 @@ export default function SettingsPage() {
   const [previewingVoice, setPreviewingVoice] = useState(false)
 
   const acc = settings.large ? 'text-lg' : 'text-sm'
-  const { permission, subscribe } = usePushNotifications(student?.id)
+  const { permission, subscribe } = usePushNotifications(
+    'student',
+    user?.legacyStudentId || student?.id || user?.id
+  )
 
   const voiceOn = settings.voiceOn !== false
   const voiceProfile = settings.voiceProfile || 'auto'
