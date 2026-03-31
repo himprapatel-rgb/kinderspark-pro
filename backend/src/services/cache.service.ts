@@ -13,6 +13,7 @@ const TTL_MS: Record<string, number> = {
   homework:     3 * 24 * 60 * 60 * 1000,  // 3 days
   syllabus:     7 * 24 * 60 * 60 * 1000,  // 7 days
   recommendations: 12 * 60 * 60 * 1000,   // 12 hours
+  tts:          30 * 24 * 60 * 60 * 1000,  // 30 days — audio never changes
 }
 
 const DEFAULT_TTL_MS = 24 * 60 * 60 * 1000 // 1 day fallback
