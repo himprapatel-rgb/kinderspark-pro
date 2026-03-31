@@ -22,7 +22,7 @@ const GH_HEADERS = {
 function agentAuth(req: any, res: any, next: any) {
   const secret = req.headers['x-agent-secret']
   if (secret === AGENT_SECRET) return next()
-  next()
+  return res.status(401).json({ error: 'Unauthorized' })
 }
 
 // ── Dev/dashboard read access — agent secret OR JWT admin/teacher ───────────
