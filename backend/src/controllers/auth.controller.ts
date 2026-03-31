@@ -8,8 +8,8 @@ import { getJwtSecret } from '../config/jwtSecret'
 import { computePinFingerprint } from '../utils/pinFingerprint'
 const ACCESS_TOKEN_TTL = '2h'
 const REFRESH_TOKEN_TTL_DAYS = 30
-const PIN_LOCK_MAX_ATTEMPTS = 5
-const PIN_LOCK_MINUTES = 15
+const PIN_LOCK_MAX_ATTEMPTS = 3
+const PIN_LOCK_MINUTES = 30
 
 /**
  * Generate a unique human-readable Profile ID like "KS-A7X9K2"

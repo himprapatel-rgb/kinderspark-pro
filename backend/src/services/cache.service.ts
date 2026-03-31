@@ -19,7 +19,13 @@ const TTL_MS: Record<string, number> = {
 const DEFAULT_TTL_MS = 24 * 60 * 60 * 1000 // 1 day fallback
 
 export function makeCacheKey(type: string, params: Record<string, unknown>): string {
-  const raw = JSON.stringify({ type, ...params })
+  const stableParams = Object.keys(params)
+    .sort()
+    .reduce<Record<string, unknown>>((acc, key) => {
+      acc[key] = params[key]
+      return acc
+    }, {})
+  const raw = JSON.stringify({ type, ...stableParams })
   return crypto.createHash('sha256').update(raw).digest('hex')
 }
 

@@ -1,9 +1,6 @@
 import prisma from '../prisma/client'
 
 export async function canParentAccessStudent(parentUserId: string, studentId: string): Promise<boolean> {
-  // Legacy fallback: parent previously logged in as student id.
-  if (parentUserId === studentId) return true
-
   const links = await prisma.parentChildLink.findMany({
     where: {
       parentProfile: { userId: parentUserId },
