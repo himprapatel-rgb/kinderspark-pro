@@ -49,6 +49,7 @@ function clampScore(n: number): number {
 async function canReadProgress(req: Request, studentId: string): Promise<boolean> {
   const u = req.user
   if (!u) return false
+  if (u.role === 'child' && u.id === studentId) return true
   if (u.role === 'child' && u.id !== studentId) return false
   if (u.role === 'parent') return canParentAccessStudent(u.id, studentId)
   if (u.role === 'teacher') {
