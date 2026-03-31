@@ -1,0 +1,67 @@
+{
+  "_meta": {
+    "version": "1.0",
+    "lastUpdated": "2026-03-31",
+    "languages": ["en", "fr", "es", "ar", "ur", "hi", "zh", "pt", "de", "tr"],
+    "rtlLanguages": ["ar", "ur"],
+    "platforms": ["web", "ios", "android"],
+    "description": "Single source of truth for all KinderSpark Pro translations. Edit here — never edit platform files directly. Run: node translations/sync.js"
+  },
+
+  "keys": {
+    "nav.home":         { "en": "Home",        "fr": "Accueil",      "es": "Inicio",        "ar": "الرئيسية",   "ur": "گھر",           "hi": "होम",        "zh": "首页",   "pt": "Início",     "de": "Start",        "tr": "Ana Sayfa" },
+    "nav.learn":        { "en": "Learn",       "fr": "Apprendre",    "es": "Aprender",      "ar": "تعلم",       "ur": "سیکھیں",        "hi": "सीखें",      "zh": "学习",   "pt": "Aprender",   "de": "Lernen",       "tr": "Öğren" },
+    "nav.tutor":        { "en": "AI Tutor",    "fr": "Tuteur IA",    "es": "Tutor IA",      "ar": "المعلم الذكي","ur": "AI ٹیوٹر",     "hi": "AI ट्यूटर",  "zh": "AI导师", "pt": "Tutor IA",   "de": "KI-Tutor",     "tr": "AI Öğretmen" },
+    "nav.draw":         { "en": "Draw",        "fr": "Dessiner",     "es": "Dibujar",       "ar": "ارسم",       "ur": "ڈرا کریں",      "hi": "बनाएं",      "zh": "画画",   "pt": "Desenhar",   "de": "Zeichnen",     "tr": "Çiz" },
+    "nav.shop":         { "en": "Shop",        "fr": "Boutique",     "es": "Tienda",        "ar": "المتجر",     "ur": "دکان",          "hi": "दुकान",      "zh": "商店",   "pt": "Loja",       "de": "Shop",         "tr": "Mağaza" },
+    "nav.settings":     { "en": "Settings",    "fr": "Paramètres",   "es": "Configuración", "ar": "الإعدادات",  "ur": "ترتیبات",       "hi": "सेटिंग्स",   "zh": "设置",   "pt": "Configurações","de": "Einstellungen","tr": "Ayarlar" },
+
+    "auth.selectRole":  { "en": "Who are you?","fr": "Qui êtes-vous?","es": "¿Quién eres?", "ar": "من أنت؟",    "ur": "آپ کون ہیں؟",   "hi": "आप कौन हैं?","zh": "你是谁?", "pt": "Quem é você?","de": "Wer bist du?", "tr": "Sen kimsin?" },
+    "auth.enterPin":    { "en": "Enter your PIN","fr": "Entrez votre PIN","es": "Ingresa tu PIN","ar": "أدخل رمزك","ur": "اپنا PIN درج کریں","hi": "अपना PIN डालें","zh": "输入PIN码","pt": "Digite seu PIN","de": "PIN eingeben","tr": "PIN girin" },
+    "auth.child":       { "en": "Student",     "fr": "Élève",        "es": "Estudiante",    "ar": "طالب",       "ur": "طالب علم",      "hi": "छात्र",      "zh": "学生",   "pt": "Aluno",      "de": "Schüler",      "tr": "Öğrenci" },
+    "auth.teacher":     { "en": "Teacher",     "fr": "Enseignant",   "es": "Maestro",       "ar": "معلم",       "ur": "استاد",         "hi": "शिक्षक",     "zh": "老师",   "pt": "Professor",  "de": "Lehrer",       "tr": "Öğretmen" },
+    "auth.parent":      { "en": "Parent",      "fr": "Parent",       "es": "Padre",         "ar": "ولي الأمر",  "ur": "والدین",        "hi": "अभिभावक",    "zh": "家长",   "pt": "Pai/Mãe",    "de": "Elternteil",   "tr": "Ebeveyn" },
+    "auth.admin":       { "en": "Admin",       "fr": "Admin",        "es": "Admin",         "ar": "مدير",       "ur": "ایڈمن",         "hi": "एडमिन",      "zh": "管理员", "pt": "Admin",      "de": "Admin",        "tr": "Yönetici" },
+
+    "homework.title":   { "en": "Homework",    "fr": "Devoirs",      "es": "Tarea",         "ar": "الواجبات",   "ur": "ہوم ورک",       "hi": "होमवर्क",    "zh": "作业",   "pt": "Dever de Casa","de": "Hausaufgaben","tr": "Ödev" },
+    "homework.completed":{ "en": "Completed",  "fr": "Terminé",      "es": "Completado",    "ar": "مكتمل",      "ur": "مکمل",          "hi": "पूरा हुआ",   "zh": "已完成", "pt": "Concluído",  "de": "Abgeschlossen","tr": "Tamamlandı" },
+    "homework.pending": { "en": "Pending",     "fr": "En attente",   "es": "Pendiente",     "ar": "معلق",       "ur": "زیر التواء",    "hi": "लंबित",      "zh": "待完成", "pt": "Pendente",   "de": "Ausstehend",   "tr": "Bekliyor" },
+
+    "badge.earned":     { "en": "Badge Earned!","fr": "Badge obtenu!","es": "¡Insignia ganada!","ar": "حصلت على شارة!","ur": "بیج ملا!",  "hi": "बैज मिला!",  "zh": "获得徽章!","pt": "Medalha Ganha!","de": "Abzeichen erhalten!","tr": "Rozet Kazanıldı!" },
+    "stars.earned":     { "en": "Stars Earned","fr": "Étoiles gagnées","es": "Estrellas ganadas","ar": "نجوم مكتسبة","ur": "ستارے حاصل","hi": "तारे मिले",  "zh": "获得星星", "pt": "Estrelas Ganhas","de": "Sterne verdient","tr": "Yıldız Kazanıldı" },
+
+    "tutor.correct":    { "en": "Correct! 🎉", "fr": "Correct! 🎉",  "es": "¡Correcto! 🎉", "ar": "صحيح! 🎉",   "ur": "درست! 🎉",      "hi": "सही! 🎉",    "zh": "正确! 🎉","pt": "Correto! 🎉", "de": "Richtig! 🎉",  "tr": "Doğru! 🎉" },
+    "tutor.tryAgain":   { "en": "Try again! 💪","fr": "Réessayez! 💪","es": "¡Inténtalo! 💪","ar": "حاول مرة أخرى! 💪","ur": "دوبارہ کوشش! 💪","hi": "फिर कोशिश करो! 💪","zh": "再试一次! 💪","pt": "Tente novamente! 💪","de": "Nochmal! 💪","tr": "Tekrar dene! 💪" },
+    "tutor.level":      { "en": "Level",       "fr": "Niveau",       "es": "Nivel",         "ar": "المستوى",    "ur": "سطح",           "hi": "स्तर",       "zh": "等级",   "pt": "Nível",      "de": "Stufe",        "tr": "Seviye" },
+    "tutor.great":      { "en": "Great job! ⭐","fr": "Bravo! ⭐",    "es": "¡Excelente! ⭐","ar": "عمل رائع! ⭐","ur": "شاباش! ⭐",     "hi": "शानदार! ⭐", "zh": "太棒了! ⭐","pt": "Ótimo trabalho! ⭐","de": "Toll gemacht! ⭐","tr": "Harika iş! ⭐" },
+    "tutor.streak":     { "en": "Day Streak 🔥","fr": "Jours consécutifs 🔥","es": "Racha 🔥","ar": "أيام متتالية 🔥","ur": "سلسلہ 🔥",   "hi": "दिन की लकीर 🔥","zh": "连续天数 🔥","pt": "Sequência 🔥","de": "Tages-Streak 🔥","tr": "Gün Serisi 🔥" },
+
+    "settings.language":    { "en": "Language",     "fr": "Langue",      "es": "Idioma",       "ar": "اللغة",     "ur": "زبان",       "hi": "भाषा",       "zh": "语言",   "pt": "Idioma",      "de": "Sprache",      "tr": "Dil" },
+    "settings.darkMode":    { "en": "Dark Mode",    "fr": "Mode sombre", "es": "Modo oscuro",  "ar": "الوضع الداكن","ur": "ڈارک موڈ",  "hi": "डार्क मोड",  "zh": "深色模式","pt": "Modo Escuro",  "de": "Dunkelmodus",  "tr": "Karanlık Mod" },
+    "settings.largeText":   { "en": "Large Text",   "fr": "Texte large", "es": "Texto grande", "ar": "نص كبير",   "ur": "بڑا متن",    "hi": "बड़ा टेक्स्ट","zh": "大字体",  "pt": "Texto Grande", "de": "Großer Text",  "tr": "Büyük Yazı" },
+    "settings.highContrast":{ "en": "High Contrast","fr": "Contraste élevé","es": "Alto contraste","ar": "تباين عالٍ","ur": "ہائی کنٹراسٹ","hi": "उच्च कंट्रास्ट","zh": "高对比度","pt": "Alto Contraste","de": "Hoher Kontrast","tr": "Yüksek Kontrast" },
+    "settings.dyslexiaFont":{ "en": "Dyslexia Font","fr": "Police dyslexie","es": "Fuente dislexia","ar": "خط عسر القراءة","ur": "ڈسلیکسیا فونٹ","hi": "डिस्लेक्सिया फॉन्ट","zh": "阅读障碍字体","pt": "Fonte Dislexia","de": "Dyslexie-Schrift","tr": "Disleksi Yazı Tipi" },
+    "settings.screenTime":  { "en": "Screen Time Limit","fr": "Limite de temps","es": "Límite de tiempo","ar": "حد وقت الشاشة","ur": "اسکرین ٹائم","hi": "स्क्रीन टाइम","zh": "屏幕时间","pt": "Tempo de Tela","de": "Bildschirmzeit","tr": "Ekran Süresi" },
+
+    "common.loading":   { "en": "Loading...",  "fr": "Chargement...", "es": "Cargando...",  "ar": "جارٍ التحميل...","ur": "لوڈ ہو رہا ہے...","hi": "लोड हो रहा है...","zh": "加载中...","pt": "Carregando...", "de": "Laden...",     "tr": "Yükleniyor..." },
+    "common.error":     { "en": "Something went wrong","fr": "Quelque chose a mal tourné","es": "Algo salió mal","ar": "حدث خطأ ما","ur": "کچھ غلط ہوگیا","hi": "कुछ गलत हुआ","zh": "出错了","pt": "Algo deu errado","de": "Etwas lief schief","tr": "Bir şeyler ters gitti" },
+    "common.save":      { "en": "Save",        "fr": "Sauvegarder",  "es": "Guardar",      "ar": "حفظ",        "ur": "محفوظ کریں", "hi": "सेव करें",   "zh": "保存",   "pt": "Salvar",      "de": "Speichern",    "tr": "Kaydet" },
+    "common.cancel":    { "en": "Cancel",      "fr": "Annuler",      "es": "Cancelar",     "ar": "إلغاء",      "ur": "منسوخ",      "hi": "रद्द करें",  "zh": "取消",   "pt": "Cancelar",    "de": "Abbrechen",    "tr": "İptal" },
+    "common.back":      { "en": "Back",        "fr": "Retour",       "es": "Atrás",        "ar": "رجوع",       "ur": "واپس",       "hi": "वापस",       "zh": "返回",   "pt": "Voltar",      "de": "Zurück",       "tr": "Geri" },
+    "common.done":      { "en": "Done",        "fr": "Terminé",      "es": "Listo",        "ar": "تم",         "ur": "ہو گیا",     "hi": "हो गया",     "zh": "完成",   "pt": "Pronto",      "de": "Fertig",       "tr": "Bitti" },
+    "common.next":      { "en": "Next",        "fr": "Suivant",      "es": "Siguiente",    "ar": "التالي",     "ur": "اگلا",       "hi": "अगला",       "zh": "下一步", "pt": "Próximo",     "de": "Weiter",       "tr": "Sonraki" },
+    "common.start":     { "en": "Start",       "fr": "Commencer",    "es": "Empezar",      "ar": "ابدأ",       "ur": "شروع کریں",  "hi": "शुरू करें",  "zh": "开始",   "pt": "Começar",     "de": "Starten",      "tr": "Başla" },
+    "common.play":      { "en": "Play",        "fr": "Jouer",        "es": "Jugar",        "ar": "العب",       "ur": "کھیلیں",     "hi": "खेलें",      "zh": "游戏",   "pt": "Jogar",       "de": "Spielen",      "tr": "Oyna" },
+
+    "child.goodMorning":{ "en": "Good Morning! ☀️","fr": "Bonjour! ☀️","es": "¡Buenos días! ☀️","ar": "صباح الخير! ☀️","ur": "صبح بخیر! ☀️","hi": "शुभ प्रभात! ☀️","zh": "早上好! ☀️","pt": "Bom dia! ☀️","de": "Guten Morgen! ☀️","tr": "Günaydın! ☀️" },
+    "child.stars":      { "en": "Stars",       "fr": "Étoiles",      "es": "Estrellas",    "ar": "نجوم",       "ur": "ستارے",      "hi": "तारे",       "zh": "星星",   "pt": "Estrelas",    "de": "Sterne",       "tr": "Yıldızlar" },
+    "child.streak":     { "en": "Day Streak",  "fr": "Série",        "es": "Racha",        "ar": "سلسلة",      "ur": "سلسلہ",      "hi": "लकीर",       "zh": "连续",   "pt": "Sequência",   "de": "Serie",        "tr": "Seri" },
+
+    "teacher.class":    { "en": "My Class",    "fr": "Ma Classe",    "es": "Mi Clase",     "ar": "فصلي",       "ur": "میری کلاس",  "hi": "मेरी कक्षा",  "zh": "我的班级","pt": "Minha Turma",  "de": "Meine Klasse", "tr": "Sınıfım" },
+    "teacher.reports":  { "en": "Reports",     "fr": "Rapports",     "es": "Reportes",     "ar": "التقارير",   "ur": "رپورٹس",     "hi": "रिपोर्ट्स",  "zh": "报告",   "pt": "Relatórios",  "de": "Berichte",     "tr": "Raporlar" },
+    "teacher.homework": { "en": "Assign Homework","fr": "Assigner des devoirs","es": "Asignar Tarea","ar": "تعيين الواجبات","ur": "ہوم ورک دیں","hi": "होमवर्क दें","zh": "布置作业","pt": "Atribuir Dever","de": "Hausaufgaben vergeben","tr": "Ödev Ver" },
+
+    "parent.progress":  { "en": "Progress",    "fr": "Progrès",      "es": "Progreso",     "ar": "التقدم",     "ur": "ترقی",       "hi": "प्रगति",     "zh": "进度",   "pt": "Progresso",   "de": "Fortschritt",  "tr": "İlerleme" },
+    "parent.messages":  { "en": "Messages",    "fr": "Messages",     "es": "Mensajes",     "ar": "الرسائل",    "ur": "پیغامات",    "hi": "संदेश",      "zh": "消息",   "pt": "Mensagens",   "de": "Nachrichten",  "tr": "Mesajlar" }
+  }
+}
