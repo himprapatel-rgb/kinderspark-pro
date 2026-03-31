@@ -132,11 +132,11 @@ function PinContent() {
       // #endregion
       const data = await verifyPin(pinValue, role, code)
       // #region agent log
-      fetch(`${API_BASE}/diag`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/pin/page.tsx:submit:success',message:'PIN submit success',data:{role,hasToken:!!(data.accessToken||data.token)},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
+      fetch(`${API_BASE}/diag`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/pin/page.tsx:submit:success',message:'PIN submit success',data:{role,hasToken:false},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
       // #endregion
       hapticSuccess()
       setSuccess(true)
-      setAuth(data.user, role, data.accessToken || data.token)
+      setAuth(data.user, role)
       setTimeout(() => {
         // #region agent log
         fetch(`${API_BASE}/diag`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/pin/page.tsx:submit:redirect',message:'Redirect after PIN',data:{role},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});

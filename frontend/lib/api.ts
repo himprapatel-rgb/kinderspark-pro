@@ -5,45 +5,10 @@ export const API_BASE =
 // Keep internal alias so nothing below breaks
 const BASE = API_BASE
 
-function getToken(): string | null {
-  if (typeof window === 'undefined') return null
-  try {
-    const raw = localStorage.getItem('kinderspark-store')
-    if (!raw) return null
-    const state = JSON.parse(raw)
-    return state?.state?.token || null
-  } catch {
-    return null
-  }
-}
-
-function getRefreshToken(): string | null {
-  if (typeof window === 'undefined') return null
-  try {
-    return localStorage.getItem('kinderspark-refresh') || null
-  } catch {
-    return null
-  }
-}
-
-function setTokens(token: string, refreshToken: string) {
-  try {
-    const raw = localStorage.getItem('kinderspark-store')
-    if (raw) {
-      const parsed = JSON.parse(raw)
-      parsed.state = { ...parsed.state, token }
-      localStorage.setItem('kinderspark-store', JSON.stringify(parsed))
-    }
-    localStorage.setItem('kinderspark-refresh', refreshToken)
-  } catch {}
-}
-
 let isRefreshing = false
-let refreshQueue: Array<(token: string) => void> = []
+let refreshQueue: Array<(ok: boolean) => void> = []
 
-async function tryRefresh(): Promise<string | null> {
-  const refreshToken = getRefreshToken()
-  if (!refreshToken) return null
+async function tryRefresh(): Promise<boolean> {
   if (isRefreshing) {
     return new Promise(resolve => {
       refreshQueue.push(resolve)
@@ -54,33 +19,29 @@ async function tryRefresh(): Promise<string | null> {
     const res = await fetch(`${BASE}/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken }),
+      credentials: 'include',
     })
-    if (!res.ok) return null
-    const data = await res.json()
-    setTokens(data.token, data.refreshToken)
-    refreshQueue.forEach(cb => cb(data.token))
+    const ok = res.ok
+    refreshQueue.forEach(cb => cb(ok))
     refreshQueue = []
-    return data.token
+    return ok
   } catch {
-    return null
+    refreshQueue.forEach(cb => cb(false))
+    refreshQueue = []
+    return false
   } finally {
     isRefreshing = false
   }
 }
 
 async function req(path: string, options?: RequestInit): Promise<any> {
-  let token = getToken()
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
-
-  const res = await fetch(`${BASE}${path}`, { headers, ...options })
+  const res = await fetch(`${BASE}${path}`, { headers, credentials: 'include', ...options })
 
   if (res.status === 401) {
-    const newToken = await tryRefresh()
-    if (newToken) {
-      const retryHeaders: Record<string, string> = { 'Content-Type': 'application/json', Authorization: `Bearer ${newToken}` }
-      const retry = await fetch(`${BASE}${path}`, { headers: retryHeaders, ...options })
+    const refreshed = await tryRefresh()
+    if (refreshed) {
+      const retry = await fetch(`${BASE}${path}`, { headers, credentials: 'include', ...options })
       if (!retry.ok) {
         const error = await retry.json().catch(() => ({ error: 'Request failed' }))
         throw new Error(error.error || `HTTP ${retry.status}`)
@@ -111,9 +72,6 @@ export async function verifyPin(pin: string, role: string, schoolCode: string) {
     method: 'POST',
     body: JSON.stringify({ pin, role, schoolCode: code }),
   })
-  if (data.refreshToken) {
-    localStorage.setItem('kinderspark-refresh', data.refreshToken)
-  }
   return data
 }
 
@@ -126,22 +84,14 @@ export async function registerAccount(data: {
   /** Required when role is `child` — must match a school in the database. */
   schoolCode?: string
 }) {
-  const result = await req('/auth/register', {
+  return req('/auth/register', {
     method: 'POST',
     body: JSON.stringify(data),
   })
-  if (result.refreshToken) {
-    localStorage.setItem('kinderspark-refresh', result.refreshToken)
-  }
-  return result
 }
 
 export async function logoutApi() {
-  const refreshToken = getRefreshToken()
-  if (refreshToken) {
-    await req('/auth/logout', { method: 'POST', body: JSON.stringify({ refreshToken }) }).catch(() => {})
-    localStorage.removeItem('kinderspark-refresh')
-  }
+  await req('/auth/logout', { method: 'POST' }).catch(() => {})
 }
 
 export async function getStudents(classId?: string) {
@@ -747,13 +697,8 @@ export async function linkParentChild(data: { parentProfileId: string; studentPr
 
 // ── SSE helpers ───────────────────────────────────────────────────────────────
 
-/**
- * Returns the raw JWT token stored by the app, or null if unavailable.
- * Used when we need to pass the token as a query param (e.g. EventSource).
- */
-export function getRawToken(): string | null {
-  return getToken()
-}
+/** Tokens are stored in secure cookies; raw JWT is intentionally unavailable in client JS. */
+export function getRawToken(): string | null { return null }
 
 /**
  * Opens an SSE connection to /api/messages/stream for a given classId.
@@ -764,9 +709,7 @@ export function getRawToken(): string | null {
  */
 export function createMessageStream(classId: string): EventSource | null {
   if (typeof window === 'undefined' || !('EventSource' in window)) return null
-  const token = getToken()
-  if (!token) return null
-  const url = `${API_BASE}/messages/stream?classId=${encodeURIComponent(classId)}&token=${encodeURIComponent(token)}`
-  return new EventSource(url)
+  const url = `${API_BASE}/messages/stream?classId=${encodeURIComponent(classId)}`
+  return new EventSource(url, { withCredentials: true })
 }
 

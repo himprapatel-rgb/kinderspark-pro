@@ -1,7 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import agentsConfig from '@/public/agents-config.json'
-import { useAppStore } from '@/store/appStore'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://kinderspark-backend-production.up.railway.app/api'
 
@@ -41,7 +40,6 @@ function sameGroup(a: Msg, b: Msg) {
 }
 
 export default function AgentsDashboard() {
-  const storeToken = useAppStore(s => s.token)
   const [conversations, setConversations] = useState<Msg[]>([])
   const [memories, setMemories]           = useState<Memory[]>([])
   const [runs, setRuns]                   = useState<Run[]>([])
@@ -62,13 +60,11 @@ export default function AgentsDashboard() {
   useEffect(() => {
     const poll = async () => {
       try {
-        const headers: Record<string, string> = storeToken
-          ? { Authorization: `Bearer ${storeToken}` }
-          : { 'x-agent-secret': 'ks-agent-secret' }
+        const headers: Record<string, string> = { 'x-agent-secret': 'ks-agent-secret' }
         const [c, m, r] = await Promise.all([
-          fetch(`${API}/agents/conversations?limit=100`, { headers }),
-          fetch(`${API}/agents/memory?limit=80`, { headers }),
-          fetch(`${API}/agents/runs`, { headers }),
+          fetch(`${API}/agents/conversations?limit=100`, { headers, credentials: 'include' }),
+          fetch(`${API}/agents/memory?limit=80`, { headers, credentials: 'include' }),
+          fetch(`${API}/agents/runs`, { headers, credentials: 'include' }),
         ])
         if (c.ok) { const d = await c.json(); setConversations(d.reverse()) }
         if (m.ok) setMemories(await m.json())
@@ -79,7 +75,7 @@ export default function AgentsDashboard() {
     poll()
     const t = setInterval(poll, 6_000)
     return () => clearInterval(t)
-  }, [storeToken])
+  }, [])
 
   // Scroll group chat
   useEffect(() => {

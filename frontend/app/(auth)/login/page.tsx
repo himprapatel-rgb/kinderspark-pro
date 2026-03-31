@@ -92,7 +92,7 @@ export default function LoginPage() {
     setDevLoading(item.role)
     try {
       const data = await verifyPin(item.pin, item.role, getDemoSchoolCode())
-      setAuth(data.user, item.role, data.accessToken || data.token)
+      setAuth(data.user, item.role)
       if (item.role === 'teacher') router.replace('/teacher')
       else if (item.role === 'admin' || item.role === 'principal')  router.replace('/admin')
       else if (item.role === 'parent') router.replace('/parent')

@@ -117,7 +117,7 @@ export function broadcastToClass(classId: string, message: object): void {
 }
 
 // ── GET /api/messages/stream — SSE endpoint ───────────────────────────────────
-// Auth: Bearer token passed via ?token= query param (EventSource can't set headers)
+// Auth: cookie (preferred) via global authenticate middleware; token query kept for backward compatibility.
 router.get('/stream', async (req: Request, res: Response) => {
   const { classId, token } = req.query
 
@@ -126,25 +126,27 @@ router.get('/stream', async (req: Request, res: Response) => {
     return
   }
 
-  // Verify token from query param
-  if (!token || typeof token !== 'string') {
-    res.status(401).json({ error: 'token query param is required' })
+  // Preferred: user already populated from auth cookie.
+  // Fallback: explicit token query for older clients.
+  if (!req.user && token && typeof token === 'string') {
+    try {
+      const decoded = jwt.verify(token, getJwtSecret()) as AuthUser
+      req.user = decoded
+    } catch {
+      res.status(401).json({ error: 'Invalid or expired token' })
+      return
+    }
+  }
+  if (!req.user) {
+    res.status(401).json({ error: 'Authentication required' })
     return
   }
-  try {
-    const decoded = jwt.verify(token, getJwtSecret()) as AuthUser
-    // Attach so downstream code could use it if needed
-    req.user = decoded
-    if (decoded.role === 'child') {
-      const ownClassId = await getRequesterClassId(decoded.id)
-      if (!ownClassId || ownClassId !== classId) {
-        res.status(403).json({ error: 'Insufficient permissions' })
-        return
-      }
+  if (req.user.role === 'child') {
+    const ownClassId = await getRequesterClassId(req.user.id)
+    if (!ownClassId || ownClassId !== classId) {
+      res.status(403).json({ error: 'Insufficient permissions' })
+      return
     }
-  } catch {
-    res.status(401).json({ error: 'Invalid or expired token' })
-    return
   }
 
   // Set SSE headers

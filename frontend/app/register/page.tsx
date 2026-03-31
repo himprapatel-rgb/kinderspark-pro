@@ -131,7 +131,7 @@ export default function RegisterPage() {
         ...(role === 'child' && code ? { schoolCode: code } : {}),
       })
       setProfileId(result.profileId || result.user?.id || '')
-      setAuth(result.user, role, result.token)
+      setAuth(result.user, role)
       setStep('done')
     } catch (err: any) {
       setError(err.message || 'Registration failed')

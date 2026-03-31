@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { API_BASE, getRawToken } from '@/lib/api';
+import { API_BASE } from '@/lib/api';
 
 export function usePushNotifications(studentId?: string) {
   const [permission, setPermission] = useState<NotificationPermission>('default');
@@ -29,10 +29,10 @@ export function usePushNotifications(studentId?: string) {
     });
 
     if (studentId) {
-      const token = getRawToken();
       await fetch(`${API_BASE}/students/${studentId}/push-token`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: JSON.stringify(sub) })
       });
     }

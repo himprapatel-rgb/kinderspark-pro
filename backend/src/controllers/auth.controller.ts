@@ -46,7 +46,7 @@ function setAuthCookies(res: Response, accessToken: string, refreshToken: string
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    path: '/api/auth/refresh',
+    path: '/api/auth',
     maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
   })
 }
@@ -156,8 +156,6 @@ export async function verifyPin(req: Request, res: Response) {
         return res.json({
           success: true,
           role: activeRole,
-          token,
-          refreshToken,
           user: {
             id: u.id,
             name: u.displayName,
@@ -186,7 +184,7 @@ export async function verifyPin(req: Request, res: Response) {
       const token = signAccessToken({ id: teacher.id, role: 'teacher', roles: ['teacher'], name: teacher.name, schoolId: teacher.schoolId || null })
       const refreshToken = await issueRefreshToken(teacher.id, 'teacher')
       setAuthCookies(res, token, refreshToken)
-      return res.json({ success: true, role: 'teacher', token, refreshToken, user: { id: teacher.id, name: teacher.name, avatar: (teacher as any).avatar || '👩‍🏫', profileId: teacher.id, roles: ['teacher'] } })
+      return res.json({ success: true, role: 'teacher', user: { id: teacher.id, name: teacher.name, avatar: (teacher as any).avatar || '👩‍🏫', profileId: teacher.id, roles: ['teacher'] } })
     }
 
     if (role === 'admin' || role === 'principal') {
@@ -215,8 +213,6 @@ export async function verifyPin(req: Request, res: Response) {
       return res.json({
         success: true,
         role: activeRole,
-        token,
-        refreshToken,
         user: {
           id: admin.id,
           name: admin.name,
@@ -266,8 +262,6 @@ export async function verifyPin(req: Request, res: Response) {
     return res.json({
       success: true,
       role,
-      token,
-      refreshToken,
       user: {
         id: student.id,
         name: student.name,
@@ -322,7 +316,7 @@ export async function refreshAccessToken(req: Request, res: Response) {
     const newRefreshToken = await issueRefreshToken(record.userId, record.role)
 
     setAuthCookies(res, token, newRefreshToken)
-    return res.json({ token, refreshToken: newRefreshToken })
+    return res.json({ success: true })
   } catch (err) {
     return res.status(500).json({ error: 'Server error' })
   }
@@ -334,11 +328,11 @@ export async function revokeRefreshToken(req: Request, res: Response) {
   try {
     await prisma.refreshToken.deleteMany({ where: { token: refreshToken } })
     res.clearCookie('kinderspark_token')
-    res.clearCookie('kinderspark_refresh', { path: '/api/auth/refresh' })
+    res.clearCookie('kinderspark_refresh', { path: '/api/auth' })
     return res.json({ success: true })
   } catch {
     res.clearCookie('kinderspark_token')
-    res.clearCookie('kinderspark_refresh', { path: '/api/auth/refresh' })
+    res.clearCookie('kinderspark_refresh', { path: '/api/auth' })
     return res.json({ success: true })
   }
 }
@@ -458,8 +452,6 @@ export async function registerUser(req: Request, res: Response) {
     return res.status(201).json({
       success: true,
       role,
-      token,
-      refreshToken,
       profileId: user.id,
       user: {
         id: user.id,

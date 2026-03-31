@@ -5,7 +5,6 @@ import helmet from 'helmet'
 import cookieParser from 'cookie-parser'
 import rateLimit from 'express-rate-limit'
 import { rateLimiter } from './middleware/rateLimit.middleware'
-import { cache } from './middleware/cache.middleware'
 import { authenticate } from './middleware/auth.middleware'
 import authRoutes from './routes/auth.routes'
 import studentRoutes from './routes/student.routes'
@@ -100,21 +99,21 @@ app.get('/health', async (_req, res) => {
 })
 
 app.use('/api/auth', authRoutes)
-app.use('/api/students', cache(20), studentRoutes)
+app.use('/api/students', studentRoutes)
 app.use('/api/teacher', teacherRoutes)
-app.use('/api/homework', cache(15), homeworkRoutes)
-app.use('/api/syllabuses', cache(60), syllabusRoutes)
+app.use('/api/homework', homeworkRoutes)
+app.use('/api/syllabuses', syllabusRoutes)
 app.use('/api/messages', messageRoutes)
 app.use('/api/progress', progressRoutes)
 app.use('/api/ai', aiRoutes)
-app.use('/api/admin', cache(30), adminRoutes)
+app.use('/api/admin', adminRoutes)
 app.use('/api/attendance', attendanceRoutes)
 app.use('/api/push', pushRoutes)
-app.use('/api/classes', cache(30), classRoutes)
+app.use('/api/classes', classRoutes)
 app.use('/api/ai-sessions', aiSessionRoutes)
 app.use('/api/feedback', feedbackRoutes)
 app.use('/api/agents', agentRoutes)
-app.use('/api/ecosystem', cache(20), ecosystemRoutes)
+app.use('/api/ecosystem', ecosystemRoutes)
 app.use('/api/profiles', profilesRoutes)
 app.use('/api/diag', diagRoutes)
 app.use('/api/schools', schoolsRoutes)

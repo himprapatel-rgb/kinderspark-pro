@@ -47,7 +47,7 @@ interface AppStore {
   kpiEvents: KpiEvent[]
 
   // Actions
-  setAuth: (user: User, role: string, token: string) => void
+  setAuth: (user: User, role: string, token?: string | null) => void
   logout: () => void
   setCurrentStudent: (student: Student | null) => void
   setAvailableRoles: (roles: Array<'teacher' | 'parent' | 'child' | 'admin' | 'principal'>) => void
@@ -99,7 +99,7 @@ export const useAppStore = create<AppStore>()(
         set({
           user,
           role: role as any,
-          token,
+          token: token || null,
           availableRoles: Array.isArray((user as any)?.roles) && (user as any).roles.length
             ? ((user as any).roles as Array<'teacher' | 'parent' | 'child' | 'admin' | 'principal'>)
             : [role as any],

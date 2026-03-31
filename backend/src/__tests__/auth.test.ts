@@ -96,7 +96,7 @@ describe('Auth Controller – POST /api/auth/pin', () => {
     mockPrismaPinLoginThrottle.delete.mockResolvedValue({})
   })
 
-  it('returns 200 with accessToken for valid teacher PIN', async () => {
+  it('returns 200 for valid teacher PIN and sets cookie auth', async () => {
     const fakeTeacher = { id: 'teacher-1', name: 'Ms Smith', pin: '1234' }
     mockPrismaTeacher.findMany.mockResolvedValue([fakeTeacher])
     mockPrismaRefreshToken.create.mockResolvedValue({})
@@ -108,7 +108,7 @@ describe('Auth Controller – POST /api/auth/pin', () => {
 
     expect(res.status).toBe(200)
     expect(res.body.success).toBe(true)
-    expect(res.body.token).toBe('fake.access.token')
+    expect(res.body.token).toBeUndefined()
     expect(res.body.role).toBe('teacher')
     expect(res.body.user).toMatchObject({ id: 'teacher-1', name: 'Ms Smith' })
   })
@@ -164,6 +164,7 @@ describe('Auth Controller – POST /api/auth/pin', () => {
     expect(res.status).toBe(200)
     expect(res.body.success).toBe(true)
     expect(res.body.role).toBe('admin')
+    expect(res.body.token).toBeUndefined()
   })
 
   it('returns 200 for valid child PIN', async () => {
@@ -195,6 +196,7 @@ describe('Auth Controller – POST /api/auth/pin', () => {
     expect(res.status).toBe(200)
     expect(res.body.success).toBe(true)
     expect(res.body.role).toBe('child')
+    expect(res.body.token).toBeUndefined()
   })
 
   it('returns 401 for invalid child PIN', async () => {
@@ -234,7 +236,7 @@ describe('Auth Controller – POST /api/auth/refresh', () => {
     mockPrismaUser.findUnique.mockResolvedValue(null)
   })
 
-  it('returns 200 with new tokens for a valid refresh token', async () => {
+  it('returns 200 for a valid refresh token and rotates cookies', async () => {
     const futureDate = new Date(Date.now() + 1000 * 60 * 60)
     const fakeRecord = {
       id: 'rt-1',
@@ -253,8 +255,7 @@ describe('Auth Controller – POST /api/auth/refresh', () => {
       .send({ refreshToken: 'valid-refresh-token' })
 
     expect(res.status).toBe(200)
-    expect(res.body.token).toBe('new.access.token')
-    expect(res.body.refreshToken).toBeDefined()
+    expect(res.body.success).toBe(true)
   })
 
   it('returns 401 for expired refresh token', async () => {

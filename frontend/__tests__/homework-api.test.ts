@@ -1,10 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 // ── localStorage stub shared across tests ────────────────────────────────────
-function stubLocalStorage(token = 'access.token') {
+function stubLocalStorage(_token = 'access.token') {
   const store: Record<string, string> = {
-    'kinderspark-store': JSON.stringify({ state: { token } }),
-    'kinderspark-refresh': 'refresh-token',
+    'kinderspark-store': JSON.stringify({ state: { token: null } }),
   }
   vi.stubGlobal('localStorage', {
     getItem: vi.fn((key: string) => store[key] ?? null),
@@ -43,7 +42,7 @@ describe('getHomework', () => {
     expect(result).toEqual(hw)
     expect(vi.mocked(fetch)).toHaveBeenCalledWith(
       expect.stringContaining('/homework?classId=cls-1'),
-      expect.objectContaining({ headers: expect.objectContaining({ Authorization: 'Bearer access.token' }) })
+      expect.objectContaining({ credentials: 'include' })
     )
   })
 
