@@ -247,6 +247,7 @@ POST   /api/agents/conversations
 9. **Use `accessControl.ts`** for RBAC — never hand-roll permission checks
 10. **Never disable `rateLimiter`** or `aiRateLimit` middleware
 11. **No SQL injection** — always use Prisma ORM, never raw queries with user input
+12. **CSRF required on state change** — for authenticated cookie sessions, all `POST`/`PUT`/`PATCH`/`DELETE` require `x-csrf-token` matching `kinderspark_csrf`
 
 ---
 
@@ -403,12 +404,26 @@ Notes:
 
 ---
 
+## Security Hardening Status (2026-03-31)
+
+Completed:
+- `cache.service.ts` cache keys are now deterministic (sorted params before SHA-256).
+- `accessControl.ts` removed permissive `parentUserId === studentId` bypass.
+- PIN lock policy tightened to 3 failed attempts per 30 minutes.
+- Frontend store no longer persists auth `token` in localStorage (`partialize` removed token).
+- CSRF middleware added (`backend/src/middleware/csrf.middleware.ts`) and mounted globally in `app.ts`.
+- Auth flow now issues/clears `kinderspark_csrf` cookie alongside auth cookies.
+- Frontend API client (`frontend/lib/api.ts`) sends `x-csrf-token` automatically on state-changing requests.
+- Structured AI responses (lesson/syllabus/homework/recommendations) are validated before cache write in `services/ai/index.ts`.
+- CSRF middleware tests added in `backend/src/__tests__/csrf.middleware.test.ts`.
+
+---
+
 ## Known Gaps (as of 2026-03-31)
 
 - iOS app exists (Capacitor Xcode project) but not yet in App Store
 - `SENDGRID_API_KEY`, `CLOUDINARY_URL`, `OPENAI_API_KEY` need to be set on Railway for those features to work
 - `VAPID_PUBLIC_KEY` + `VAPID_PRIVATE_KEY` required on Railway for push notifications
-- `@google/generative-ai` package not installed — Gemini provider will fail until added
 - TTS human voices need env vars set on Railway: `GOOGLE_TTS_API_KEY`, `OPENAI_API_KEY`, or `AZURE_TTS_KEY` — app falls back to Web Speech API until at least one is set
 
 ---
