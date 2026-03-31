@@ -1,17 +1,47 @@
 import { Request, Response } from 'express'
 import { generateLesson, generateTutorFeedback, generateRecommendations, generateHomeworkIdea, generateStudentReport, generateSyllabusAI } from '../services/ai'
 import { buildClassReport } from '../services/report.service'
+import { makeCacheKey, getCachedResponse, setCachedResponse } from '../services/cache.service'
 import { sanitizePromptInput } from '../utils/sanitize'
 import prisma from '../prisma/client'
 
 export async function aiGenerateLesson(req: Request, res: Response) {
-  const { topic, count = 10 } = req.body
+  const { topic, count = 10, language = 'en', difficulty = 1 } = req.body
   if (!topic) return res.status(400).json({ error: 'topic required' })
   const safeTopic = sanitizePromptInput(topic)
   if (!safeTopic) return res.status(400).json({ error: 'topic required' })
+
   try {
-    const items = await generateLesson(safeTopic, count)
-    return res.json({ items })
+    // 1. Check CurriculumModule — standard modules never need AI
+    const mod = await prisma.curriculumModule.findUnique({
+      where: { moduleId: safeTopic },
+    })
+    if (mod) {
+      const items = mod.items as Array<{ w: string; e: string; hint: string }>
+      return res.json({ items, source: 'db' })
+    }
+
+    // 2. Check LessonCache — previously generated custom lessons
+    const cached = await prisma.lessonCache.findUnique({
+      where: { moduleId_language_difficulty: { moduleId: safeTopic, language, difficulty: Number(difficulty) } },
+    })
+    if (cached) {
+      prisma.lessonCache.update({
+        where: { id: cached.id },
+        data: { hitCount: { increment: 1 } },
+      }).catch(() => {})
+      return res.json({ items: cached.items, source: 'cache' })
+    }
+
+    // 3. Call AI for unknown/custom topics
+    const items = await generateLesson(safeTopic, Number(count))
+
+    // Save to LessonCache for future requests (best-effort)
+    prisma.lessonCache.create({
+      data: { moduleId: safeTopic, language, difficulty: Number(difficulty), items: items as any },
+    }).catch(() => {})
+
+    return res.json({ items, source: 'ai' })
   } catch (err) {
     return res.status(500).json({ error: 'AI generation failed', items: [] })
   }
