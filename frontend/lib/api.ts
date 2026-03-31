@@ -5,9 +5,6 @@ export const API_BASE =
 // Keep internal alias so nothing below breaks
 const BASE = API_BASE
 
-let isRefreshing = false
-let refreshQueue: Array<(ok: boolean) => void> = []
-
 function getCsrfToken(): string | null {
   if (typeof document === 'undefined') return null
   const part = document.cookie
@@ -24,6 +21,9 @@ function withCsrfHeader(method: string | undefined, headers: Record<string, stri
   if (!csrf) return headers
   return { ...headers, 'x-csrf-token': csrf }
 }
+
+let isRefreshing = false
+let refreshQueue: Array<(ok: boolean) => void> = []
 
 async function tryRefresh(): Promise<boolean> {
   if (isRefreshing) {

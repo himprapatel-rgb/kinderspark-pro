@@ -148,9 +148,27 @@ const globalErrorHandler: ErrorRequestHandler = (
 app.use(globalErrorHandler)
 
 const PORT = process.env.PORT || 4000
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`KinderSpark API running on port ${PORT}`)
   startAgentScheduler()
+
+  // Auto-seed demo data if the database has no school yet.
+  // Uses upsert — safe to run on every cold start; won't overwrite real data.
+  try {
+    const schoolCount = await prisma.school.count()
+    if (schoolCount === 0) {
+      console.log('[startup] No schools found — running demo seed...')
+      const { execSync } = require('child_process')
+      execSync('npx ts-node prisma/seed.ts', {
+        cwd: process.cwd().endsWith('dist') ? require('path').join(process.cwd(), '..') : process.cwd(),
+        stdio: 'inherit',
+        env: { ...process.env },
+      })
+      console.log('[startup] Demo seed complete ✓')
+    }
+  } catch (err) {
+    console.warn('[startup] Auto-seed failed (non-fatal):', (err as any)?.message?.slice(0, 200))
+  }
 })
 
 export default app

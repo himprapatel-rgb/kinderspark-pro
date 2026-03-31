@@ -146,12 +146,22 @@ function PinContent() {
         else if (role === 'parent') router.replace('/parent')
         else router.replace('/child')
       }, 600)
-    } catch {
+    } catch (err: any) {
       // #region agent log
-      fetch(`${API_BASE}/diag`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/pin/page.tsx:submit:error',message:'PIN submit error',data:{role},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
+      fetch(`${API_BASE}/diag`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/pin/page.tsx:submit:error',message:'PIN submit error',data:{role,err:String(err?.message)},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
       // #endregion
       hapticError()
-      setError('Wrong PIN — try again')
+      const msg = err?.message || ''
+      // Show specific errors to help diagnose; fall back to generic for wrong PIN
+      if (msg.includes('fetch') || msg.includes('network') || msg.includes('Failed')) {
+        setError('Cannot reach server — check your connection')
+      } else if (msg.includes('school') || msg.includes('School')) {
+        setError(msg)
+      } else if (msg.includes('locked') || msg.includes('Too many')) {
+        setError(msg)
+      } else {
+        setError('Wrong PIN — try again')
+      }
       setPin(['', '', '', ''])
       setShake(true)
       setTimeout(() => { setShake(false); refs[0].current?.focus() }, 500)
