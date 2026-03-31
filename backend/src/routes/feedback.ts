@@ -2,7 +2,7 @@ import prisma from '../prisma/client'
 import { Router, Request, Response } from 'express'
 import { requireAuth, requireRole } from '../middleware/auth.middleware'
 import { canParentAccessStudent } from '../utils/accessControl'
-import { sendGradeNotification } from '../services/notification.service'
+import { notifyStudentPushSubscribers } from '../services/notification.service'
 
 
 const router = Router()
@@ -66,10 +66,14 @@ router.post('/', requireRole('teacher', 'admin'), async (req: Request, res: Resp
       })
       const st = await prisma.student.findUnique({
         where: { id: studentId },
-        select: { name: true, pushToken: true },
+        select: { name: true },
       })
-      if (st?.pushToken) {
-        sendGradeNotification(st.pushToken, st.name, String(grade)).catch(() => {})
+      if (st) {
+        notifyStudentPushSubscribers(studentId, {
+          title: `⭐ New grade for ${st.name}`,
+          body: `Your teacher gave a grade of ${grade}`,
+          url: '/parent',
+        }).catch(() => {})
       }
     }
 

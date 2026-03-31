@@ -1,8 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { API_BASE, savePushToken } from '@/lib/api';
+import { API_BASE, postPushSubscribe } from '@/lib/api';
 
-export function usePushNotifications(studentId?: string) {
+export function usePushNotifications(scope: 'student' | 'parent', studentId?: string) {
   const [permission, setPermission] = useState<NotificationPermission>('default');
 
   useEffect(() => {
@@ -13,7 +13,7 @@ export function usePushNotifications(studentId?: string) {
 
   async function subscribe() {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-    if (!studentId) return;
+    if (scope === 'student' && !studentId) return;
 
     await navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
     const reg = await navigator.serviceWorker.ready;
@@ -31,7 +31,12 @@ export function usePushNotifications(studentId?: string) {
       applicationServerKey: urlBase64ToUint8Array(publicKey)
     });
 
-    await savePushToken(studentId, JSON.stringify(sub));
+    const subscription = JSON.stringify(sub);
+    await postPushSubscribe({
+      scope,
+      ...(scope === 'student' ? { studentId } : {}),
+      subscription,
+    });
   }
 
   return { permission, subscribe };

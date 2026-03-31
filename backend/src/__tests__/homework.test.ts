@@ -26,7 +26,7 @@ jest.mock('../prisma/client', () => ({
 
 // ── Service mocks ─────────────────────────────────────────────────────────────
 jest.mock('../services/notification.service', () => ({
-  sendPushNotification: jest.fn(() => Promise.resolve()),
+  notifyStudentPushSubscribers: jest.fn(() => Promise.resolve()),
 }))
 
 jest.mock('../services/badge.service', () => ({
