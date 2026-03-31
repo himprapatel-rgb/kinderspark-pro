@@ -5,6 +5,13 @@ export const API_BASE =
 // Keep internal alias so nothing below breaks
 const BASE = API_BASE
 
+/** Read the CSRF token from the kinderspark_csrf cookie (httpOnly=false, JS-readable) */
+function getCsrfToken(): string {
+  if (typeof document === 'undefined') return ''
+  const match = document.cookie.match(/(?:^|;\s*)kinderspark_csrf=([^;]+)/)
+  return match ? decodeURIComponent(match[1]) : ''
+}
+
 let isRefreshing = false
 let refreshQueue: Array<(ok: boolean) => void> = []
 
@@ -16,9 +23,10 @@ async function tryRefresh(): Promise<boolean> {
   }
   isRefreshing = true
   try {
+    const csrfToken = getCsrfToken()
     const res = await fetch(`${BASE}/auth/refresh`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}) },
       credentials: 'include',
     })
     const ok = res.ok
@@ -35,7 +43,13 @@ async function tryRefresh(): Promise<boolean> {
 }
 
 async function req(path: string, options?: RequestInit): Promise<any> {
+  const method = (options?.method || 'GET').toUpperCase()
+  const csrfToken = getCsrfToken()
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  // Send CSRF token on all state-changing requests so the backend CSRF middleware accepts them
+  if (method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS' && csrfToken) {
+    headers['x-csrf-token'] = csrfToken
+  }
   const res = await fetch(`${BASE}${path}`, { headers, credentials: 'include', ...options })
 
   if (res.status === 401) {
