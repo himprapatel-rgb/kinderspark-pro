@@ -14,7 +14,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https://res.cloudinary.com",
       "media-src 'self' data: blob:",
-      "connect-src 'self' https://kinderspark-pro-production.up.railway.app",
+      "connect-src 'self' https://kinderspark-pro-production.up.railway.app https://kinderspark-backend-production.up.railway.app https://*.up.railway.app",
       "font-src 'self'",
       "frame-ancestors 'self'",
     ].join('; '),
