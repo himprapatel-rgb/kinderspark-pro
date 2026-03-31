@@ -1,13 +1,26 @@
 import { Router, Request, Response } from 'express'
 import bcrypt from 'bcryptjs'
 import prisma from '../prisma/client'
+import { invalidateCache } from '../middleware/cache.middleware'
+import { requireAuth, requireRole } from '../middleware/auth.middleware'
+import { canParentAccessStudent, canTeacherAccessClass } from '../utils/accessControl'
+import { computePinFingerprint } from '../utils/pinFingerprint'
 
 const router = Router()
+router.use(requireAuth)
+
+function canAccessOwnStudent(req: Request, studentId: string) {
+  return (req.user?.role === 'child' || req.user?.role === 'parent') && req.user.id === studentId
+}
 
 // GET /api/students?classId=
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', requireRole('teacher', 'admin'), async (req: Request, res: Response) => {
   try {
     const { classId } = req.query
+    if (req.user?.role === 'teacher' && classId) {
+      const ok = await canTeacherAccessClass(req.user.id, String(classId))
+      if (!ok) return res.status(403).json({ error: 'Insufficient permissions' })
+    }
     const where = classId ? { classId: String(classId) } : {}
     const students = await prisma.student.findMany({
       where,
@@ -25,6 +38,16 @@ router.get('/', async (req: Request, res: Response) => {
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params
+    if (
+      req.user?.role !== 'teacher' &&
+      req.user?.role !== 'admin' &&
+      !canAccessOwnStudent(req, id)
+    ) {
+      return res.status(403).json({ error: 'Insufficient permissions' })
+    }
+    if (req.user?.role === 'parent' && !(await canParentAccessStudent(req.user.id, id))) {
+      return res.status(403).json({ error: 'Insufficient permissions' })
+    }
     const student = await prisma.student.findUnique({
       where: { id },
       include: {
@@ -44,19 +67,25 @@ router.get('/:id', async (req: Request, res: Response) => {
 })
 
 // POST /api/students
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', requireRole('teacher', 'admin'), async (req: Request, res: Response) => {
   try {
     const { name, age, avatar, pin, classId, stars, streak } = req.body
+    if (req.user?.role === 'teacher') {
+      const ok = await canTeacherAccessClass(req.user.id, String(classId))
+      if (!ok) return res.status(403).json({ error: 'Insufficient permissions' })
+    }
     if (!name || !pin || !classId) {
       return res.status(400).json({ error: 'name, pin, and classId are required' })
     }
     const pinHash = await bcrypt.hash(pin, 10)
+    const pinFingerprint = computePinFingerprint(String(pin))
     const student = await prisma.student.create({
       data: {
         name,
         age: age || 5,
         avatar: avatar || '👧',
         pin: pinHash,
+        pinFingerprint,
         stars: stars || 0,
         streak: streak || 0,
         classId,
@@ -64,6 +93,7 @@ router.post('/', async (req: Request, res: Response) => {
         selectedTheme: 'th_def',
       },
     })
+    invalidateCache('/api/students')
     return res.status(201).json(student)
   } catch (err: any) {
     console.error('createStudent error:', err)
@@ -78,6 +108,16 @@ router.post('/', async (req: Request, res: Response) => {
 router.put('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params
+    if (
+      req.user?.role !== 'teacher' &&
+      req.user?.role !== 'admin' &&
+      !canAccessOwnStudent(req, id)
+    ) {
+      return res.status(403).json({ error: 'Insufficient permissions' })
+    }
+    if (req.user?.role === 'parent' && !(await canParentAccessStudent(req.user.id, id))) {
+      return res.status(403).json({ error: 'Insufficient permissions' })
+    }
     const {
       name, age, avatar, stars, streak, grade,
       aiStars, aiSessions, aiBestLevel, ownedItems, selectedTheme,
@@ -97,6 +137,7 @@ router.put('/:id', async (req: Request, res: Response) => {
     if (selectedTheme !== undefined) updateData.selectedTheme = selectedTheme
 
     const student = await prisma.student.update({ where: { id }, data: updateData })
+    invalidateCache('/api/students')
     return res.json(student)
   } catch (err) {
     console.error('updateStudent error:', err)
@@ -105,10 +146,11 @@ router.put('/:id', async (req: Request, res: Response) => {
 })
 
 // DELETE /api/students/:id
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', requireRole('teacher', 'admin'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params
     await prisma.student.delete({ where: { id } })
+    invalidateCache('/api/students')
     return res.json({ success: true })
   } catch (err) {
     console.error('deleteStudent error:', err)
@@ -119,9 +161,20 @@ router.delete('/:id', async (req: Request, res: Response) => {
 // PATCH /api/students/:id/push-token
 router.patch('/:id/push-token', async (req: Request, res: Response) => {
   try {
+    if (
+      req.user?.role !== 'teacher' &&
+      req.user?.role !== 'admin' &&
+      !canAccessOwnStudent(req, req.params.id)
+    ) {
+      return res.status(403).json({ error: 'Insufficient permissions' })
+    }
+    if (req.user?.role === 'parent' && !(await canParentAccessStudent(req.user.id, req.params.id))) {
+      return res.status(403).json({ error: 'Insufficient permissions' })
+    }
     const { token } = req.body
     if (!token) return res.status(400).json({ error: 'token required' })
     await prisma.student.update({ where: { id: req.params.id }, data: { pushToken: token } })
+    invalidateCache('/api/students')
     return res.json({ success: true })
   } catch (err) {
     return res.status(500).json({ error: 'Failed to save push token' })
@@ -131,6 +184,16 @@ router.patch('/:id/push-token', async (req: Request, res: Response) => {
 // GET /api/students/:id/badges
 router.get('/:id/badges', async (req: Request, res: Response) => {
   try {
+    if (
+      req.user?.role !== 'teacher' &&
+      req.user?.role !== 'admin' &&
+      !canAccessOwnStudent(req, req.params.id)
+    ) {
+      return res.status(403).json({ error: 'Insufficient permissions' })
+    }
+    if (req.user?.role === 'parent' && !(await canParentAccessStudent(req.user.id, req.params.id))) {
+      return res.status(403).json({ error: 'Insufficient permissions' })
+    }
     const badges = await prisma.badge.findMany({
       where: { studentId: req.params.id },
       orderBy: { earnedAt: 'desc' },

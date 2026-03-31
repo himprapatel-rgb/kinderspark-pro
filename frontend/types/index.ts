@@ -76,8 +76,10 @@ export interface Homework {
 export interface Student {
   id: string
   name: string
+  preferredName?: string | null
   age: number
   avatar: string
+  photoUrl?: string | null
   pin: string
   stars: number
   streak: number
@@ -89,6 +91,16 @@ export interface Student {
   selectedTheme: string
   lastLoginAt?: string | null
   classId: string
+  addressLine1?: string | null
+  addressLine2?: string | null
+  city?: string | null
+  state?: string | null
+  postalCode?: string | null
+  country?: string | null
+  parentName?: string | null
+  parentPhone?: string | null
+  emergencyPhone?: string | null
+  notes?: string | null
   class?: Class
   progress?: Progress[]
   feedback?: Feedback | null
@@ -163,7 +175,10 @@ export interface User {
   id: string
   name: string
   role?: string
+  roles?: string[]
   avatar?: string
+  profileId?: string
+  email?: string
   stars?: number
   streak?: number
   classId?: string
@@ -179,9 +194,14 @@ export interface User {
 
 export interface AppState {
   user: User | null
-  role: 'teacher' | 'parent' | 'child' | 'admin' | null
+  role: 'teacher' | 'parent' | 'child' | 'admin' | 'principal' | null
   token: string | null
   currentStudent: Student | null
+  availableRoles?: Array<'teacher' | 'parent' | 'child' | 'admin' | 'principal'>
+  activeProfile?: string | null
+  schoolContext?: { schoolId?: string | null; schoolName?: string | null } | null
+  children?: Array<{ id: string; name: string; avatar?: string }>
+  teachingClasses?: Array<{ id: string; name: string; grade?: string }>
   settings: {
     dark: boolean
     large: boolean

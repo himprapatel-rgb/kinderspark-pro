@@ -1,7 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import agentsConfig from '@/public/agents-config.json'
-import { useAppStore } from '@/store/appStore'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://kinderspark-backend-production.up.railway.app/api'
 
@@ -41,7 +40,6 @@ function sameGroup(a: Msg, b: Msg) {
 }
 
 export default function AgentsDashboard() {
-  const storeToken = useAppStore(s => s.token)
   const [conversations, setConversations] = useState<Msg[]>([])
   const [memories, setMemories]           = useState<Memory[]>([])
   const [runs, setRuns]                   = useState<Run[]>([])
@@ -62,13 +60,11 @@ export default function AgentsDashboard() {
   useEffect(() => {
     const poll = async () => {
       try {
-        const headers: Record<string, string> = storeToken
-          ? { Authorization: `Bearer ${storeToken}` }
-          : { 'x-agent-secret': 'ks-agent-secret' }
+        const headers: Record<string, string> = { 'x-agent-secret': 'ks-agent-secret' }
         const [c, m, r] = await Promise.all([
-          fetch(`${API}/agents/conversations?limit=100`, { headers }),
-          fetch(`${API}/agents/memory?limit=80`, { headers }),
-          fetch(`${API}/agents/runs`, { headers }),
+          fetch(`${API}/agents/conversations?limit=100`, { headers, credentials: 'include' }),
+          fetch(`${API}/agents/memory?limit=80`, { headers, credentials: 'include' }),
+          fetch(`${API}/agents/runs`, { headers, credentials: 'include' }),
         ])
         if (c.ok) { const d = await c.json(); setConversations(d.reverse()) }
         if (m.ok) setMemories(await m.json())
@@ -79,7 +75,7 @@ export default function AgentsDashboard() {
     poll()
     const t = setInterval(poll, 6_000)
     return () => clearInterval(t)
-  }, [storeToken])
+  }, [])
 
   // Scroll group chat
   useEffect(() => {
@@ -183,12 +179,12 @@ export default function AgentsDashboard() {
           <div style={{ fontWeight: 900, fontSize: 14 }}>KinderSpark Agent Room</div>
           <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>
             {agentsConfig.agents.length} agents ·{' '}
-            <span style={{ color: connected ? '#30D158' : '#FF453A' }}>{connected ? '● live' : '○ connecting'}</span>
+            <span style={{ color: connected ? '#4CAF6A' : '#E05252' }}>{connected ? '● live' : '○ connecting'}</span>
           </div>
         </div>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 4 }}>
           {(['chat', 'memory', 'runs'] as const).map(t => (
-            <button key={t} onClick={() => setTab(t)} style={{ padding: '5px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', background: tab === t ? '#5E5CE6' : 'rgba(255,255,255,0.06)', color: tab === t ? 'white' : 'rgba(255,255,255,0.4)', fontWeight: 800, fontSize: 11, fontFamily: 'Nunito, sans-serif', transition: 'all 0.15s' }}>
+            <button key={t} onClick={() => setTab(t)} style={{ padding: '5px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', background: tab === t ? '#5B7FE8' : 'rgba(255,255,255,0.06)', color: tab === t ? 'white' : 'rgba(255,255,255,0.4)', fontWeight: 800, fontSize: 11, fontFamily: 'Nunito, sans-serif', transition: 'all 0.15s' }}>
               {t === 'chat' ? `💬 Chat${conversations.length ? ` (${conversations.length})` : ''}` : t === 'memory' ? '🧠 Memory' : '⚡ Runs'}
             </button>
           ))}
@@ -201,7 +197,7 @@ export default function AgentsDashboard() {
         <div style={{ width: 210, background: '#13101f', borderRight: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', overflow: 'hidden', flexShrink: 0 }}>
           {/* Category filter */}
           <div style={{ padding: '8px 8px 6px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-            <button onClick={() => setCatFilter('all')} style={{ fontSize: 9, fontWeight: 800, padding: '2px 7px', borderRadius: 5, border: 'none', cursor: 'pointer', background: catFilter === 'all' ? '#5E5CE6' : 'rgba(255,255,255,0.07)', color: catFilter === 'all' ? 'white' : 'rgba(255,255,255,0.4)' }}>ALL</button>
+            <button onClick={() => setCatFilter('all')} style={{ fontSize: 9, fontWeight: 800, padding: '2px 7px', borderRadius: 5, border: 'none', cursor: 'pointer', background: catFilter === 'all' ? '#5B7FE8' : 'rgba(255,255,255,0.07)', color: catFilter === 'all' ? 'white' : 'rgba(255,255,255,0.4)' }}>ALL</button>
             {CATS.map(([id, cat]) => (
               <button key={id} onClick={() => setCatFilter(id)} style={{ fontSize: 9, fontWeight: 800, padding: '2px 6px', borderRadius: 5, border: 'none', cursor: 'pointer', background: catFilter === id ? cat.color : 'rgba(255,255,255,0.07)', color: catFilter === id ? 'white' : 'rgba(255,255,255,0.4)', transition: 'all 0.15s' }}>
                 {cat.icon}
@@ -223,7 +219,7 @@ export default function AgentsDashboard() {
                 >
                   <div style={{ position: 'relative', flexShrink: 0 }}>
                     <div style={{ width: 28, height: 28, borderRadius: 8, background: agent.color + '22', border: `1px solid ${agent.color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>{agent.icon}</div>
-                    <div style={{ position: 'absolute', bottom: -1, right: -1, width: 7, height: 7, borderRadius: '50%', background: active ? '#30D158' : '#2a2a3a', border: '1.5px solid #13101f', animation: active ? 'pulse 2.5s infinite' : 'none' }} />
+                    <div style={{ position: 'absolute', bottom: -1, right: -1, width: 7, height: 7, borderRadius: '50%', background: active ? '#4CAF6A' : '#2a2a3a', border: '1.5px solid #13101f', animation: active ? 'pulse 2.5s infinite' : 'none' }} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 10, fontWeight: 800, color: isOpen ? 'white' : active ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.45)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{agent.name}</div>
@@ -244,9 +240,9 @@ export default function AgentsDashboard() {
                 onChange={e => setTaskInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && sendTask()}
                 placeholder="Dispatch a task..."
-                style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 7, padding: '6px 8px', color: 'white', fontSize: 10, outline: 'none', fontFamily: 'Nunito, sans-serif' }}
+                style={{ flex: 1, background: 'var(--app-surface-soft)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 7, padding: '6px 8px', color: 'white', fontSize: 10, outline: 'none', fontFamily: 'Nunito, sans-serif' }}
               />
-              <button onClick={sendTask} disabled={sending || !taskInput.trim()} style={{ background: sending || !taskInput.trim() ? 'rgba(255,255,255,0.06)' : '#5E5CE6', border: 'none', borderRadius: 7, padding: '6px 9px', color: 'white', fontWeight: 900, fontSize: 11, cursor: sending || !taskInput.trim() ? 'default' : 'pointer', fontFamily: 'Nunito, sans-serif', transition: 'background 0.15s' }}>
+              <button onClick={sendTask} disabled={sending || !taskInput.trim()} style={{ background: sending || !taskInput.trim() ? 'rgba(255,255,255,0.06)' : '#5B7FE8', border: 'none', borderRadius: 7, padding: '6px 9px', color: 'white', fontWeight: 900, fontSize: 11, cursor: sending || !taskInput.trim() ? 'default' : 'pointer', fontFamily: 'Nunito, sans-serif', transition: 'background 0.15s' }}>
                 {sending ? '…' : '→'}
               </button>
             </div>
@@ -261,13 +257,13 @@ export default function AgentsDashboard() {
             <>
               {/* DM header */}
               <div style={{ padding: '10px 16px', background: '#16132a', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                <button onClick={() => setSelectedAgent(null)} style={{ background: 'rgba(255,255,255,0.06)', border: 'none', borderRadius: 6, padding: '4px 8px', color: 'rgba(255,255,255,0.5)', fontSize: 11, cursor: 'pointer', fontFamily: 'Nunito, sans-serif' }}>← Back</button>
+                <button onClick={() => setSelectedAgent(null)} style={{ background: 'var(--app-surface-soft)', border: 'none', borderRadius: 6, padding: '4px 8px', color: 'rgba(255,255,255,0.5)', fontSize: 11, cursor: 'pointer', fontFamily: 'Nunito, sans-serif' }}>← Back</button>
                 <div style={{ width: 34, height: 34, borderRadius: 10, background: selectedAgent.color + '25', border: `1.5px solid ${selectedAgent.color}55`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>{selectedAgent.icon}</div>
                 <div>
                   <div style={{ fontWeight: 900, fontSize: 14, color: 'white' }}>{selectedAgent.name}</div>
                   <div style={{ fontSize: 10, color: selectedAgent.color }}>{selectedAgent.desc}</div>
                 </div>
-                <div style={{ marginLeft: 'auto', fontSize: 10, color: 'rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.05)', padding: '3px 8px', borderRadius: 6 }}>{selectedAgent.trigger}</div>
+                <div style={{ marginLeft: 'auto', fontSize: 10, color: 'rgba(255,255,255,0.25)', background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)', padding: '3px 8px', borderRadius: 6 }}>{selectedAgent.trigger}</div>
               </div>
 
               {/* DM messages */}
@@ -282,7 +278,7 @@ export default function AgentsDashboard() {
                   const isMe = msg.fromAgentId === 'commander'
                   const prev = dmMsgs[i - 1]
                   const grouped = prev && sameGroup(prev, msg)
-                  const color = isMe ? '#5E5CE6' : selectedAgent.color
+                  const color = isMe ? '#5B7FE8' : selectedAgent.color
 
                   return (
                     <div key={msg.id} style={{ display: 'flex', flexDirection: isMe ? 'row-reverse' : 'row', gap: 8, marginTop: grouped ? 2 : 10, animation: 'slideUp 0.2s ease' }}>
@@ -304,7 +300,7 @@ export default function AgentsDashboard() {
                         <div
                           className="msg-bubble"
                           style={{
-                            background: isMe ? '#5E5CE6' : color + '18',
+                            background: isMe ? '#5B7FE8' : color + '18',
                             border: isMe ? 'none' : `1px solid ${color}30`,
                             borderRadius: isMe
                               ? grouped ? '12px 4px 12px 12px' : '12px 4px 12px 12px'
@@ -339,7 +335,7 @@ export default function AgentsDashboard() {
 
               {/* DM input */}
               <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.06)', background: '#13101f', flexShrink: 0 }}>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', background: 'rgba(255,255,255,0.05)', border: `1px solid ${selectedAgent.color}30`, borderRadius: 12, padding: '4px 4px 4px 12px', transition: 'border-color 0.2s' }}>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', background: 'var(--app-surface-soft)', border: `1px solid ${selectedAgent.color}30`, borderRadius: 12, padding: '4px 4px 4px 12px', transition: 'border-color 0.2s' }}>
                   <span style={{ fontSize: 15 }}>🧑‍💻</span>
                   <input
                     value={dmInput}
@@ -384,7 +380,7 @@ export default function AgentsDashboard() {
                   const isDM      = msg.toAgentId !== 'all' && msg.toAgentId !== 'commander'
                   const isAlert   = msg.msgType === 'alert'
                   const isHandoff = msg.msgType === 'handoff'
-                  const color     = isMe ? '#5E5CE6' : (msg.fromColor || '#5E5CE6')
+                  const color     = isMe ? '#5B7FE8' : (msg.fromColor || '#5B7FE8')
 
                   return (
                     <div key={msg.id} style={{ display: 'flex', flexDirection: isMe ? 'row-reverse' : 'row', gap: 10, marginTop: grouped ? 2 : 12, animation: 'slideUp 0.2s ease' }}>
@@ -405,15 +401,15 @@ export default function AgentsDashboard() {
                               </span>
                             )}
                             <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)' }}>{timeAgo(msg.createdAt)}</span>
-                            {isAlert   && <span style={{ fontSize: 9, fontWeight: 900, color: '#FF453A', background: '#FF453A20', padding: '1px 5px', borderRadius: 4 }}>🚨 alert</span>}
-                            {isHandoff && <span style={{ fontSize: 9, fontWeight: 900, color: '#FFD60A', background: '#FFD60A20', padding: '1px 5px', borderRadius: 4 }}>🤝 handoff</span>}
+                            {isAlert   && <span style={{ fontSize: 9, fontWeight: 900, color: '#E05252', background: '#E0525220', padding: '1px 5px', borderRadius: 4 }}>🚨 alert</span>}
+                            {isHandoff && <span style={{ fontSize: 9, fontWeight: 900, color: '#F5B731', background: '#F5B73120', padding: '1px 5px', borderRadius: 4 }}>🤝 handoff</span>}
                           </div>
                         )}
                         <div
                           className="msg-bubble"
                           style={{
                             display: 'inline-block', maxWidth: '80%',
-                            background: isMe ? '#5E5CE6' : isAlert ? 'rgba(255,69,58,0.1)' : isHandoff ? 'rgba(255,214,10,0.07)' : isDM ? color + '14' : 'rgba(255,255,255,0.05)',
+                            background: isMe ? '#5B7FE8' : isAlert ? 'rgba(255,69,58,0.1)' : isHandoff ? 'rgba(255,214,10,0.07)' : isDM ? color + '14' : 'rgba(255,255,255,0.05)',
                             border: isMe ? 'none' : isAlert ? '1px solid rgba(255,69,58,0.25)' : isHandoff ? '1px solid rgba(255,214,10,0.18)' : `1px solid ${color}20`,
                             borderRadius: isMe ? '12px 4px 12px 12px' : '4px 12px 12px 12px',
                             padding: '7px 12px',
@@ -443,13 +439,13 @@ export default function AgentsDashboard() {
                   <div style={{ fontWeight: 800, marginTop: 12 }}>No memories yet</div>
                 </div>
               ) : memories.map(m => (
-                <div key={m.id} style={{ display: 'flex', gap: 10, padding: '10px 12px', background: 'rgba(255,255,255,0.025)', border: `1px solid ${m.agentColor || '#5E5CE6'}20`, borderLeft: `3px solid ${m.agentColor || '#5E5CE6'}`, borderRadius: '0 10px 10px 0', animation: 'slideUp 0.2s ease' }}>
+                <div key={m.id} style={{ display: 'flex', gap: 10, padding: '10px 12px', background: 'rgba(255,255,255,0.025)', border: `1px solid ${m.agentColor || '#5B7FE8'}20`, borderLeft: `3px solid ${m.agentColor || '#5B7FE8'}`, borderRadius: '0 10px 10px 0', animation: 'slideUp 0.2s ease' }}>
                   <span style={{ fontSize: 20, flexShrink: 0 }}>{m.agentIcon}</span>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                      <span style={{ color: m.agentColor || '#5E5CE6', fontWeight: 800, fontSize: 12 }}>{m.agentName}</span>
-                      <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.06)', padding: '1px 5px', borderRadius: 4 }}>{m.type}</span>
-                      {m.importance >= 3 && <span style={{ fontSize: 9, color: '#FF453A', fontWeight: 900 }}>🔴 critical</span>}
+                      <span style={{ color: m.agentColor || '#5B7FE8', fontWeight: 800, fontSize: 12 }}>{m.agentName}</span>
+                      <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', background: 'var(--app-surface-soft)', padding: '1px 5px', borderRadius: 4 }}>{m.type}</span>
+                      {m.importance >= 3 && <span style={{ fontSize: 9, color: '#E05252', fontWeight: 900 }}>🔴 critical</span>}
                       <span style={{ marginLeft: 'auto', fontSize: 10, color: 'rgba(255,255,255,0.2)' }}>{timeAgo(m.createdAt)}</span>
                     </div>
                     <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', lineHeight: 1.5 }}>{m.content}</div>
@@ -469,7 +465,7 @@ export default function AgentsDashboard() {
                   <div style={{ fontSize: 12, marginTop: 6 }}>Set GITHUB_TOKEN in Railway to see runs</div>
                 </div>
               ) : runs.map(run => {
-                const color = run.status === 'in_progress' ? '#FFD60A' : run.conclusion === 'success' ? '#30D158' : run.conclusion === 'failure' ? '#FF453A' : '#636366'
+                const color = run.status === 'in_progress' ? '#F5B731' : run.conclusion === 'success' ? '#4CAF6A' : run.conclusion === 'failure' ? '#E05252' : '#636366'
                 const label = run.status === 'in_progress' ? 'Running' : run.conclusion === 'success' ? 'Success' : run.conclusion === 'failure' ? 'Failed' : 'Idle'
                 return (
                   <a key={run.id} href={run.html_url} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, textDecoration: 'none', transition: 'background 0.15s' }}>
@@ -496,3 +492,4 @@ export default function AgentsDashboard() {
     </div>
   )
 }
+

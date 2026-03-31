@@ -1,13 +1,20 @@
 import { Router, Request, Response } from 'express'
 import prisma from '../prisma/client'
+import { requireAuth, requireRole } from '../middleware/auth.middleware'
+import { canParentAccessStudent, canTeacherAccessClass } from '../utils/accessControl'
 
 const router = Router()
+router.use(requireAuth)
 
 // GET /api/attendance?classId=&date=YYYY-MM-DD
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', requireRole('teacher', 'admin'), async (req: Request, res: Response) => {
   try {
     const { classId, date } = req.query
     if (!classId || !date) return res.status(400).json({ error: 'classId and date required' })
+    if (req.user?.role === 'teacher') {
+      const ok = await canTeacherAccessClass(req.user.id, String(classId))
+      if (!ok) return res.status(403).json({ error: 'Insufficient permissions' })
+    }
 
     const records = await prisma.attendance.findMany({
       where: { classId: String(classId), date: String(date) },
@@ -43,11 +50,15 @@ router.get('/', async (req: Request, res: Response) => {
 
 // POST /api/attendance — bulk save attendance for a class on a date
 // body: { classId, date, records: [{ studentId, present, note? }] }
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', requireRole('teacher', 'admin'), async (req: Request, res: Response) => {
   try {
     const { classId, date, records } = req.body
     if (!classId || !date || !Array.isArray(records)) {
       return res.status(400).json({ error: 'classId, date, and records[] required' })
+    }
+    if (req.user?.role === 'teacher') {
+      const ok = await canTeacherAccessClass(req.user.id, String(classId))
+      if (!ok) return res.status(403).json({ error: 'Insufficient permissions' })
     }
 
     await Promise.all(
@@ -72,6 +83,23 @@ router.get('/summary', async (req: Request, res: Response) => {
   try {
     const { classId, days = '30' } = req.query
     if (!classId) return res.status(400).json({ error: 'classId required' })
+    if (req.user?.role === 'child') {
+      const self = await prisma.student.findUnique({
+        where: { id: req.user.id },
+        select: { classId: true },
+      })
+      if (!self || self.classId !== String(classId)) {
+        return res.status(403).json({ error: 'Insufficient permissions' })
+      }
+    }
+    if (req.user?.role === 'parent') {
+      const students = await prisma.student.findMany({ where: { classId: String(classId) }, select: { id: true } })
+      let allowed = false
+      for (const s of students) {
+        if (await canParentAccessStudent(req.user.id, s.id)) { allowed = true; break }
+      }
+      if (!allowed) return res.status(403).json({ error: 'Insufficient permissions' })
+    }
 
     const cutoff = new Date()
     cutoff.setDate(cutoff.getDate() - Number(days))
@@ -99,6 +127,63 @@ router.get('/summary', async (req: Request, res: Response) => {
   } catch (err) {
     console.error('attendanceSummary error:', err)
     return res.status(500).json({ error: 'Failed to get summary' })
+  }
+})
+
+// ── Geofenced attendance scaffold (in-memory; opt-in consent) ────────────────
+const GEOFENCE_CONSENT: Record<string, boolean> = {}
+type GeofenceEvt = { userId: string; type: 'enter' | 'exit'; at: number; regionLabel?: string }
+const GEOFENCE_EVENTS: GeofenceEvt[] = []
+const GEOFENCE_MAX = 200
+
+// POST /api/attendance/geofence/consent  body: { enabled: boolean }
+router.post('/geofence/consent', async (req: Request, res: Response) => {
+  try {
+    if (!req.user?.id) return res.status(401).json({ error: 'Authentication required' })
+    const enabled = !!req.body?.enabled
+    GEOFENCE_CONSENT[req.user.id] = enabled
+    return res.json({ ok: true, enabled })
+  } catch (err) {
+    console.error('geofenceConsent error:', err)
+    return res.status(500).json({ error: 'Failed to save consent' })
+  }
+})
+
+// POST /api/attendance/geofence/event  body: { type: 'enter'|'exit', regionLabel? }
+router.post('/geofence/event', async (req: Request, res: Response) => {
+  try {
+    if (!req.user?.id) return res.status(401).json({ error: 'Authentication required' })
+    if (!GEOFENCE_CONSENT[req.user.id]) {
+      return res.status(403).json({ error: 'Geofence consent is off' })
+    }
+    const type = req.body?.type
+    if (type !== 'enter' && type !== 'exit') {
+      return res.status(400).json({ error: 'type must be enter or exit' })
+    }
+    const evt: GeofenceEvt = {
+      userId: req.user.id,
+      type,
+      at: Date.now(),
+      regionLabel: typeof req.body?.regionLabel === 'string' ? req.body.regionLabel : undefined,
+    }
+    GEOFENCE_EVENTS.push(evt)
+    if (GEOFENCE_EVENTS.length > GEOFENCE_MAX) GEOFENCE_EVENTS.splice(0, GEOFENCE_EVENTS.length - GEOFENCE_MAX)
+    return res.json({ ok: true })
+  } catch (err) {
+    console.error('geofenceEvent error:', err)
+    return res.status(500).json({ error: 'Failed to record event' })
+  }
+})
+
+// GET /api/attendance/geofence/events
+router.get('/geofence/events', async (req: Request, res: Response) => {
+  try {
+    if (!req.user?.id) return res.status(401).json({ error: 'Authentication required' })
+    const mine = GEOFENCE_EVENTS.filter((e) => e.userId === req.user!.id)
+    return res.json({ events: mine.slice(-50), consent: !!GEOFENCE_CONSENT[req.user.id] })
+  } catch (err) {
+    console.error('geofenceEvents error:', err)
+    return res.status(500).json({ error: 'Failed to list events' })
   }
 })
 

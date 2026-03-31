@@ -2,10 +2,25 @@
 import { claudeProvider }     from './providers/claude'
 import { openaiProvider }     from './providers/openai'
 import { perplexityProvider } from './providers/perplexity'
+import { geminiProvider }     from './providers/gemini'
 import type { AIProvider, AIProviderName, AICallOptions } from './types'
 import { TASK_PROVIDERS } from './types'
+import { filterAIResponse, AI_FILTERED_FALLBACK } from '../contentFilter.service'
+
+/** When output is blocked, return parseable JSON for structured tasks so callers do not throw. */
+const JSON_TASK_FALLBACK: Record<string, string> = {
+  'generate-lesson': '[]',
+  'generate-syllabus':
+    '{"title":"Let\'s learn!","icon":"⭐","color":"#8B5CF6","description":"Fun practice","items":[]}',
+  'generate-homework':
+    '{"title":"Fun practice","description":"Try your favorite learning game!","moduleId":"numbers","emoji":"⭐","starsReward":5,"estimatedMinutes":10,"activities":[{"instruction":"Count and play!","emoji":"🔢"}]}',
+  recommendations: '[]',
+  'poem-listen-spark': JSON.stringify({ title: 'A little star', poem: AI_FILTERED_FALLBACK }),
+  'tutor-hint-spark': JSON.stringify({ hint: AI_FILTERED_FALLBACK }),
+}
 
 const ALL_PROVIDERS: Record<AIProviderName, AIProvider> = {
+  gemini:     geminiProvider,
   claude:     claudeProvider,
   openai:     openaiProvider,
   perplexity: perplexityProvider,
@@ -27,27 +42,35 @@ export async function aiComplete(
   // Build preference list: explicit override first, then task defaults, then all providers
   let order: AIProviderName[] = opts.provider
     ? [opts.provider, ...(TASK_PROVIDERS[task] ?? []).filter(p => p !== opts.provider)]
-    : (TASK_PROVIDERS[task] ?? ['claude', 'openai', 'perplexity'])
+    : (TASK_PROVIDERS[task] ?? ['gemini', 'claude', 'openai', 'perplexity'])
 
   // Only keep providers that have credentials configured
   const available = order.filter(name => ALL_PROVIDERS[name].available())
 
   if (available.length === 0) {
     throw new Error(
-      `No AI provider configured. Set ANTHROPIC_API_KEY, OPENAI_API_KEY, or PERPLEXITY_API_KEY.`
+      `No AI provider configured. Set GEMINI_API_KEY (free!), ANTHROPIC_API_KEY, OPENAI_API_KEY, or PERPLEXITY_API_KEY.`
     )
   }
 
   let lastError: unknown
   for (const name of available) {
     try {
-      const text = await ALL_PROVIDERS[name].complete(prompt, opts)
-      if (process.env.NODE_ENV !== 'production') {
-        console.log(`[AI] ${task} → ${name}`)
+      const raw = await ALL_PROVIDERS[name].complete(prompt, opts)
+      const { safe, filtered } = filterAIResponse(raw)
+      let text = filtered
+      if (!safe && task in JSON_TASK_FALLBACK) {
+        text = JSON_TASK_FALLBACK[task]!
       }
+      console.log(`[AI] ✅ ${task} → ${name}${safe ? '' : ' (output filtered)'}`)
       return { text, provider: name }
     } catch (err) {
-      console.warn(`[AI] ${name} failed for task "${task}":`, (err as any)?.message ?? err)
+      const errMsg = (err as any)?.message ?? ''
+      // Suppress verbose logs for known quota/billing failures — circuit breaker already logged it
+      const isKnownQuota = errMsg.includes('quota exceeded') || errMsg.includes('no credits')
+      if (!isKnownQuota) {
+        console.warn(`[AI] ${name} failed for task "${task}":`, errMsg.slice(0, 150))
+      }
       lastError = err
     }
   }
@@ -58,6 +81,7 @@ export async function aiComplete(
 /** Return which providers are currently configured (for health/admin endpoints) */
 export function getProviderStatus(): Record<AIProviderName, boolean> {
   return {
+    gemini:     geminiProvider.available(),
     claude:     claudeProvider.available(),
     openai:     openaiProvider.available(),
     perplexity: perplexityProvider.available(),

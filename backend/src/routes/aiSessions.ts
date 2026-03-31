@@ -1,13 +1,22 @@
 import { Router, Request, Response } from 'express'
 import prisma from '../prisma/client'
 import { checkAndAwardBadges } from '../services/badge.service'
+import { requireAuth } from '../middleware/auth.middleware'
+import { canParentAccessStudent } from '../utils/accessControl'
 
 const router = Router()
+router.use(requireAuth)
 
 // GET /api/ai-sessions/:studentId
 router.get('/:studentId', async (req: Request, res: Response) => {
   try {
     const { studentId } = req.params
+    if (req.user?.role === 'child' && req.user.id !== studentId) {
+      return res.status(403).json({ error: 'Insufficient permissions' })
+    }
+    if (req.user?.role === 'parent' && !(await canParentAccessStudent(req.user.id, studentId))) {
+      return res.status(403).json({ error: 'Insufficient permissions' })
+    }
 
     const sessions = await prisma.aISession.findMany({
       where: { studentId },
@@ -26,6 +35,12 @@ router.get('/:studentId', async (req: Request, res: Response) => {
 router.post('/', async (req: Request, res: Response) => {
   try {
     const { studentId, topic, correct, total, stars, maxLevel, accuracy } = req.body
+    if (req.user?.role === 'child' && req.user.id !== studentId) {
+      return res.status(403).json({ error: 'Insufficient permissions' })
+    }
+    if (req.user?.role === 'parent' && !(await canParentAccessStudent(req.user.id, studentId))) {
+      return res.status(403).json({ error: 'Insufficient permissions' })
+    }
 
     if (!studentId || !topic) {
       return res.status(400).json({ error: 'studentId and topic are required' })

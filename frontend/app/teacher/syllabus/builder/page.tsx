@@ -1,7 +1,17 @@
 'use client'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
-import SyllabusBuilder from '@/components/SyllabusBuilder'
+
+const SyllabusBuilder = dynamic(() => import('@/components/SyllabusBuilder'), {
+  ssr: false,
+  loading: () => (
+    <div
+      className="rounded-2xl h-64 animate-pulse mx-auto max-w-lg"
+      style={{ background: 'rgba(255,255,255,0.08)' }}
+    />
+  ),
+})
 
 export default function SyllabusBuilderPage() {
   const router = useRouter()
@@ -14,22 +24,21 @@ export default function SyllabusBuilderPage() {
 
   return (
     <div
-      className="min-h-screen pb-8"
-      style={{ background: 'linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%)' }}
+      className="min-h-screen pb-8 app-page app-container"
     >
       {/* Header */}
       <div
         className="p-5 pt-10"
-        style={{ background: 'linear-gradient(135deg, #30D158, #43C6AC)' }}
+        style={{ background: 'linear-gradient(135deg, #4CAF6A, #5FBF7F)' }}
       >
         <button
           onClick={() => router.back()}
-          className="text-white/70 text-sm font-bold mb-4 flex items-center gap-1"
+          className="text-sm font-bold mb-4 flex items-center gap-1 app-pressable"
         >
           ← Back
         </button>
-        <h1 className="text-white font-black text-2xl">Syllabus Builder 📖</h1>
-        <p className="text-white/70 text-sm font-bold mt-1">Create custom learning content</p>
+        <h1 className="font-black text-2xl">Syllabus Builder 📖</h1>
+        <p className="text-sm font-bold mt-1">Create custom learning content</p>
       </div>
 
       <div className="p-5">
@@ -41,3 +50,4 @@ export default function SyllabusBuilderPage() {
     </div>
   )
 }
+

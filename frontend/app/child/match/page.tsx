@@ -1,9 +1,14 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
 import { MODS } from '@/lib/modules'
 import { updateProgress, saveAISession } from '@/lib/api'
+import { BookOpen, RefreshCw, Target } from 'lucide-react'
+import { playCorrect, playWrong, playComplete } from '@/lib/sounds'
+
+const ConfettiCanvas = dynamic(() => import('@/components/Confetti'), { ssr: false })
 
 const QUESTIONS_PER_ROUND = 10
 const STARS_PER_CORRECT = 3
@@ -93,11 +98,13 @@ export default function WordMatchPage() {
     setFeedback(isCorrect ? 'correct' : 'wrong')
 
     if (isCorrect) {
+      playCorrect()
       const newStreak = streak + 1
       setScore(s => s + 1)
       setStreak(newStreak)
       setMaxStreak(ms => Math.max(ms, newStreak))
     } else {
+      playWrong()
       setStreak(0)
     }
 
@@ -112,8 +119,14 @@ export default function WordMatchPage() {
     }, 900)
   }
 
+  const [showConfetti, setShowConfetti] = useState(false)
+
   const finishGame = async (finalScore: number) => {
     setScreen('result')
+    if (finalScore >= QUESTIONS_PER_ROUND * 0.6) {
+      playComplete()
+      setShowConfetti(true)
+    }
     if (!student?.id) return
     setSaving(true)
     const starsEarned = finalScore * STARS_PER_CORRECT
@@ -141,42 +154,42 @@ export default function WordMatchPage() {
     return (
       <div
         className="min-h-screen flex flex-col items-center justify-center px-5 pb-24"
-        style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #1a0a2e) 0%, #0d0d1a 100%)' }}
+        style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #EDF2FF), var(--app-bg))' }}
       >
         <div
-          className="w-24 h-24 rounded-3xl flex items-center justify-center text-5xl mb-6 animate-bounce-subtle"
+          className="w-24 h-24 rounded-3xl flex items-center justify-center text-5xl mb-6 animate-bounce-subtle sticker-bubble"
           style={{
-            background: 'linear-gradient(135deg, #FF9F0A, #FF6B35)',
+            background: 'linear-gradient(135deg, #F5A623, #D4881A)',
             boxShadow: '0 8px 32px rgba(255,159,10,0.45)',
           }}
         >
           🔤
         </div>
-        <h1 className="text-white text-3xl font-black mb-2">Word Match</h1>
-        <p className="text-white/50 text-base font-bold mb-2 text-center">
+        <h1 className="text-3xl font-black mb-2">Word Match</h1>
+        <p className="text-base font-bold app-muted mb-2 text-center">
           Match the emoji to the correct word!
         </p>
         <div className="flex gap-4 mb-10 mt-4">
-          {[
-            { label: `${QUESTIONS_PER_ROUND} rounds`, icon: '🎯' },
-            { label: `${STARS_PER_CORRECT}⭐ per hit`, icon: '⭐' },
-            { label: 'All topics', icon: '📚' },
+            {[
+            { label: `${QUESTIONS_PER_ROUND} rounds`, icon: <Target size={18} color="var(--app-accent)" /> },
+            { label: `${STARS_PER_CORRECT}⭐ per hit`, icon: <span style={{ fontSize: 18 }}>⭐</span> },
+            { label: 'All topics', icon: <BookOpen size={18} color="var(--app-accent)" /> },
           ].map((s, i) => (
             <div
               key={i}
               className="rounded-2xl px-3 py-2 flex flex-col items-center gap-1"
-              style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)' }}
+              style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}
             >
-              <span className="text-xl">{s.icon}</span>
-              <span className="text-white/60 text-[11px] font-bold">{s.label}</span>
+              <span className="text-xl sticker-bubble w-9 h-9 flex items-center justify-center" style={{ transform: 'rotate(-4deg)' }}>{s.icon}</span>
+              <span className="text-[11px] font-bold app-muted">{s.label}</span>
             </div>
           ))}
         </div>
         <button
           onClick={startGame}
-          className="w-full max-w-[280px] py-5 rounded-3xl text-white font-black text-xl active:scale-95 transition-all relative overflow-hidden"
+          className="w-full max-w-[280px] py-5 rounded-3xl font-black text-xl active:scale-95 transition-all relative overflow-hidden app-pressable animate-sparkle-on-hover"
           style={{
-            background: 'linear-gradient(135deg, #FF9F0A, #FF6B35)',
+            background: 'linear-gradient(135deg, #F5A623, #D4881A)',
             boxShadow: '0 8px 32px rgba(255,159,10,0.5)',
           }}
         >
@@ -185,7 +198,7 @@ export default function WordMatchPage() {
         </button>
         <button
           onClick={() => router.back()}
-          className="mt-5 text-white/30 text-sm font-bold"
+          className="mt-5 text-sm font-bold app-muted app-pressable"
         >
           ← Back
         </button>
@@ -199,18 +212,19 @@ export default function WordMatchPage() {
     return (
       <div
         className="min-h-screen flex flex-col items-center justify-center px-5 pb-24"
-        style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #1a0a2e) 0%, #0d0d1a 100%)' }}
+        style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #EDF2FF), var(--app-bg))' }}
       >
+        <ConfettiCanvas trigger={showConfetti} onComplete={() => setShowConfetti(false)} />
         <div className="text-7xl mb-4 animate-bounce">{accuracy >= 70 ? '🎉' : '💪'}</div>
-        <h1 className="text-white text-3xl font-black mb-1">{grade}</h1>
-        <p className="text-white/50 text-sm font-bold mb-8">{score}/{QUESTIONS_PER_ROUND} correct</p>
+        <h1 className="text-3xl font-black mb-1">{grade}</h1>
+        <p className="text-sm font-bold app-muted mb-8">{score}/{QUESTIONS_PER_ROUND} correct</p>
 
         {/* Stats */}
         <div className="w-full max-w-[320px] grid grid-cols-3 gap-3 mb-8">
           {[
-            { label: 'Score', value: `${score}/${QUESTIONS_PER_ROUND}`, icon: '🎯', color: '#5E5CE6' },
-            { label: 'Stars', value: `+${starsEarned}⭐`, icon: '⭐', color: '#FFD60A' },
-            { label: 'Best Streak', value: `${maxStreak}🔥`, icon: '🔥', color: '#FF6B35' },
+            { label: 'Score', value: `${score}/${QUESTIONS_PER_ROUND}`, icon: '🎯', color: '#5B7FE8' },
+            { label: 'Stars', value: `+${starsEarned}⭐`, icon: '⭐', color: '#F5B731' },
+            { label: 'Best Streak', value: `${maxStreak}🔥`, icon: '🔥', color: '#D4881A' },
           ].map((s, i) => (
             <div
               key={i}
@@ -218,7 +232,7 @@ export default function WordMatchPage() {
               style={{ background: s.color + '18', border: `1px solid ${s.color}35` }}
             >
               <p className="font-black text-base" style={{ color: s.color }}>{s.value}</p>
-              <p className="text-white/50 text-[10px] font-bold mt-0.5">{s.label}</p>
+              <p className="text-[10px] font-bold app-muted mt-0.5">{s.label}</p>
             </div>
           ))}
         </div>
@@ -226,10 +240,10 @@ export default function WordMatchPage() {
         {/* Accuracy ring */}
         <div className="relative mb-8">
           <svg width="120" height="120">
-            <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="10" />
+            <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(120,120,140,0.12)" strokeWidth="10" />
             <circle
               cx="60" cy="60" r="50" fill="none"
-              stroke={accuracy >= 70 ? '#30D158' : '#FF9F0A'} strokeWidth="10"
+              stroke={accuracy >= 70 ? '#4CAF6A' : '#F5A623'} strokeWidth="10"
               strokeLinecap="round"
               strokeDasharray={`${accuracy * 3.14} 314`}
               transform="rotate(-90 60 60)"
@@ -237,22 +251,22 @@ export default function WordMatchPage() {
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-white font-black text-2xl">{accuracy}%</span>
-            <span className="text-white/40 text-[10px] font-bold">accuracy</span>
+            <span className="font-black text-2xl">{accuracy}%</span>
+            <span className="text-[10px] app-muted font-bold">accuracy</span>
           </div>
         </div>
 
         <button
           onClick={startGame}
-          className="w-full max-w-[280px] py-4 rounded-2xl text-white font-black text-lg active:scale-95 transition-all mb-3"
-          style={{ background: 'linear-gradient(135deg, #FF9F0A, #FF6B35)', boxShadow: '0 6px 24px rgba(255,159,10,0.4)' }}
+          className="w-full max-w-[280px] py-4 rounded-2xl font-black text-lg active:scale-95 transition-all mb-3 app-pressable inline-flex items-center justify-center gap-2"
+          style={{ background: 'linear-gradient(135deg, #F5A623, #D4881A)', boxShadow: '0 6px 24px rgba(255,159,10,0.4)' }}
         >
-          Play Again 🔄
+          <RefreshCw size={16} /> Play Again
         </button>
         <button
           onClick={() => router.back()}
-          className="w-full max-w-[280px] py-3.5 rounded-2xl font-black text-sm active:scale-95 transition-all"
-          style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.6)' }}
+          className="w-full max-w-[280px] py-3.5 rounded-2xl font-black text-sm active:scale-95 transition-all app-pressable"
+          style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)', color: 'var(--app-text-muted)' }}
         >
           ← Back Home
         </button>
@@ -267,21 +281,21 @@ export default function WordMatchPage() {
   return (
     <div
       className="min-h-screen flex flex-col pb-24"
-      style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #1a0a2e) 0%, #0d0d1a 100%)' }}
+      style={{ background: 'linear-gradient(180deg, var(--theme-bg-tint, #EDF2FF), var(--app-bg))' }}
     >
       {/* Header */}
       <div className="px-5 pt-10 pb-4">
         <div className="flex items-center gap-3 mb-4">
-          <button onClick={() => setScreen('ready')} className="text-white/40 text-xl font-bold w-8">←</button>
-          <div className="flex-1 h-3 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
+          <button onClick={() => setScreen('ready')} className="text-xl font-bold app-muted w-8 app-pressable">←</button>
+          <div className="flex-1 h-3 rounded-full overflow-hidden" style={{ background: 'rgba(120,120,140,0.12)' }}>
             <div
               className="h-full rounded-full transition-all duration-500 relative overflow-hidden"
-              style={{ width: `${progress}%`, background: 'linear-gradient(90deg, #FFD60A, #FF9F0A)' }}
+              style={{ width: `${progress}%`, background: 'linear-gradient(90deg, #F5B731, #F5A623)' }}
             >
               <div className="absolute inset-0 shimmer" />
             </div>
           </div>
-          <span className="text-white/60 text-xs font-black w-10 text-right">{current}/{QUESTIONS_PER_ROUND}</span>
+          <span className="text-xs app-muted font-black w-10 text-right">{current}/{QUESTIONS_PER_ROUND}</span>
         </div>
 
         {/* Score & streak row */}
@@ -305,11 +319,11 @@ export default function WordMatchPage() {
           className={`w-40 h-40 rounded-3xl flex items-center justify-center transition-all duration-300 ${feedback === 'correct' ? 'scale-110' : feedback === 'wrong' ? 'animate-shake' : ''}`}
           style={{
             background: feedback === 'correct'
-              ? 'linear-gradient(135deg, #30D15840, #27AE7A40)'
+              ? 'linear-gradient(135deg, #4CAF6A40, #27AE7A40)'
               : feedback === 'wrong'
-              ? 'linear-gradient(135deg, #FF453A30, #FF2D5530)'
+              ? 'linear-gradient(135deg, #E0525230, #FF2D5530)'
               : q.modColor + '22',
-            border: `3px solid ${feedback === 'correct' ? '#30D158' : feedback === 'wrong' ? '#FF453A' : q.modColor + '55'}`,
+            border: `3px solid ${feedback === 'correct' ? '#4CAF6A' : feedback === 'wrong' ? '#E05252' : q.modColor + '55'}`,
             boxShadow: feedback === 'correct'
               ? '0 0 40px rgba(48,209,88,0.4)'
               : feedback === 'wrong'
@@ -321,27 +335,27 @@ export default function WordMatchPage() {
         </div>
 
         {q.hint && (
-          <p className="text-white/40 text-sm font-bold text-center italic">"{q.hint}"</p>
+          <p className="text-sm font-bold app-muted text-center italic">"{q.hint}"</p>
         )}
 
-        <p className="text-white/70 text-base font-black uppercase tracking-widest">What's this?</p>
+        <p className="text-base font-black app-muted uppercase tracking-widest">What's this?</p>
 
         {/* Choices */}
         <div className="w-full max-w-[360px] grid grid-cols-2 gap-3">
           {q.choices.map((choice) => {
             const isSelected = selected === choice
             const isCorrect = choice === q.correct
-            let bg = 'rgba(255,255,255,0.07)'
-            let border = 'rgba(255,255,255,0.12)'
-            let textColor = 'white'
+            let bg = 'rgba(70,75,96,0.06)'
+            let border = 'var(--app-border)'
+            let textColor = 'rgb(var(--foreground-rgb))'
 
-            if (isSelected && feedback === 'correct') { bg = 'rgba(48,209,88,0.25)'; border = '#30D158'; textColor = '#30D158' }
-            else if (isSelected && feedback === 'wrong') { bg = 'rgba(255,69,58,0.25)'; border = '#FF453A'; textColor = '#FF453A' }
-            else if (selected && isCorrect && feedback === 'wrong') { bg = 'rgba(48,209,88,0.2)'; border = '#30D158'; textColor = '#30D158' }
+            if (isSelected && feedback === 'correct') { bg = 'rgba(48,209,88,0.25)'; border = '#4CAF6A'; textColor = '#4CAF6A' }
+            else if (isSelected && feedback === 'wrong') { bg = 'rgba(255,69,58,0.25)'; border = '#E05252'; textColor = '#E05252' }
+            else if (selected && isCorrect && feedback === 'wrong') { bg = 'rgba(48,209,88,0.2)'; border = '#4CAF6A'; textColor = '#4CAF6A' }
 
             return (
               <button
-                key={choice}
+                    key={choice}
                 onClick={() => handleChoice(choice)}
                 disabled={!!selected}
                 className="rounded-2xl py-4 px-3 font-black text-base transition-all active:scale-95 disabled:cursor-default"
@@ -361,3 +375,4 @@ export default function WordMatchPage() {
     </div>
   )
 }
+

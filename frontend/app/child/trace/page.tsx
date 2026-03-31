@@ -10,6 +10,8 @@ const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
 export default function TracePage() {
   const router = useRouter()
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const canvasWrapRef = useRef<HTMLDivElement>(null)
+  const drawCountRef = useRef(0)
   const user = useStore(s => s.user)
   const currentStudent = useStore(s => s.currentStudent)
 
@@ -33,7 +35,7 @@ export default function TracePage() {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
     ctx.clearRect(0, 0, canvas.width, canvas.height)
-    ctx.fillStyle = '#1a1a2e'
+    ctx.fillStyle = '#FFF9EE'
     ctx.fillRect(0, 0, canvas.width, canvas.height)
 
     // Draw faint letter guide
@@ -52,6 +54,7 @@ export default function TracePage() {
 
     setProgress(0)
     setDrawCount(0)
+    drawCountRef.current = 0
     setAwarded(false)
   }
 
@@ -93,20 +96,18 @@ export default function TracePage() {
     ctx.lineWidth = 12
     ctx.lineCap = 'round'
     ctx.lineJoin = 'round'
-    ctx.strokeStyle = '#5E5CE6'
+    ctx.strokeStyle = '#5B7FE8'
     ctx.lineTo(pos.x, pos.y)
     ctx.stroke()
 
-    setDrawCount(c => {
-      const newCount = c + 1
-      const newProgress = Math.min(100, Math.round((newCount / 200) * 100))
-      setProgress(newProgress)
-
-      if (newProgress >= 100 && !completed.has(currentLetter)) {
-        handleComplete()
-      }
-      return newCount
-    })
+    drawCountRef.current += 1
+    if (drawCountRef.current % 4 !== 0) return
+    const newProgress = Math.min(100, Math.round((drawCountRef.current / 200) * 100))
+    setDrawCount(drawCountRef.current)
+    setProgress(newProgress)
+    if (newProgress >= 100 && !completed.has(currentLetter)) {
+      handleComplete()
+    }
   }
 
   const handleComplete = async () => {
@@ -139,13 +140,29 @@ export default function TracePage() {
 
   const endDraw = () => setDrawing(false)
 
+  useEffect(() => {
+    const canvas = canvasRef.current
+    const wrap = canvasWrapRef.current
+    if (!canvas || !wrap) return
+    const resizeCanvas = () => {
+      const width = Math.min(Math.max(wrap.clientWidth - 8, 280), 740)
+      const height = Math.round(width * 0.86)
+      canvas.width = width
+      canvas.height = height
+      drawLetterGuide(currentLetter)
+    }
+    resizeCanvas()
+    window.addEventListener('resize', resizeCanvas)
+    return () => window.removeEventListener('resize', resizeCanvas)
+  }, [currentLetter])
+
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#0f0f1a' }}>
+    <div className="min-h-screen flex flex-col app-page app-container">
       {/* Header */}
       <div className="flex items-center justify-between p-4">
-        <button onClick={() => router.push('/child')} className="text-white/60 font-bold">← Back</button>
-        <div className="text-white font-black">✍️ Trace Letters</div>
-        <div className="text-white/60 text-sm font-bold">{completed.size}/26</div>
+        <button onClick={() => router.push('/child')} className="app-muted font-bold app-pressable">← Back</button>
+        <div className="app-title animate-bob">✍️ Trace Letters</div>
+        <div className="app-muted text-sm font-bold">{completed.size}/26</div>
       </div>
 
       {/* Letter selector */}
@@ -154,11 +171,11 @@ export default function TracePage() {
           {LETTERS.map(l => (
             <button key={l}
               onClick={() => { setCurrentLetter(l); speak(l) }}
-              className="w-10 h-10 rounded-xl font-black text-sm flex-shrink-0 transition-all active:scale-90"
+              className="w-10 h-10 rounded-xl font-black text-sm flex-shrink-0 transition-all active:scale-90 app-pressable"
               style={{
-                background: currentLetter === l ? '#5E5CE6' : completed.has(l) ? '#30D15840' : 'rgba(255,255,255,0.1)',
-                color: currentLetter === l ? 'white' : completed.has(l) ? '#30D158' : 'rgba(255,255,255,0.6)',
-                border: currentLetter === l ? '2px solid #5E5CE6' : '1px solid rgba(255,255,255,0.1)',
+                background: currentLetter === l ? '#5B7FE8' : completed.has(l) ? '#4CAF6A40' : 'var(--app-surface)',
+                color: currentLetter === l ? 'white' : completed.has(l) ? '#4CAF6A' : 'rgba(70,75,96,0.75)',
+                border: currentLetter === l ? '2px solid #5B7FE8' : '1px solid var(--app-border)',
               }}>
               {l}
             </button>
@@ -168,13 +185,13 @@ export default function TracePage() {
 
       {/* Progress bar */}
       <div className="px-4 mb-3">
-        <div className="flex justify-between text-xs font-bold text-white/50 mb-1">
+        <div className="flex justify-between text-xs font-bold app-muted mb-1">
           <span>Tracing {currentLetter}</span>
           <span>{progress}%</span>
         </div>
-        <div className="bg-white/10 rounded-full h-3">
+        <div className="rounded-full h-3" style={{ background: 'rgba(120,120,140,0.18)' }}>
           <div className="h-3 rounded-full transition-all"
-            style={{ width: `${progress}%`, background: progress >= 100 ? '#30D158' : '#5E5CE6' }} />
+            style={{ width: `${progress}%`, background: progress >= 100 ? '#4CAF6A' : '#5B7FE8' }} />
         </div>
         {progress >= 100 && (
           <div className="text-green-400 text-xs font-black text-center mt-1">+3 ⭐ Earned!</div>
@@ -182,12 +199,13 @@ export default function TracePage() {
       </div>
 
       {/* Canvas */}
-      <div className="flex-1 px-3 flex items-center justify-center">
+      <div ref={canvasWrapRef} className="flex-1 px-3 flex items-center justify-center">
         <canvas
           ref={canvasRef}
           width={370}
           height={320}
-          className="rounded-2xl w-full touch-none"
+          className="rounded-2xl w-full max-w-[740px] touch-none"
+          style={{ maxHeight: '58vh', background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}
           onMouseDown={startDraw}
           onMouseMove={draw}
           onMouseUp={endDraw}
@@ -201,13 +219,13 @@ export default function TracePage() {
       {/* Bottom controls */}
       <div className="p-4 flex gap-3">
         <button onClick={clearCanvas}
-          className="flex-1 py-3 rounded-2xl font-black text-white"
-          style={{ background: '#FF453A40', border: '1px solid #FF453A80' }}>
+          className="flex-1 py-3 rounded-2xl font-black text-white app-pressable"
+          style={{ background: '#E0525240', border: '1px solid #E0525280' }}>
           Clear
         </button>
         <button onClick={nextLetter} disabled={LETTERS.indexOf(currentLetter) === LETTERS.length - 1}
-          className="flex-1 py-3 rounded-2xl font-black text-white disabled:opacity-40"
-          style={{ background: '#5E5CE6' }}>
+          className="flex-1 py-3 rounded-2xl font-black text-white disabled:opacity-40 app-pressable animate-sparkle-on-hover"
+          style={{ background: '#5B7FE8' }}>
           Next Letter →
         </button>
       </div>

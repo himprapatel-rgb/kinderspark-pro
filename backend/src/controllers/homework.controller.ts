@@ -2,10 +2,15 @@ import { Request, Response } from 'express'
 import prisma from '../prisma/client'
 import { sendPushNotification } from '../services/notification.service'
 import { checkAndAwardBadges } from '../services/badge.service'
+import { canParentAccessStudent, canTeacherAccessClass } from '../utils/accessControl'
 
 export async function listHomework(req: Request, res: Response) {
   try {
     const { classId } = req.query
+    if (req.user?.role === 'teacher' && classId) {
+      const ok = await canTeacherAccessClass(req.user.id, String(classId))
+      if (!ok) return res.status(403).json({ error: 'Insufficient permissions' })
+    }
     const where = classId ? { classId: String(classId) } : {}
     const homework = await prisma.homework.findMany({
       where,
@@ -25,6 +30,10 @@ export async function listHomework(req: Request, res: Response) {
 export async function createHomework(req: Request, res: Response) {
   try {
     const { title, description, moduleId, syllabusId, dueDate, assignedTo, starsReward, classId, aiGenerated } = req.body
+    if (req.user?.role === 'teacher') {
+      const ok = await canTeacherAccessClass(req.user.id, String(classId))
+      if (!ok) return res.status(403).json({ error: 'Insufficient permissions' })
+    }
     if (!title || !dueDate || !classId) {
       return res.status(400).json({ error: 'title, dueDate, and classId are required' })
     }
@@ -62,6 +71,12 @@ export async function createHomework(req: Request, res: Response) {
 export async function deleteHomework(req: Request, res: Response) {
   try {
     const { id } = req.params
+    if (req.user?.role === 'teacher') {
+      const target = await prisma.homework.findUnique({ where: { id }, select: { classId: true } })
+      if (!target) return res.status(404).json({ error: 'Homework not found' })
+      const ok = await canTeacherAccessClass(req.user.id, target.classId)
+      if (!ok) return res.status(403).json({ error: 'Insufficient permissions' })
+    }
     await prisma.homework.delete({ where: { id } })
     return res.json({ success: true })
   } catch (err) {
@@ -78,6 +93,9 @@ export async function completeHomework(req: Request, res: Response) {
       ? req.user.id
       : (req.body.studentId || req.user?.id)
     if (!studentId) return res.status(400).json({ error: 'studentId required' })
+    if (req.user?.role === 'parent' && !(await canParentAccessStudent(req.user.id, studentId))) {
+      return res.status(403).json({ error: 'Insufficient permissions' })
+    }
 
     const hw = await prisma.homework.findUnique({ where: { id } })
     if (!hw) return res.status(404).json({ error: 'Homework not found' })
@@ -120,6 +138,10 @@ export async function completeHomework(req: Request, res: Response) {
 export async function sendReminders(req: Request, res: Response) {
   try {
     const { classId } = req.body
+    if (req.user?.role === 'teacher' && classId) {
+      const ok = await canTeacherAccessClass(req.user.id, String(classId))
+      if (!ok) return res.status(403).json({ error: 'Insufficient permissions' })
+    }
     const tomorrow = new Date()
     tomorrow.setDate(tomorrow.getDate() + 1)
     const tomorrowStr = tomorrow.toISOString().slice(0, 10)
@@ -158,6 +180,12 @@ export async function sendReminders(req: Request, res: Response) {
 export async function getCompletions(req: Request, res: Response) {
   try {
     const { id } = req.params
+    if (req.user?.role === 'teacher') {
+      const hw = await prisma.homework.findUnique({ where: { id }, select: { classId: true } })
+      if (!hw) return res.status(404).json({ error: 'Homework not found' })
+      const ok = await canTeacherAccessClass(req.user.id, hw.classId)
+      if (!ok) return res.status(403).json({ error: 'Insufficient permissions' })
+    }
     const completions = await prisma.homeworkCompletion.findMany({
       where: { homeworkId: id },
       include: { student: true },

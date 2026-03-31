@@ -1,7 +1,7 @@
 'use client'
 import { useState, useCallback } from 'react'
 import { TUTOR_TOPICS, QB } from '@/lib/modules'
-import { getTutorFeedback, saveAISession } from '@/lib/api'
+import { getTutorFeedback, saveAISession, logQuizResponse } from '@/lib/api'
 
 interface AiTutorProps {
   studentId?: string
@@ -44,6 +44,15 @@ export default function AiTutor({ studentId, onComplete }: AiTutorProps) {
 
     const q = questions[qIndex]
     const isCorrect = choice === q.a
+    if (studentId && topic) {
+      void logQuizResponse({
+        studentId,
+        moduleId: `tutor:${topic}`,
+        questionId: `q${qIndex}`,
+        answer: choice,
+        isCorrect,
+      }).catch(() => {})
+    }
     if (isCorrect) {
       setCorrect((c) => c + 1)
       const newLevel = Math.min(5, level + 1)
@@ -67,7 +76,9 @@ export default function AiTutor({ studentId, onComplete }: AiTutorProps) {
           correct: totalCorrect,
           total: questions.length,
           topic: topicMeta?.label || topic,
-          maxLevel: maxLevel,
+          topicId: topic,
+          maxLevel,
+          ...(studentId ? { studentId } : {}),
         })
         setFeedback(fb.feedback)
       } catch {
@@ -133,7 +144,7 @@ export default function AiTutor({ studentId, onComplete }: AiTutorProps) {
           {stars >= 3 ? '🏆' : stars >= 2 ? '⭐' : '💪'}
         </div>
         <div className="text-white font-black text-2xl">Quiz Complete!</div>
-        <div className="text-5xl font-black" style={{ color: '#FFD60A' }}>
+        <div className="text-5xl font-black" style={{ color: '#F5B731' }}>
           {correct}/{questions.length}
         </div>
         <div className="flex gap-1">
@@ -151,9 +162,9 @@ export default function AiTutor({ studentId, onComplete }: AiTutorProps) {
         {/* Stats */}
         <div className="w-full grid grid-cols-3 gap-2">
           {[
-            { label: 'Accuracy', value: `${accuracy}%`, color: '#30D158' },
-            { label: 'Level', value: `Lv ${maxLevel}`, color: '#5E5CE6' },
-            { label: 'Stars', value: `+${stars}⭐`, color: '#FFD60A' },
+            { label: 'Accuracy', value: `${accuracy}%`, color: '#4CAF6A' },
+            { label: 'Level', value: `Lv ${maxLevel}`, color: '#5B7FE8' },
+            { label: 'Stars', value: `+${stars}⭐`, color: '#F5B731' },
           ].map((stat) => (
             <div
               key={stat.label}
@@ -169,7 +180,7 @@ export default function AiTutor({ studentId, onComplete }: AiTutorProps) {
         <button
           onClick={() => setScreen('topics')}
           className="w-full py-4 rounded-2xl font-black text-white text-base transition-all active:scale-95"
-          style={{ background: 'linear-gradient(135deg, #5E5CE6, #BF5AF2)' }}
+          style={{ background: 'linear-gradient(135deg, #5B7FE8, #8B6CC1)' }}
         >
           Play Again! 🎮
         </button>
@@ -194,7 +205,7 @@ export default function AiTutor({ studentId, onComplete }: AiTutorProps) {
               key={i}
               className="w-2 h-2 rounded-full transition-all"
               style={{
-                background: i < qIndex ? '#30D158' : i === qIndex ? '#5E5CE6' : 'rgba(255,255,255,0.2)'
+                background: i < qIndex ? '#4CAF6A' : i === qIndex ? '#5B7FE8' : 'rgba(255,255,255,0.2)'
               }}
             />
           ))}
@@ -210,7 +221,7 @@ export default function AiTutor({ studentId, onComplete }: AiTutorProps) {
         <div className="h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.1)' }}>
           <div
             className="h-full rounded-full transition-all"
-            style={{ width: `${(level / 5) * 100}%`, background: '#5E5CE6' }}
+            style={{ width: `${(level / 5) * 100}%`, background: '#5B7FE8' }}
           />
         </div>
       </div>
@@ -232,8 +243,8 @@ export default function AiTutor({ studentId, onComplete }: AiTutorProps) {
           let bg = 'rgba(255,255,255,0.08)'
           let border = 'rgba(255,255,255,0.15)'
           if (selected) {
-            if (isCorrect) { bg = 'rgba(48,209,88,0.25)'; border = '#30D158' }
-            else if (isSelected) { bg = 'rgba(255,69,58,0.25)'; border = '#FF453A' }
+            if (isCorrect) { bg = 'rgba(48,209,88,0.25)'; border = '#4CAF6A' }
+            else if (isSelected) { bg = 'rgba(255,69,58,0.25)'; border = '#E05252' }
           }
 
           return (

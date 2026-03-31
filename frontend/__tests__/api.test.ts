@@ -32,8 +32,7 @@ describe('Token refresh logic (mocked fetch)', () => {
   beforeEach(() => {
     // Stub localStorage
     const store: Record<string, string> = {
-      'kinderspark-refresh': 'valid-refresh-token',
-      'kinderspark-store': JSON.stringify({ state: { token: 'old.access.token' } }),
+      'kinderspark-store': JSON.stringify({ state: { token: null } }),
     }
 
     vi.stubGlobal('localStorage', {
@@ -51,8 +50,8 @@ describe('Token refresh logic (mocked fetch)', () => {
   })
 
   it('retries with new token after 401 when refresh succeeds', async () => {
-    // First call: 401 (access token expired)
-    // Second call (refresh): 200 with new token
+    // First call: 401 (access expired)
+    // Second call (refresh via cookie): 200
     // Third call (retry): 200 with data
 
     fetchSpy
@@ -64,7 +63,7 @@ describe('Token refresh logic (mocked fetch)', () => {
       .mockResolvedValueOnce({
         status: 200,
         ok: true,
-        json: async () => ({ token: 'new.access.token', refreshToken: 'new-refresh-token' }),
+        json: async () => ({ success: true }),
       } as Response)
       .mockResolvedValueOnce({
         status: 200,
@@ -97,7 +96,7 @@ describe('Token refresh logic (mocked fetch)', () => {
     await expect(getStudents()).rejects.toThrow('Session expired')
   })
 
-  it('makes a request with the Bearer token from localStorage', async () => {
+  it('makes cookie-based request with credentials include', async () => {
     fetchSpy.mockResolvedValueOnce({
       status: 200,
       ok: true,
@@ -110,9 +109,7 @@ describe('Token refresh logic (mocked fetch)', () => {
     expect(fetchSpy).toHaveBeenCalledWith(
       expect.stringContaining('/students'),
       expect.objectContaining({
-        headers: expect.objectContaining({
-          Authorization: 'Bearer old.access.token',
-        }),
+        credentials: 'include',
       })
     )
   })
@@ -146,23 +143,20 @@ describe('verifyPin', () => {
     vi.unstubAllGlobals()
   })
 
-  it('stores refreshToken in localStorage after successful PIN verification', async () => {
+  it('returns successful response after PIN verification', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
       status: 200,
       ok: true,
       json: async () => ({
         success: true,
-        token: 'access.token',
-        refreshToken: 'the-refresh-token',
         role: 'teacher',
         user: { id: 'u-1', name: 'Ms Smith' },
       }),
     } as Response)
 
     const { verifyPin } = await import('../lib/api')
-    const result = await verifyPin('1234', 'teacher')
+    const result = await verifyPin('1234', 'teacher', 'SUN001')
 
     expect(result.success).toBe(true)
-    expect(localStorage.setItem).toHaveBeenCalledWith('kinderspark-refresh', 'the-refresh-token')
   })
 })

@@ -1,0 +1,133 @@
+name: Build iOS App
+
+on:
+  workflow_dispatch:        # Manual trigger from GitHub UI
+    inputs:
+      build_type:
+        description: 'Build type'
+        required: true
+        default: 'debug'
+        type: choice
+        options:
+          - debug
+          - release
+
+jobs:
+  build-ios:
+    name: 🍎 Build iOS App
+    runs-on: macos-14       # Apple Silicon Mac runner (M1)
+    timeout-minutes: 30
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 📲 Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: 🎨 Generate iOS assets (icons + splash screens)
+        working-directory: frontend
+        run: node scripts/generate-ios-assets.js
+
+      - name: 🔄 Capacitor Sync
+        working-directory: frontend
+        run: |
+          npx cap sync ios
+          # Copy our custom icon and splash screens
+          cp assets/icon-1024.png ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png
+          cp assets/splash-universal.png ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732.png
+          cp assets/splash-dark.png ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732-1.png
+          cp assets/splash-dark.png ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732-2.png
+
+      - name: 📋 Show Xcode version
+        run: |
+          xcodebuild -version
+          xcrun simctl list devices available | head -20
+
+      - name: 🏗️ Build iOS App (Debug - no signing)
+        if: inputs.build_type == 'debug'
+        working-directory: frontend/ios/App
+        run: |
+          xcodebuild build \
+            -project App.xcodeproj \
+            -scheme App \
+            -destination 'generic/platform=iOS Simulator' \
+            -configuration Debug \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            | tail -20
+
+      - name: 🏗️ Build iOS App (Release - archive)
+        if: inputs.build_type == 'release'
+        working-directory: frontend/ios/App
+        run: |
+          xcodebuild archive \
+            -project App.xcodeproj \
+            -scheme App \
+            -archivePath ${{ runner.temp }}/KinderSparkPro.xcarchive \
+            -destination 'generic/platform=iOS' \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            | tail -30
+
+      - name: 📦 Package .app for download (Debug)
+        if: inputs.build_type == 'debug'
+        working-directory: frontend/ios/App
+        run: |
+          APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name "App.app" -path "*/Debug-iphonesimulator/*" | head -1)
+          if [ -n "$APP_PATH" ]; then
+            cd "$(dirname "$APP_PATH")"
+            zip -r ${{ runner.temp }}/KinderSparkPro-debug.zip App.app
+            echo "✅ Debug .app packaged"
+          else
+            echo "⚠️ Could not find .app bundle"
+          fi
+
+      - name: 📦 Package archive for download (Release)
+        if: inputs.build_type == 'release'
+        run: |
+          if [ -d "${{ runner.temp }}/KinderSparkPro.xcarchive" ]; then
+            cd ${{ runner.temp }}
+            zip -r KinderSparkPro-release.zip KinderSparkPro.xcarchive
+            echo "✅ Release archive packaged"
+          fi
+
+      - name: 📤 Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: KinderSparkPro-${{ inputs.build_type }}-${{ github.run_number }}
+          path: |
+            ${{ runner.temp }}/KinderSparkPro-debug.zip
+            ${{ runner.temp }}/KinderSparkPro-release.zip
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: ✅ Build Summary
+        run: |
+          echo "## 🍎 iOS Build Complete!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build type:** ${{ inputs.build_type }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **App ID:** com.kinderspark.pro" >> $GITHUB_STEP_SUMMARY
+          echo "- **App Name:** KinderSpark Pro" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ inputs.build_type }}" == "debug" ]; then
+            echo "### 📱 Debug Build" >> $GITHUB_STEP_SUMMARY
+            echo "The debug .app can run on iOS Simulator." >> $GITHUB_STEP_SUMMARY
+            echo "Download the artifact above and drag into Simulator." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### 🚀 Release Archive" >> $GITHUB_STEP_SUMMARY
+            echo "To submit to App Store, you need:" >> $GITHUB_STEP_SUMMARY
+            echo "1. Apple Developer Account (\$99/yr)" >> $GITHUB_STEP_SUMMARY
+            echo "2. Add signing certificates as GitHub Secrets" >> $GITHUB_STEP_SUMMARY
+            echo "3. Re-run with code signing enabled" >> $GITHUB_STEP_SUMMARY
+          fi

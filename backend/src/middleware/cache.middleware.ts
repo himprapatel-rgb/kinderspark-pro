@@ -8,12 +8,13 @@ interface CacheEntry {
 const store = new Map<string, CacheEntry>()
 
 // Clean stale entries every 5 minutes
-setInterval(() => {
+const cacheGcTimer = setInterval(() => {
   const now = Date.now()
   for (const [key, entry] of store.entries()) {
     if (entry.expiresAt <= now) store.delete(key)
   }
 }, 5 * 60 * 1000)
+cacheGcTimer.unref?.()
 
 export function cache(ttlSeconds = 30) {
   return (req: Request, res: Response, next: NextFunction) => {

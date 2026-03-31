@@ -10,6 +10,7 @@
 
 import { aiComplete } from './router'
 import { makeCacheKey, getCachedResponse, setCachedResponse } from '../cache.service'
+import { buildPoemListenPrompt, buildTutorHintSparkPrompt } from './promptTemplates'
 
 export { getProviderStatus } from './router'
 
@@ -76,9 +77,11 @@ export async function generateTutorFeedback(
   correct: number,
   total: number,
   topic: string,
-  maxLevel: number
+  maxLevel: number,
+  learnerContext?: string,
+  memoryBlock?: string,
 ): Promise<string> {
-  const cacheKey = makeCacheKey('feedback', { correct, total, topic, maxLevel })
+  const cacheKey = makeCacheKey('feedback', { correct, total, topic, maxLevel, learnerContext, memoryBlock })
   const cached = await getCachedResponse(cacheKey)
   if (cached) return cached
 
@@ -126,9 +129,10 @@ export async function generateStudentReport(
   hwDone: number,
   hwTotal: number,
   aiSessions: number,
-  aiBestLevel: number
+  aiBestLevel: number,
+  learnerContext?: string,
 ): Promise<string> {
-  const cacheKey = makeCacheKey('report', { studentName, stars, hwDone, hwTotal, aiSessions, aiBestLevel })
+  const cacheKey = makeCacheKey('report', { studentName, stars, hwDone, hwTotal, aiSessions, aiBestLevel, learnerContext })
   const cached = await getCachedResponse(cacheKey)
   if (cached) return cached
 
@@ -181,9 +185,10 @@ export async function generateRecommendations(
   name: string,
   stars: number,
   progressSummary: string,
-  sessionSummary: string
+  sessionSummary: string,
+  learnerContext?: string,
 ): Promise<Array<{ title: string; reason: string; moduleId: string }>> {
-  const cacheKey = makeCacheKey('recommendations', { name, stars, progressSummary, sessionSummary })
+  const cacheKey = makeCacheKey('recommendations', { name, stars, progressSummary, sessionSummary, learnerContext })
   const cached = await getCachedResponse(cacheKey)
   if (cached) return parseJSON(cached)
 
@@ -200,4 +205,63 @@ Respond ONLY with valid JSON array: [{"title":"Learn Colors","reason":"Short enc
   )
   await setCachedResponse(cacheKey, 'recommendations', text, AI_MODEL)
   return parseJSON(text)
+}
+
+export interface GeneratedPoemResult {
+  title: string
+  poem: string
+  provider: string
+}
+
+export async function generatePoemFromSpark(
+  spark: string,
+  targetMinutes: number,
+  learnerContext?: string,
+): Promise<GeneratedPoemResult> {
+  const cacheKey = makeCacheKey('poem', { spark, targetMinutes, learnerContext })
+  const cached = await getCachedResponse(cacheKey)
+  if (cached) {
+    const parsed = parseJSON<{ title: string; poem: string; provider: string }>(cached)
+    return parsed
+  }
+
+  const { text, provider } = await aiComplete(
+    'poem-listen-spark',
+    buildPoemListenPrompt(spark, targetMinutes, learnerContext),
+    { maxTokens: 4096 }
+  )
+  const parsed = parseJSON<{ title: string; poem: string }>(text)
+  if (!parsed?.title || !parsed?.poem) throw new Error('Invalid poem response')
+  const result: GeneratedPoemResult = { title: parsed.title, poem: parsed.poem, provider }
+  await setCachedResponse(cacheKey, 'poem', JSON.stringify(result), AI_MODEL)
+  return result
+}
+
+export interface TutorHintSparkResult {
+  hint: string
+  provider: string
+}
+
+export async function generateTutorHintFromSpark(
+  spark: string,
+  topicContext: string,
+  learnerContext?: string,
+): Promise<TutorHintSparkResult> {
+  const cacheKey = makeCacheKey('tutor-hint', { spark, topicContext, learnerContext })
+  const cached = await getCachedResponse(cacheKey)
+  if (cached) {
+    const parsed = parseJSON<{ hint: string; provider: string }>(cached)
+    return parsed
+  }
+
+  const { text, provider } = await aiComplete(
+    'tutor-hint-spark',
+    buildTutorHintSparkPrompt(spark, topicContext, learnerContext),
+    { maxTokens: 220 }
+  )
+  const parsed = parseJSON<{ hint: string }>(text)
+  if (!parsed?.hint) throw new Error('Invalid hint response')
+  const result: TutorHintSparkResult = { hint: parsed.hint.trim(), provider }
+  await setCachedResponse(cacheKey, 'tutor-hint', JSON.stringify(result), AI_MODEL)
+  return result
 }

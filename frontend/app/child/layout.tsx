@@ -8,18 +8,18 @@ const THEME_SECONDARY: Record<string, string> = {
   th_def:    '#8b1cf7',
   th_ocean:  '#5856D6',
   th_forest: '#27AE7A',
-  th_sunset: '#FF6B35',
+  th_sunset: '#D4881A',
   th_rose:   '#FF2D55',
   th_galaxy: '#7B2FBE',
 }
 
 const THEME_BG_TINT: Record<string, string> = {
-  th_def:    '#1a0a2e',
-  th_ocean:  '#0a1a2e',
-  th_forest: '#0a1e12',
-  th_sunset: '#1e100a',
-  th_rose:   '#1e0a12',
-  th_galaxy: '#120a1e',
+  th_def:    '#EDF2FF',
+  th_ocean:  '#E8F4FC',
+  th_forest: '#E8F8ED',
+  th_sunset: '#FFF7E6',
+  th_rose:   '#FDF0F0',
+  th_galaxy: '#F2EEFA',
 }
 
 const NAV_TABS = [
@@ -77,7 +77,7 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
   const themeId = (student as any)?.selectedTheme || 'th_def'
   const theme = SHOP_THS.find(t => t.id === themeId) || SHOP_THS[0]
   const secondary = THEME_SECONDARY[themeId] || '#8b1cf7'
-  const bgTint = THEME_BG_TINT[themeId] || '#1a0a2e'
+  const bgTint = THEME_BG_TINT[themeId] || '#EDF2FF'
 
   // Determine active tab (exact match for /child, prefix match otherwise)
   const activeIdx = NAV_TABS.findIndex(t =>
@@ -100,12 +100,12 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
         <div style={{
           position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', flexDirection: 'column',
           alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 32,
-          background: 'linear-gradient(135deg, #0d0824, #080614)',
+          background: 'linear-gradient(135deg, rgba(94,92,230,0.95), rgba(191,90,242,0.9))',
           fontFamily: 'Nunito, sans-serif',
         }}>
           <div style={{ fontSize: 72, marginBottom: 16, animation: 'bounce 1s infinite' }}>🌟</div>
           <h1 style={{ color: 'white', fontWeight: 900, fontSize: 28, margin: '0 0 12px' }}>Great learning today!</h1>
-          <p style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 700, fontSize: 16, margin: '0 0 8px' }}>
+          <p style={{ color: 'var(--app-text-muted)', fontWeight: 700, fontSize: 16, margin: '0 0 8px' }}>
             You've used your {limitMin} minutes for today.
           </p>
           <p style={{ color: 'rgba(255,255,255,0.4)', fontWeight: 700, fontSize: 14, margin: 0 }}>
@@ -122,42 +122,43 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
 
       {children}
 
-      {/* Bottom Tab Bar */}
+      {/* Bottom Tab Bar — fixed; timer floats above when screen limit is on */}
       <div
-        className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto flex items-center justify-around z-40"
-        style={{ position: 'relative' }}
+        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[960px] flex items-center justify-around z-40 rounded-t-2xl"
+        style={{
+          background: 'rgba(255,255,255,0.95)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          borderTop: '1px solid var(--app-border)',
+          paddingBottom: 'max(14px, env(safe-area-inset-bottom))',
+          paddingTop: 10,
+          boxShadow: '0 -4px 20px rgba(20,25,45,0.08)',
+        }}
       >
-        {/* Timer badge */}
         {limitMin > 0 && !timeUp && remainingSec <= 300 && (
-          <div style={{
-            position: 'absolute', top: -32, left: '50%', transform: 'translateX(-50%)',
-            background: remainingSec <= 60 ? 'rgba(255,69,58,0.9)' : 'rgba(255,159,10,0.9)',
-            borderRadius: 20, padding: '3px 10px', fontSize: 10, fontWeight: 900, color: 'white',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.4)', whiteSpace: 'nowrap',
-          }}>
+          <div
+            className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-9 z-50"
+            style={{
+              background: remainingSec <= 60 ? 'rgba(255,69,58,0.9)' : 'rgba(255,159,10,0.9)',
+              borderRadius: 20,
+              padding: '3px 10px',
+              fontSize: 10,
+              fontWeight: 900,
+              color: 'white',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.4)',
+              whiteSpace: 'nowrap',
+            }}
+          >
             ⏱ {remainingMin} min left
           </div>
         )}
-      </div>
-      <div
-        className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto flex items-center justify-around z-40"
-        style={{
-          background: 'rgba(10,8,20,0.97)',
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
-          borderTop: '1px solid rgba(255,255,255,0.08)',
-          paddingBottom: 'max(14px, env(safe-area-inset-bottom))',
-          paddingTop: 10,
-          boxShadow: '0 -8px 32px rgba(0,0,0,0.5)',
-        }}
-      >
         {NAV_TABS.map((tab, i) => {
           const active = i === activeIdx
           return (
             <button
               key={tab.path}
               onClick={() => router.push(tab.path)}
-              className="flex flex-col items-center gap-1 transition-all duration-200"
+              className="flex flex-col items-center gap-1 transition-all duration-200 app-pressable"
               style={{ minWidth: 52 }}
             >
               <div
@@ -178,7 +179,7 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
               </div>
               <span
                 className="text-[9px] font-black transition-colors duration-200"
-                style={{ color: active ? theme.color : 'rgba(255,255,255,0.3)' }}
+                style={{ color: active ? theme.color : 'rgba(70, 75, 96, 0.65)' }}
               >
                 {tab.label}
               </span>

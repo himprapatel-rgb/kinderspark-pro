@@ -1,9 +1,41 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useAppStore as useStore } from '@/store/appStore'
-import { getHomework, getMessages, sendMessage, getAISessions, getAttendanceSummary, markAllMessagesRead, completeHomework, createMessageStream } from '@/lib/api'
+import { Loading, InlineEmpty } from '@/components/UIStates'
+import TopBarActions from '@/components/TopBarActions'
+import WeatherChip from '@/components/WeatherChip'
+import LocationCard from '@/components/LocationCard'
+import ParentSidebar from '@/components/ParentSidebar'
+import ActivityFeed from '@/components/ActivityFeed'
+import {
+  getHomework, getMessages, sendMessage, getAISessions, getAttendanceSummary, markAllMessagesRead,
+  completeHomework, createMessageStream, getMyProfile, getProgress, getStudentBadges,
+  getMessageThreads, getThreadMessages, createMessageThread, sendThreadMessage, lookupMessageRecipient, getMessageRecipients,
+  getDailyMission,
+  deletePrivacyStudentData,
+} from '@/lib/api'
+import { MODS } from '@/lib/modules'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
+import { BarChart3, Bell, Home, Users, MessageSquare, Download } from 'lucide-react'
+import { useToast } from '@/components/Toast'
+import PageTransition from '@/components/PageTransition'
+import { usePullToRefresh, PullIndicator } from '@/hooks/usePullToRefresh'
+import { hapticTap, hapticSuccess, nativeShare } from '@/lib/capacitor'
+import { useTranslation } from '@/hooks/useTranslation'
+import KidAvatar from '@/components/KidAvatar'
+
+const ProgressCharts = dynamic(() => import('@/components/ProgressCharts'), {
+  ssr: false,
+  loading: () => (
+    <div
+      className="mx-3 mb-4 h-48 rounded-2xl animate-pulse"
+      style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}
+    />
+  ),
+})
 
 // SVG ring component for circular progress
 function Ring({ pct, color, size = 80, stroke = 8 }: { pct: number; color: string; size?: number; stroke?: number }) {
@@ -12,29 +44,61 @@ function Ring({ pct, color, size = 80, stroke = 8 }: { pct: number; color: strin
   const dash = (pct / 100) * circ
   return (
     <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth={stroke} />
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(120,120,140,0.15)" strokeWidth={stroke} />
       <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={stroke}
         strokeDasharray={`${dash} ${circ}`} strokeLinecap="round" style={{ transition: 'stroke-dasharray 0.6s ease' }} />
     </svg>
   )
 }
 
+function mapThreadMessageToLegacy(msg: any) {
+  const raw = String(msg?.body || '')
+  const lines = raw.split('\n')
+  const subjectLine = lines[0]?.startsWith('Subject: ') ? lines[0].replace('Subject: ', '').trim() : ''
+  const cleanBody = subjectLine ? lines.slice(2).join('\n').trim() : raw
+  return {
+    id: msg.id,
+    from: msg.senderUser?.displayName || 'Teacher',
+    fromId: msg.senderUserId,
+    to: 'parent',
+    subject: subjectLine || (msg.kind === 'class_update' ? 'Class Update' : 'Message'),
+    body: cleanBody,
+    createdAt: msg.sentAt,
+    read: !!msg.receipts?.[0]?.seenAt,
+  }
+}
+
 export default function ParentPage() {
   const router = useRouter()
   const user = useStore(s => s.user)
-  const logout = useStore(s => s.logout)
+  const role = useStore(s => s.role)
+  const dailyMission = useStore(s => s.dailyMission)
+  const setDailyMission = useStore(s => s.setDailyMission)
+  const { t } = useTranslation()
+  const trackKpiEvent = useStore(s => s.trackKpiEvent)
+  const toast = useToast()
 
   const [tab, setTab] = useState(0)
   const [student, setStudent] = useState<any>(null)
+  const [children, setChildren] = useState<Array<{ id: string; name: string; avatar?: string; classId?: string; ownedItems?: string[] }>>([])
   const [homework, setHomework] = useState<any[]>([])
   const [messages, setMessages] = useState<any[]>([])
+  const [threadMode, setThreadMode] = useState<{ enabled: boolean; threadId?: string }>({ enabled: false })
   const [aiSessions, setAiSessions] = useState<any[]>([])
   const [attendance, setAttendance] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [showReply, setShowReply] = useState<any>(null)
   const [replyBody, setReplyBody] = useState('')
+  const [directMsgForm, setDirectMsgForm] = useState({ profileId: '', subject: '', body: '' })
+  const [directRecipient, setDirectRecipient] = useState<any>(null)
+  const [directLookupState, setDirectLookupState] = useState<'idle' | 'loading' | 'error' | 'ok'>('idle')
+  const [recipientGroups, setRecipientGroups] = useState<{ kids: any[]; teachers: any[]; parents: any[]; school: any[] }>({ kids: [], teachers: [], parents: [], school: [] })
+  const [directSending, setDirectSending] = useState(false)
   const [markingDone, setMarkingDone] = useState<string | null>(null)
   const [unreadMsgs, setUnreadMsgs] = useState(0)
+  const [progressData, setProgressData] = useState<any[]>([])
+  const [badgesData, setBadgesData] = useState<any[]>([])
+  const [consentInfo, setConsentInfo] = useState<{ hasConsent: boolean } | null>(null)
   const { permission: notifPermission, subscribe: subscribeNotif } = usePushNotifications(student?.id ?? user?.id)
 
   // SSE / fallback polling refs
@@ -43,8 +107,38 @@ export default function ParentPage() {
 
   useEffect(() => {
     if (!user) { router.push('/'); return }
-    setStudent(user)
-    loadData(user)
+    if (role !== 'parent') { router.push('/'); return }
+    getMessageRecipients().then((rows) => setRecipientGroups(rows || { kids: [], teachers: [], parents: [], school: [] })).catch(() => {})
+    ;(async () => {
+      try {
+        const profile = await getMyProfile().catch(() => null)
+        const linkedChildren = (profile?.parentProfile?.children || [])
+          .map((link: any) => {
+            const sp = link.studentProfile
+            const activeEnrollment = (sp?.enrollments || [])[0]
+            return {
+              id: sp?.legacyStudentId || sp?.userId || '',
+              name: sp?.user?.displayName || 'Child',
+              avatar: sp?.user?.avatar || '🧒',
+              classId: activeEnrollment?.classGroup?.legacyClassId || user.classId,
+              classGroupId: activeEnrollment?.classGroup?.id || null,
+              ownedItems: sp?.legacyStudent?.ownedItems || [],
+            }
+          })
+          .filter((c: any) => c.id)
+        if (linkedChildren.length > 0) {
+          setChildren(linkedChildren)
+          setStudent(linkedChildren[0])
+          loadData(linkedChildren[0])
+        } else {
+          setStudent(user)
+          loadData(user)
+        }
+      } catch {
+        setStudent(user)
+        loadData(user)
+      }
+    })()
   }, [user, router])
 
   useEffect(() => {
@@ -52,6 +146,14 @@ export default function ParentPage() {
       markAllMessagesRead(student.classId, student.id).then(() => setUnreadMsgs(0)).catch(() => {})
     }
   }, [tab])
+
+  useEffect(() => {
+    if (!student || loading || tab !== 0) return
+    const key = `ks_parent_digest_viewed_${student.id}_${new Date().toISOString().slice(0, 10)}`
+    if (typeof window !== 'undefined' && localStorage.getItem(key)) return
+    trackKpiEvent({ category: 'engagement', name: 'parent_weekly_digest_viewed' })
+    if (typeof window !== 'undefined') localStorage.setItem(key, '1')
+  }, [student, loading, tab, trackKpiEvent])
 
   // Real-time messages via SSE (falls back to 10s polling if not supported)
   useEffect(() => {
@@ -133,25 +235,64 @@ export default function ParentPage() {
 
   const loadData = async (u: any) => {
     try {
-      const [hw, msgs, sessions] = await Promise.all([
-        getHomework(u.classId),
-        getMessages({ classId: u.classId }),
-        getAISessions(u.id),
+      const [hw, sessions, prog] = await Promise.all([
+        u.classId ? getHomework(u.classId) : Promise.resolve([]),
+        getAISessions(u.id).catch(() => []),
+        getProgress(u.id).catch(() => []),
       ])
-      setHomework(hw)
+      let msgs: any[] = []
+      if (u.classGroupId) {
+        try {
+          const threads = await getMessageThreads({ scopeType: 'classGroup', classGroupId: u.classGroupId })
+          const thread = Array.isArray(threads) ? threads[0] : null
+          if (thread?.id) {
+            const rows = await getThreadMessages(thread.id)
+            setThreadMode({ enabled: true, threadId: thread.id })
+            msgs = rows.map(mapThreadMessageToLegacy)
+          } else {
+            setThreadMode({ enabled: false, threadId: undefined })
+            if (u.classId) msgs = await getMessages({ classId: u.classId }).catch(() => [])
+          }
+        } catch {
+          setThreadMode({ enabled: false, threadId: undefined })
+          if (u.classId) msgs = await getMessages({ classId: u.classId }).catch(() => [])
+        }
+      } else if (u.classId) {
+        setThreadMode({ enabled: false, threadId: undefined })
+        msgs = await getMessages({ classId: u.classId }).catch(() => [])
+      }
+      setHomework(hw || [])
       setMessages(msgs)
       setAiSessions(sessions || [])
+      setProgressData(prog || [])
       const unread = msgs.filter((m: any) => !m.read && m.fromId !== u.id).length
       setUnreadMsgs(unread)
-      getAttendanceSummary(u.classId, 30).then(summary => {
-        const mine = summary?.find((s: any) => s.studentId === u.id)
-        setAttendance(mine || null)
-      }).catch(() => {})
+      if (u.classId) {
+        getAttendanceSummary(u.classId, 30).then(summary => {
+          const mine = summary?.find((s: any) => s.studentId === u.id)
+          setAttendance(mine || null)
+        }).catch(() => {})
+      }
+      getStudentBadges(u.id).then(b => setBadgesData(b || [])).catch(() => {})
+      if (u.classId && u.id) {
+        getDailyMission({ studentId: u.id, classId: u.classId })
+          .then((m) => setDailyMission(m))
+          .catch(() => setDailyMission(null))
+      } else {
+        setDailyMission(null)
+      }
     } catch (e) {
       console.error(e)
     } finally {
       setLoading(false)
     }
+  }
+
+  const selectChild = (childId: string) => {
+    const next = children.find((c) => c.id === childId)
+    if (!next) return
+    setStudent(next)
+    loadData(next)
   }
 
   const pendingHW = homework.filter(hw => {
@@ -168,62 +309,293 @@ export default function ParentPage() {
     ? Math.round(aiSessions.reduce((a: number, s: any) => a + (s.accuracy || 0), 0) / aiSessions.length)
     : 0
   const totalAIStars = aiSessions.reduce((a: number, s: any) => a + (s.stars || 0), 0)
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+  const weeklyCompleted = homework.filter((hw: any) =>
+    hw.completions?.some((c: any) =>
+      c.studentId === student?.id && c.done && c.completedAt && new Date(c.completedAt) >= sevenDaysAgo
+    )
+  ).length
+  const weeklyAISessions = aiSessions.filter((s: any) => s.createdAt && new Date(s.createdAt) >= sevenDaysAgo).length
+  const weeklyAvgAccuracy = weeklyAISessions
+    ? Math.round(
+        aiSessions
+          .filter((s: any) => s.createdAt && new Date(s.createdAt) >= sevenDaysAgo)
+          .reduce((a: number, s: any) => a + (s.accuracy || 0), 0) / weeklyAISessions
+      )
+    : totalAccuracy
+  const weeklyDigestText = weeklyCompleted >= 3
+    ? 'Strong learning momentum this week. Keep the same routine.'
+    : weeklyCompleted > 0
+      ? 'Good progress this week. A short daily check-in can boost confidence.'
+      : 'Light activity this week. Try one 5-minute mission together today.'
+  const todayAction = pendingHW[0] || null
+  const missionAction = !todayAction && dailyMission ? dailyMission : null
+  const insightText = pendingHW.length > 0
+    ? `${pendingHW.length} homework item${pendingHW.length > 1 ? 's' : ''} need attention today.`
+    : hwPct >= 80
+      ? 'Great momentum this week. Keep the routine going.'
+      : 'Progress is steady. A short 5-minute practice can help a lot.'
+
+  // ── Computed chart data for ProgressCharts ─────────────────────
+  const skillsForChart = useMemo(() => {
+    // Group AI sessions by topic → average accuracy per topic
+    const topicMap: Record<string, { total: number; count: number }> = {}
+    aiSessions.forEach((s: any) => {
+      const key = (s.topic || 'unknown').toLowerCase()
+      if (!topicMap[key]) topicMap[key] = { total: 0, count: 0 }
+      topicMap[key].total += s.accuracy || 0
+      topicMap[key].count += 1
+    })
+
+    // Also include module progress as skills
+    const moduleMap: Record<string, number> = {}
+    progressData.forEach((p: any) => {
+      const mod = MODS.find(m => m.id === p.moduleId)
+      if (mod) {
+        const pctFromCards = Math.round((p.cards / mod.items.length) * 100)
+        const hasScore = typeof p.score === 'number'
+        moduleMap[p.moduleId] = hasScore ? Math.min(100, Math.max(0, p.score)) : pctFromCards
+      }
+    })
+
+    const colors = ['#5E5CE6', '#30D158', '#FF453A', '#FF9F0A', '#BF5AF2', '#64D2FF', '#FF6B6B', '#4CAF6A']
+    const emojiMap: Record<string, string> = {
+      numbers: '🔢', letters: '🔤', animals: '🐾', colors: '🎨',
+      shapes: '🔷', fruits: '🍎', food: '🍔', weather: '⛅',
+      vehicles: '🚗', feelings: '😊', habits: '🌟', manners: '💝',
+    }
+
+    const skills: { label: string; emoji: string; value: number; color: string }[] = []
+    let ci = 0
+
+    // From AI sessions
+    Object.entries(topicMap).forEach(([topic, data]) => {
+      const avg = Math.round(data.total / data.count)
+      skills.push({
+        label: topic.charAt(0).toUpperCase() + topic.slice(1),
+        emoji: emojiMap[topic] || '📚',
+        value: avg,
+        color: colors[ci % colors.length],
+      })
+      ci++
+    })
+
+    // From module progress (only add if not already covered by AI sessions)
+    Object.entries(moduleMap).forEach(([modId, pct]) => {
+      if (!topicMap[modId]) {
+        const mod = MODS.find(m => m.id === modId)
+        skills.push({
+          label: mod?.title || modId,
+          emoji: mod?.icon || '📘',
+          value: pct,
+          color: colors[ci % colors.length],
+        })
+        ci++
+      }
+    })
+
+    return skills
+  }, [aiSessions, progressData])
+
+  const weeklyForChart = useMemo(() => {
+    // Group AI sessions by date (last 7 days)
+    const dayMap: Record<string, { accuracy: number[]; sessions: number; stars: number }> = {}
+    const now = Date.now()
+    const daysBack = 7
+
+    for (let i = daysBack - 1; i >= 0; i--) {
+      const d = new Date(now - i * 86400_000)
+      const key = d.toISOString().slice(0, 10)
+      dayMap[key] = { accuracy: [], sessions: 0, stars: 0 }
+    }
+
+    aiSessions.forEach((s: any) => {
+      if (!s.createdAt) return
+      const key = new Date(s.createdAt).toISOString().slice(0, 10)
+      if (dayMap[key]) {
+        dayMap[key].accuracy.push(s.accuracy || 0)
+        dayMap[key].sessions += 1
+        dayMap[key].stars += s.stars || 0
+      }
+    })
+
+    return Object.entries(dayMap).map(([dateStr, d]) => ({
+      label: new Date(dateStr).toLocaleDateString('en-US', { weekday: 'short' }),
+      accuracy: d.accuracy.length ? Math.round(d.accuracy.reduce((a, v) => a + v, 0) / d.accuracy.length) : 0,
+      sessions: d.sessions,
+      stars: d.stars,
+    }))
+  }, [aiSessions])
+
+  const chartBadges = useMemo(() => {
+    return (badgesData || []).map((b: any) => ({
+      name: b.name || b.badge || '',
+      emoji: b.emoji || '🏅',
+      earnedAt: b.earnedAt || b.createdAt || '',
+    }))
+  }, [badgesData])
 
   const handleMarkDone = async (hwId: string) => {
     if (!student || markingDone) return
-    setMarkingDone(hwId)
-    try {
-      await completeHomework(hwId, student.id)
-      await loadData(user)
-    } catch (e: any) { alert(e.message) }
-    finally { setMarkingDone(null) }
+    toast.confirm('Are you sure your child has completed this homework? This will notify the teacher.', async () => {
+      setMarkingDone(hwId)
+      try {
+        await completeHomework(hwId, student.id)
+        await loadData(user)
+      } catch (e: any) { toast.error(e.message) }
+      finally { setMarkingDone(null) }
+    })
   }
 
   const handleReply = async () => {
     if (!showReply || !replyBody) return
     try {
-      await sendMessage({
-        from: `${student?.name}'s Parent`,
-        fromId: student?.id,
-        to: showReply.fromId || 'teacher',
-        subject: `Re: ${showReply.subject}`,
-        body: replyBody,
-        classId: student?.classId,
-      })
+      const payloadBody = `Subject: Re: ${showReply.subject}\n\n${replyBody}`
+      if (threadMode.enabled && threadMode.threadId) {
+        await sendThreadMessage(threadMode.threadId, {
+          body: payloadBody,
+          kind: 'direct_message',
+          priority: 'normal',
+        })
+      } else if (student?.classGroupId) {
+        try {
+          const existing = await getMessageThreads({ scopeType: 'classGroup', classGroupId: student.classGroupId })
+          let thread = Array.isArray(existing) ? existing[0] : null
+          if (!thread) thread = await createMessageThread({ scopeType: 'classGroup', classGroupId: student.classGroupId })
+          if (!thread?.id) throw new Error('thread unavailable')
+          await sendThreadMessage(thread.id, {
+            body: payloadBody,
+            kind: 'direct_message',
+            priority: 'normal',
+          })
+          setThreadMode({ enabled: true, threadId: thread.id })
+        } catch {
+          await sendMessage({
+            from: `${student?.name}'s Parent`,
+            fromId: student?.id,
+            to: showReply.fromId || 'teacher',
+            subject: `Re: ${showReply.subject}`,
+            body: replyBody,
+            classId: student?.classId,
+          })
+        }
+      } else {
+        await sendMessage({
+          from: `${student?.name}'s Parent`,
+          fromId: student?.id,
+          to: showReply.fromId || 'teacher',
+          subject: `Re: ${showReply.subject}`,
+          body: replyBody,
+          classId: student?.classId,
+        })
+      }
       setShowReply(null)
       setReplyBody('')
       loadData(user)
-    } catch (e: any) { alert(e.message) }
+    } catch (e: any) { toast.error(e.message) }
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#0a1a0a' }}>
-        <div className="flex flex-col items-center gap-3">
-          <div className="text-4xl animate-bounce">👪</div>
-          <div className="text-white/60 font-bold">Loading...</div>
-        </div>
-      </div>
-    )
+  const handleSendDirect = async () => {
+    const profileId = directMsgForm.profileId.trim()
+    if (!profileId || !directMsgForm.subject.trim() || !directMsgForm.body.trim()) return
+    try {
+      setDirectSending(true)
+      const recipient = await lookupMessageRecipient(profileId)
+      const existing = await getMessageThreads({ scopeType: 'direct' })
+      const directThread = Array.isArray(existing)
+        ? existing.find((th: any) =>
+            Array.isArray(th.participants) &&
+            th.participants.some((p: any) => p?.user?.id === recipient.id)
+          )
+        : null
+      let thread = directThread
+      if (!thread) {
+        thread = await createMessageThread({
+          scopeType: 'direct',
+          participantUserIds: [recipient.id],
+        })
+      }
+      if (!thread?.id) throw new Error('Thread unavailable')
+      await sendThreadMessage(thread.id, {
+        body: `Subject: ${directMsgForm.subject.trim()}\n\n${directMsgForm.body.trim()}`,
+        kind: 'direct_message',
+        priority: 'normal',
+      })
+      setThreadMode({ enabled: true, threadId: thread.id })
+      setDirectMsgForm({ profileId: '', subject: '', body: '' })
+      setDirectRecipient(null)
+      setDirectLookupState('idle')
+      toast.success(`Message sent to ${recipient.name}`)
+      await loadData(student)
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to send direct message')
+    } finally {
+      setDirectSending(false)
+    }
   }
+
+  const openQuickReply = (template: string) => {
+    trackKpiEvent({ category: 'communication', name: 'parent_quick_reply_used' })
+    const teacherMsg = messages.find((m: any) => m.fromId !== student?.id)
+    setShowReply(teacherMsg || { subject: 'Daily Check-in', fromId: 'teacher' })
+    setReplyBody(template)
+    setTab(2)
+  }
+
+  const quickReplies = [t('parent_quick_r1'), t('parent_quick_r2'), t('parent_quick_r3')]
+
+  /** Child-only routes cannot run as parent; copy steps + toast instead of navigating. */
+  const shareChildMissionFromParent = (route: string, title: string, kpiEventName: string) => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : ''
+    const url = route.startsWith('http') ? route : `${origin}${route.startsWith('/') ? route : `/${route}`}`
+    const name = student?.name || 'your child'
+    const text = [
+      `KinderSpark — ${title}`,
+      `For: ${name}`,
+      '',
+      'Steps:',
+      '1) Sign out (Profile → Sign Out).',
+      `2) Choose I am a Kid and enter ${name}'s PIN.`,
+      `3) Open this link in the same browser: ${url}`,
+    ].join('\n')
+    trackKpiEvent({ category: 'engagement', name: kpiEventName })
+    const notify = () => toast.info(t('parent_mission_toast'), 8000)
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(notify).catch(notify)
+    } else {
+      notify()
+    }
+    void nativeShare({ title: `KinderSpark: ${title}`, text })
+  }
+
+  if (loading) return <Loading emoji="✨" text="Loading your child's data…" />
 
   const TABS = [
-    { label: '🏠 Home', idx: 0 },
-    { label: '📊 Progress', idx: 1 },
-    { label: `💬 Messages${unreadMsgs > 0 ? ` (${unreadMsgs})` : ''}`, idx: 2 },
+    { label: 'Home', idx: 0, icon: <Home size={14} /> },
+    { label: 'Progress', idx: 1, icon: <BarChart3 size={14} /> },
+    { label: 'Messages', idx: 2, icon: <Users size={14} /> },
   ]
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(180deg, #0a1a0a 0%, #060f06 100%)' }}>
+    <div className="min-h-screen flex" style={{ background: 'var(--app-bg)' }}>
+      <ParentSidebar
+        userName={user?.name || student?.name}
+        childName={student?.name}
+        activeIndex={tab}
+        onItemClick={(idx) => setTab(idx)}
+        unreadCount={unreadMsgs}
+      />
+    <div className="flex-1 min-h-screen flex flex-col app-container">
       {/* Fixed tab bar */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-50 bg-black/90 backdrop-blur border-b border-white/10">
+      <div className="lg:hidden fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[960px] z-50 backdrop-blur border-b rounded-b-xl" style={{ background: 'rgba(255,255,255,0.92)', borderColor: 'var(--app-border)' }}>
         <div className="flex">
-          {TABS.map(t => (
-            <button key={t.idx} onClick={() => setTab(t.idx)}
-              className={`flex-1 py-3 text-xs font-black transition-colors relative ${tab === t.idx ? 'text-green-400 border-b-2 border-green-400' : 'text-white/50'}`}>
-              {t.label}
-              {t.idx === 2 && unreadMsgs > 0 && (
-                <span className="absolute top-1 right-2 bg-red-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center">
+          {TABS.map((tabItem) => (
+            <button key={tabItem.idx} type="button" onClick={() => setTab(tabItem.idx)}
+              className={`flex-1 py-3 text-xs font-black transition-colors relative min-h-11 ${tab === tabItem.idx ? 'border-b-2' : ''}`}
+              style={{ color: tab === tabItem.idx ? 'var(--app-accent)' : 'rgba(70, 75, 96, 0.8)', borderColor: tab === tabItem.idx ? 'var(--app-accent)' : 'transparent' }}>
+              <span className="inline-flex items-center gap-1.5">{tabItem.icon}<span>{tabItem.label}</span></span>
+              {tabItem.idx === 2 && unreadMsgs > 0 && (
+                <span className="absolute top-1 right-2 bg-red-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center app-pressable">
                   {unreadMsgs > 9 ? '9+' : unreadMsgs}
                 </span>
               )}
@@ -232,18 +604,49 @@ export default function ParentPage() {
         </div>
       </div>
 
-      <div className="pt-12 pb-20">
+      <div className="pt-12 lg:pt-4 pb-20">
         {/* ── HOME TAB ──────────────────────────────────────────── */}
         {tab === 0 && (
           <div>
             {/* Hero card */}
-            <div className="m-3 rounded-3xl p-5 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #1a3a1a, #2a5a2a)' }}>
+            <div className="m-3 rounded-3xl p-5 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(48,209,88,0.08), rgba(67,198,172,0.06))', border: '1px solid rgba(48,209,88,0.2)' }}>
               <div className="absolute right-0 top-0 w-40 h-40 rounded-full bg-white/5 -translate-y-12 translate-x-12" />
               <div className="absolute right-8 bottom-0 w-24 h-24 rounded-full bg-white/3 translate-y-8" />
               <div className="flex justify-between items-start relative">
                 <div>
-                  <div className="text-white/60 text-xs font-bold mb-1">👪 Parent View</div>
-                  <div className="text-white text-2xl font-black">{student?.avatar} {student?.name}</div>
+                  <div className="text-xs font-bold app-muted mb-1 inline-flex items-center gap-1"><Users size={12} /> Parent View</div>
+                  <div className="text-2xl font-black inline-flex items-center gap-2">
+                    <KidAvatar
+                      studentId={student?.id}
+                      ownedItems={(student as any)?.ownedItems}
+                      fallback={student?.avatar || '🧒'}
+                      size={30}
+                    />
+                    <span>{student?.name}</span>
+                  </div>
+                  {children.length > 1 && (
+                    <div className="mt-2 flex items-center gap-2 flex-wrap">
+                      {children.map((c) => {
+                        const selected = c.id === student?.id
+                        return (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onClick={() => selectChild(c.id)}
+                            className="min-h-11 px-2.5 py-1.5 rounded-xl inline-flex items-center gap-2 text-xs font-black app-pressable transition-all"
+                            style={{
+                              background: selected ? 'rgba(48,209,88,0.2)' : 'var(--app-surface-soft)',
+                              border: selected ? '1.5px solid rgba(48,209,88,0.45)' : '1px solid var(--app-border)',
+                              color: selected ? '#9EF0B2' : 'inherit',
+                            }}
+                          >
+                            <KidAvatar studentId={c.id} ownedItems={c.ownedItems} fallback={c.avatar || '🧒'} size={22} />
+                            <span>{c.name}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
                   <div className="flex gap-2 mt-2 flex-wrap">
                     <span className="bg-yellow-400/20 text-yellow-300 rounded-full px-3 py-0.5 text-xs font-black">⭐ {student?.stars} stars</span>
                     {(student?.streak ?? 0) > 0 && (
@@ -252,52 +655,213 @@ export default function ParentPage() {
                     <span className="bg-purple-400/20 text-purple-300 rounded-full px-3 py-0.5 text-xs font-black">🤖 Lv {student?.aiBestLevel}</span>
                   </div>
                 </div>
-                <button onClick={() => { logout(); router.push('/') }}
-                  className="text-white/50 text-xs font-bold border border-white/30 rounded-full px-3 py-1.5 shrink-0">
-                  Logout
-                </button>
+                <div className="flex flex-col items-end gap-2">
+                  <WeatherChip variant="light" />
+                  <TopBarActions variant="light" profileHref="/parent/profile" />
+                </div>
               </div>
+            </div>
+
+            {consentInfo && student?.id && (
+              <div
+                className="mx-3 mb-4 rounded-2xl p-4"
+                style={{ background: 'rgba(94,92,230,0.08)', border: '1px solid rgba(94,92,230,0.25)' }}
+              >
+                <div className="flex items-start gap-3">
+                  <span className="text-xl shrink-0" aria-hidden>
+                    🛡️
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-black text-sm mb-1">{t('parent_privacy_banner_title')}</div>
+                    {!consentInfo.hasConsent ? (
+                      <>
+                        <p className="text-xs font-bold app-muted leading-relaxed mb-3">{t('parent_privacy_banner_body')}</p>
+                        <Link
+                          href={`/parent/consent?studentId=${encodeURIComponent(student.id)}`}
+                          className="inline-flex min-h-10 items-center px-3 rounded-xl text-xs font-black app-pressable active:scale-95"
+                          style={{ background: 'rgba(94,92,230,0.25)', color: '#c4b5fd' }}
+                        >
+                          {t('parent_privacy_record_consent')}
+                        </Link>
+                      </>
+                    ) : (
+                      <p className="text-xs font-bold text-emerald-600 dark:text-green-300">{t('parent_privacy_consent_recorded')}</p>
+                    )}
+                    <div className="mt-3 pt-3 border-t" style={{ borderColor: 'var(--app-border)' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          toast.confirm(
+                            `${t('parent_privacy_delete_confirm_title')}\n\n${t('parent_privacy_delete_confirm_body')}`,
+                            async () => {
+                              try {
+                                await deletePrivacyStudentData(student.id)
+                                toast.info('Data removed. Reloading…')
+                                window.location.assign('/parent')
+                              } catch (e: unknown) {
+                                toast.error(e instanceof Error ? e.message : 'Delete failed')
+                              }
+                            }
+                          )
+                        }}
+                        className="text-xs font-black app-pressable underline decoration-dotted"
+                        style={{ color: '#fca5a5' }}
+                      >
+                        {t('parent_privacy_delete_data')}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Parent co-pilot: today action + plain-language insight */}
+            <div className="mx-3 mb-4 rounded-2xl p-4" style={{ background: 'rgba(48,209,88,0.12)', border: '1px solid rgba(48,209,88,0.3)' }}>
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="font-black text-sm">{t('parent_copilot_today_title')}</div>
+                <div className="text-green-300 text-[11px] font-bold">{t('parent_copilot_badge')}</div>
+              </div>
+              {todayAction ? (
+                <div className="rounded-xl p-3" style={{ background: 'var(--app-surface-soft)' }}>
+                  <div className="font-black text-sm">{todayAction.title}</div>
+                  <div className="text-xs font-bold app-muted mt-0.5">{t('parent_copilot_hw_sub')}</div>
+                  <div className="flex items-center justify-between mt-2">
+                    <div className="text-yellow-300 text-xs font-black">⭐ {todayAction.starsReward} stars</div>
+                    <button
+                      type="button"
+                      onClick={() => setTab(2)}
+                      className="min-h-10 text-xs font-black px-2.5 py-2 rounded-lg app-pressable"
+                      style={{ background: 'rgba(48,209,88,0.2)', color: '#9EF0B2' }}
+                    >
+                      {t('parent_copilot_msg_teacher')}
+                    </button>
+                  </div>
+                </div>
+              ) : missionAction ? (
+                <div className="rounded-xl p-3" style={{ background: 'var(--app-surface-soft)' }}>
+                  <div className="font-black text-sm">{missionAction.title}</div>
+                  <div className="text-xs font-bold app-muted mt-0.5">
+                    {t('parent_copilot_mission_sub')} ({missionAction.etaMin} min).
+                  </div>
+                  <div className="flex items-center justify-between mt-2">
+                    <div className="text-xs font-black app-muted capitalize">{missionAction.kind}</div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        shareChildMissionFromParent(
+                          missionAction.route,
+                          missionAction.title,
+                          'parent_mission_share_from_copilot'
+                        )
+                      }
+                      className="min-h-10 text-xs font-black px-2.5 py-2 rounded-lg app-pressable"
+                      style={{ background: 'var(--app-accent-soft)', color: 'var(--app-accent)' }}
+                    >
+                      {t('parent_mission_share_label')}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-xl p-3 text-xs app-muted font-bold" style={{ background: 'var(--app-surface-soft)' }}>
+                  {t('parent_copilot_all_caught_up')}
+                </div>
+              )}
+              <div className="app-muted text-xs font-bold mt-3">
+                {insightText}
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {quickReplies.map((q) => (
+                  <button
+                    type="button"
+                    key={q}
+                    onClick={() => openQuickReply(q)}
+                    className="min-h-10 px-2.5 py-2 rounded-lg text-[11px] font-black app-pressable text-left"
+                    style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Weekly digest card (imported pattern from family learning apps) */}
+            <div className="mx-3 mb-4 rounded-2xl p-4" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="font-black text-sm">Weekly Digest</div>
+                <span className="text-[10px] font-black px-2 py-1 rounded-full" style={{ background: 'rgba(91,127,232,0.16)', color: '#5B7FE8' }}>Last 7 days</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 mb-2">
+                <div className="rounded-xl p-2.5" style={{ background: 'var(--app-surface-soft)' }}>
+                  <div className="text-lg font-black text-green-500">{weeklyCompleted}</div>
+                  <div className="text-[10px] font-bold app-muted">HW Done</div>
+                </div>
+                <div className="rounded-xl p-2.5" style={{ background: 'var(--app-surface-soft)' }}>
+                  <div className="text-lg font-black text-purple-500">{weeklyAISessions}</div>
+                  <div className="text-[10px] font-bold app-muted">AI Sessions</div>
+                </div>
+                <div className="rounded-xl p-2.5" style={{ background: 'var(--app-surface-soft)' }}>
+                  <div className="text-lg font-black text-blue-500">{weeklyAvgAccuracy}%</div>
+                  <div className="text-[10px] font-bold app-muted">Accuracy</div>
+                </div>
+              </div>
+              <div className="text-xs font-bold app-muted">{weeklyDigestText}</div>
+              {missionAction && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    shareChildMissionFromParent(
+                      missionAction.route,
+                      missionAction.title,
+                      'parent_mission_share_from_digest'
+                    )
+                  }
+                  className="mt-3 min-h-10 px-3 py-2 rounded-xl text-xs font-black app-pressable"
+                  style={{ background: 'rgba(91,127,232,0.16)', color: '#5B7FE8', border: '1px solid rgba(91,127,232,0.3)' }}
+                >
+                  {t('parent_mission_share_label')}
+                </button>
+              )}
             </div>
 
             {/* Progress rings */}
             <div className="mx-3 mb-4">
-              <div className="text-white/50 text-xs font-bold mb-3 px-1">PROGRESS OVERVIEW</div>
+              <div className="text-xs font-bold app-muted mb-3 px-1">PROGRESS OVERVIEW</div>
               <div className="grid grid-cols-3 gap-3">
                 {/* Homework ring */}
-                <div className="rounded-2xl p-3 flex flex-col items-center" style={{ background: '#1a2a1a' }}>
+                <div className="rounded-2xl p-3 flex flex-col items-center" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
                   <div className="relative">
-                    <Ring pct={hwPct} color="#30D158" size={72} stroke={7} />
+                    <Ring pct={hwPct} color="#4CAF6A" size={72} stroke={7} />
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-white font-black text-sm">{hwPct}%</span>
+                      <span className="font-black text-sm">{hwPct}%</span>
                     </div>
                   </div>
-                  <div className="text-white/50 text-xs font-bold mt-2 text-center">Homework</div>
+                  <div className="text-xs font-bold app-muted mt-2 text-center">Homework</div>
                   <div className="text-green-400 text-xs font-black">{completedHW.length}/{homework.length}</div>
                 </div>
 
                 {/* Attendance ring */}
-                <div className="rounded-2xl p-3 flex flex-col items-center" style={{ background: '#1a2a1a' }}>
+                <div className="rounded-2xl p-3 flex flex-col items-center" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
                   <div className="relative">
-                    <Ring pct={attPct} color={attPct >= 80 ? '#30D158' : '#FF9F0A'} size={72} stroke={7} />
+                    <Ring pct={attPct} color={attPct >= 80 ? '#4CAF6A' : '#F5A623'} size={72} stroke={7} />
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-white font-black text-sm">{attendance ? `${attPct}%` : '--'}</span>
+                      <span className="font-black text-sm">{attendance ? `${attPct}%` : '--'}</span>
                     </div>
                   </div>
-                  <div className="text-white/50 text-xs font-bold mt-2 text-center">Attendance</div>
+                  <div className="text-xs font-bold app-muted mt-2 text-center">Attendance</div>
                   <div className={`text-xs font-black ${attPct >= 80 ? 'text-green-400' : 'text-orange-400'}`}>
                     {attendance ? `${attendance.present}P/${attendance.absent}A` : '30d'}
                   </div>
                 </div>
 
                 {/* AI accuracy ring */}
-                <div className="rounded-2xl p-3 flex flex-col items-center" style={{ background: '#1a2a1a' }}>
+                <div className="rounded-2xl p-3 flex flex-col items-center" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
                   <div className="relative">
-                    <Ring pct={totalAccuracy} color="#BF5AF2" size={72} stroke={7} />
+                    <Ring pct={totalAccuracy} color="#8B6CC1" size={72} stroke={7} />
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-white font-black text-sm">{totalAccuracy}%</span>
+                      <span className="font-black text-sm">{totalAccuracy}%</span>
                     </div>
                   </div>
-                  <div className="text-white/50 text-xs font-bold mt-2 text-center">AI Accuracy</div>
+                  <div className="text-xs font-bold app-muted mt-2 text-center">AI Accuracy</div>
                   <div className="text-purple-400 text-xs font-black">{aiSessions.length} sessions</div>
                 </div>
               </div>
@@ -305,29 +869,34 @@ export default function ParentPage() {
 
             {/* Quick stats */}
             <div className="mx-3 mb-4 grid grid-cols-2 gap-3">
-              <div className="rounded-2xl p-4" style={{ background: '#1a2a1a' }}>
+              <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
                 <div className="text-yellow-400 font-black text-2xl">{totalAIStars}</div>
-                <div className="text-white/50 text-xs font-bold mt-1">Stars from AI Tutor</div>
+                <div className="text-xs font-bold app-muted mt-1">Stars from AI Tutor</div>
               </div>
-              <div className="rounded-2xl p-4" style={{ background: '#1a2a1a' }}>
+              <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
                 <div className="text-orange-400 font-black text-2xl">{pendingHW.length}</div>
-                <div className="text-white/50 text-xs font-bold mt-1">Pending Homework</div>
+                <div className="text-xs font-bold app-muted mt-1">Pending Homework</div>
                 {pendingHW.length > 0 && <div className="text-orange-400/60 text-xs font-bold">Needs attention!</div>}
               </div>
             </div>
 
+            {/* Location card */}
+            <div className="mx-3 mb-4">
+              <LocationCard />
+            </div>
+
             {/* Push notification opt-in banner */}
             {notifPermission !== 'granted' && notifPermission !== 'denied' && (
-              <div className="mx-3 mb-4 rounded-2xl p-4 flex items-center gap-3" style={{ background: 'linear-gradient(135deg, #1a2a1a, #2a4a2a)', border: '1px solid #30D15840' }}>
-                <div className="text-2xl shrink-0">🔔</div>
+              <div className="mx-3 mb-4 rounded-2xl p-4 flex items-center gap-3" style={{ background: 'linear-gradient(135deg, rgba(48,209,88,0.06), rgba(67,198,172,0.04))', border: '1px solid #4CAF6A40' }}>
+                <div className="text-2xl shrink-0"><Bell size={20} style={{ color: 'var(--app-success)' }} /></div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-white font-black text-sm">Enable Homework Alerts</div>
-                  <div className="text-white/50 text-xs font-bold">Get notified when homework is due</div>
+                  <div className="font-black text-sm">Enable Homework Alerts</div>
+                  <div className="text-xs font-bold app-muted">Get notified when homework is due</div>
                 </div>
                 <button
                   onClick={subscribeNotif}
-                  className="px-3 py-2 rounded-xl text-xs font-black shrink-0 active:scale-95 transition-all"
-                  style={{ background: '#30D158', color: '#fff' }}
+                  className="px-3 py-2 rounded-xl text-xs font-black shrink-0 active:scale-95 transition-all app-pressable"
+                  style={{ background: '#4CAF6A', color: '#fff' }}
                 >
                   Enable
                 </button>
@@ -340,23 +909,23 @@ export default function ParentPage() {
                 <div className="text-orange-400 font-black text-sm mb-2">⚠️ Pending ({pendingHW.length})</div>
                 <div className="space-y-2">
                   {pendingHW.map(hw => (
-                    <div key={hw.id} className="rounded-xl p-3 flex items-center gap-3" style={{ background: '#1a2a1a', border: hw.aiGenerated ? '1px solid rgba(94,92,230,0.35)' : '1px solid #FF9F0A30' }}>
+                    <div key={hw.id} className="rounded-xl p-3 flex items-center gap-3" style={{ background: 'var(--app-surface)', border: hw.aiGenerated ? '1px solid rgba(94,92,230,0.35)' : '1px solid #F5A62330' }}>
                       <div className="text-2xl">{hw.aiGenerated ? '✨' : '📝'}</div>
                       <div className="flex-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <div className="text-white font-black text-sm">{hw.title}</div>
+                          <div className="font-black text-sm">{hw.title}</div>
                           {hw.aiGenerated && <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(94,92,230,0.3)', color: '#A78BFA' }}>✨ AI</span>}
                         </div>
-                        {hw.description && <div className="text-white/50 text-xs font-bold mt-0.5 leading-snug">{hw.description}</div>}
-                        <div className="text-red-400 text-xs font-bold mt-0.5">Due: {hw.dueDate}</div>
+                        {hw.description && <div className="text-xs font-bold app-muted mt-0.5 leading-snug">{hw.description}</div>}
+                        <div className="text-red-400 text-xs font-bold mt-0.5">Due: {hw.dueDate ? new Date(hw.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'soon'}</div>
                       </div>
                       <div className="flex flex-col items-end gap-1.5">
                         <div className="text-yellow-400 text-xs font-bold">⭐{hw.starsReward}</div>
                         <button
                           onClick={() => handleMarkDone(hw.id)}
                           disabled={markingDone === hw.id}
-                          className="text-[10px] font-black px-2 py-1 rounded-lg active:scale-95 transition-all"
-                          style={{ background: '#30D15820', color: '#30D158', opacity: markingDone === hw.id ? 0.5 : 1 }}
+                          className="text-[10px] font-black px-2 py-1 rounded-lg active:scale-95 transition-all app-pressable"
+                          style={{ background: '#4CAF6A20', color: '#4CAF6A', opacity: markingDone === hw.id ? 0.5 : 1 }}
                         >
                           {markingDone === hw.id ? '…' : 'Mark Done ✅'}
                         </button>
@@ -367,23 +936,31 @@ export default function ParentPage() {
               </div>
             )}
 
+            {/* Activity Feed from Teacher */}
+            {student?.classId && (
+              <div className="mx-3 mb-4">
+                <div className="font-black text-sm mb-3">📸 Classroom Moments</div>
+                <ActivityFeed classId={student.classId} />
+              </div>
+            )}
+
             {/* Recent messages preview */}
             {messages.length > 0 && (
               <div className="mx-3">
                 <div className="flex justify-between items-center mb-2">
-                  <div className="text-white font-black text-sm">💬 Messages</div>
-                  {unreadMsgs > 0 && <div className="bg-red-500 text-white text-xs font-black rounded-full px-2 py-0.5">{unreadMsgs} new</div>}
+                  <div className="font-black text-sm">💬 Messages</div>
+                  {unreadMsgs > 0 && <div className="bg-red-500 text-xs font-black rounded-full px-2 py-0.5">{unreadMsgs} new</div>}
                 </div>
                 {messages.slice(0, 2).map(msg => (
-                  <div key={msg.id} className="rounded-xl p-3 mb-2" style={{ background: '#1a2a1a', border: !msg.read ? '1px solid #30D15840' : 'none' }}>
+                  <div key={msg.id} className="rounded-xl p-3 mb-2" style={{ background: 'var(--app-surface)', border: !msg.read ? '1px solid #4CAF6A40' : '1px solid var(--app-border)' }}>
                     <div className="flex items-center gap-2">
                       {!msg.read && <div className="w-2 h-2 rounded-full bg-green-400 shrink-0" />}
-                      <div className="text-white font-black text-sm">{msg.subject}</div>
+                      <div className="font-black text-sm">{msg.subject}</div>
                     </div>
-                    <div className="text-white/50 text-xs font-bold">From: {msg.from}</div>
+                    <div className="text-xs font-bold app-muted">From: {msg.from}</div>
                   </div>
                 ))}
-                <button onClick={() => setTab(2)} className="text-green-400 text-sm font-bold">View all →</button>
+                <button onClick={() => setTab(2)} className="text-green-400 text-sm font-bold app-pressable">View all →</button>
               </div>
             )}
           </div>
@@ -392,37 +969,92 @@ export default function ParentPage() {
         {/* ── PROGRESS TAB ──────────────────────────────────────── */}
         {tab === 1 && (
           <div className="px-3 pt-2">
-            <h2 className="text-white font-black text-lg mb-4">📊 Learning Progress</h2>
-
-            {/* Summary bar */}
-            <div className="rounded-2xl p-4 mb-4" style={{ background: '#1a1a2e' }}>
-              <div className="flex justify-between items-center mb-2">
-                <div className="text-white font-black text-sm">Overall Homework</div>
-                <div className="text-white font-black">{hwPct}%</div>
-              </div>
-              <div className="bg-white/10 rounded-full h-3">
-                <div className="h-3 rounded-full transition-all" style={{ width: `${hwPct}%`, background: hwPct >= 80 ? '#30D158' : hwPct >= 50 ? '#FF9F0A' : '#FF453A' }} />
-              </div>
-              <div className="text-white/40 text-xs font-bold mt-1">{completedHW.length} done · {pendingHW.length} pending</div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-black text-lg inline-flex items-center gap-2"><BarChart3 size={18} /> Learning Progress</h2>
+              <button
+                onClick={() => window.print()}
+                className="px-3 py-1.5 rounded-xl text-xs font-black app-pressable inline-flex items-center gap-1.5"
+                style={{ background: 'rgba(94,92,230,0.15)', color: '#5E5CE6', border: '1px solid rgba(94,92,230,0.3)' }}
+              >
+                <Download size={12} /> Save Report
+              </button>
             </div>
 
+            {/* Summary bar */}
+            <div className="rounded-2xl p-4 mb-4" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+              <div className="flex justify-between items-center mb-2">
+                <div className="font-black text-sm">Overall Homework</div>
+                <div className="font-black">{hwPct}%</div>
+              </div>
+              <div className="rounded-full h-3" style={{ background: 'rgba(120,120,140,0.14)' }}>
+                <div className="h-3 rounded-full transition-all" style={{ width: `${hwPct}%`, background: hwPct >= 80 ? '#4CAF6A' : hwPct >= 50 ? '#F5A623' : '#E05252' }} />
+              </div>
+              <div className="text-xs font-bold app-muted mt-1">{completedHW.length} done · {pendingHW.length} pending</div>
+            </div>
+
+            {/* Visual Progress Charts */}
+            {(aiSessions.length > 0 || progressData.length > 0) && (
+              <ProgressCharts
+                skills={skillsForChart}
+                weekly={weeklyForChart}
+                totalStars={totalAIStars}
+                totalSessions={aiSessions.length}
+                avgAccuracy={totalAccuracy}
+                bestLevel={student?.aiBestLevel || 1}
+                badges={chartBadges}
+              />
+            )}
+
+            {progressData.length > 0 && (
+              <div className="mt-4 mb-4">
+                <div className="text-xs font-bold app-muted mb-2">MODULE MASTERY</div>
+                <div className="space-y-2">
+                  {progressData.map((p: any) => {
+                    const mod = MODS.find(m => m.id === p.moduleId)
+                    const label = mod?.title || p.moduleId
+                    const mastery = String(p.masteryLevel || 'not_started')
+                    const masteryLabel =
+                      mastery === 'mastered' ? 'Mastered' : mastery === 'in_progress' ? 'In progress' : 'Not started'
+                    const scoreN = typeof p.score === 'number' ? p.score : 0
+                    const attemptsN = typeof p.attempts === 'number' ? p.attempts : 0
+                    const sec = typeof p.timeSpentSeconds === 'number' ? p.timeSpentSeconds : 0
+                    return (
+                      <div
+                        key={p.id || `${p.moduleId}-${p.updatedAt}`}
+                        className="rounded-2xl p-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between"
+                        style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}
+                      >
+                        <div className="font-black text-sm">{label}</div>
+                        <div className="text-xs font-bold app-muted">
+                          Score {scoreN}% · {masteryLabel}
+                          {attemptsN > 0 ? ` · ${attemptsN} attempt${attemptsN === 1 ? '' : 's'}` : ''}
+                          {sec > 0 ? ` · ${Math.max(1, Math.round(sec / 60))} min practiced` : ''}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* AI Tutor Sessions list */}
             {aiSessions.length > 0 && (
-              <div className="mb-4">
-                <div className="text-white/60 text-xs font-bold mb-2">AI TUTOR SESSIONS</div>
+              <div className="mt-4 mb-4">
+                <div className="text-xs font-bold app-muted mb-2">AI TUTOR SESSION HISTORY</div>
                 <div className="space-y-2">
                   {aiSessions.slice(0, 8).map((s: any) => (
-                    <div key={s.id} className="rounded-2xl p-3 flex items-center gap-3" style={{ background: '#1a1a2e' }}>
+                    <div key={s.id} className="rounded-2xl p-3 flex items-center gap-3" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
                       <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0" style={{ background: 'rgba(191,90,242,0.2)' }}>🧠</div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-white font-black text-sm truncate">{s.topic}</div>
-                        <div className="bg-white/10 rounded-full h-1.5 mt-1">
+                        <div className="font-black text-sm truncate">{s.topic}</div>
+                        <div className="rounded-full h-1.5 mt-1" style={{ background: 'rgba(120,120,140,0.14)' }}>
                           <div className="h-1.5 rounded-full bg-purple-400" style={{ width: `${s.accuracy}%` }} />
                         </div>
-                        <div className="text-white/40 text-xs font-bold">{s.correct}/{s.total} correct · Lv {s.maxLevel}</div>
+                        <div className="text-xs font-bold app-muted">{s.correct}/{s.total} correct · Lv {s.maxLevel}</div>
                       </div>
                       <div className="text-right shrink-0">
                         <div className="text-yellow-400 font-black text-sm">⭐{s.stars}</div>
-                        <div className="text-white/40 text-xs font-bold">{s.accuracy}%</div>
+                        <div className="text-xs font-bold app-muted">{s.accuracy}%</div>
                       </div>
                     </div>
                   ))}
@@ -430,26 +1062,27 @@ export default function ParentPage() {
               </div>
             )}
 
+            {/* Homework status */}
             {homework.length > 0 && (
               <div className="mb-4">
-                <div className="text-white/60 text-xs font-bold mb-2">HOMEWORK STATUS</div>
+                <div className="text-xs font-bold app-muted mb-2">HOMEWORK STATUS</div>
                 <div className="space-y-2">
                   {homework.map(hw => {
                     const done = hw.completions?.some((c: any) => c.studentId === student?.id && c.done)
                     return (
                       <div key={hw.id} className="rounded-2xl p-3 flex items-center gap-3"
-                        style={{ background: '#1a2a1a', border: `1px solid ${done ? '#30D15830' : hw.aiGenerated ? 'rgba(94,92,230,0.3)' : '#FF9F0A30'}` }}>
+                        style={{ background: 'var(--app-surface)', border: `1px solid ${done ? '#4CAF6A30' : hw.aiGenerated ? 'rgba(94,92,230,0.3)' : '#F5A62330'}` }}>
                         <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0 ${done ? 'bg-green-500/20' : 'bg-orange-500/20'}`}>
                           {done ? '✅' : hw.aiGenerated ? '✨' : '⏰'}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <div className="text-white font-black text-sm truncate">{hw.title}</div>
+                            <div className="font-black text-sm truncate">{hw.title}</div>
                             {hw.aiGenerated && <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0" style={{ background: 'rgba(94,92,230,0.3)', color: '#A78BFA' }}>✨ AI</span>}
                           </div>
-                          {hw.description && <div className="text-white/40 text-xs font-bold mt-0.5 leading-snug">{hw.description}</div>}
+                          {hw.description && <div className="text-xs font-bold app-muted mt-0.5 leading-snug">{hw.description}</div>}
                           <div className={`text-xs font-bold ${done ? 'text-green-400' : 'text-orange-400'}`}>
-                            {done ? 'Completed!' : `Due: ${hw.dueDate}`}
+                            {done ? 'Completed!' : `Due: ${hw.dueDate ? new Date(hw.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'soon'}`}
                           </div>
                         </div>
                         <div className="text-yellow-400 text-xs font-bold shrink-0">⭐{hw.starsReward}</div>
@@ -460,39 +1093,131 @@ export default function ParentPage() {
               </div>
             )}
 
-            {aiSessions.length === 0 && homework.length === 0 && (
-              <div className="text-center text-white/30 font-bold py-10">No activity yet.</div>
-            )}
+            {aiSessions.length === 0 && homework.length === 0 && progressData.length === 0 && <InlineEmpty emoji="📊" text="No activity yet" />}
           </div>
         )}
 
         {/* ── MESSAGES TAB ──────────────────────────────────────── */}
         {tab === 2 && (
           <div className="px-3 pt-2">
-            <h2 className="text-white font-black text-lg mb-4">💬 Messages</h2>
+            <h2 className="font-black text-lg mb-4 inline-flex items-center gap-2"><MessageSquare size={16} /> Messages</h2>
+            <div className="rounded-2xl p-4 mb-3" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+              <div className="font-black text-sm mb-2">Send by Profile ID</div>
+              <div className="space-y-2">
+                <select
+                  value={directMsgForm.profileId}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    setDirectMsgForm((p) => ({ ...p, profileId: v }))
+                    const allRows = [...recipientGroups.kids, ...recipientGroups.teachers, ...recipientGroups.school]
+                    const picked = allRows.find((r: any) => (r.profileId || r.id) === v) || null
+                    setDirectRecipient(picked)
+                    setDirectLookupState(v ? 'ok' : 'idle')
+                  }}
+                  className="app-input"
+                >
+                  <option value="">Select recipient from your network</option>
+                  {recipientGroups.kids.length > 0 && <option disabled value="">-- Kids --</option>}
+                  {recipientGroups.kids.map((r: any) => <option key={`kid-${r.id}`} value={r.profileId || r.id}>{r.name} ({r.profileId || r.id})</option>)}
+                  {recipientGroups.teachers.length > 0 && <option disabled value="">-- Teachers --</option>}
+                  {recipientGroups.teachers.map((r: any) => <option key={`teacher-${r.id}`} value={r.profileId || r.id}>{r.name} ({r.profileId || r.id})</option>)}
+                  {recipientGroups.school.length > 0 && <option disabled value="">-- School --</option>}
+                  {recipientGroups.school.map((r: any) => <option key={`school-${r.id}`} value={r.profileId || r.id}>{r.name} ({r.profileId || r.id})</option>)}
+                </select>
+                <input
+                  value={directMsgForm.profileId}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    setDirectMsgForm((p) => ({ ...p, profileId: v }))
+                    setDirectRecipient(null)
+                    setDirectLookupState('idle')
+                  }}
+                  onBlur={async () => {
+                    const pid = directMsgForm.profileId.trim()
+                    if (!pid) {
+                      setDirectLookupState('idle')
+                      setDirectRecipient(null)
+                      return
+                    }
+                    try {
+                      setDirectLookupState('loading')
+                      const u = await lookupMessageRecipient(pid)
+                      setDirectRecipient(u)
+                      setDirectLookupState('ok')
+                    } catch {
+                      setDirectRecipient(null)
+                      setDirectLookupState('error')
+                    }
+                  }}
+                  placeholder="Recipient Profile ID"
+                  className="app-input"
+                />
+                <div className="text-[11px] font-bold app-muted">
+                  {directLookupState === 'loading' && 'Checking recipient...'}
+                  {directLookupState === 'ok' && directRecipient && `To: ${directRecipient.name} (${(directRecipient.roles || []).join(', ')})`}
+                  {directLookupState === 'error' && 'Recipient not found or not allowed'}
+                  {directLookupState === 'idle' && 'Parents can message linked kid, teacher, and school users by Profile ID.'}
+                </div>
+                <input
+                  value={directMsgForm.subject}
+                  onChange={(e) => setDirectMsgForm((p) => ({ ...p, subject: e.target.value }))}
+                  placeholder="Subject"
+                  className="app-input"
+                />
+                <textarea
+                  value={directMsgForm.body}
+                  onChange={(e) => setDirectMsgForm((p) => ({ ...p, body: e.target.value }))}
+                  placeholder="Your message..."
+                  rows={3}
+                  className="app-input resize-none"
+                />
+                <button
+                  type="button"
+                  onClick={handleSendDirect}
+                  disabled={
+                    directSending ||
+                    !directMsgForm.profileId.trim() ||
+                    !directMsgForm.subject.trim() ||
+                    !directMsgForm.body.trim() ||
+                    directLookupState === 'loading'
+                  }
+                  className="w-full py-3 rounded-xl font-black app-pressable"
+                  style={{
+                    background: 'var(--app-success)',
+                    color: '#fff',
+                    opacity: (
+                      !directMsgForm.profileId.trim() ||
+                      !directMsgForm.subject.trim() ||
+                      !directMsgForm.body.trim() ||
+                      directLookupState === 'loading'
+                    ) ? 0.55 : 1,
+                  }}
+                >
+                  {directSending ? 'Sending...' : 'Send Direct Message'}
+                </button>
+              </div>
+            </div>
             <div className="space-y-3">
               {messages.map(msg => (
                 <div key={msg.id} className="rounded-2xl p-4"
-                  style={{ background: '#1a2a1a', border: !msg.read ? '1px solid #30D15840' : '1px solid transparent' }}>
+                  style={{ background: 'var(--app-surface)', border: !msg.read ? '1px solid #4CAF6A40' : '1px solid var(--app-border)' }}>
                   <div className="flex justify-between items-start mb-1">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       {!msg.read && <div className="w-2 h-2 rounded-full bg-green-400 shrink-0" />}
-                      <div className="text-white font-black text-sm truncate">{msg.subject}</div>
+                      <div className="font-black text-sm truncate">{msg.subject}</div>
                     </div>
-                    <div className="text-white/40 text-xs font-bold ml-2 shrink-0">{new Date(msg.createdAt).toLocaleDateString()}</div>
+                    <div className="text-xs font-bold app-muted ml-2 shrink-0">{new Date(msg.createdAt).toLocaleDateString()}</div>
                   </div>
-                  <div className="text-white/60 text-xs font-bold mb-2">From: {msg.from}</div>
-                  <div className="text-white/70 text-xs leading-relaxed mb-3">{msg.body}</div>
+                  <div className="text-xs font-bold app-muted mb-2">From: {msg.from}</div>
+                  <div className="text-xs app-muted leading-relaxed mb-3">{msg.body}</div>
                   <button onClick={() => setShowReply(msg)}
-                    className="px-3 py-1.5 rounded-lg text-xs font-bold text-green-400"
-                    style={{ background: '#30D15820' }}>
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold text-green-400 app-pressable"
+                    style={{ background: '#4CAF6A20' }}>
                     ↩ Reply
                   </button>
                 </div>
               ))}
-              {messages.length === 0 && (
-                <div className="text-center text-white/30 font-bold py-10">No messages yet.</div>
-              )}
+              {messages.length === 0 && <InlineEmpty emoji="💬" text="No messages yet" />}
             </div>
           </div>
         )}
@@ -500,24 +1225,37 @@ export default function ParentPage() {
 
       {/* Reply modal */}
       {showReply && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: 'rgba(0,0,0,0.7)' }}>
-          <div className="w-full max-w-[430px] rounded-t-3xl p-5 pb-10" style={{ background: '#1a2a1a' }}>
+        <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: 'var(--app-overlay)' }}>
+          <div className="w-full max-w-[430px] rounded-t-3xl p-5 pb-10" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
             <div className="flex justify-between items-center mb-3">
-              <h3 className="text-white font-black">Reply</h3>
-              <button onClick={() => setShowReply(null)} className="text-white/50 text-2xl leading-none">×</button>
+              <h3 className="font-black">Reply</h3>
+              <button onClick={() => setShowReply(null)} className="app-muted text-2xl leading-none app-pressable">×</button>
             </div>
-            <div className="text-white/50 text-xs font-bold mb-3">Re: {showReply.subject}</div>
+            <div className="text-xs font-bold app-muted mb-3">Re: {showReply.subject}</div>
             <textarea placeholder="Your message..." value={replyBody} rows={5}
               onChange={e => setReplyBody(e.target.value)}
-              className="w-full bg-white/10 border border-white/20 rounded-xl p-3 text-white font-bold text-sm resize-none outline-none mb-3" />
+              className="app-input mb-3 resize-none" />
+            <div className="mb-3 flex flex-wrap gap-2">
+              {quickReplies.map((q: string) => (
+                <button
+                  key={q}
+                  onClick={() => setReplyBody(q)}
+                  className="px-2.5 py-1.5 rounded-lg text-[11px] font-black app-pressable"
+                  style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}
+                >
+                  Use: {q}
+                </button>
+              ))}
+            </div>
             <button onClick={handleReply}
-              className="w-full py-3 rounded-xl text-white font-black"
-              style={{ background: '#30D158' }}>
+              className="w-full py-3 rounded-xl font-black app-pressable"
+              style={{ background: 'var(--app-success)', color: '#fff' }}>
               Send Reply
             </button>
           </div>
         </div>
       )}
+    </div>
     </div>
   )
 }

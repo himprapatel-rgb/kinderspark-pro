@@ -30,6 +30,7 @@ function makeRes(): Partial<Response> {
   return {
     status: jest.fn().mockReturnThis(),
     json: jest.fn().mockReturnThis(),
+    clearCookie: jest.fn().mockReturnThis(),
   }
 }
 
@@ -74,7 +75,7 @@ describe('authenticate middleware', () => {
     expect(next).toHaveBeenCalledTimes(1)
   })
 
-  it('calls next() with req.user undefined when token is expired', () => {
+  it('returns 401 when Bearer token is expired', () => {
     mockVerify.mockImplementation(() => {
       const err: any = new Error('TokenExpiredError')
       err.name = 'TokenExpiredError'
@@ -87,10 +88,12 @@ describe('authenticate middleware', () => {
     authenticate(req, res, next as NextFunction)
 
     expect(req.user).toBeUndefined()
-    expect(next).toHaveBeenCalledTimes(1)
+    expect(next).not.toHaveBeenCalled()
+    expect(res.status).toHaveBeenCalledWith(401)
+    expect(res.json).toHaveBeenCalledWith({ error: 'Invalid or expired token' })
   })
 
-  it('calls next() with req.user undefined when token signature is invalid', () => {
+  it('returns 401 when Bearer token signature is invalid', () => {
     mockVerify.mockImplementation(() => {
       throw new Error('invalid signature')
     })
@@ -101,10 +104,11 @@ describe('authenticate middleware', () => {
     authenticate(req, res, next as NextFunction)
 
     expect(req.user).toBeUndefined()
-    expect(next).toHaveBeenCalledTimes(1)
+    expect(next).not.toHaveBeenCalled()
+    expect(res.status).toHaveBeenCalledWith(401)
   })
 
-  it('does not block the request even when auth fails (non-blocking middleware)', () => {
+  it('returns 401 for invalid Bearer token (explicit client credential)', () => {
     mockVerify.mockImplementation(() => {
       throw new Error('invalid token')
     })
@@ -114,8 +118,24 @@ describe('authenticate middleware', () => {
 
     authenticate(req, res, next as NextFunction)
 
-    expect(next).toHaveBeenCalledTimes(1)
+    expect(next).not.toHaveBeenCalled()
+    expect(res.status).toHaveBeenCalledWith(401)
+  })
+
+  it('clears stale cookie and calls next() when only cookie is invalid (login still works)', () => {
+    mockVerify.mockImplementation(() => {
+      throw new Error('invalid token')
+    })
+
+    const req = makeReq(undefined, { kinderspark_token: 'stale' }) as Request
+    const res = makeRes() as Response
+
+    authenticate(req, res, next as NextFunction)
+
+    expect(req.user).toBeUndefined()
     expect(res.status).not.toHaveBeenCalled()
+    expect(res.clearCookie).toHaveBeenCalled()
+    expect(next).toHaveBeenCalledTimes(1)
   })
 
   it('reads token from cookie when no Authorization header is set', () => {

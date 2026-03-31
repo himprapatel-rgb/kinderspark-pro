@@ -3,6 +3,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
 import { generateReport, getClasses } from '@/lib/api'
+import { BarChart3, ClipboardList, Printer } from 'lucide-react'
 
 function ReportsContent() {
   const router = useRouter()
@@ -32,27 +33,27 @@ function ReportsContent() {
   }
 
   return (
-    <div className="min-h-screen pb-8" style={{ background: 'linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%)' }}>
-      <div className="p-5 pt-10" style={{ background: 'linear-gradient(135deg, #5E5CE6, #BF5AF2)' }}>
-        <button onClick={() => router.back()} className="text-white/70 text-sm font-bold mb-4 flex items-center gap-1">← Back</button>
-        <h1 className="text-white font-black text-2xl">Weekly Report 📊</h1>
-        <p className="text-white/70 text-sm font-bold mt-1">AI-generated class summary</p>
+    <div className="min-h-screen pb-8 app-container" style={{ background: 'var(--app-bg)' }}>
+      <div className="p-5 pt-10" style={{ background: 'linear-gradient(135deg, var(--app-accent), #4A6ED0)' }}>
+        <button onClick={() => router.back()} className="text-sm font-bold mb-4 flex items-center gap-1 app-pressable">← Back</button>
+        <h1 className="font-black text-2xl inline-flex items-center gap-2"><BarChart3 size={22} /> Weekly Report</h1>
+        <p className="text-sm font-bold mt-1">AI-generated class summary</p>
       </div>
 
       <div className="p-5 space-y-4">
-        <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.07)' }}>
-          <div className="text-white/60 text-xs font-bold mb-2">Select Class</div>
+        <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface)', border: '1px solid rgba(120,120,140,0.2)' }}>
+          <div className="text-xs font-bold mb-2" style={{ color: 'rgba(70, 75, 96, 0.75)' }}>Select Class</div>
           {classes.length > 0 ? (
             <div className="space-y-2">
               {classes.map(cls => (
                 <button
-                  key={cls.id}
+                    key={cls.id}
                   onClick={() => setClassId(cls.id)}
                   className="w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold text-sm transition-all"
                   style={{
-                    background: classId === cls.id ? 'rgba(94,92,230,0.3)' : 'rgba(255,255,255,0.07)',
-                    border: classId === cls.id ? '1.5px solid #5E5CE6' : '1.5px solid transparent',
-                    color: classId === cls.id ? '#fff' : 'rgba(255,255,255,0.7)',
+                    background: classId === cls.id ? 'rgba(94,92,230,0.15)' : 'rgba(70,75,96,0.06)',
+                    border: classId === cls.id ? '1.5px solid #5B7FE8' : '1.5px solid transparent',
+                    color: classId === cls.id ? '#2d245d' : 'rgb(32,36,52)',
                   }}
                 >
                   <span>{cls.name}</span>
@@ -64,36 +65,36 @@ function ReportsContent() {
             </div>
           ) : (
             <input value={classId} onChange={e => setClassId(e.target.value)} placeholder="Enter class ID..."
-              className="w-full px-3 py-2 rounded-xl font-bold text-sm text-white outline-none"
-              style={{ background: 'rgba(255,255,255,0.1)' }} />
+              className="w-full px-3 py-2 rounded-xl font-bold text-sm outline-none"
+              style={{ background: 'rgba(70,75,96,0.06)', color: 'rgb(32,36,52)' }} />
           )}
         </div>
 
         <button onClick={handleGenerate} disabled={loading || !classId}
-          className="w-full py-4 rounded-2xl font-black text-white text-base transition-all active:scale-95 disabled:opacity-50"
-          style={{ background: 'linear-gradient(135deg, #5E5CE6, #BF5AF2)' }}>
+          className="w-full py-4 rounded-2xl font-black text-white text-base transition-all active:scale-95 disabled:opacity-50 app-pressable"
+          style={{ background: 'linear-gradient(135deg, #5B7FE8, #8B6CC1)' }}>
           {loading ? <span className="flex items-center justify-center gap-2"><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Generating with AI...</span> : '✨ Generate Report'}
         </button>
 
         {error && <div className="text-red-400 text-sm font-bold text-center">{error}</div>}
 
         {report && (
-          <div className="rounded-2xl p-5 space-y-4" style={{ background: 'rgba(255,255,255,0.07)' }}>
+          <div className="rounded-2xl p-5 space-y-4" style={{ background: 'var(--app-surface)', border: '1px solid rgba(120,120,140,0.2)' }}>
             <div className="flex items-center justify-between">
-              <div className="text-white font-black text-base">📋 Weekly Report</div>
-              <button onClick={() => window.print()} className="px-3 py-1 rounded-xl font-bold text-xs text-white" style={{ background: 'rgba(255,255,255,0.15)' }}>🖨️ Print</button>
+              <div className="font-black text-base inline-flex items-center gap-1.5" style={{ color: 'rgb(32,36,52)' }}><ClipboardList size={16} /> Weekly Report</div>
+              <button onClick={() => window.print()} className="px-3 py-1 rounded-xl font-bold text-xs app-pressable inline-flex items-center gap-1.5" style={{ background: 'var(--app-surface-soft)', color: 'rgb(var(--foreground-rgb))', border: '1px solid var(--app-border)' }}><Printer size={14} /> Print</button>
             </div>
-            <div className="text-white/80 font-bold text-sm leading-relaxed whitespace-pre-wrap">{report}</div>
-            <div className="text-white/40 text-xs font-bold">Generated by Claude AI • {new Date().toLocaleDateString()}</div>
+            <div className="font-bold text-sm leading-relaxed whitespace-pre-wrap" style={{ color: 'rgba(32,36,52,0.9)' }}>{report}</div>
+            <div className="text-xs font-bold" style={{ color: 'rgba(70, 75, 96, 0.75)' }}>Generated by Claude AI • {new Date().toLocaleDateString()}</div>
           </div>
         )}
 
         {!report && !loading && (
-          <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.05)' }}>
-            <div className="text-white/60 font-black text-sm mb-2">How it works</div>
+          <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface)', border: '1px solid rgba(120,120,140,0.2)' }}>
+            <div className="font-black text-sm mb-2" style={{ color: 'rgba(70, 75, 96, 0.9)' }}>How it works</div>
             <ul className="space-y-1">
               {['Select your class from the list above', 'Claude AI analyzes student progress', 'Receive a warm, parent-friendly report', 'Print and share with families'].map((tip, i) => (
-                <li key={i} className="text-white/40 text-xs font-bold flex gap-2"><span>{i + 1}.</span><span>{tip}</span></li>
+                <li key={i} className="text-xs font-bold flex gap-2" style={{ color: 'rgba(70, 75, 96, 0.78)' }}><span>{i + 1}.</span><span>{tip}</span></li>
               ))}
             </ul>
           </div>
@@ -110,3 +111,4 @@ export default function ReportsPage() {
     </Suspense>
   )
 }
+

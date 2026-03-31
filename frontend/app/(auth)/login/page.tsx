@@ -2,7 +2,9 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
-import { verifyPin } from '@/lib/api'
+import { verifyPin, getDemoSchoolCode } from '@/lib/api'
+import Onboarding, { isOnboardingDone } from '@/components/Onboarding'
+import { useTranslation } from '@/hooks/useTranslation'
 
 const ROLES = [
   {
@@ -10,8 +12,8 @@ const ROLES = [
     emoji: '🧒',
     label: "I'm a Kid",
     sub: 'Learn, play & earn stars!',
-    color: '#FF9F0A',
-    grad: 'linear-gradient(135deg,#FF9F0A 0%,#FF6B35 100%)',
+    color: '#F5A623',
+    grad: 'linear-gradient(135deg,#F5A623 0%,#D4881A 100%)',
     glow: 'rgba(255,159,10,0.4)',
     icon: '⭐',
   },
@@ -20,8 +22,8 @@ const ROLES = [
     emoji: '👩‍🏫',
     label: "I'm a Teacher",
     sub: 'Manage your class & lessons',
-    color: '#5E5CE6',
-    grad: 'linear-gradient(135deg,#5E5CE6 0%,#BF5AF2 100%)',
+    color: '#5B7FE8',
+    grad: 'linear-gradient(135deg,#5B7FE8 0%,#8B6CC1 100%)',
     glow: 'rgba(94,92,230,0.4)',
     icon: '📚',
   },
@@ -30,8 +32,8 @@ const ROLES = [
     emoji: '👨‍👩‍👧',
     label: "I'm a Parent",
     sub: "Track your child's progress",
-    color: '#30D158',
-    grad: 'linear-gradient(135deg,#30D158 0%,#43C6AC 100%)',
+    color: '#4CAF6A',
+    grad: 'linear-gradient(135deg,#4CAF6A 0%,#5FBF7F 100%)',
     glow: 'rgba(48,209,88,0.4)',
     icon: '💚',
   },
@@ -40,8 +42,8 @@ const ROLES = [
     emoji: '⚙️',
     label: 'Admin',
     sub: 'School overview & settings',
-    color: '#BF5AF2',
-    grad: 'linear-gradient(135deg,#BF5AF2 0%,#5E5CE6 100%)',
+    color: '#8B6CC1',
+    grad: 'linear-gradient(135deg,#8B6CC1 0%,#5B7FE8 100%)',
     glow: 'rgba(191,90,242,0.4)',
     icon: '🏫',
   },
@@ -64,11 +66,14 @@ const STARS = [
 ]
 
 const DEV_LOGINS = [
-  { label: 'Admin',   emoji: '⚙️',  role: 'admin',   pin: '9999', color: '#BF5AF2' },
-  { label: 'Teacher', emoji: '👩‍🏫', role: 'teacher', pin: '1234', color: '#5E5CE6' },
-  { label: 'Parent',  emoji: '👨‍👩‍👧', role: 'parent',  pin: '1111', color: '#30D158' },
-  { label: 'Kid',     emoji: '🧒',  role: 'child',   pin: '1111', color: '#FF9F0A' },
+  { label: 'Admin',   emoji: '⚙️',  role: 'admin',   pin: '9999', color: '#8B6CC1' },
+  { label: 'Teacher', emoji: '👩‍🏫', role: 'teacher', pin: '1234', color: '#5B7FE8' },
+  { label: 'Parent',  emoji: '👨‍👩‍👧', role: 'parent',  pin: '1111', color: '#4CAF6A' },
+  { label: 'Kid',     emoji: '🧒',  role: 'child',   pin: '1111', color: '#F5A623' },
 ]
+
+const IS_DEV = process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_SHOW_DEV_TOOLS === 'true'
+
 
 export default function LoginPage() {
   const router = useRouter()
@@ -76,14 +81,20 @@ export default function LoginPage() {
   const role = useAppStore((s) => s.role)
   const setAuth = useAppStore((s) => s.setAuth)
   const [devLoading, setDevLoading] = useState<string | null>(null)
+  const [showOnboarding, setShowOnboarding] = useState(false)
+  const { t } = useTranslation()
+
+  useEffect(() => {
+    if (!isOnboardingDone()) setShowOnboarding(true)
+  }, [])
 
   async function quickLogin(item: typeof DEV_LOGINS[number]) {
     setDevLoading(item.role)
     try {
-      const data = await verifyPin(item.pin, item.role)
-      setAuth(data.user, item.role, data.accessToken || data.token)
+      const data = await verifyPin(item.pin, item.role, getDemoSchoolCode())
+      setAuth(data.user, item.role)
       if (item.role === 'teacher') router.replace('/teacher')
-      else if (item.role === 'admin')  router.replace('/admin')
+      else if (item.role === 'admin' || item.role === 'principal')  router.replace('/admin')
       else if (item.role === 'parent') router.replace('/parent')
       else router.replace('/child')
     } catch { setDevLoading(null) }
@@ -92,23 +103,27 @@ export default function LoginPage() {
   useEffect(() => {
     if (!user || !role) return
     if (role === 'teacher') router.replace('/teacher')
-    else if (role === 'admin')  router.replace('/admin')
+    else if (role === 'admin' || role === 'principal')  router.replace('/admin')
     else if (role === 'parent') router.replace('/parent')
     else router.replace('/child')
   }, [user, role, router])
 
+  if (showOnboarding) {
+    return <Onboarding onComplete={() => setShowOnboarding(false)} />
+  }
+
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center px-5 py-12 relative overflow-hidden"
-      style={{ background: 'linear-gradient(160deg, #0a0a18 0%, #12102a 40%, #0f1a10 100%)' }}
+      style={{ background: 'linear-gradient(160deg, #FFFCF5 0%, #FFF9EE 40%, #F5FAF0 100%)' }}
     >
       {/* ── Background orbs ── */}
       <div className="orb w-80 h-80 top-[-80px] left-[-80px] opacity-30"
-        style={{ background: '#5E5CE6', animationDelay: '0s' }} />
+        style={{ background: '#5B7FE8', animationDelay: '0s' }} />
       <div className="orb w-72 h-72 bottom-[-60px] right-[-60px] opacity-25"
-        style={{ background: '#30D158', animationDelay: '2s', filter: 'blur(70px)' }} />
+        style={{ background: '#4CAF6A', animationDelay: '2s', filter: 'blur(70px)' }} />
       <div className="orb w-48 h-48 top-[40%] right-[5%] opacity-20"
-        style={{ background: '#BF5AF2', filter: 'blur(50px)' }} />
+        style={{ background: '#8B6CC1', filter: 'blur(50px)' }} />
 
       {/* ── Twinkling stars ── */}
       {STARS.map((s, i) => (
@@ -136,7 +151,7 @@ export default function LoginPage() {
           <div
             className="absolute inset-0 rounded-3xl opacity-60"
             style={{
-              background: 'linear-gradient(135deg, #5E5CE6, #BF5AF2)',
+              background: 'linear-gradient(135deg, #5B7FE8, #8B6CC1)',
               filter: 'blur(14px)',
               animation: 'glow-pulse 2.5s ease-in-out infinite',
             }}
@@ -144,7 +159,7 @@ export default function LoginPage() {
           <div
             className="relative z-10 w-full h-full rounded-3xl flex items-center justify-center text-5xl"
             style={{
-              background: 'linear-gradient(135deg, #5E5CE6, #BF5AF2)',
+              background: 'linear-gradient(135deg, #5B7FE8, #8B6CC1)',
               boxShadow: '0 8px 32px rgba(94,92,230,0.5), inset 0 1px 0 rgba(255,255,255,0.25)',
             }}
           >
@@ -154,7 +169,7 @@ export default function LoginPage() {
         <h1
           className="text-4xl font-black tracking-tight"
           style={{
-            background: 'linear-gradient(135deg, #fff 30%, rgba(255,255,255,0.6))',
+            background: 'linear-gradient(135deg, #5B7FE8 0%, #8B6CC1 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
@@ -165,7 +180,7 @@ export default function LoginPage() {
             style={{
               display: 'block',
               fontSize: '1rem',
-              background: 'linear-gradient(135deg, #BF5AF2, #5E5CE6)',
+              background: 'linear-gradient(135deg, #8B6CC1, #5B7FE8)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
@@ -177,17 +192,20 @@ export default function LoginPage() {
             PRO
           </span>
         </h1>
-        <p className="text-white/40 text-sm font-bold mt-1 tracking-wide">
+        <p className="text-sm font-bold mt-1 tracking-wide" style={{ color: 'rgba(70, 75, 96, 0.6)' }}>
           AI-powered kindergarten learning
         </p>
       </div>
 
       {/* ── Divider ── */}
       <div className="flex items-center gap-3 mb-6 w-full max-w-[360px] animate-slide-up delay-100">
-        <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.12))' }} />
-        <span className="text-white/30 text-xs font-black uppercase tracking-widest px-1">Who are you?</span>
-        <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.12), transparent)' }} />
+        <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(70,75,96,0.25))' }} />
+        <span className="text-xs font-black uppercase tracking-widest px-1" style={{ color: 'rgba(70, 75, 96, 0.7)' }}>Who are you?</span>
+        <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, rgba(70,75,96,0.25), transparent)' }} />
       </div>
+      <p className="text-center text-[11px] font-semibold mb-4 max-w-[360px] mx-auto" style={{ color: 'rgba(70, 75, 96, 0.55)' }}>
+        Next step: your school&apos;s 6-character code (from your teacher), then your PIN.
+      </p>
 
       {/* ── Role cards ── */}
       <div className="w-full max-w-[360px] space-y-3 relative z-10">
@@ -195,12 +213,12 @@ export default function LoginPage() {
           <button
             key={r.id}
             onClick={() => router.push(`/pin?role=${r.id}`)}
-            className="w-full rounded-2xl p-4 flex items-center gap-4 text-left relative overflow-hidden group transition-all duration-200 active:scale-[0.97]"
+            className="w-full rounded-2xl p-4 flex items-center gap-4 text-left relative overflow-hidden group transition-all duration-200 active:scale-[0.97] app-pressable"
             style={{
               animationDelay: `${(i + 2) * 100}ms`,
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              boxShadow: `0 4px 24px rgba(0,0,0,0.3)`,
+              background: 'rgba(255,255,255,0.88)',
+              border: '1px solid rgba(120,120,140,0.22)',
+              boxShadow: `0 8px 22px rgba(30,40,70,0.12)`,
             }}
           >
             {/* Hover gradient fill */}
@@ -227,14 +245,14 @@ export default function LoginPage() {
 
             {/* Text */}
             <div className="flex-1 relative z-10">
-              <div className="text-white text-base font-black leading-tight">{r.label}</div>
-              <div className="text-white/55 text-xs font-semibold mt-0.5">{r.sub}</div>
+              <div className="text-base font-black leading-tight" style={{ color: 'rgb(32,36,52)' }}>{r.label}</div>
+              <div className="text-xs font-semibold mt-0.5" style={{ color: 'rgba(70, 75, 96, 0.8)' }}>{r.sub}</div>
             </div>
 
             {/* Arrow */}
             <div
               className="relative z-10 w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black transition-all duration-200 group-hover:translate-x-1"
-              style={{ background: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.7)' }}
+              style={{ background: 'rgba(94,92,230,0.1)', color: 'rgba(94,92,230,0.6)' }}
             >
               ›
             </div>
@@ -242,56 +260,85 @@ export default function LoginPage() {
         ))}
       </div>
 
-      {/* ── Dev Links ── */}
-      <div className="w-full max-w-[360px] mt-6 relative z-10">
-        <div style={{ background: 'rgba(255,200,0,0.07)', border: '1px solid rgba(255,200,0,0.2)', borderRadius: 12, padding: '10px 14px', marginBottom: 12 }}>
-          <div style={{ fontSize: 10, fontWeight: 900, color: 'rgba(255,200,0,0.6)', letterSpacing: '0.15em', marginBottom: 8 }}>🔗 DEV LINKS</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            {[
-              { label: '🛸 Agent Dashboard', path: '/dashboard/agents' },
-              { label: '⚙️ Admin',            path: '/admin' },
-              { label: '👩‍🏫 Teacher',         path: '/teacher' },
-              { label: '👨‍👩‍👧 Parent',          path: '/parent' },
-              { label: '🧒 Child',            path: '/child' },
-              { label: '🔧 Dev Panel',        path: '/dashboard/agents' },
-            ].map(link => (
-              <button key={link.path} onClick={() => router.push(link.path)} style={{
-                fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 8,
-                background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
-                color: 'rgba(255,255,255,0.7)', cursor: 'pointer', whiteSpace: 'nowrap',
-              }}>{link.label}</button>
-            ))}
+      {/* ── Dev Links (hidden in production) ── */}
+      {IS_DEV && (
+        <div className="w-full max-w-[360px] mt-6 relative z-10">
+          <div style={{ background: 'rgba(255,200,0,0.07)', border: '1px solid rgba(255,200,0,0.2)', borderRadius: 12, padding: '10px 14px', marginBottom: 12 }}>
+            <div style={{ fontSize: 10, fontWeight: 900, color: 'rgba(255,200,0,0.6)', letterSpacing: '0.15em', marginBottom: 8 }}>🔗 DEV LINKS</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {[
+                { label: '🛸 Agent Dashboard', path: '/dashboard/agents' },
+                { label: '⚙️ Admin',            path: '/admin' },
+                { label: '👩‍🏫 Teacher',         path: '/teacher' },
+                { label: '👨‍👩‍👧 Parent',          path: '/parent' },
+                { label: '🧒 Child',            path: '/child' },
+                { label: '🔧 Dev Panel',        path: '/dashboard/agents' },
+              ].map(link => (
+                <button key={link.path} onClick={() => router.push(link.path)} className="app-pressable" style={{
+                  fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 8,
+                  background: 'var(--app-surface-soft)', border: '1px solid rgba(255,255,255,0.1)',
+                  color: 'rgba(255,255,255,0.7)', cursor: 'pointer', whiteSpace: 'nowrap' as const,
+                }}>{link.label}</button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* ── Dev Quick Login ── */}
-      <div className="w-full max-w-[360px] relative z-10">
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 16 }}>
-          <div style={{ textAlign: 'center', fontSize: 10, fontWeight: 900, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.2em', marginBottom: 10 }}>
-            ⚡ DEV QUICK LOGIN
-          </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            {DEV_LOGINS.map(item => (
-              <button
-                key={item.role}
-                onClick={() => quickLogin(item)}
-                disabled={devLoading === item.role}
-                style={{
-                  flex: 1, padding: '8px 4px', borderRadius: 10, border: 'none',
-                  background: devLoading === item.role ? 'rgba(255,255,255,0.05)' : item.color + '22',
-                  color: item.color, fontWeight: 900, fontSize: 10, cursor: 'pointer',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-                  border: `1px solid ${item.color}33`,
-                  transition: 'all 0.2s',
-                }}
-              >
-                <span style={{ fontSize: 18 }}>{devLoading === item.role ? '⏳' : item.emoji}</span>
-                {item.label}
-              </button>
-            ))}
+      {/* ── Dev Quick Login (hidden in production) ── */}
+      {IS_DEV && (
+        <div className="w-full max-w-[360px] relative z-10">
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 16 }}>
+            <div style={{ textAlign: 'center', fontSize: 10, fontWeight: 900, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.2em', marginBottom: 10 }}>
+              ⚡ DEV QUICK LOGIN
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {DEV_LOGINS.map(item => (
+                <button
+                  key={item.role}
+                  onClick={() => quickLogin(item)}
+                  disabled={devLoading === item.role}
+                  className="app-pressable"
+                  style={{
+                    flex: 1, padding: '8px 4px', borderRadius: 10,
+                    background: devLoading === item.role ? 'rgba(255,255,255,0.05)' : item.color + '22',
+                    color: item.color, fontWeight: 900, fontSize: 10, cursor: 'pointer',
+                    display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: 3,
+                    border: `1px solid ${item.color}33`,
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  <span style={{ fontSize: 18 }}>{devLoading === item.role ? '⏳' : item.emoji}</span>
+                  {item.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
+      )}
+
+      {/* ── Create Account ── */}
+      <div className="w-full max-w-[360px] mt-6 relative z-10">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(70,75,96,0.15))' }} />
+          <span className="text-xs font-bold" style={{ color: 'rgba(70, 75, 96, 0.5)' }}>New here?</span>
+          <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, rgba(70,75,96,0.15), transparent)' }} />
+        </div>
+        <button
+          onClick={() => router.push('/register')}
+          className="w-full rounded-2xl p-4 flex items-center justify-center gap-3 text-left relative overflow-hidden group transition-all duration-200 active:scale-[0.97] app-pressable"
+          style={{
+            background: 'rgba(255,255,255,0.7)',
+            border: '2px dashed rgba(94,92,230,0.3)',
+            boxShadow: '0 4px 16px rgba(30,40,70,0.06)',
+          }}
+        >
+          <span className="text-2xl">✨</span>
+          <div>
+            <div className="text-sm font-black" style={{ color: '#5B7FE8' }}>Create Account</div>
+            <div className="text-xs font-semibold" style={{ color: 'rgba(70,75,96,0.6)' }}>Get your unique Profile ID</div>
+          </div>
+        </button>
       </div>
 
       {/* ── Footer ── */}
@@ -301,7 +348,12 @@ export default function LoginPage() {
             <span key={i} className="text-sm opacity-40">{icon}</span>
           ))}
         </div>
-        <p className="text-white/20 text-xs font-semibold">Safe & AI-powered learning · © 2025 KinderSpark Pro</p>
+        <p className="text-xs font-semibold" style={{ color: 'rgba(70, 75, 96, 0.4)' }}>Safe & AI-powered learning · © 2026 KinderSpark Pro</p>
+        <div className="mt-2 flex items-center justify-center gap-3">
+          <button onClick={() => router.push('/privacy')} className="text-xs font-bold underline app-pressable" style={{ color: 'rgba(94, 92, 230, 0.5)' }}>Privacy Policy</button>
+          <span className="text-xs" style={{ color: 'rgba(70,75,96,0.2)' }}>·</span>
+          <button onClick={() => router.push('/terms')} className="text-xs font-bold underline app-pressable" style={{ color: 'rgba(94, 92, 230, 0.5)' }}>Terms of Service</button>
+        </div>
       </div>
 
       <style>{`

@@ -1,10 +1,23 @@
 'use client'
 import { useState, useEffect } from 'react'
+import dynamic from 'next/dynamic'
 import { useRouter, useParams } from 'next/navigation'
 import { useAppStore as useStore } from '@/store/appStore'
-import { updateProgress, updateStudent, getSyllabus } from '@/lib/api'
-import { MODS } from '@/lib/modules'
+import { updateProgress, updateStudent, getSyllabus, getProgress } from '@/lib/api'
+import { MODS, type Module } from '@/lib/modules'
+import {
+  orderedPathMods,
+  getNextModuleAfter,
+  getRecommendedNextModule,
+  touchPracticeTimestamp,
+  estimateLessonMinutes,
+} from '@/lib/learnPath'
 import { speak } from '@/lib/speech'
+import { Home, RotateCcw, Volume2, Map, Sparkles } from 'lucide-react'
+import { playComplete, playSwipe, playStar } from '@/lib/sounds'
+
+const ConfettiCanvas = dynamic(() => import('@/components/Confetti'), { ssr: false })
+import { useTranslation } from '@/hooks/useTranslation'
 
 export default function LessonPage() {
   const router = useRouter()
@@ -14,16 +27,18 @@ export default function LessonPage() {
   const currentStudent = useStore(s => s.currentStudent)
 
   const student = currentStudent || user
+  const { t } = useTranslation()
 
   const [items, setItems] = useState<any[]>([])
   const [title, setTitle] = useState('')
-  const [color, setColor] = useState('#5E5CE6')
+  const [color, setColor] = useState('#5B7FE8')
   const [icon, setIcon] = useState('📖')
   const [type, setType] = useState<string>('items')
   const [idx, setIdx] = useState(0)
   const [done, setDone] = useState(false)
   const [loading, setLoading] = useState(true)
   const [confetti, setConfetti] = useState(false)
+  const [nextModule, setNextModule] = useState<Module | null>(null)
 
   const isSyllabus = rawId.startsWith('syl_')
   const moduleId = isSyllabus ? rawId : rawId
@@ -58,26 +73,32 @@ export default function LessonPage() {
     setLoading(false)
   }
 
-  const card = items[idx]
   const total = items.length
+  const card = items[idx]
   const pct = total > 0 ? Math.round(((idx + 1) / total) * 100) : 0
+  const sessionEst = estimateLessonMinutes(total)
+  const cardsToGo = Math.max(0, total - idx - 1)
 
   const handleNext = async () => {
     if (idx < total - 1) {
+      playSwipe()
       setIdx(i => i + 1)
       // Update progress
       if (student) {
-        await updateProgress(student.id, moduleId, idx + 1).catch(() => {})
+        await updateProgress(student.id, moduleId, idx + 1, { lessonTotal: total }).catch(() => {})
       }
     } else {
       // Finished
+      playComplete()
       setDone(true)
       setConfetti(true)
       if (student) {
-        await updateProgress(student.id, moduleId, total).catch(() => {})
+        playStar()
+        await updateProgress(student.id, moduleId, total, { lessonTotal: total }).catch(() => {})
         const newStars = (student.stars || 0) + 10
         const newStreak = (student.streak || 0) + 1
         await updateStudent(student.id, { stars: newStars, streak: newStreak }).catch(() => {})
+        if (!isSyllabus) touchPracticeTimestamp(moduleId)
       }
     }
   }
@@ -86,33 +107,101 @@ export default function LessonPage() {
     if (idx > 0) setIdx(i => i - 1)
   }
 
+  useEffect(() => {
+    if (!done || !student) return
+    const run = async () => {
+      try {
+        const list = await getProgress(student.id)
+        const map: Record<string, number> = {}
+        ;(list || []).forEach((p: any) => {
+          map[p.moduleId] = p.cards
+        })
+        const p = orderedPathMods()
+        if (isSyllabus) {
+          setNextModule(getRecommendedNextModule(p, map))
+        } else {
+          setNextModule(getNextModuleAfter(p, moduleId, map, true))
+        }
+      } catch {
+        setNextModule(null)
+      }
+    }
+    run()
+  }, [done, student, isSyllabus, moduleId])
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#0f0f1a' }}>
+      <div className="min-h-screen flex items-center justify-center app-page">
         <div className="text-6xl animate-bounce">{icon}</div>
       </div>
     )
   }
 
   if (done) {
+    const prevStreak = Number((student as any)?.streak ?? 0)
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-6"
-        style={{ background: 'linear-gradient(135deg, #1a0a2e, #0f0f1a)' }}>
-        {confetti && <Confetti />}
-        <div className="text-7xl mb-4 animate-bounce">🎉</div>
-        <div className="text-white text-3xl font-black mb-2">Amazing!</div>
-        <div className="text-white/70 font-bold text-center mb-6">
-          You completed {title}!<br />+10 ⭐ stars earned!
+      <div
+        className="min-h-screen flex flex-col items-center justify-center px-5 pb-10"
+        style={{ background: 'var(--app-bg)' }}
+      >
+        <ConfettiCanvas trigger={confetti} onComplete={() => setConfetti(false)} />
+        <div className="text-7xl mb-3 animate-bounce">🎉</div>
+        <div className="text-2xl font-black mb-1 text-center" style={{ color: 'rgb(var(--foreground-rgb))' }}>
+          {t('learn_complete_title')}
         </div>
-        <div className="flex gap-3">
-          <button onClick={() => { setDone(false); setIdx(0) }}
-            className="px-6 py-3 rounded-2xl text-white font-black"
-            style={{ background: color }}>
-            Play Again
-          </button>
-          <button onClick={() => router.push('/child')}
-            className="px-6 py-3 rounded-2xl text-white font-black bg-white/20">
-            Home
+        <div className="text-base font-black mb-1" style={{ color }}>
+          +10 ⭐ · {t('done')} ✓
+        </div>
+        <div className="app-muted font-bold text-center text-sm mb-1 max-w-xs">{title}</div>
+        {student != null && (
+          <div className="text-xs font-black mb-5 px-3 py-1.5 rounded-full" style={{ background: 'rgba(245,166,35,0.15)', color: '#D4881A' }}>
+            🔥 {prevStreak + 1}d · {t('learn_complete_streak')}
+          </div>
+        )}
+        {student == null && <div className="mb-5" />}
+        <div className="flex flex-col gap-2.5 w-full max-w-sm">
+          {nextModule && (
+            <button
+              type="button"
+              onClick={() => router.push(`/child/lesson/${nextModule.id}`)}
+              className="w-full min-h-11 py-3.5 rounded-2xl font-black text-sm inline-flex items-center justify-center gap-2 app-pressable animate-sparkle-on-hover"
+              style={{
+                background: 'linear-gradient(135deg, var(--app-gold), var(--app-warning))',
+                color: '#2B1F10',
+                boxShadow: '0 6px 20px rgba(245,183,49,0.35)',
+              }}
+            >
+              <Sparkles size={18} />
+              {t('learn_next_lesson')}: {nextModule.icon} {nextModule.title}
+            </button>
+          )}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => router.push('/child/learn')}
+              className="flex-1 min-h-11 py-3 rounded-2xl font-black text-sm inline-flex items-center justify-center gap-2 app-pressable"
+              style={{ background: 'rgba(94,92,230,0.18)', color: '#5B7FE8', border: '1px solid rgba(94,92,230,0.35)' }}
+            >
+              <Map size={16} /> {t('learn_path_title').split(' ')[0]}…
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push('/child')}
+              className="flex-1 min-h-11 py-3 rounded-2xl font-black text-sm inline-flex items-center justify-center gap-2 app-pressable bg-white/12"
+            >
+              <Home size={16} /> Home
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setDone(false)
+              setIdx(0)
+            }}
+            className="w-full py-2.5 rounded-xl font-bold text-sm app-pressable inline-flex items-center justify-center gap-2 app-muted"
+            style={{ background: 'var(--app-surface-soft)' }}
+          >
+            <RotateCcw size={16} /> Play Again
           </button>
         </div>
       </div>
@@ -120,16 +209,20 @@ export default function LessonPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#0f0f1a' }}>
+    <div className="min-h-screen flex flex-col app-page app-container">
       {/* Header */}
-      <div className="flex items-center gap-3 p-4">
-        <button onClick={() => router.push('/child')} className="text-white/60 font-bold">← Back</button>
-        <div className="flex-1">
-          <div className="flex justify-between text-white/50 text-xs font-bold mb-1">
-            <span>{title}</span>
-            <span>{idx + 1}/{total}</span>
+      <div className="flex items-center gap-3 p-4 doodle-surface">
+        <button onClick={() => router.push('/child')} className="font-bold app-pressable sticker-bubble px-3 py-1.5" style={{ color: 'rgb(var(--foreground-rgb))' }}>← Back</button>
+        <div className="flex-1 min-w-0">
+          <div className="flex justify-between text-xs font-bold app-muted mb-0.5 gap-2">
+            <span className="truncate">{title}</span>
+            <span className="shrink-0">{idx + 1}/{total}</span>
           </div>
-          <div className="bg-white/10 rounded-full h-2">
+          <p className="text-[10px] font-bold app-muted mb-1">
+            {t('learn_min_estimate').replace('{n}', String(sessionEst))}
+            {total > 0 && idx < total ? ` · ${t('learn_cards_left').replace('{n}', String(cardsToGo))}` : ''}
+          </p>
+          <div className="rounded-full h-2" style={{ background: 'rgba(120,120,140,0.18)' }}>
             <div className="h-2 rounded-full transition-all" style={{ width: `${pct}%`, background: color }} />
           </div>
         </div>
@@ -141,35 +234,39 @@ export default function LessonPage() {
       </div>
 
       {/* Navigation */}
-      <div className="p-6 flex items-center justify-between">
-        <button onClick={handlePrev} disabled={idx === 0}
-          className="w-12 h-12 rounded-full flex items-center justify-center text-xl disabled:opacity-30 active:scale-95 transition-all"
-          style={{ background: 'rgba(255,255,255,0.1)' }}>
-          ←
-        </button>
-
-        <button onClick={() => speak(card?.w || '')}
-          className="w-14 h-14 rounded-full flex items-center justify-center text-2xl active:scale-95 transition-all"
-          style={{ background: color + '33', border: `2px solid ${color}66` }}>
-          🔊
-        </button>
-
-        <button onClick={handleNext} disabled={!card}
-          className="w-12 h-12 rounded-full flex items-center justify-center text-xl active:scale-95 transition-all"
-          style={{ background: idx === total - 1 ? color : 'rgba(255,255,255,0.1)' }}>
-          {idx === total - 1 ? '✓' : '→'}
-        </button>
-      </div>
-
-      {idx === total - 1 && (
-        <div className="pb-6 px-6">
-          <button onClick={handleNext}
-            className="w-full py-4 rounded-2xl text-white font-black text-lg active:scale-95 transition-all"
-            style={{ background: `linear-gradient(135deg, ${color}, ${color}aa)` }}>
-            Finished! 🎉
+      <div className="p-6 space-y-3">
+        {/* Main next/finish button — big and obvious */}
+        {idx < total - 1 ? (
+          <button onClick={handleNext} disabled={!card}
+            className="w-full py-4 rounded-2xl font-black text-base active:scale-95 transition-all disabled:opacity-40 app-pressable flex items-center justify-center gap-2 animate-sparkle-on-hover"
+            style={{ background: `linear-gradient(135deg, ${color}, ${color}cc)`, color: '#fff', boxShadow: `0 4px 16px ${color}40` }}>
+            Next Card → <span className="text-xs opacity-70">{idx + 1}/{total}</span>
           </button>
+        ) : (
+          <button onClick={handleNext}
+            className="w-full py-5 rounded-2xl font-black text-lg active:scale-95 transition-all app-pressable flex items-center justify-center gap-2 animate-sparkle-on-hover"
+            style={{ background: `linear-gradient(135deg, var(--app-success), #5FBF7F)`, color: '#fff', boxShadow: '0 4px 20px rgba(43,165,94,0.35)' }}>
+            🎉 All Done! Earn Stars
+          </button>
+        )}
+
+        {/* Secondary controls row */}
+        <div className="flex items-center justify-between">
+          <button onClick={handlePrev} disabled={idx === 0}
+            className="w-12 h-12 rounded-full flex items-center justify-center text-xl disabled:opacity-20 active:scale-95 transition-all app-pressable"
+            style={{ background: 'rgba(120,120,140,0.08)', color: 'var(--app-text-muted)' }}>
+            ←
+          </button>
+
+          <button onClick={() => speak(card?.w || '')}
+            className="w-14 h-14 rounded-full flex items-center justify-center text-2xl active:scale-95 transition-all app-pressable sticker-bubble"
+            style={{ background: color + '18', border: `2px solid ${color}33` }}>
+            <Volume2 size={22} color={color} />
+          </button>
+
+          <div className="w-12 text-center text-xs font-black app-muted">{idx + 1}/{total}</div>
         </div>
-      )}
+      </div>
     </div>
   )
 }
@@ -182,14 +279,14 @@ function LessonCard({ card, type, color, onSpeak }: any) {
         <>
           <div className="text-8xl font-black text-white mb-2">{card.e}</div>
           <div className="text-4xl font-black text-white mb-4">{card.w}</div>
-          {card.hint && <div className="text-white/60 font-bold">{card.hint}</div>}
+          {card.hint && <div className="app-muted font-bold">{card.hint}</div>}
         </>
       )}
       {type === 'letters' && (
         <>
           <div className="text-9xl font-black text-white mb-2" style={{ color }}>{card.w}</div>
           <div className="text-5xl mb-2">{card.e}</div>
-          {card.hint && <div className="text-white/60 font-bold text-sm">{card.hint}</div>}
+          {card.hint && <div className="app-muted font-bold text-sm">{card.hint}</div>}
         </>
       )}
       {type === 'words' && (
@@ -198,13 +295,13 @@ function LessonCard({ card, type, color, onSpeak }: any) {
           <div className="text-3xl font-black text-white mb-3">{card.w}</div>
           <div className="flex gap-2 justify-center mb-3">
             {card.w.split('').map((l: string, i: number) => (
-              <div key={i} className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-black"
+              <div key={i} className="w-8 h-8 rounded-lg flex items-center justify-center font-black"
                 style={{ background: color }}>
                 {l}
               </div>
             ))}
           </div>
-          {card.hint && <div className="text-white/60 font-bold text-sm italic">"{card.hint}"</div>}
+          {card.hint && <div className="app-muted font-bold text-sm italic">"{card.hint}"</div>}
         </>
       )}
       {type === 'colors' && (
@@ -212,14 +309,14 @@ function LessonCard({ card, type, color, onSpeak }: any) {
           <div className="w-24 h-24 rounded-full mx-auto mb-4 shadow-lg"
             style={{ background: getColorHex(card.w) }} />
           <div className="text-3xl font-black text-white mb-2">{card.w}</div>
-          {card.hint && <div className="text-white/60 font-bold text-sm">{card.hint}</div>}
+          {card.hint && <div className="app-muted font-bold text-sm">{card.hint}</div>}
         </>
       )}
       {type === 'items' && (
         <>
           <div className="text-8xl mb-4">{card.e}</div>
           <div className="text-3xl font-black text-white mb-2">{card.w}</div>
-          {card.hint && <div className="text-white/60 font-bold text-sm">{card.hint}</div>}
+          {card.hint && <div className="app-muted font-bold text-sm">{card.hint}</div>}
         </>
       )}
     </div>
@@ -228,31 +325,10 @@ function LessonCard({ card, type, color, onSpeak }: any) {
 
 function getColorHex(name: string): string {
   const map: Record<string, string> = {
-    Red: '#FF453A', Blue: '#0A84FF', Green: '#30D158', Yellow: '#FFD60A',
-    Orange: '#FF9F0A', Purple: '#BF5AF2', Pink: '#FF375F', Brown: '#A0522D',
+    Red: '#E05252', Blue: '#0A84FF', Green: '#4CAF6A', Yellow: '#F5B731',
+    Orange: '#F5A623', Purple: '#8B6CC1', Pink: '#FF375F', Brown: '#A0522D',
     Black: '#1a1a1a', White: '#ffffff',
   }
-  return map[name] || '#5E5CE6'
+  return map[name] || '#5B7FE8'
 }
 
-function Confetti() {
-  const pieces = Array.from({ length: 30 }, (_, i) => i)
-  const colors = ['#FFD60A', '#FF9F0A', '#5E5CE6', '#30D158', '#BF5AF2', '#FF453A']
-  return (
-    <div className="fixed inset-0 pointer-events-none z-50">
-      {pieces.map(i => (
-        <div
-          key={i}
-          className="confetti-piece"
-          style={{
-            left: `${Math.random() * 100}%`,
-            background: colors[i % colors.length],
-            borderRadius: Math.random() > 0.5 ? '50%' : '0',
-            animationDelay: `${Math.random() * 2}s`,
-            animationDuration: `${2 + Math.random() * 2}s`,
-          }}
-        />
-      ))}
-    </div>
-  )
-}

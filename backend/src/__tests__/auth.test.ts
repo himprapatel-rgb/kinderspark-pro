@@ -5,6 +5,7 @@ import express from 'express'
 // Note: jest.mock is hoisted so we must not reference outer vars in the factory.
 // We expose `__mockPrisma` via the factory itself.
 
+const mockPrismaSchool = { findUnique: jest.fn() }
 const mockPrismaTeacher = { findMany: jest.fn() }
 const mockPrismaAdmin = { findMany: jest.fn() }
 const mockPrismaStudent = { findMany: jest.fn(), update: jest.fn() }
@@ -14,15 +15,31 @@ const mockPrismaRefreshToken = {
   delete: jest.fn(),
   deleteMany: jest.fn(),
 }
+const mockPrismaPinLoginThrottle = {
+  findUnique: jest.fn(),
+  upsert: jest.fn(),
+  delete: jest.fn(),
+}
+const mockPrismaUser = {
+  findMany: jest.fn(),
+  findUnique: jest.fn(),
+}
 
 jest.mock('../prisma/client', () => ({
   __esModule: true,
   default: {
+    school: mockPrismaSchool,
+    user: mockPrismaUser,
     teacher: mockPrismaTeacher,
     admin: mockPrismaAdmin,
     student: mockPrismaStudent,
     refreshToken: mockPrismaRefreshToken,
+    pinLoginThrottle: mockPrismaPinLoginThrottle,
   },
+}))
+
+jest.mock('../services/badge.service', () => ({
+  checkAndAwardBadges: jest.fn().mockResolvedValue([]),
 }))
 
 // Mock bcryptjs: compare succeeds when plain === hash (tests use plaintext pins as "hashes")
@@ -52,6 +69,12 @@ import * as authController from '../controllers/auth.controller'
 function buildApp() {
   const app = express()
   app.use(express.json())
+  // verifyPin / refresh set cookies — stub for supertest (no cookie-parser in minimal app)
+  app.use((req, res: any, next) => {
+    res.cookie = jest.fn(() => res)
+    res.clearCookie = jest.fn(() => res)
+    next()
+  })
   app.post('/api/auth/pin', authController.verifyPin)
   app.post('/api/auth/refresh', authController.refreshAccessToken)
   app.post('/api/auth/logout', authController.revokeRefreshToken)
@@ -66,9 +89,14 @@ describe('Auth Controller – POST /api/auth/pin', () => {
   beforeEach(() => {
     app = buildApp()
     jest.clearAllMocks()
+    mockPrismaSchool.findUnique.mockResolvedValue({ id: 'school-1', name: 'Test School', schoolCode: 'SUN001' })
+    mockPrismaUser.findMany.mockResolvedValue([])
+    mockPrismaPinLoginThrottle.findUnique.mockResolvedValue(null)
+    mockPrismaPinLoginThrottle.upsert.mockResolvedValue({})
+    mockPrismaPinLoginThrottle.delete.mockResolvedValue({})
   })
 
-  it('returns 200 with accessToken for valid teacher PIN', async () => {
+  it('returns 200 for valid teacher PIN and sets cookie auth', async () => {
     const fakeTeacher = { id: 'teacher-1', name: 'Ms Smith', pin: '1234' }
     mockPrismaTeacher.findMany.mockResolvedValue([fakeTeacher])
     mockPrismaRefreshToken.create.mockResolvedValue({})
@@ -76,11 +104,11 @@ describe('Auth Controller – POST /api/auth/pin', () => {
 
     const res = await request(app)
       .post('/api/auth/pin')
-      .send({ pin: '1234', role: 'teacher' })
+      .send({ pin: '1234', role: 'teacher', schoolCode: 'SUN001' })
 
     expect(res.status).toBe(200)
     expect(res.body.success).toBe(true)
-    expect(res.body.token).toBe('fake.access.token')
+    expect(res.body.token).toBeUndefined()
     expect(res.body.role).toBe('teacher')
     expect(res.body.user).toMatchObject({ id: 'teacher-1', name: 'Ms Smith' })
   })
@@ -91,7 +119,7 @@ describe('Auth Controller – POST /api/auth/pin', () => {
 
     const res = await request(app)
       .post('/api/auth/pin')
-      .send({ pin: 'wrong', role: 'teacher' })
+      .send({ pin: 'wrong', role: 'teacher', schoolCode: 'SUN001' })
 
     expect(res.status).toBe(401)
     expect(res.body.error).toBe('Wrong PIN')
@@ -100,10 +128,19 @@ describe('Auth Controller – POST /api/auth/pin', () => {
   it('returns 400 when pin is missing', async () => {
     const res = await request(app)
       .post('/api/auth/pin')
-      .send({ role: 'teacher' })
+      .send({ role: 'teacher', schoolCode: 'SUN001' })
 
     expect(res.status).toBe(400)
     expect(res.body.error).toMatch(/pin and role required/i)
+  })
+
+  it('returns 400 when schoolCode is missing or invalid', async () => {
+    const res = await request(app)
+      .post('/api/auth/pin')
+      .send({ pin: '1234', role: 'teacher' })
+
+    expect(res.status).toBe(400)
+    expect(String(res.body.error)).toMatch(/schoolCode/i)
   })
 
   it('returns 400 when role is missing', async () => {
@@ -115,18 +152,19 @@ describe('Auth Controller – POST /api/auth/pin', () => {
   })
 
   it('returns 200 with accessToken for valid admin PIN', async () => {
-    const fakeAdmin = { id: 'admin-1', name: 'Admin User', pin: '9999' }
+    const fakeAdmin = { id: 'admin-1', name: 'Admin User', pin: '9999', schoolId: 'school-1' }
     mockPrismaAdmin.findMany.mockResolvedValue([fakeAdmin])
     mockPrismaRefreshToken.create.mockResolvedValue({})
     mockJwtSign.mockReturnValue('fake.admin.token')
 
     const res = await request(app)
       .post('/api/auth/pin')
-      .send({ pin: '9999', role: 'admin' })
+      .send({ pin: '9999', role: 'admin', schoolCode: 'SUN001' })
 
     expect(res.status).toBe(200)
     expect(res.body.success).toBe(true)
     expect(res.body.role).toBe('admin')
+    expect(res.body.token).toBeUndefined()
   })
 
   it('returns 200 for valid child PIN', async () => {
@@ -137,7 +175,12 @@ describe('Auth Controller – POST /api/auth/pin', () => {
       stars: 10,
       streak: 0,
       lastLoginAt: null,
-      class: { id: 'class-1' },
+      grade: 'KG 1',
+      aiStars: 0,
+      ownedItems: [],
+      selectedTheme: 'th_def',
+      classId: 'class-1',
+      class: { id: 'class-1', schoolId: 'school-1' },
       progress: [],
       feedback: null,
     }
@@ -148,11 +191,12 @@ describe('Auth Controller – POST /api/auth/pin', () => {
 
     const res = await request(app)
       .post('/api/auth/pin')
-      .send({ pin: '5678', role: 'child' })
+      .send({ pin: '5678', role: 'child', schoolCode: 'SUN001' })
 
     expect(res.status).toBe(200)
     expect(res.body.success).toBe(true)
     expect(res.body.role).toBe('child')
+    expect(res.body.token).toBeUndefined()
   })
 
   it('returns 401 for invalid child PIN', async () => {
@@ -161,9 +205,25 @@ describe('Auth Controller – POST /api/auth/pin', () => {
 
     const res = await request(app)
       .post('/api/auth/pin')
-      .send({ pin: 'bad', role: 'child' })
+      .send({ pin: 'bad', role: 'child', schoolCode: 'SUN001' })
 
     expect(res.status).toBe(401)
+  })
+
+  it('returns 429 when PIN login is temporarily locked for IP+school+role', async () => {
+    const future = new Date(Date.now() + 60_000)
+    mockPrismaPinLoginThrottle.findUnique.mockResolvedValue({
+      key: 'SUN001:teacher:127.0.0.1',
+      lockedUntil: future,
+      attempts: 5,
+    })
+
+    const res = await request(app)
+      .post('/api/auth/pin')
+      .send({ pin: '1234', role: 'teacher', schoolCode: 'SUN001' })
+
+    expect(res.status).toBe(429)
+    expect(res.body.error).toMatch(/too many failed pin attempts/i)
   })
 })
 
@@ -173,9 +233,10 @@ describe('Auth Controller – POST /api/auth/refresh', () => {
   beforeEach(() => {
     app = buildApp()
     jest.clearAllMocks()
+    mockPrismaUser.findUnique.mockResolvedValue(null)
   })
 
-  it('returns 200 with new tokens for a valid refresh token', async () => {
+  it('returns 200 for a valid refresh token and rotates cookies', async () => {
     const futureDate = new Date(Date.now() + 1000 * 60 * 60)
     const fakeRecord = {
       id: 'rt-1',
@@ -194,8 +255,7 @@ describe('Auth Controller – POST /api/auth/refresh', () => {
       .send({ refreshToken: 'valid-refresh-token' })
 
     expect(res.status).toBe(200)
-    expect(res.body.token).toBe('new.access.token')
-    expect(res.body.refreshToken).toBeDefined()
+    expect(res.body.success).toBe(true)
   })
 
   it('returns 401 for expired refresh token', async () => {

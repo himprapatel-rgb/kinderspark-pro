@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { API_BASE } from '@/lib/api';
 
 export function usePushNotifications(studentId?: string) {
   const [permission, setPermission] = useState<NotificationPermission>('default');
@@ -14,7 +15,7 @@ export function usePushNotifications(studentId?: string) {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
 
     const reg = await navigator.serviceWorker.ready;
-    const vapidRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/push/vapid-public-key`);
+    const vapidRes = await fetch(`${API_BASE}/push/vapid-public-key`);
     const { publicKey } = await vapidRes.json();
     if (!publicKey) return;
 
@@ -28,10 +29,10 @@ export function usePushNotifications(studentId?: string) {
     });
 
     if (studentId) {
-      const token = localStorage.getItem('kinderspark-token');
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/students/${studentId}/push-token`, {
+      await fetch(`${API_BASE}/students/${studentId}/push-token`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: JSON.stringify(sub) })
       });
     }

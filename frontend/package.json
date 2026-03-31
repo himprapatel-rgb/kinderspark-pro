@@ -9,11 +9,15 @@
     "lint": "next lint",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest --coverage",
+    "ios:assets": "node scripts/generate-ios-assets.js",
+    "ios:sync": "npx cap sync ios",
+    "ios:open": "npx cap open ios",
+    "ios:build": "npm run ios:assets && npm run ios:sync"
   },
   "dependencies": {
-    "@clerk/nextjs": "^4.29.0",
     "autoprefixer": "^10.4.0",
+    "lucide-react": "^1.7.0",
     "next": "14.2.35",
     "postcss": "^8.4.0",
     "react": "^18.2.0",
@@ -22,12 +26,27 @@
     "zustand": "^4.5.0"
   },
   "devDependencies": {
+    "@capacitor/app": "^8.1.0",
+    "@capacitor/browser": "^8.0.3",
+    "@capacitor/cli": "^8.3.0",
+    "@capacitor/core": "^8.3.0",
+    "@capacitor/geolocation": "^8.0.1",
+    "@capacitor/haptics": "^8.0.2",
+    "@capacitor/ios": "^8.3.0",
+    "@capacitor/keyboard": "^8.0.2",
+    "@capacitor/local-notifications": "^8.0.2",
+    "@capacitor/network": "^8.0.1",
+    "@capacitor/push-notifications": "^8.0.3",
+    "@capacitor/share": "^8.0.1",
+    "@capacitor/splash-screen": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^20.0.0",
     "@types/react": "^18.2.0",
     "@vitejs/plugin-react": "^6.0.1",
     "jsdom": "^29.0.1",
+    "sharp": "^0.34.5",
     "typescript": "^5.4.0",
     "vitest": "^4.1.0"
   }
