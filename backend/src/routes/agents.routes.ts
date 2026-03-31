@@ -1,4 +1,4 @@
-import { Router } from 'express'
+import { NextFunction, Request, Response, Router } from 'express'
 import { requireAuth, requireRole } from '../middleware/auth.middleware'
 import * as mem from '../services/agentMemory.service'
 import Anthropic from '@anthropic-ai/sdk'
@@ -33,7 +33,11 @@ const GH_HEADERS = {
 type AnyRecord = Record<string, unknown>
 
 // ── Agent auth middleware (workflows use AGENT_SECRET, not JWT) ────────────
-function agentAuth(req: any, res: any, next: any) {
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
+}
+
+function agentAuth(req: Request, res: Response, next: NextFunction) {
   if (!AGENT_SECRET) return res.status(503).json({ error: 'Agent auth not configured' })
   const secret = req.headers['x-agent-secret']
   if (secret === AGENT_SECRET) return next()
@@ -41,13 +45,13 @@ function agentAuth(req: any, res: any, next: any) {
 }
 
 // ── Dev/dashboard read access — agent secret OR JWT admin/teacher ───────────
-function dashboardAuth(req: any, res: any, next: any) {
+function dashboardAuth(req: Request, res: Response, next: NextFunction) {
   const secret = req.headers['x-agent-secret']
   if (AGENT_SECRET && secret === AGENT_SECRET) return next()
   return requireAuth(req, res, () => requireRole('admin', 'teacher')(req, res, next))
 }
 
-function dashboardAdminOrAgentAuth(req: any, res: any, next: any) {
+function dashboardAdminOrAgentAuth(req: Request, res: Response, next: NextFunction) {
   const secret = req.headers['x-agent-secret']
   if (AGENT_SECRET && secret === AGENT_SECRET) return next()
   return requireAuth(req, res, () => requireRole('admin')(req, res, next))
@@ -118,8 +122,8 @@ router.post('/memory', agentAuth, async (req, res) => {
       importance: safeImportance,
     })
     res.json(entry)
-  } catch (e: any) {
-    res.status(500).json({ error: e.message })
+  } catch (e: unknown) {
+    res.status(500).json({ error: getErrorMessage(e) })
   }
 })
 
@@ -129,8 +133,8 @@ router.get('/memory/:agentId', agentAuth, async (req, res) => {
   const limit = parseLimitedInt(req.query.limit, 20, 50)
   try {
     res.json(await mem.readMemory(req.params.agentId, limit))
-  } catch (e: any) {
-    res.status(500).json({ error: e.message })
+  } catch (e: unknown) {
+    res.status(500).json({ error: getErrorMessage(e) })
   }
 })
 
@@ -139,8 +143,8 @@ router.get('/memory', dashboardAdminOrAgentAuth, async (req, res) => {
   const limit = parseLimitedInt(req.query.limit, 100, 200)
   try {
     res.json(await mem.getAllMemories(limit))
-  } catch (e: any) {
-    res.status(500).json({ error: e.message })
+  } catch (e: unknown) {
+    res.status(500).json({ error: getErrorMessage(e) })
   }
 })
 
@@ -148,8 +152,8 @@ router.get('/memory', dashboardAdminOrAgentAuth, async (req, res) => {
 router.get('/critical', agentAuth, async (_req, res) => {
   try {
     res.json(await mem.readCriticalMemories(3, 10))
-  } catch (e: any) {
-    res.status(500).json({ error: e.message })
+  } catch (e: unknown) {
+    res.status(500).json({ error: getErrorMessage(e) })
   }
 })
 
@@ -179,8 +183,8 @@ router.post('/message', agentAuth, async (req, res) => {
       message, msgType: safeMessageType,
     })
     res.json(msg)
-  } catch (e: any) {
-    res.status(500).json({ error: e.message })
+  } catch (e: unknown) {
+    res.status(500).json({ error: getErrorMessage(e) })
   }
 })
 
@@ -202,8 +206,8 @@ router.post('/broadcast', agentAuth, async (req, res) => {
       message, safeBroadcastType
     )
     res.json(msg)
-  } catch (e: any) {
-    res.status(500).json({ error: e.message })
+  } catch (e: unknown) {
+    res.status(500).json({ error: getErrorMessage(e) })
   }
 })
 
@@ -212,8 +216,8 @@ router.get('/inbox/:agentId', agentAuth, async (req, res) => {
   if (!isNonEmptyString(req.params.agentId)) return res.status(400).json({ error: 'agentId required' })
   try {
     res.json(await mem.getInbox(req.params.agentId, 20))
-  } catch (e: any) {
-    res.status(500).json({ error: e.message })
+  } catch (e: unknown) {
+    res.status(500).json({ error: getErrorMessage(e) })
   }
 })
 
@@ -222,8 +226,8 @@ router.get('/conversations', dashboardAdminOrAgentAuth, async (req, res) => {
   const limit = parseLimitedInt(req.query.limit, 50, 200)
   try {
     res.json(await mem.getAllConversations(limit))
-  } catch (e: any) {
-    res.status(500).json({ error: e.message })
+  } catch (e: unknown) {
+    res.status(500).json({ error: getErrorMessage(e) })
   }
 })
 
@@ -231,8 +235,8 @@ router.get('/conversations', dashboardAdminOrAgentAuth, async (req, res) => {
 router.patch('/conversations/:id/resolve', requireAuth, requireRole('admin'), async (req, res) => {
   try {
     res.json(await mem.resolveConversation(req.params.id, req.user!.id))
-  } catch (e: any) {
-    res.status(500).json({ error: e.message })
+  } catch (e: unknown) {
+    res.status(500).json({ error: getErrorMessage(e) })
   }
 })
 
@@ -240,8 +244,8 @@ router.patch('/conversations/:id/resolve', requireAuth, requireRole('admin'), as
 router.get('/stats', dashboardAuth, async (_req, res) => {
   try {
     res.json(await mem.getAgentStats())
-  } catch (e: any) {
-    res.status(500).json({ error: e.message })
+  } catch (e: unknown) {
+    res.status(500).json({ error: getErrorMessage(e) })
   }
 })
 
@@ -254,7 +258,7 @@ router.get('/runs', dashboardAdminOrAgentAuth, async (_req, res) => {
   if (!GITHUB_TOKEN) return res.json([])
   try {
     const r = await fetch(`${GH_API}/actions/runs?per_page=50`, { headers: GH_HEADERS })
-    const data = await r.json() as any
+    const data = (await r.json()) as { workflow_runs?: unknown[] }
     res.json(data.workflow_runs || [])
   } catch { res.json([]) }
 })
@@ -299,7 +303,8 @@ router.get('/feed', requireAuth, requireRole('admin', 'teacher'), async (_req, r
         mem.getAllConversations(30),
         mem.readCriticalMemories(4, 5),
       ])
-      let runs: any[] = [], issues: any[] = []
+      let runs: unknown[] = []
+      let issues: unknown[] = []
       if (GITHUB_TOKEN) {
         const ghAbort = new AbortController()
         const ghTimeout = setTimeout(() => ghAbort.abort(), 8_000)
@@ -309,8 +314,8 @@ router.get('/feed', requireAuth, requireRole('admin', 'teacher'), async (_req, r
           fetch(`${GH_API}/issues?state=open&per_page=10&labels=agent-auto,critical`, { headers: GH_HEADERS, signal: ghAbort.signal }),
         ])
         clearTimeout(ghTimeout)
-        runs   = (await runsRes.json() as any).workflow_runs || []
-        issues = (await issuesRes.json()) as any[]
+        runs   = (((await runsRes.json()) as { workflow_runs?: unknown[] }).workflow_runs) || []
+        issues = (await issuesRes.json()) as unknown[]
       }
       if (!streamClosed) send('update', { memories, conversations, criticals, runs, issues, ts: Date.now() })
     } catch {
@@ -375,8 +380,8 @@ router.post('/trigger', dashboardAdminOrAgentAuth, async (req, res) => {
     } else {
       res.status(r.status).json({ error: await r.text() })
     }
-  } catch (e: any) {
-    res.status(500).json({ error: e.message })
+  } catch (e: unknown) {
+    res.status(500).json({ error: getErrorMessage(e) })
   }
 })
 
@@ -430,7 +435,11 @@ CRITICAL RULES:
       messages: [{ role: 'user', content: message }],
     })
 
-    let reply = ((aiRes.content[0] as any).text || '').trim()
+    const firstBlock = aiRes.content[0]
+    let reply = ''
+    if (firstBlock && 'text' in firstBlock && typeof firstBlock.text === 'string') {
+      reply = firstBlock.text.trim()
+    }
     const shouldTrigger = reply.includes('[TRIGGER_WORKFLOW]')
     reply = reply.replace('[TRIGGER_WORKFLOW]', '').trim()
 
@@ -459,9 +468,9 @@ CRITICAL RULES:
         }),
       }).catch(() => {/* non-blocking */})
     }
-  } catch (e: any) {
+  } catch (e: unknown) {
     // Response is already sent, so surface async failures through logs and agent feed.
-    const message = e instanceof Error ? e.message : String(e)
+    const message = getErrorMessage(e)
     console.error('[agents:/ask] async failure', { agentId, error: message })
     try {
       await mem.broadcast(
@@ -494,7 +503,7 @@ router.post('/issue', dashboardAdminOrAgentAuth, async (req, res) => {
       method: 'POST', headers: GH_HEADERS,
       body: JSON.stringify({ title, body, labels }),
     })
-    const issue = await r.json() as any
+    const issue = (await r.json()) as { number?: number }
     // Broadcast to relevant agents
     await mem.broadcast(
       { id: 'mission-control', name: 'Mission Control', icon: '🛸', color: '#5E5CE6' },
@@ -502,8 +511,8 @@ router.post('/issue', dashboardAdminOrAgentAuth, async (req, res) => {
       'handoff'
     )
     res.json(issue)
-  } catch (e: any) {
-    res.status(500).json({ error: e.message })
+  } catch (e: unknown) {
+    res.status(500).json({ error: getErrorMessage(e) })
   }
 })
 
