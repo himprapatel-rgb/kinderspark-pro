@@ -21,6 +21,94 @@ function parseJSON<T>(text: string): T {
   return JSON.parse(clean)
 }
 
+function requireNonEmptyString(value: unknown, field: string): string {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    throw new Error(`AI returned invalid ${field}`)
+  }
+  return value.trim()
+}
+
+function validateLessonCards(text: string): Array<{ w: string; e: string; hint: string }> {
+  const parsed = parseJSON<unknown>(text)
+  if (!Array.isArray(parsed) || parsed.length === 0) {
+    throw new Error('AI returned invalid lesson format')
+  }
+  return parsed.map((item, idx) => {
+    if (!item || typeof item !== 'object') throw new Error(`AI returned invalid lesson item ${idx}`)
+    const row = item as Record<string, unknown>
+    return {
+      w: requireNonEmptyString(row.w, `lesson.w[${idx}]`),
+      e: requireNonEmptyString(row.e, `lesson.e[${idx}]`),
+      hint: requireNonEmptyString(row.hint, `lesson.hint[${idx}]`),
+    }
+  })
+}
+
+function validateSyllabus(text: string): GeneratedSyllabus {
+  const parsed = parseJSON<unknown>(text)
+  if (!parsed || typeof parsed !== 'object') throw new Error('AI returned invalid syllabus format')
+  const obj = parsed as Record<string, unknown>
+  if (!Array.isArray(obj.items) || obj.items.length === 0) throw new Error('AI returned invalid syllabus items')
+  return {
+    title: requireNonEmptyString(obj.title, 'syllabus.title'),
+    icon: requireNonEmptyString(obj.icon, 'syllabus.icon'),
+    color: requireNonEmptyString(obj.color, 'syllabus.color'),
+    description: requireNonEmptyString(obj.description, 'syllabus.description'),
+    items: obj.items.map((item, idx) => {
+      if (!item || typeof item !== 'object') throw new Error(`AI returned invalid syllabus item ${idx}`)
+      const row = item as Record<string, unknown>
+      return {
+        word: requireNonEmptyString(row.word, `syllabus.items.word[${idx}]`),
+        emoji: requireNonEmptyString(row.emoji, `syllabus.items.emoji[${idx}]`),
+        hint: requireNonEmptyString(row.hint, `syllabus.items.hint[${idx}]`),
+      }
+    }),
+  }
+}
+
+function validateHomeworkIdea(text: string): HomeworkIdea {
+  const parsed = parseJSON<unknown>(text)
+  if (!parsed || typeof parsed !== 'object') throw new Error('AI returned invalid homework format')
+  const obj = parsed as Record<string, unknown>
+  if (!Array.isArray(obj.activities) || obj.activities.length === 0) {
+    throw new Error('AI returned invalid homework activities')
+  }
+  return {
+    title: requireNonEmptyString(obj.title, 'homework.title'),
+    description: requireNonEmptyString(obj.description, 'homework.description'),
+    moduleId: requireNonEmptyString(obj.moduleId, 'homework.moduleId'),
+    emoji: requireNonEmptyString(obj.emoji, 'homework.emoji'),
+    starsReward: Number(obj.starsReward) || 0,
+    estimatedMinutes: Number(obj.estimatedMinutes) || 0,
+    activities: obj.activities.map((a, idx) => {
+      if (!a || typeof a !== 'object') throw new Error(`AI returned invalid homework activity ${idx}`)
+      const row = a as Record<string, unknown>
+      return {
+        instruction: requireNonEmptyString(row.instruction, `homework.activities.instruction[${idx}]`),
+        emoji: requireNonEmptyString(row.emoji, `homework.activities.emoji[${idx}]`),
+      }
+    }),
+  }
+}
+
+function validateRecommendations(
+  text: string,
+): Array<{ title: string; reason: string; moduleId: string }> {
+  const parsed = parseJSON<unknown>(text)
+  if (!Array.isArray(parsed) || parsed.length !== 3) {
+    throw new Error('AI returned invalid recommendations format')
+  }
+  return parsed.map((item, idx) => {
+    if (!item || typeof item !== 'object') throw new Error(`AI returned invalid recommendation ${idx}`)
+    const row = item as Record<string, unknown>
+    return {
+      title: requireNonEmptyString(row.title, `recommendation.title[${idx}]`),
+      reason: requireNonEmptyString(row.reason, `recommendation.reason[${idx}]`),
+      moduleId: requireNonEmptyString(row.moduleId, `recommendation.moduleId[${idx}]`),
+    }
+  })
+}
+
 // ── Types (re-exported for consumers) ─────────────────────────────────────
 export interface HomeworkIdea {
   title: string
@@ -55,8 +143,9 @@ export async function generateLesson(
     `You are a kindergarten curriculum designer. Generate exactly ${count} learning flashcards for children aged 3-6 about: "${topic}". Each card needs: word/phrase (w), relevant emoji (e), short child-friendly hint (hint, max 8 words). Respond ONLY with valid JSON array, no markdown: [{"w":"Cat","e":"🐱","hint":"Says meow and loves cuddles!"}]`,
     { maxTokens: 1024 }
   )
-  await setCachedResponse(cacheKey, 'lesson', text, AI_MODEL)
-  return parseJSON(text)
+  const validated = validateLessonCards(text)
+  await setCachedResponse(cacheKey, 'lesson', JSON.stringify(validated), AI_MODEL)
+  return validated
 }
 
 export async function generateWeeklyReport(classData: string): Promise<string> {
@@ -119,8 +208,9 @@ Respond ONLY with valid JSON (no markdown):
 }`,
     { maxTokens: 1200 }
   )
-  await setCachedResponse(cacheKey, 'syllabus', text, AI_MODEL)
-  return parseJSON(text)
+  const validated = validateSyllabus(text)
+  await setCachedResponse(cacheKey, 'syllabus', JSON.stringify(validated), AI_MODEL)
+  return validated
 }
 
 export async function generateStudentReport(
@@ -177,8 +267,9 @@ Generate a fun, age-appropriate homework assignment. Respond ONLY with valid JSO
 }`,
     { maxTokens: 600 }
   )
-  await setCachedResponse(cacheKey, 'homework', text, AI_MODEL)
-  return parseJSON(text)
+  const validated = validateHomeworkIdea(text)
+  await setCachedResponse(cacheKey, 'homework', JSON.stringify(validated), AI_MODEL)
+  return validated
 }
 
 export async function generateRecommendations(
@@ -203,8 +294,9 @@ Recommend exactly 3 learning activities. Choose from these moduleIds: numbers, n
 Respond ONLY with valid JSON array: [{"title":"Learn Colors","reason":"Short encouraging reason (max 10 words)","moduleId":"colors"}]`,
     { maxTokens: 400 }
   )
-  await setCachedResponse(cacheKey, 'recommendations', text, AI_MODEL)
-  return parseJSON(text)
+  const validated = validateRecommendations(text)
+  await setCachedResponse(cacheKey, 'recommendations', JSON.stringify(validated), AI_MODEL)
+  return validated
 }
 
 export interface GeneratedPoemResult {

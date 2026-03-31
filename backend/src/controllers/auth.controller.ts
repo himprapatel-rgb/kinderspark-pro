@@ -28,6 +28,10 @@ function signAccessToken(payload: Record<string, unknown>) {
   return jwt.sign(payload, getJwtSecret(), { expiresIn: ACCESS_TOKEN_TTL })
 }
 
+function issueCsrfToken(): string {
+  return crypto.randomBytes(24).toString('hex')
+}
+
 async function issueRefreshToken(userId: string, role: string): Promise<string> {
   const token = crypto.randomBytes(40).toString('hex')
   const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_DAYS * 86400 * 1000)
@@ -36,6 +40,7 @@ async function issueRefreshToken(userId: string, role: string): Promise<string> 
 }
 
 function setAuthCookies(res: Response, accessToken: string, refreshToken: string) {
+  const csrfToken = issueCsrfToken()
   res.cookie('kinderspark_token', accessToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -48,6 +53,12 @@ function setAuthCookies(res: Response, accessToken: string, refreshToken: string
     sameSite: 'lax',
     path: '/api/auth',
     maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+  })
+  res.cookie('kinderspark_csrf', csrfToken, {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 30 * 24 * 60 * 60 * 1000,
   })
 }
 
@@ -329,10 +340,12 @@ export async function revokeRefreshToken(req: Request, res: Response) {
     await prisma.refreshToken.deleteMany({ where: { token: refreshToken } })
     res.clearCookie('kinderspark_token')
     res.clearCookie('kinderspark_refresh', { path: '/api/auth' })
+    res.clearCookie('kinderspark_csrf')
     return res.json({ success: true })
   } catch {
     res.clearCookie('kinderspark_token')
     res.clearCookie('kinderspark_refresh', { path: '/api/auth' })
+    res.clearCookie('kinderspark_csrf')
     return res.json({ success: true })
   }
 }

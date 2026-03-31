@@ -8,6 +8,23 @@ const BASE = API_BASE
 let isRefreshing = false
 let refreshQueue: Array<(ok: boolean) => void> = []
 
+function getCsrfToken(): string | null {
+  if (typeof document === 'undefined') return null
+  const part = document.cookie
+    .split('; ')
+    .find((row) => row.startsWith('kinderspark_csrf='))
+  if (!part) return null
+  return decodeURIComponent(part.split('=')[1] || '')
+}
+
+function withCsrfHeader(method: string | undefined, headers: Record<string, string>): Record<string, string> {
+  const m = (method || 'GET').toUpperCase()
+  if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(m)) return headers
+  const csrf = getCsrfToken()
+  if (!csrf) return headers
+  return { ...headers, 'x-csrf-token': csrf }
+}
+
 async function tryRefresh(): Promise<boolean> {
   if (isRefreshing) {
     return new Promise(resolve => {
@@ -16,9 +33,10 @@ async function tryRefresh(): Promise<boolean> {
   }
   isRefreshing = true
   try {
+    const headers = withCsrfHeader('POST', { 'Content-Type': 'application/json' })
     const res = await fetch(`${BASE}/auth/refresh`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       credentials: 'include',
     })
     const ok = res.ok
@@ -35,13 +53,21 @@ async function tryRefresh(): Promise<boolean> {
 }
 
 async function req(path: string, options?: RequestInit): Promise<any> {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  const res = await fetch(`${BASE}${path}`, { headers, credentials: 'include', ...options })
+  const requestHeaders: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options?.headers as Record<string, string> | undefined),
+  }
+  const headers = withCsrfHeader(options?.method, requestHeaders)
+  const res = await fetch(`${BASE}${path}`, { ...options, headers, credentials: 'include' })
 
   if (res.status === 401) {
     const refreshed = await tryRefresh()
     if (refreshed) {
-      const retry = await fetch(`${BASE}${path}`, { headers, credentials: 'include', ...options })
+      const retryHeaders = withCsrfHeader(options?.method, {
+        'Content-Type': 'application/json',
+        ...(options?.headers as Record<string, string> | undefined),
+      })
+      const retry = await fetch(`${BASE}${path}`, { ...options, headers: retryHeaders, credentials: 'include' })
       if (!retry.ok) {
         const error = await retry.json().catch(() => ({ error: 'Request failed' }))
         throw new Error(error.error || `HTTP ${retry.status}`)

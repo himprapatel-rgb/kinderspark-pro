@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser'
 import rateLimit from 'express-rate-limit'
 import { rateLimiter } from './middleware/rateLimit.middleware'
 import { authenticate } from './middleware/auth.middleware'
+import { enforceCsrf } from './middleware/csrf.middleware'
 import authRoutes from './routes/auth.routes'
 import studentRoutes from './routes/student.routes'
 import teacherRoutes from './routes/teacher.routes'
@@ -76,6 +77,7 @@ app.use(cookieParser())
 app.use(ipWindowLimiter)
 app.use(rateLimiter)
 app.use(authenticate)
+app.use(enforceCsrf)
 
 app.get('/health', async (_req, res) => {
   const start = Date.now()
