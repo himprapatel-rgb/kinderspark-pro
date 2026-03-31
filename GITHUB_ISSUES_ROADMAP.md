@@ -2,6 +2,11 @@
 
 Use these as direct GitHub issues. Each includes priority, owner role, scope, and acceptance criteria.
 
+## Agent Control Plane Hardening
+
+- Use `AGENTS_HARDENING_BACKLOG.md` for the focused 10-issue security hardening sequence for `backend/src/routes/agents.routes.ts`.
+- Execute one issue per PR in the documented order.
+
 ---
 
 ## Issue 1: Add Cross-Role Smoke Test Suite
