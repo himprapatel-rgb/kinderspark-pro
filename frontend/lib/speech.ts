@@ -102,9 +102,8 @@ async function apiSpeak(text: string, onEnd?: () => void): Promise<boolean> {
   if (typeof window === 'undefined') return false
 
   try {
-    const apiBase = (window as any).__NEXT_DATA__?.runtimeConfig?.NEXT_PUBLIC_API_URL
-      || process.env.NEXT_PUBLIC_API_URL
-      || ''
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || ''
+    if (!apiBase) console.warn('[TTS] NEXT_PUBLIC_API_URL is not set — sending to relative /api/tts (may fail)')
 
     const res = await fetch(`${apiBase}/api/tts`, {
       method: 'POST',
@@ -117,10 +116,17 @@ async function apiSpeak(text: string, onEnd?: () => void): Promise<boolean> {
       }),
     })
 
+    if (!res.ok) {
+      console.warn(`[TTS] API returned ${res.status} — falling back to Web Speech API`)
+      if (res.status === 401) return false  // not authenticated — don't disable
+      return false
+    }
+
     const data = await res.json()
 
     // Server told us no provider is configured — don't retry
     if (data.fallback) {
+      console.warn('[TTS] No provider configured on server — using Web Speech API fallback')
       apiTTSAvailable = false
       return false
     }
@@ -128,14 +134,15 @@ async function apiSpeak(text: string, onEnd?: () => void): Promise<boolean> {
     if (!data.dataUrl) return false
 
     apiTTSAvailable = true
+    console.info(`[TTS] Human voice from provider: ${data.provider}`)
 
     const audio = new Audio(data.dataUrl)
     audio.playbackRate = 0.92
     if (onEnd) audio.onended = onEnd
     await audio.play()
     return true
-  } catch {
-    // Network error or not authenticated — use fallback silently
+  } catch (err) {
+    console.warn('[TTS] Request failed:', err)
     return false
   }
 }
