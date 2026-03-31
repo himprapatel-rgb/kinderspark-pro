@@ -280,12 +280,19 @@ router.get('/feed', requireAuth, requireRole('admin', 'teacher'), async (_req, r
   res.setHeader('Cache-Control', 'no-cache')
   res.setHeader('Connection', 'keep-alive')
   res.setHeader('X-Accel-Buffering', 'no')
+  res.setHeader('Keep-Alive', 'timeout=60')
   res.flushHeaders()
+  res.write('retry: 10000\n\n')
 
   const send = (event: string, data: unknown) =>
     res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
 
+  let streamClosed = false
+  let pollInFlight = false
+
   const poll = async () => {
+    if (streamClosed || pollInFlight) return
+    pollInFlight = true
     try {
       const [memories, conversations, criticals] = await Promise.all([
         mem.getAllMemories(30),
@@ -294,22 +301,45 @@ router.get('/feed', requireAuth, requireRole('admin', 'teacher'), async (_req, r
       ])
       let runs: any[] = [], issues: any[] = []
       if (GITHUB_TOKEN) {
+        const ghAbort = new AbortController()
+        const ghTimeout = setTimeout(() => ghAbort.abort(), 8_000)
+        ghTimeout.unref?.()
         const [runsRes, issuesRes] = await Promise.all([
-          fetch(`${GH_API}/actions/runs?per_page=20`, { headers: GH_HEADERS }),
-          fetch(`${GH_API}/issues?state=open&per_page=10&labels=agent-auto,critical`, { headers: GH_HEADERS }),
+          fetch(`${GH_API}/actions/runs?per_page=20`, { headers: GH_HEADERS, signal: ghAbort.signal }),
+          fetch(`${GH_API}/issues?state=open&per_page=10&labels=agent-auto,critical`, { headers: GH_HEADERS, signal: ghAbort.signal }),
         ])
+        clearTimeout(ghTimeout)
         runs   = (await runsRes.json() as any).workflow_runs || []
         issues = (await issuesRes.json()) as any[]
       }
-      send('update', { memories, conversations, criticals, runs, issues, ts: Date.now() })
+      if (!streamClosed) send('update', { memories, conversations, criticals, runs, issues, ts: Date.now() })
     } catch {
-      send('ping', { ts: Date.now() })
+      if (!streamClosed) send('ping', { ts: Date.now() })
+    } finally {
+      pollInFlight = false
     }
   }
 
   await poll()
   const interval = setInterval(poll, 15_000)
-  _req.on('close', () => { clearInterval(interval); res.end() })
+  interval.unref?.()
+
+  const heartbeat = setInterval(() => {
+    if (!streamClosed) send('ping', { ts: Date.now() })
+  }, 25_000)
+  heartbeat.unref?.()
+
+  const cleanup = () => {
+    if (streamClosed) return
+    streamClosed = true
+    clearInterval(interval)
+    clearInterval(heartbeat)
+    res.end()
+  }
+
+  _req.on('close', cleanup)
+  _req.on('error', cleanup)
+  res.on('error', cleanup)
 })
 
 // POST /api/agents/trigger — manually trigger a workflow
