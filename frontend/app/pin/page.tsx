@@ -144,8 +144,9 @@ function PinContent() {
         const resume = (() => {
           try {
             const raw = sessionStorage.getItem('ks_after_login') || ''
-            if (raw && raw.startsWith('/')) {
-              sessionStorage.removeItem('ks_after_login')
+            sessionStorage.removeItem('ks_after_login')
+            // Only resume to real app pages — never back to /pin or /login
+            if (raw && raw.startsWith('/') && !raw.startsWith('/pin') && !raw.startsWith('/login')) {
               return raw
             }
           } catch {

@@ -24,7 +24,9 @@ function handleSessionExpired(): void {
   if (typeof window === 'undefined') return
   try {
     const currentPath = `${window.location.pathname}${window.location.search || ''}`
-    if (currentPath && currentPath !== '/') {
+    // Never save /pin or /login as resume destination — they are not meaningful destinations
+    const isAuthPage = currentPath.startsWith('/pin') || currentPath.startsWith('/login') || currentPath === '/'
+    if (currentPath && !isAuthPage) {
       sessionStorage.setItem('ks_after_login', currentPath)
     }
     const role = getCurrentRoleForRelogin()
@@ -125,10 +127,17 @@ export async function verifyPin(pin: string, role: string, schoolCode: string) {
   if (code.length !== 6) {
     throw new Error('School code must be 6 letters or numbers')
   }
-  const data = await req('/auth/pin', {
+  // Use raw fetch — do NOT go through req() which treats 401 as session-expiry.
+  // A wrong PIN returns 401 and must never trigger handleSessionExpired().
+  const headers = withCsrfHeader('POST', { 'Content-Type': 'application/json' })
+  const res = await fetch(`${BASE}/auth/pin`, {
     method: 'POST',
+    headers,
+    credentials: 'include',
     body: JSON.stringify({ pin, role, schoolCode: code }),
   })
+  const data = await res.json().catch(() => ({ error: 'Request failed' }))
+  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
   return data
 }
 
