@@ -567,7 +567,7 @@ Operational notes:
 | **Medium** | Geofence persistence | `GeofenceUserConsent` + `GeofenceUserEvent` models added; verify `attendance.ts` writes to DB not in-memory array |
 | **Medium** | Email silent when misconfigured | `email.service.ts` returns early if no `SENDGRID_API_KEY` — no user-facing error |
 | **Medium** | TTS degrades without keys | All provider keys optional → browser Web Speech fallback for lesson audio |
-| **Medium** | CSRF + Bearer | Mutating requests with **only** Bearer token (no cookies) bypass CSRF (see rule 12) |
+| **Medium** | CSRF + Bearer | Bearer tokens no longer supported — cookie-only auth enforced ✅ |
 | **Medium** | Legacy route surface | `app.ts` mounts backward-compat: `/api/classes`, `/api/ai-sessions`, `/api/feedback` — audit auth on changes |
 | **Medium** | No service worker | No `public/sw.js` / SW registration in root layout for offline/push client |
 
@@ -615,6 +615,7 @@ Full audit performed. All role dashboards (admin, teacher, parent, principal) st
 - All toast notifications use `useToast()` ✅
 - No TODO/FIXME in main source (only in old worktree copies) ✅
 - TTS client sends CSRF token and uses normalized API base URL ✅ (fixed in speech.ts)
+- Session expiry handled gracefully ✅ — api.ts saves current route to `sessionStorage.ks_after_login`, redirects to `/pin?role=<role>`; pin/page.tsx resumes saved route after successful re-auth
 
 ---
 
