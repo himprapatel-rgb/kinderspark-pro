@@ -11,6 +11,9 @@ const ACCESS_TOKEN_TTL = '2h'
 const REFRESH_TOKEN_TTL_DAYS = 30
 const PIN_LOCK_MAX_ATTEMPTS = 5
 const PIN_LOCK_MINUTES = 15
+// Global (cross-IP) threshold per schoolCode+role — prevents rotating-IP brute-force
+const PIN_LOCK_GLOBAL_MAX_ATTEMPTS = 25
+const PIN_LOCK_GLOBAL_MINUTES = 60
 
 /**
  * Generate a unique human-readable Profile ID like "KS-A7X9K2"
@@ -77,6 +80,11 @@ function throttleKey(schoolCode: string, role: string, ip: string): string {
   return `${schoolCode}:${role}:${ip}`
 }
 
+/** Global (cross-IP) key — catches rotating-IP brute force */
+function globalThrottleKey(schoolCode: string, role: string): string {
+  return `${schoolCode}:${role}`
+}
+
 async function enforcePinThrottleOrReject(
   req: Request,
   res: Response,
@@ -85,9 +93,18 @@ async function enforcePinThrottleOrReject(
 ): Promise<string | null> {
   const ip = requestIp(req)
   const key = throttleKey(schoolCode, role, ip)
-  const existing = await prisma.pinLoginThrottle.findUnique({ where: { key } })
-  if (existing?.lockedUntil && existing.lockedUntil > new Date()) {
-    const retryAfterSec = Math.max(1, Math.ceil((existing.lockedUntil.getTime() - Date.now()) / 1000))
+  const globalKey = globalThrottleKey(schoolCode, role)
+
+  // Check both per-IP and global locks
+  const [existing, globalExisting] = await Promise.all([
+    prisma.pinLoginThrottle.findUnique({ where: { key } }),
+    prisma.pinLoginThrottle.findUnique({ where: { key: globalKey } }),
+  ])
+
+  const locked = (r: typeof existing) => r?.lockedUntil && r.lockedUntil > new Date()
+  if (locked(existing) || locked(globalExisting)) {
+    const lockedRecord = locked(existing) ? existing : globalExisting
+    const retryAfterSec = Math.max(1, Math.ceil((lockedRecord!.lockedUntil!.getTime() - Date.now()) / 1000))
     res.status(429).json({
       error: 'Too many failed PIN attempts. Please try again later.',
       retryAfter: retryAfterSec,
@@ -98,22 +115,45 @@ async function enforcePinThrottleOrReject(
 }
 
 async function registerPinFailure(key: string, schoolCode: string, role: string, ip: string): Promise<void> {
-  const current = await prisma.pinLoginThrottle.findUnique({ where: { key } })
+  const globalKey = globalThrottleKey(schoolCode, role)
+
+  const [current, globalCurrent] = await Promise.all([
+    prisma.pinLoginThrottle.findUnique({ where: { key } }),
+    prisma.pinLoginThrottle.findUnique({ where: { key: globalKey } }),
+  ])
+
   const attempts = (current?.attempts || 0) + 1
   const lockedUntil =
     attempts >= PIN_LOCK_MAX_ATTEMPTS
       ? new Date(Date.now() + PIN_LOCK_MINUTES * 60 * 1000)
       : null
 
-  await prisma.pinLoginThrottle.upsert({
-    where: { key },
-    create: { key, schoolCode, role, ip, attempts, lockedUntil },
-    update: { attempts, lockedUntil },
-  })
+  const globalAttempts = (globalCurrent?.attempts || 0) + 1
+  const globalLockedUntil =
+    globalAttempts >= PIN_LOCK_GLOBAL_MAX_ATTEMPTS
+      ? new Date(Date.now() + PIN_LOCK_GLOBAL_MINUTES * 60 * 1000)
+      : null
+
+  await Promise.all([
+    prisma.pinLoginThrottle.upsert({
+      where: { key },
+      create: { key, schoolCode, role, ip, attempts, lockedUntil },
+      update: { attempts, lockedUntil },
+    }),
+    prisma.pinLoginThrottle.upsert({
+      where: { key: globalKey },
+      create: { key: globalKey, schoolCode, role, ip: '', attempts: globalAttempts, lockedUntil: globalLockedUntil },
+      update: { attempts: globalAttempts, lockedUntil: globalLockedUntil },
+    }),
+  ])
 }
 
-async function clearPinFailure(key: string): Promise<void> {
-  await prisma.pinLoginThrottle.delete({ where: { key } }).catch(() => {})
+async function clearPinFailure(key: string, schoolCode: string, role: string): Promise<void> {
+  const globalKey = globalThrottleKey(schoolCode, role)
+  await Promise.all([
+    prisma.pinLoginThrottle.delete({ where: { key } }).catch(() => {}),
+    prisma.pinLoginThrottle.delete({ where: { key: globalKey } }).catch(() => {}),
+  ])
 }
 
 export async function verifyPin(req: Request, res: Response) {
@@ -153,7 +193,7 @@ export async function verifyPin(req: Request, res: Response) {
     for (const u of users) {
       if (!u.pin) continue
       if (await bcrypt.compare(pin, u.pin)) {
-        await clearPinFailure(key)
+        await clearPinFailure(key, schoolCode, String(role))
         const roles = u.roleAssignments.map(r => String(r.role))
         const activeRole = roles.includes(role) ? role : roles[0] || role
         const token = signAccessToken({
@@ -214,7 +254,7 @@ export async function verifyPin(req: Request, res: Response) {
         await registerPinFailure(key, schoolCode, String(role), ip)
         return res.status(401).json({ error: 'Wrong PIN' })
       }
-      await clearPinFailure(key)
+      await clearPinFailure(key, schoolCode, String(role))
       const token = signAccessToken({ id: teacher.id, role: 'teacher', roles: ['teacher'], name: teacher.name, schoolId: teacher.schoolId || null })
       const refreshToken = await issueRefreshToken(teacher.id, 'teacher')
       setAuthCookies(res, token, refreshToken)
@@ -233,7 +273,7 @@ export async function verifyPin(req: Request, res: Response) {
         await registerPinFailure(key, schoolCode, String(role), ip)
         return res.status(401).json({ error: 'Wrong PIN' })
       }
-      await clearPinFailure(key)
+      await clearPinFailure(key, schoolCode, String(role))
       const activeRole = role === 'principal' ? 'principal' : 'admin'
       const token = signAccessToken({
         id: admin.id,
@@ -270,7 +310,7 @@ export async function verifyPin(req: Request, res: Response) {
       await registerPinFailure(key, schoolCode, String(role), ip)
       return res.status(401).json({ error: 'Wrong PIN' })
     }
-    await clearPinFailure(key)
+    await clearPinFailure(key, schoolCode, String(role))
 
     // Compute streak: +1 if last login was yesterday, reset to 1 if gap > 1 day, keep if same day
     const now = new Date()
