@@ -101,12 +101,12 @@ export default function ParentSidebar({ userName, childName, activeIndex, onItem
       <div className="px-3 py-4 border-t space-y-1" style={{ borderColor: 'var(--app-border)' }}>
         <button
           type="button"
-          onClick={() => router.push('/parent/profile')}
+          onClick={() => router.push('/parent/settings')}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all app-pressable min-h-11"
           style={{ color: 'var(--app-text-muted)', fontSize: '13px', fontWeight: 700 }}
         >
           <AppIcon name="settings" size="sm" roleTone="parent" />
-          <span>Profile & Settings</span>
+          <span>Settings</span>
         </button>
       </div>
     </aside>

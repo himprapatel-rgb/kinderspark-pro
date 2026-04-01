@@ -125,7 +125,7 @@ export default function DashboardSidebar({ role, items, userName, profileHref, o
           style={{ color: 'var(--app-text-muted)', fontSize: '13px', fontWeight: 700 }}
         >
           <AppIcon name="settings" size="sm" roleTone={roleTone} />
-          <span>Profile &amp; Settings</span>
+          <span>Settings</span>
         </button>
       </div>
     </aside>

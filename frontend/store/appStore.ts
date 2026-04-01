@@ -12,6 +12,10 @@ interface Settings {
   stLimit: number
   voiceOn: boolean
   voiceProfile: 'auto' | 'girl' | 'boy'
+  /** Teacher default content difficulty for AI generation */
+  teachDifficulty?: 'easy' | 'medium' | 'hard'
+  /** Parent notification update frequency */
+  notifFreq?: 'instant' | 'daily' | 'weekly'
 }
 
 export interface DailyMission {

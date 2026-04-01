@@ -717,7 +717,7 @@ export default function TeacherDashboard() {
 
   return (
     <div className="min-h-screen flex" style={{ background: 'var(--app-bg)' }}>
-      <DashboardSidebar role="teacher" items={SIDEBAR_ITEMS} userName={user?.name} profileHref="/teacher/profile" onItemClick={(idx) => setTab(TAB_ORDER[idx])} activeIndex={TAB_ORDER.indexOf(tab)} />
+      <DashboardSidebar role="teacher" items={SIDEBAR_ITEMS} userName={user?.name} profileHref="/teacher/settings" onItemClick={(idx) => setTab(TAB_ORDER[idx])} activeIndex={TAB_ORDER.indexOf(tab)} />
       <div className="flex-1 min-h-screen flex flex-col app-container">
       {/* Toast */}
       {toast && (
@@ -737,7 +737,7 @@ export default function TeacherDashboard() {
             <WeatherChip variant="light" />
             <TopBarActions
               variant="light"
-              profileHref="/teacher/profile"
+              profileHref="/teacher/settings"
               extra={
                 <button
                   onClick={() => router.push('/teacher/reports')}
