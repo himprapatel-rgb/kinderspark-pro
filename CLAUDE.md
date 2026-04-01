@@ -154,7 +154,7 @@ kinderspark-pro/
     │                                SoundSettings, SyllabusBuilder, TeacherOnboarding, ThemeCustomizer,
     │                                Toast, TopBarActions, UIStates, WeatherChip + lesson/LessonCard,
     │                                ui/Button, ui/Modal, ui/TabBar, ui/Toast)
-    │   └── icons/                 ← StoryIcons.tsx — handcrafted SVG icon system with micro-animations
+    │   └── icons/                 ← AppIcon.tsx (primary API), StoryIcons.tsx (SVG library), types.ts, iconRegistry.ts, spec.md
     ├── hooks/                     ← useLocation, useNativeFeatures, usePullToRefresh
     ├── lib/
     │   ├── api.ts                 ← all API fetch calls (106 exported functions; CSRF header auto-injected)
@@ -598,7 +598,7 @@ Operational notes:
 | Parental consent | `ParentalConsent` model; `ParentChildLink` links parents to children; parent can view consent page at `/parent/consent` |
 | Agent memory | `agentMemory.service.ts` — importance-ranked memory with `agentId+importance` index; used by agent orchestrator |
 | Health | `app.ts` — `GET /health` pings DB, returns memory/uptime |
-| Icons | `StoryIcons.tsx` — 16 SVG icons with role tones, compact density, idle/hover/active/success/disabled micro-animations |
+| Icons | `AppIcon` (primary API) wraps `StoryIcons.tsx` — 16 SVG icons, unified prop contract (`name/size/title/decorative/interactive/roleTone/state/animated`), auto-density, accessible, prefers-reduced-motion respected. Registry in `iconRegistry.ts`, types in `types.ts`, spec in `spec.md`. |
 
 ### Gaps / incomplete (verified in code)
 

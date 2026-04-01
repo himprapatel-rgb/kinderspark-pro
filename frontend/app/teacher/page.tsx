@@ -706,12 +706,12 @@ export default function TeacherDashboard() {
 
   const TAB_ORDER: Tab[] = ['home', 'students', 'homework', 'attendance', 'syllabus', 'messages']
   const SIDEBAR_ITEMS = [
-    { icon: '🏠', label: 'Dashboard', href: '/teacher' },
-    { icon: '👥', label: 'Students', href: '/teacher/students' },
-    { icon: '📚', label: 'Homework', href: '/teacher/homework' },
-    { icon: '📋', label: 'Attendance', href: '/teacher/attendance' },
-    { icon: '📖', label: 'Syllabus', href: '/teacher/syllabus' },
-    { icon: '💬', label: 'Messages', href: '/teacher/messages', badge: unreadCount },
+    { icon: 'home' as const,       label: 'Dashboard',  href: '/teacher' },
+    { icon: 'students' as const,   label: 'Students',   href: '/teacher/students' },
+    { icon: 'homework' as const,   label: 'Homework',   href: '/teacher/homework' },
+    { icon: 'attendance' as const, label: 'Attendance', href: '/teacher/attendance' },
+    { icon: 'class' as const,      label: 'Syllabus',   href: '/teacher/syllabus' },
+    { icon: 'messages' as const,   label: 'Messages',   href: '/teacher/messages', badge: unreadCount },
   ]
 
   return (

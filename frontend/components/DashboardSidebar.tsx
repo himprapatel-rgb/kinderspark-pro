@@ -1,9 +1,11 @@
 'use client'
 import { usePathname, useRouter } from 'next/navigation'
-import { StoryIcon, StoryIconName } from '@/components/icons'
+import { AppIcon } from '@/components/icons'
+import type { IconName, IconRoleTone } from '@/components/icons'
 
 interface NavItem {
-  icon: string
+  /** Icon name from the AppIcon registry */
+  icon: IconName
   label: string
   href: string
   badge?: number
@@ -28,22 +30,7 @@ export default function DashboardSidebar({ role, items, userName, profileHref, o
 
   const roleColor = role === 'teacher' ? 'var(--role-teacher)' : 'var(--role-admin)'
   const roleLabel = role === 'teacher' ? 'Teacher' : 'Admin'
-  const roleTone = role === 'teacher' ? 'teacher' : 'admin'
-
-  const renderIcon = (icon: string): StoryIconName => {
-    switch (icon) {
-      case '🏠': return 'home'
-      case '👥': return 'students'
-      case '📚': return 'class'
-      case '📊': return 'progress'
-      case '🏆': return 'rewards'
-      case '🏫': return 'school'
-      case '💬': return 'messages'
-      case '📋': return 'homework'
-      case '📈': return 'progress'
-      default: return 'aiTutor'
-    }
-  }
+  const roleTone: IconRoleTone = role === 'teacher' ? 'teacher' : 'admin'
 
   return (
     <aside className="hidden lg:flex w-64 h-screen sticky top-0 flex-col border-r" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)' }}>
@@ -53,7 +40,7 @@ export default function DashboardSidebar({ role, items, userName, profileHref, o
           className="w-10 h-10 rounded-xl flex items-center justify-center text-xl font-black text-white"
           style={{ background: `linear-gradient(135deg, var(--app-accent), ${roleColor})` }}
         >
-          <StoryIcon name="school" size={18} density="compact" roleTone={roleTone} state="success" interactive={false} />
+          <AppIcon name="school" size="xs" roleTone={roleTone} state="success" />
         </div>
         <div>
           <div className="text-sm font-black" style={{ color: 'rgb(var(--foreground-rgb))' }}>
@@ -90,8 +77,6 @@ export default function DashboardSidebar({ role, items, userName, profileHref, o
               ? pathname === `/${role}`
               : pathname.startsWith(item.href)
 
-          const iconName = renderIcon(item.icon)
-
           return (
             <button
               key={item.href + idx}
@@ -99,7 +84,7 @@ export default function DashboardSidebar({ role, items, userName, profileHref, o
               aria-current={active ? 'page' : undefined}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all duration-200 app-pressable ${active ? 'translate-x-0.5' : 'hover:bg-gray-50'}`}
               style={{
-                background: active ? `var(--app-accent)` : 'transparent',
+                background: active ? 'var(--app-accent)' : 'transparent',
                 color: active ? '#fff' : 'var(--app-text-muted)',
                 fontWeight: active ? 800 : 600,
                 fontSize: '13px',
@@ -107,18 +92,16 @@ export default function DashboardSidebar({ role, items, userName, profileHref, o
               }}
             >
               <span className="text-base">
-                <StoryIcon
-                  name={iconName}
-                  size={16}
-                  density="compact"
+                <AppIcon
+                  name={item.icon}
+                  size="xs"
                   roleTone={roleTone}
-                  state={active ? 'success' : 'idle'}
-                  interactive={!active}
-                  tone={active ? { ink: '#ffffff', white: '#ffffff' } : undefined}
+                  state={active ? 'success' : 'default'}
+                  tone={active ? { ink: '#ffffff', white: '#ffffff' } as never : undefined}
                 />
               </span>
               <span className="flex-1">{item.label}</span>
-              {item.badge && item.badge > 0 && (
+              {item.badge != null && item.badge > 0 && (
                 <span
                   className="text-[10px] font-black px-1.5 py-0.5 rounded-full app-badge-pulse"
                   style={{
@@ -134,7 +117,7 @@ export default function DashboardSidebar({ role, items, userName, profileHref, o
         })}
       </nav>
 
-      {/* Bottom: profile (Sign Out is in Profile only) */}
+      {/* Bottom: profile */}
       <div className="px-3 py-4 border-t space-y-1" style={{ borderColor: 'var(--app-border)' }}>
         <button
           type="button"
@@ -142,8 +125,8 @@ export default function DashboardSidebar({ role, items, userName, profileHref, o
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all app-pressable min-h-11"
           style={{ color: 'var(--app-text-muted)', fontSize: '13px', fontWeight: 700 }}
         >
-          <StoryIcon name="teacher" size={18} density="compact" roleTone={roleTone} state="hover" aria-hidden />
-          <span>Profile & Settings</span>
+          <AppIcon name="settings" size="sm" roleTone={roleTone} />
+          <span>Profile &amp; Settings</span>
         </button>
       </div>
     </aside>
