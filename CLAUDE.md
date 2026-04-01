@@ -262,14 +262,61 @@ POST   /api/agents/conversations
 
 ## Frontend Design System — ALWAYS FOLLOW
 
-1. **Dark-first** — background `#0d0d1a` or darker
-2. **Glass morphism** — `rgba(255,255,255,0.07)` bg + `backdrop-filter: blur()`
-3. **CSS variables** — use `--theme-color`, `--theme-secondary`, `--theme-bg-tint`
-4. **Mobile-first** — child screens max-width 430px; admin/teacher full-width
-5. **Child UI** — emoji-heavy, touch targets min 44px, high contrast, joyful
-6. **Animations** — shimmer, bounce-subtle, slide-up, pop, shake (defined in globals.css)
-7. **Original UI only** — never copy other apps; always create unique designs
-8. **RTL support** — Arabic + Urdu: apply `dir="rtl"` on html element
+### Palette — "Sunny Classroom" (light-first, child psychology-informed)
+The app uses a **warm cream light palette** — NOT dark. Background is `#FFFCF5`.
+- `--app-bg: #FFFCF5` — main page background (warm cream)
+- `--app-surface: #FFFFFF` — card/panel background
+- `--app-surface-soft: #FFF9EE` — nested/inner card background
+- `--app-accent: #4DAADF` — primary blue (trust + focus)
+- `--app-border: rgba(180,160,120,0.16)` — subtle warm border
+- Role colors: `--role-child: #F5A623` · `--role-teacher: #5B7FE8` · `--role-parent: #4CAF6A` · `--role-admin: #8B6CC1`
+
+### Canonical UI Patterns (use these classes — defined in globals.css)
+```
+.app-card          — standard white card (16px radius, 1rem pad, shadow-sm)
+.app-card-soft     — inner/nested card (soft bg, 12px radius)
+.app-card-lg       — featured card (20px radius, 1.25rem pad)
+.app-card-action   — interactive card with hover/press feedback
+.stat-box          — compact metric box (12px radius)
+.stat-box-value    — metric number (xl, font-black)
+.stat-box-label    — metric label (0.65rem, uppercase)
+.section-label     — section heading above groups (0.7rem, uppercase)
+.page-hero         — gradient hero header (dot-grid overlay, consistent padding)
+.app-tab-bar       — sticky role dashboard tab bar
+.app-tab-btn       — individual tab button (data-active='true/false')
+.page-body         — scrollable content below hero (1.25rem pad + gap)
+.page-section      — content group (0.75rem gap)
+.empty-state       — standardized empty state layout
+.app-field         — form input (12px radius, consistent height)
+.app-btn-primary   — primary CTA button
+.app-btn-secondary — secondary action button
+.app-btn-danger    — destructive action
+.app-pressable     — hover/press micro-interaction on any element
+.app-chip          — badge/tag pill
+.glass             — light glass morphism (white 75% + blur 20px)
+```
+
+### Shared Components
+- `DashboardSidebar` — desktop left nav (teacher + admin + principal roles)
+- `TopBarActions` — profile + role-switcher top-right buttons
+- `TabBar` pattern — use `.app-tab-bar` + `.app-tab-btn[data-active]` (not custom inline code)
+- `UIStates` — `<Loading>`, `<InlineEmpty>` shared states
+
+### Page Structure Rules
+1. Every role dashboard MUST have a `.page-hero` gradient header with role color
+2. Mobile tab bars MUST use `.app-tab-bar` + `.app-tab-btn` — never duplicate inline
+3. Content sections MUST use `.page-body` > `.page-section` structure
+4. Cards MUST use `.app-card` or `.app-card-soft` — not `rounded-2xl p-4` inline
+5. Section labels MUST use `.section-label` — not hardcoded color/size
+6. Stat boxes MUST use `.stat-box` — consistent across all role dashboards
+
+### Other Rules
+- **Mobile-first** — child screens max-width 430px via `.app-container`; admin/teacher full-width
+- **Child UI** — emoji-heavy, touch targets min 44px, high contrast, joyful tone
+- **Animations** — `animate-slide-up`, `animate-pop`, `animate-bounce-subtle`, `animate-fade-in`, `shimmer` (all in globals.css)
+- **Original UI only** — never copy other apps
+- **RTL support** — Arabic + Urdu: apply `dir="rtl"` on html element
+- **Glass morphism on gradient heroes** — use `rgba(255,255,255,0.12–0.18)` + `border: 1px solid rgba(255,255,255,0.18–0.25)` for cards inside gradient sections
 
 ---
 

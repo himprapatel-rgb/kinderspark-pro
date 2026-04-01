@@ -775,19 +775,13 @@ export default function TeacherDashboard() {
       </div>
 
       {/* Tab bar */}
-      <div className="flex border-b backdrop-blur sticky top-0 z-30" style={{ borderColor: 'var(--app-border)', background: 'rgba(255,255,255,0.92)' }}>
+      <div className="app-tab-bar">
         {TABS.map(tabItem => (
-          <button
-            type="button"
-            key={tabItem.id}
-            onClick={() => setTab(tabItem.id)}
-            className={`flex-1 min-h-11 py-3 text-xs font-black transition-colors flex items-center justify-center gap-1.5 relative app-pressable ${tab === tabItem.id ? 'border-b-2' : ''}`}
-            style={{ color: tab === tabItem.id ? 'var(--app-accent)' : 'rgba(70, 75, 96, 0.6)', borderColor: tab === tabItem.id ? 'var(--app-accent)' : 'transparent' }}
-          >
+          <button type="button" key={tabItem.id} onClick={() => setTab(tabItem.id)} className="app-tab-btn app-pressable relative" data-active={tab === tabItem.id ? 'true' : 'false'}>
             <span>{tabItem.icon}</span>
             <span className="hidden sm:inline">{tabItem.label}</span>
             {tabItem.id === 'messages' && unreadCount > 0 && (
-              <span className="absolute top-1.5 right-1/4 bg-red-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center app-pressable">
+              <span className="absolute top-1.5 right-1 bg-red-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
