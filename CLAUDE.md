@@ -59,10 +59,10 @@ cd backend && npx prisma studio         # GUI browser
 
 | Role      | PIN    | Can Do                                                       |
 |-----------|--------|--------------------------------------------------------------|
-| Teacher   | `1234` | Manage class, assign homework, build syllabuses, reports     |
-| Admin     | `9999` | School-wide stats, all classes, oversight                    |
-| Principal | `8888` | School overview, teacher management                          |
-| Child     | `1111`–`5555` | Lessons, AI tutor, drawing, tracing, star shop        |
+| Teacher   | `1234`, `5678` | Manage class, assign homework, build syllabuses, reports  |
+| Admin     | `8800`, `7700` | School-wide stats, all classes, oversight                 |
+| Principal | `9999` | School overview, teacher management (Omar Al-Rashid — uses Admin table) |
+| Child     | `1111`–`5555`, `7777`, `8888`, `0000` | Lessons, AI tutor, drawing, tracing, star shop |
 | Parent    | child's PIN | Monitor child progress, message teacher, consent       |
 
 ---
@@ -132,7 +132,7 @@ kinderspark-pro/
     │   ├── (auth)/setup/          ← initial school setup page
     │   ├── pin/                   ← PIN pad entry
     │   ├── register/              ← new user registration
-    │   ├── child/                 ← child dashboard + 17 sub-routes
+    │   ├── child/                 ← child dashboard + 16 sub-routes
     │   │   (learn, learn/[modId], lesson/[id], tutor, story, poem, draw, trace,
     │   │    match, count, shop, leaderboard, settings, messages, profile, avatar-builder)
     │   ├── teacher/               ← teacher dashboard + 7 sub-routes
@@ -150,9 +150,10 @@ kinderspark-pro/
     │                                DiagnosticsPanel, DrawingCanvas, EmotionalBuddyCard, KidAvatar,
     │                                LanguageSelector, LocationCard, MissionCelebration, NativeBridge,
     │                                Onboarding, PageTransition, ParentSidebar, PhotoCapture,
-    │                                ProfileManager, ProgressCharts, PwaUpdateBanner, Settings/,
+    │                                ProfileManager, ProgressCharts, PwaUpdateBanner, Settings/Privacy,
     │                                SoundSettings, SyllabusBuilder, TeacherOnboarding, ThemeCustomizer,
-    │                                Toast, TopBarActions, UIStates, WeatherChip + child/, lesson/, teacher/, ui/)
+    │                                Toast, TopBarActions, UIStates, WeatherChip + lesson/LessonCard,
+    │                                ui/Button, ui/Modal, ui/TabBar, ui/Toast)
     │   └── icons/                 ← StoryIcons.tsx — handcrafted SVG icon system with micro-animations
     ├── hooks/                     ← useLocation, useNativeFeatures, usePullToRefresh
     ├── lib/
@@ -567,7 +568,7 @@ Completed:
 - Canonical QA login reference added: `docs/QA_TEST_ACCOUNTS.md`.
 - Production seed runbook added: `docs/SEED_PRODUCTION.md`.
 - **Auto-seed on first boot**: `backend/src/services/seed.service.ts` (compiled TypeScript, no ts-node dependency) is imported in `app.ts`. On server startup, if `prisma.school.count() === 0`, `seedDemoData()` runs automatically. Wrapped in try-catch — non-fatal if it fails.
-  - Seeded accounts: School `SUN001`, Admin PIN `9999`, Teacher PIN `1234`, Children PINs `1111`–`5555`, `7777`, `8888`, `0000`
+  - Seeded accounts: School `SUN001`, Principal PIN `9999` (Omar Al-Rashid), Admin PIN `8800` (Priya Sharma), Teacher PINs `1234` (Ms. Sarah Johnson) + `5678` (Mr. David Chen), Children PINs `1111`–`5555`, `7777`, `8888`, `0000`; Classes: Sunflower (KG1), Rainbow (KG2)
   - Also clears `PinLoginThrottle` on fresh install to prevent locked-out users
 - **Why compiled seed (not ts-node)**: `ts-node` is in `devDependencies` and is NOT installed in Railway production containers. Using `execSync('npx ts-node ...')` in production silently fails. The `seed.service.ts` compiles to JS with the rest of the backend.
 
