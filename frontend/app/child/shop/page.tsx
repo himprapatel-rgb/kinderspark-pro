@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useAppStore as useStore } from '@/store/appStore'
 import { updateStudent } from '@/lib/api'
 import { SHOP_AVS, SHOP_THS } from '@/lib/modules'
+import { useToast } from '@/components/Toast'
 import { Palette, ShoppingBag, Smile } from 'lucide-react'
 
 export default function ShopPage() {
@@ -12,20 +13,15 @@ export default function ShopPage() {
   const currentStudent = useStore(s => s.currentStudent)
   const setUser = useStore(s => s.setUser)
   const setCurrentStudent = useStore(s => s.setCurrentStudent)
+  const toast = useToast()
 
   const student = currentStudent || user
 
   const [buying, setBuying] = useState<string | null>(null)
-  const [toast, setToast] = useState('')
 
   const ownedItems: string[] = student?.ownedItems || ['av_def', 'th_def']
   const selectedTheme = student?.selectedTheme || 'th_def'
   const stars = student?.stars || 0
-
-  const showToast = (msg: string) => {
-    setToast(msg)
-    setTimeout(() => setToast(''), 2500)
-  }
 
   const handleBuy = async (itemId: string, price: number, type: 'avatar' | 'theme') => {
     if (!student) return
@@ -33,16 +29,16 @@ export default function ShopPage() {
       // Equip
       if (type === 'theme') {
         try {
-          const updated = await updateStudent(student.id, { selectedTheme: itemId })
+          await updateStudent(student.id, { selectedTheme: itemId })
           setCurrentStudent({ ...student, selectedTheme: itemId } as any)
           setUser({ ...user, selectedTheme: itemId })
-          showToast('Theme equipped!')
+          toast.success('Theme equipped!')
         } catch {}
       }
       return
     }
     if (stars < price) {
-      showToast(`Need ${price} ⭐ to buy this!`)
+      toast.warning(`Need ${price} ⭐ to buy this!`)
       return
     }
     setBuying(itemId)
@@ -54,9 +50,9 @@ export default function ShopPage() {
       await updateStudent(student.id, updateData)
       setCurrentStudent({ ...student, stars: newStars, ownedItems: newOwned, ...(type === 'theme' ? { selectedTheme: itemId } : {}) } as any)
       setUser({ ...user, stars: newStars, ownedItems: newOwned, ...(type === 'theme' ? { selectedTheme: itemId } : {}) })
-      showToast('Purchased! 🎉')
+      toast.success('Purchased! 🎉')
     } catch (e: any) {
-      showToast('Failed to buy. Try again.')
+      toast.error('Failed to buy. Try again.')
     } finally {
       setBuying(null)
     }
@@ -71,14 +67,8 @@ export default function ShopPage() {
         <div className="text-white/80 font-bold">You have <span className="font-black text-yellow-300">⭐ {stars}</span> stars</div>
       </div>
 
-      {/* Toast */}
-      {toast && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-white text-black font-black text-sm px-5 py-3 rounded-full shadow-lg z-50">
-          {toast}
-        </div>
-      )}
 
-      <div className="px-3 space-y-6">
+<div className="px-3 space-y-6">
         {/* Avatars */}
         <div>
           <div className="app-title text-base mb-3 inline-flex items-center gap-2"><Smile size={16} /> Avatars</div>
