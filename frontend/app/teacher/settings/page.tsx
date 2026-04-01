@@ -36,7 +36,7 @@ export default function TeacherSettingsPage() {
   const logout     = useAppStore(s => s.logout)
   const [showLogout, setShowLogout] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
-  const { permission, subscribe } = usePushNotifications('teacher', user?.id)
+  const { permission, subscribe } = usePushNotifications('parent', user?.id)
   const difficulty = settings.teachDifficulty ?? 'medium'
 
   return (
