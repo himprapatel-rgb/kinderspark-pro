@@ -18,7 +18,9 @@ function canAccessOwnStudent(req: Request, studentId: string) {
 router.get('/', requireRole('teacher', 'admin'), async (req: Request, res: Response) => {
   try {
     const { classId } = req.query
-    if (req.user?.role === 'teacher' && classId) {
+    // Teachers must always provide a classId — they cannot fetch across all schools
+    if (req.user?.role === 'teacher') {
+      if (!classId) return res.status(400).json({ error: 'classId is required' })
       const ok = await canTeacherAccessClass(req.user.id, String(classId))
       if (!ok) return res.status(403).json({ error: 'Insufficient permissions' })
     }
@@ -112,30 +114,39 @@ router.post('/', requireRole('teacher', 'admin'), async (req: Request, res: Resp
 router.put('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params
-    if (
-      req.user?.role !== 'teacher' &&
-      req.user?.role !== 'admin' &&
-      !canAccessOwnStudent(req, id)
-    ) {
+    const role = req.user?.role
+
+    // Gate: teacher/admin pass through; child may update their own record;
+    // parent must pass canParentAccessStudent (parent ID ≠ student ID so canAccessOwnStudent is never true for parents)
+    if (role === 'parent') {
+      if (!(await canParentAccessStudent(req.user!.id, id))) {
+        return res.status(403).json({ error: 'Insufficient permissions' })
+      }
+    } else if (role !== 'teacher' && role !== 'admin' && !canAccessOwnStudent(req, id)) {
       return res.status(403).json({ error: 'Insufficient permissions' })
     }
-    if (req.user?.role === 'parent' && !(await canParentAccessStudent(req.user.id, id))) {
-      return res.status(403).json({ error: 'Insufficient permissions' })
-    }
+
     const {
       name, age, avatar, stars, streak, grade,
       aiStars, aiSessions, aiBestLevel, ownedItems, selectedTheme,
     } = req.body
 
-    const isChild = req.user?.role === 'child'
     const updateData: any = {}
 
-    if (isChild) {
+    if (role === 'child') {
       // Children may only update cosmetic/preference fields — never gamification scores
       if (avatar !== undefined) updateData.avatar = avatar
       if (selectedTheme !== undefined) updateData.selectedTheme = selectedTheme
       if (ownedItems !== undefined) updateData.ownedItems = ownedItems
+    } else if (role === 'parent') {
+      // Parents can update profile fields for their child but not gamification scores
+      if (name !== undefined) updateData.name = name
+      if (age !== undefined) updateData.age = age
+      if (avatar !== undefined) updateData.avatar = avatar
+      if (selectedTheme !== undefined) updateData.selectedTheme = selectedTheme
+      if (ownedItems !== undefined) updateData.ownedItems = ownedItems
     } else {
+      // teacher / admin — full update
       if (name !== undefined) updateData.name = name
       if (age !== undefined) updateData.age = age
       if (avatar !== undefined) updateData.avatar = avatar
