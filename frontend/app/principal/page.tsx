@@ -72,10 +72,10 @@ export default function PrincipalPage() {
   ]
 
   const SIDEBAR_ITEMS = [
-    { icon: '👑', label: 'Overview', href: '/principal' },
-    { icon: '🏫', label: 'Classes',  href: '/principal' },
-    { icon: '👩‍🏫', label: 'Teachers', href: '/principal' },
-    { icon: '⚙️', label: 'Admin Panel', href: '/admin' },
+    { icon: 'school' as const,   label: 'Overview',    href: '/principal' },
+    { icon: 'class' as const,    label: 'Classes',     href: '/principal' },
+    { icon: 'teacher' as const,  label: 'Teachers',    href: '/principal' },
+    { icon: 'settings' as const, label: 'Admin Panel', href: '/admin' },
   ]
 
   return (

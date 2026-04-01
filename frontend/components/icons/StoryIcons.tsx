@@ -1,8 +1,15 @@
 'use client'
 
+/**
+ * KinderSpark StoryIcons — internal SVG library
+ *
+ * Do not consume directly in page files. Use <AppIcon /> from './AppIcon'.
+ * StoryIcon is kept as a backwards-compat export for existing callsites.
+ */
+
 import type { ReactNode, SVGProps } from 'react'
 
-type StoryIconName =
+export type StoryIconName =
   | 'home'
   | 'class'
   | 'students'
@@ -18,8 +25,9 @@ type StoryIconName =
   | 'drawing'
   | 'tracing'
   | 'school'
+  | 'settings'
 
-type Tone = {
+export type Tone = {
   ink: string
   warm: string
   mint: string
@@ -43,23 +51,30 @@ export interface StoryIconProps extends Omit<SVGProps<SVGSVGElement>, 'name'> {
   name: StoryIconName
   size?: number
   tone?: Partial<Tone>
-  roleTone?: 'default' | 'parent' | 'teacher' | 'admin' | 'child'
+  /** Role-based color palette. 'principal' maps to admin palette. 'neutral' uses default. */
+  roleTone?: 'default' | 'parent' | 'teacher' | 'admin' | 'child' | 'principal' | 'neutral'
   density?: 'default' | 'compact'
   title?: string
-  state?: 'idle' | 'hover' | 'active' | 'success' | 'disabled'
+  /** Visual state. 'warning' and 'error' render the disabled shape with accent color cue. */
+  state?: 'idle' | 'hover' | 'active' | 'success' | 'disabled' | 'warning' | 'error'
   interactive?: boolean
+  /** When true, animation CSS classes are applied (suppressed via prefers-reduced-motion in CSS) */
+  animated?: boolean
 }
 
-const ROLE_TONES: Record<NonNullable<StoryIconProps['roleTone']>, Partial<Tone>> = {
+const ROLE_TONES: Record<string, Partial<Tone>> = {
   default: {},
+  neutral: {},
   parent: { mint: '#59C89C', warm: '#FFB27A', ink: '#4A3A66' },
   teacher: { sky: '#8F8DFF', mint: '#7BC9FF', ink: '#45366E' },
   admin: { sky: '#73B4FF', sun: '#FFC96C', ink: '#324A70' },
+  principal: { sky: '#73B4FF', sun: '#FFC96C', ink: '#324A70' },
   child: { sun: '#FFD86A', rose: '#FF8FA3', ink: '#4B3F72' },
 }
 
-function withTone(roleTone: NonNullable<StoryIconProps['roleTone']> = 'default', tone?: Partial<Tone>): Tone {
-  return { ...DEFAULT_TONE, ...ROLE_TONES[roleTone], ...(tone || {}) }
+function withTone(roleTone = 'default', tone?: Partial<Tone>): Tone {
+  const base = ROLE_TONES[roleTone] ?? {}
+  return { ...DEFAULT_TONE, ...base, ...(tone || {}) }
 }
 
 function SvgRoot({
@@ -67,11 +82,13 @@ function SvgRoot({
   state = 'idle',
   interactive = true,
   density = 'default',
+  animated = false,
   className,
   children,
   title,
   ...props
-}: Omit<StoryIconProps, 'name' | 'tone'> & { children: ReactNode }) {
+}: Omit<StoryIconProps, 'name' | 'tone' | 'roleTone'> & { children: ReactNode }) {
+  const animClass = animated ? ' story-icon--animated' : ''
   return (
     <svg
       viewBox="0 0 24 24"
@@ -82,13 +99,16 @@ function SvgRoot({
       aria-label={title}
       aria-hidden={title ? undefined : true}
       data-icon-state={state}
-      className={`story-icon ${interactive ? 'story-icon--interactive' : ''} story-icon--${state} story-icon--${density}${className ? ` ${className}` : ''}`}
+      className={`story-icon${interactive ? ' story-icon--interactive' : ''} story-icon--${state} story-icon--${density}${animClass}${className ? ` ${className}` : ''}`}
       {...props}
     >
+      {title && <title>{title}</title>}
       {children}
     </svg>
   )
 }
+
+// ── Individual icon components ────────────────────────────────────────────────
 
 function IconHome({ tone, roleTone = 'default', density = 'default', ...props }: Omit<StoryIconProps, 'name'>) {
   const c = withTone(roleTone, tone)
@@ -277,6 +297,27 @@ function IconSchool({ tone, roleTone = 'default', ...props }: Omit<StoryIconProp
   )
 }
 
+function IconSettings({ tone, roleTone = 'default', density = 'default', ...props }: Omit<StoryIconProps, 'name'>) {
+  const c = withTone(roleTone, tone)
+  return (
+    <SvgRoot density={density} {...props}>
+      {/* Outer ring */}
+      <circle cx="12" cy="12" r="7.2" fill={c.sky} />
+      {/* Gear teeth — 6 rounded bumps */}
+      <path d="M12 4.2V5.8M12 18.2V19.8M4.2 12H5.8M18.2 12H19.8M6.5 6.5L7.6 7.6M16.4 16.4L17.5 17.5M6.5 17.5L7.6 16.4M16.4 7.6L17.5 6.5"
+        stroke={c.ink} strokeWidth="1.6" strokeLinecap="round" />
+      {/* Inner hub */}
+      <circle cx="12" cy="12" r="3.2" fill={c.white} />
+      <circle cx="12" cy="12" r="1.6" fill={c.warm} />
+      {density !== 'compact' && (
+        <circle cx="12" cy="12" r="4.6" stroke={c.ink} strokeWidth="1.4" fill="none" opacity=".25" />
+      )}
+    </SvgRoot>
+  )
+}
+
+// ── Registry ─────────────────────────────────────────────────────────────────
+
 const ICONS: Record<StoryIconName, (props: Omit<StoryIconProps, 'name'>) => ReactNode> = {
   home: IconHome,
   class: IconClass,
@@ -293,11 +334,11 @@ const ICONS: Record<StoryIconName, (props: Omit<StoryIconProps, 'name'>) => Reac
   drawing: IconDrawing,
   tracing: IconTracing,
   school: IconSchool,
+  settings: IconSettings,
 }
 
 export default function StoryIcon({ name, ...props }: StoryIconProps) {
   const Comp = ICONS[name]
+  if (!Comp) return null
   return <Comp {...props} />
 }
-
-export type { StoryIconName, Tone }

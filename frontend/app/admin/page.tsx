@@ -75,11 +75,11 @@ export default function AdminPage() {
     .slice(0, 4)
 
   const SIDEBAR_ITEMS = [
-    { icon: '📊', label: 'Overview', href: '/admin' },
-    { icon: '🏆', label: 'Leaderboard', href: '/admin/leaderboard' },
-    { icon: '🏫', label: 'Classes', href: '/admin/classes' },
-    { icon: '📈', label: 'AI Stats', href: '/admin/stats' },
-    { icon: '👥', label: 'School Graph', href: '/admin/graph' },
+    { icon: 'reports' as const,    label: 'Overview',     href: '/admin' },
+    { icon: 'rewards' as const,    label: 'Leaderboard',  href: '/admin/leaderboard' },
+    { icon: 'school' as const,     label: 'Classes',      href: '/admin/classes' },
+    { icon: 'progress' as const,   label: 'AI Stats',     href: '/admin/stats' },
+    { icon: 'students' as const,   label: 'School Graph', href: '/admin/graph' },
   ]
 
   return (

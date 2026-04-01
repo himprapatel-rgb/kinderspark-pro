@@ -802,6 +802,18 @@ html.high-contrast * { border-color: #fff !important; outline-color: #fff !impor
   }
 }
 
+/* AppIcon state overlays — warning/error add color cue on top of disabled shape */
+.app-icon--warning { filter: saturate(0.7) sepia(0.5) hue-rotate(-10deg) brightness(1.05); opacity: 0.75; }
+.app-icon--error   { filter: saturate(0.7) sepia(0.8) hue-rotate(-30deg) brightness(1.0);  opacity: 0.75; }
+
+/* story-icon--animated: opt-in animation (no micro-interactions by default on non-interactive icons) */
+.story-icon--animated.story-icon--idle {
+  animation: storyIconFloat 2.8s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .story-icon--animated { animation: none !important; }
+}
+
 /* Unread/message badge pulse (only applied when count > 0) */
 .app-badge-pulse {
   animation: appBadgePulse 1.8s ease-in-out infinite;
