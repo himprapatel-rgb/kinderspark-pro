@@ -419,7 +419,9 @@ Auto-sync workflow: `agent-localization.yml` (weekly + on master.json push)
 4. Railway auto-deploys in ~3 minutes
 ```
 
-**Note:** Direct pushes to `main` are blocked. Always push to `claude/` branch.
+**Note:** Direct pushes to `main` are blocked by branch protection. Always push to `claude/` branch — the `auto-merge-claude.yml` workflow merges it automatically.
+
+**If auto-merge shows merge conflicts in the PR:** rebase the feature branch onto `origin/main` (`git rebase origin/main`), resolve conflicts by taking the feature branch version (`git checkout --theirs <file>`), then force-push (`git push --force-with-lease`). This clears the PR conflicts and the workflow will re-run cleanly.
 
 ---
 
@@ -647,16 +649,18 @@ Full audit performed. All role dashboards (admin, teacher, parent, principal) st
 - `frontend/app/parent/page.tsx` — 5× `rounded-2xl p-4` with surface/border → `.app-card`; `#5B7FE8` → `var(--role-teacher)`; `#4CAF6A` → `var(--app-success)` / `var(--app-success-soft)`
 - `frontend/app/child/shop/page.tsx` — custom useState toast → `useToast()` from `@/components/Toast`
 
-### AppIcon Migration Status (2026-04-01)
+### AppIcon Migration Status (2026-04-02)
 
 Complete 4-phase rollout of the unified `AppIcon` icon system:
 
 - **Phase 1** — Core system built: `AppIcon.tsx` (wrapper), `StoryIcons.tsx` (16 SVGs), `types.ts`, `iconRegistry.ts`, `index.ts`, `spec.md`. Added 16th icon: `settings`. All 5 roleTones + warning/error states supported.
 - **Phase 2** — Role dashboards migrated: `teacher/page.tsx`, `admin/page.tsx`, `principal/page.tsx`, `teacher/reports/page.tsx`, `parent/page.tsx`, `DashboardSidebar.tsx`, `ParentSidebar.tsx`
 - **Phase 3** — Child pages migrated: `child/page.tsx`, `child/messages`, `child/count`, `child/match`, `child/story`, `child/tutor`, `child/lesson/[id]`, `child/settings`, `child/shop`, `child/learn`, `child/leaderboard`
-- **Phase 4** — Components: `TeacherOnboarding.tsx` (removed dead Lucide imports), `EmotionalBuddyCard.tsx` (Sparkles→aiTutor)
+- **Phase 4** — Components: `TeacherOnboarding.tsx` (removed dead Lucide imports), `EmotionalBuddyCard.tsx` (Sparkles→aiTutor), `DashboardSidebar.tsx` (removed invalid `tone` prop that caused Railway build failure)
 
 **22 files** now import AppIcon. Remaining Lucide icons are intentional (no AppIcon equivalent): `Volume2/VolumeX, ChevronLeft/Right, RotateCcw, RefreshCw, Flame, Bell, Camera, Printer, Download, Eye, Globe, Monitor, Timer, User, LogOut, Mic, X, Map, Goal, TrendingUp, AlertTriangle, CheckCircle2, Crown, ArrowRight, Feather, Hash, Palette, PencilLine, PlayCircle, Share2, Shapes, ShoppingBag, UserRound, Heart, Activity, MapPin, Shield, Music, Send`
+
+**Deploy note**: Phase 1 introduced a `tone` prop on `AppIcon` that caused a Railway type error. Fixed in Phase 2/3/4 commit (`6fc5481`). Branch was rebased on `origin/main` to resolve PR merge conflicts in `child/page.tsx` and `teacher/page.tsx` before auto-merge could complete.
 
 ### Still uses inline styles intentionally
 - `AiTutor.tsx` — glass cards inside gradient sections; dynamic `t.color` theme variables → intentional
