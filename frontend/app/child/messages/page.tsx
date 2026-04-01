@@ -81,20 +81,29 @@ export default function ChildMessagesPage() {
     }
   }
 
+  const canSend = !busy && !!selectedRecipientId && !!subject.trim() && !!body.trim()
+
   return (
     <div className="min-h-screen app-container pb-24" style={{ background: 'var(--app-bg)' }}>
       <div className="px-4 pt-10 pb-3 flex items-center gap-2">
-        <button type="button" onClick={() => router.back()} className="w-9 h-9 rounded-xl app-pressable" style={{ background: 'var(--app-surface-soft)' }}>←</button>
-        <h1 className="font-black text-lg inline-flex items-center gap-2"><AppIcon name="messages" size="sm" roleTone="child" decorative /> Messages</h1>
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="btn-sm app-btn-secondary"
+          aria-label="Go back"
+        >←</button>
+        <h1 className="font-black text-lg inline-flex items-center gap-2">
+          <AppIcon name="messages" size="sm" roleTone="child" decorative /> Messages
+        </h1>
       </div>
 
       <div className="px-3 space-y-3">
-        <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
-          <div className="font-black text-sm mb-2">Message your network</div>
+        <div className="app-card">
+          <p className="section-label">Message your network</p>
           <select
             value={selectedRecipientId}
             onChange={(e) => setSelectedRecipientId(e.target.value)}
-            className="w-full app-input mb-2"
+            className="w-full app-field mb-2"
           >
             <option value="">Choose recipient</option>
             {recipients.teachers.length > 0 && <option disabled value="">-- Teachers --</option>}
@@ -104,29 +113,28 @@ export default function ChildMessagesPage() {
             {recipients.kids.length > 0 && <option disabled value="">-- Friends/Kids --</option>}
             {recipients.kids.map((r: any) => <option key={`kid-${r.id}`} value={r.id}>{r.name} ({r.profileId})</option>)}
           </select>
-          <div className="text-[11px] font-bold app-muted mb-2">
+          <div className="text-[11px] font-bold mb-2" style={{ color: 'var(--app-text-muted)' }}>
             You can only message connected teachers, parents, and kids listed in your account.
           </div>
-          <input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Subject" className="w-full app-input mb-2" />
-          <textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder="Your message..." rows={4} className="w-full app-input resize-none mb-2" />
+          <input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Subject" className="w-full app-field mb-2" />
+          <textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder="Your message..." rows={4} className="w-full app-field resize-none mb-2" />
           <button
             type="button"
             onClick={handleSend}
-            disabled={busy || !selectedRecipientId || !subject.trim() || !body.trim()}
-            className="w-full py-3 rounded-xl font-black app-pressable"
-            style={{ background: 'var(--app-success)', color: '#fff', opacity: (!selectedRecipientId || !subject.trim() || !body.trim()) ? 0.55 : 1 }}
+            disabled={!canSend}
+            className="w-full btn-md app-btn-primary"
           >
             {busy ? 'Sending...' : 'Send Message'}
           </button>
         </div>
 
-        <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
-          <div className="font-black text-sm mb-2">Recent direct messages</div>
+        <div className="app-card">
+          <p className="section-label">Recent direct messages</p>
           {history.length === 0 && <InlineEmpty emoji="💬" text="No direct messages yet" />}
           <div className="space-y-2">
             {history.map((m: any) => (
-              <div key={m.id} className="rounded-xl p-3" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}>
-                <div className="text-xs font-black app-muted mb-1">{new Date(m.sentAt || m.createdAt).toLocaleString()}</div>
+              <div key={m.id} className="app-card-soft">
+                <div className="text-xs font-black mb-1" style={{ color: 'var(--app-text-muted)' }}>{new Date(m.sentAt || m.createdAt).toLocaleString()}</div>
                 <div className="text-xs leading-relaxed whitespace-pre-wrap">{m.body}</div>
               </div>
             ))}
