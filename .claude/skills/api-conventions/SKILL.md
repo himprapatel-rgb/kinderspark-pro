@@ -85,6 +85,26 @@ const safe = sanitizePromptInput(req.body.userText)
 ```
 Required for any user-provided text going into AI prompts.
 
+## Frontend API Calls — Use Same-Origin Proxy
+`frontend/lib/api.ts` uses `API_BASE = '/api'` (relative, same-origin). Next.js proxies
+`/api/*` → backend via `next.config.js` rewrites. This fixes `SameSite=Lax` cross-subdomain
+cookie blocking on Railway. **Never change API_BASE back to an absolute URL.**
+
+```typescript
+// ✅ All client-side fetch goes through the proxy
+import { getClasses } from '@/lib/api'  // calls /api/classes → rewritten to backend
+
+// ❌ Don't bypass the proxy with absolute URLs in new frontend code
+fetch('https://kinderspark-backend-production.up.railway.app/api/...')
+```
+
+## Security Rules for New Routes
+- **Never expose a POST/PUT/PATCH/DELETE endpoint without `requireAuth`**
+- **Child role field restriction** — if child can write their own record, whitelist safe fields only (avatar/theme); never allow stars/streak/gamification fields from child role
+- **Cross-school ownership** — teachers must have `canTeacherAccessClass` verified before reading/writing/deleting data in a class
+- **AI report endpoints** — always gate with `canTeacherAccessClass` for teacher role
+- **Atomic writes** — use `prisma.$transaction` when creating 2+ linked records
+
 ## Adding a New Route
 1. Create `backend/src/routes/myfeature.routes.ts`
 2. Create `backend/src/controllers/myfeature.controller.ts` (if needed)

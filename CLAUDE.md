@@ -472,8 +472,10 @@ AZURE_TTS_REGION       Azure region e.g. eastus (default: eastus)
 
 ### Frontend (Railway)
 ```
-NEXT_PUBLIC_API_URL    Backend API base URL
+NEXT_PUBLIC_API_URL    Backend API base URL (used by Next.js rewrite proxy + agents SSE page)
 ```
+
+> **Important:** Client-side API calls now use `API_BASE = '/api'` (same-origin proxy via Next.js rewrites). `NEXT_PUBLIC_API_URL` is consumed server-side by `next.config.js` as the rewrite destination and by `dashboard/agents/page.tsx` for direct SSE. It is still required at **build time** so the rewrite knows where to forward requests.
 
 ### GitHub Secrets
 ```
@@ -651,7 +653,7 @@ Full audit performed. All role dashboards (admin, teacher, parent, principal) st
 - `SENDGRID_API_KEY`, `CLOUDINARY_CLOUD_NAME`+`CLOUDINARY_API_KEY`+`CLOUDINARY_API_SECRET`, `OPENAI_API_KEY` need to be set on Railway for those features to work
 - `VAPID_PUBLIC_KEY` + `VAPID_PRIVATE_KEY` required on Railway for push notifications (client subscribe flow still missing)
 - TTS human voices need env vars set on Railway: `GOOGLE_TTS_API_KEY`, `OPENAI_API_KEY`, or `AZURE_TTS_KEY` — app falls back to Web Speech API until at least one is set
-- **`NEXT_PUBLIC_API_URL` must be set before frontend build on Railway** — it is a build-time Next.js env var; setting it post-deploy has no effect until frontend is redeployed
+- **`NEXT_PUBLIC_API_URL` must be set before frontend build on Railway** — it drives the `next.config.js` rewrite proxy destination. Client fetch calls use `'/api'` (same-origin) and are proxied server-side; setting this var post-deploy has no effect until frontend is redeployed
 
 ---
 
