@@ -530,6 +530,13 @@ Completed:
 - **AI provider timeout**: `ai/router.ts` wraps each provider call in 30-second timeout via `Promise.race`.
 - **CSP connect-src fixed**: `frontend/next.config.js` — security headers previously only whitelisted the frontend Railway URL in `connect-src`, blocking all `fetch()` calls to the backend. Now allows `https://kinderspark-backend-production.up.railway.app` and `https://*.up.railway.app`. **This was the root cause of "Cannot reach server" in production.**
 - Security response headers added to `frontend/next.config.js`: `X-Frame-Options`, `X-Content-Type-Options`, `Strict-Transport-Security`, `Referrer-Policy`, `Permissions-Policy`, `Content-Security-Policy`.
+- **Cross-origin cookie fix**: `frontend/next.config.js` adds `/api/*` → backend rewrite. `frontend/lib/api.ts` `API_BASE` changed to `'/api'` (same-origin). Solves `SameSite=Lax` cookie blocking on Railway cross-subdomain fetches. All auth cookies are now always sent.
+- **POST /api/diag secured**: Added `requireAuth` — unauthenticated flood attack no longer possible.
+- **Child gamification exploit fixed**: `PUT /api/students/:id` — child role can only update `avatar`, `selectedTheme`, `ownedItems`. Stars/streak/aiStars blocked for children.
+- **Cross-school student delete fixed**: `DELETE /api/students/:id` — teachers now verified via `canTeacherAccessClass` before deletion.
+- **AI class ownership checks**: `aiWeeklyReport`, `aiSendParentReports`, `aiAutoSyllabus` — teachers now verified via `canTeacherAccessClass` before generating reports.
+- **Legacy refresh token fixed**: `refreshAccessToken` now falls back to `Teacher`/`Admin` tables when User lookup returns null — prevents `name`/`schoolId` being stripped from refreshed tokens.
+- **Atomic child registration**: `registerUser` for child role now uses `prisma.$transaction` — User + RoleAssignment + Student created atomically, no orphaned records.
 
 ---
 

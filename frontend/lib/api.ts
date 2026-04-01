@@ -1,6 +1,6 @@
-export const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL ||
-  'https://kinderspark-backend-production.up.railway.app/api'
+// Always use the same-origin /api path so auth cookies (SameSite=Lax) are sent
+// on every request. Next.js rewrites /api/* → backend in next.config.js.
+export const API_BASE = '/api'
 
 // Keep internal alias so nothing below breaks
 const BASE = API_BASE

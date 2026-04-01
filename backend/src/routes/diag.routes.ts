@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express'
-import { requireRole } from '../middleware/auth.middleware'
+import { requireAuth, requireRole } from '../middleware/auth.middleware'
 
 const router = Router()
 
@@ -7,8 +7,8 @@ const router = Router()
 const RECENT: Array<{ ts: number; location?: string; message?: string; hypothesisId?: string; data?: any }> = []
 const MAX_EVENTS = 200
 
-// POST /api/diag — lightweight client instrumentation sink
-router.post('/', async (req: Request, res: Response) => {
+// POST /api/diag — lightweight client instrumentation sink (authenticated only)
+router.post('/', requireAuth, async (req: Request, res: Response) => {
   try {
     const { location, message, data, hypothesisId, timestamp } = req.body || {}
     // Print a compact, single-line log for Railway
