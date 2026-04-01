@@ -86,7 +86,7 @@ export default function PrincipalPage() {
         role="admin"
         items={SIDEBAR_ITEMS}
         userName={user?.name}
-        profileHref="/admin/profile"
+        profileHref="/admin/settings"
         onItemClick={(idx) => idx === 3 ? router.push('/admin') : setTab(idx)}
         activeIndex={tab}
       />
@@ -111,7 +111,7 @@ export default function PrincipalPage() {
               <p className="text-sm font-bold text-white/70 mt-0.5">School leadership dashboard</p>
             </div>
             <button
-              onClick={() => router.push('/admin/profile')}
+              onClick={() => router.push("/admin/settings")}
               className="w-10 h-10 rounded-2xl flex items-center justify-center app-pressable app-btn-glass"
               aria-label="Profile"
             >
