@@ -454,10 +454,16 @@ AGENT_TRIGGER_WORKFLOWS Comma-separated allowlist for /api/agents/trigger workfl
 AGENT_ALLOWED_ISSUE_LABELS Comma-separated allowlist for /api/agents/issue labels
 FRONTEND_URL           CORS allowed origin
 ANTHROPIC_MODEL        (optional) override Claude model
+OPENAI_MODEL           (optional) override OpenAI model (default: gpt-4o-mini)
+GEMINI_API_KEY         Google Gemini API key for AI fallback (free tier available)
+GEMINI_MODEL           (optional) override Gemini model (default: gemini-2.0-flash)
+PERPLEXITY_API_KEY     Perplexity API key for AI fallback
 VAPID_PUBLIC_KEY       Web push notifications
 VAPID_PRIVATE_KEY      Web push notifications
 SENDGRID_API_KEY       Email sending
-CLOUDINARY_URL         Image/drawing storage
+CLOUDINARY_CLOUD_NAME  Cloudinary cloud name (image/drawing storage)
+CLOUDINARY_API_KEY     Cloudinary API key
+CLOUDINARY_API_SECRET  Cloudinary API secret
 OPENAI_API_KEY         AI fallback provider + OpenAI TTS (secondary voice)
 GOOGLE_TTS_API_KEY     Google Cloud TTS — primary human voice (free 1M chars/mo)
 AZURE_TTS_KEY          Microsoft Azure TTS — tertiary voice (free 500K chars/mo)
@@ -631,9 +637,9 @@ Full audit performed. All role dashboards (admin, teacher, parent, principal) st
 ## Known Gaps (as of 2026-04-01)
 
 - iOS app exists (Capacitor Xcode project) but not yet in App Store
-- **Push:** VAPID keys + subscription storage + route wiring needed for production push (see Code-Verified table)
-- **Geofence:** move off in-memory arrays to DB if persistence is required
-- `SENDGRID_API_KEY`, `CLOUDINARY_URL`, `OPENAI_API_KEY` need to be set on Railway for those features to work
+- **Push:** Server-side fully wired (`WebPushSubscription`, fan-out to student+parents). Still missing: client-side service worker (`public/sw.js`) for background push delivery. Set `VAPID_PUBLIC_KEY` + `VAPID_PRIVATE_KEY` on Railway.
+- **Geofence:** Persistence implemented (`GeofenceUserEvent` + `GeofenceUserConsent` written to DB)
+- `SENDGRID_API_KEY`, `CLOUDINARY_CLOUD_NAME`+`CLOUDINARY_API_KEY`+`CLOUDINARY_API_SECRET`, `OPENAI_API_KEY` need to be set on Railway for those features to work
 - `VAPID_PUBLIC_KEY` + `VAPID_PRIVATE_KEY` required on Railway for push notifications (client subscribe flow still missing)
 - TTS human voices need env vars set on Railway: `GOOGLE_TTS_API_KEY`, `OPENAI_API_KEY`, or `AZURE_TTS_KEY` — app falls back to Web Speech API until at least one is set
 - **`NEXT_PUBLIC_API_URL` must be set before frontend build on Railway** — it is a build-time Next.js env var; setting it post-deploy has no effect until frontend is redeployed

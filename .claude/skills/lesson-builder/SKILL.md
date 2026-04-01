@@ -15,7 +15,7 @@ This is enforced in `backend/src/controllers/ai.controller.ts` and all 9 AI func
 **Never call AI directly for standard modules** — they're seeded in the DB.
 
 ## AI Prompt Rules
-- Always specify **"child aged 4-8"** or **"kindergarten level"** in every prompt
+- Always specify **"child aged 3-6"** or **"kindergarten level"** in every prompt
 - Request **strict JSON output** — no markdown fences, no extra text
 - Max tokens: 100–1024 (keep small for speed + cost)
 - On AI failure: return a friendly fallback — never show errors to children
