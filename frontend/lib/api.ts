@@ -8,6 +8,34 @@ const BASE = API_BASE
 let isRefreshing = false
 let refreshQueue: Array<(ok: boolean) => void> = []
 
+function getCurrentRoleForRelogin(): string {
+  if (typeof window === 'undefined') return 'child'
+  try {
+    const raw = localStorage.getItem('kinderspark-store')
+    if (!raw) return 'child'
+    const parsed = JSON.parse(raw)
+    const role = String(parsed?.state?.role || 'child')
+    if (['teacher', 'parent', 'child', 'admin', 'principal'].includes(role)) return role
+  } catch {
+    // ignore parse errors and fall back
+  }
+  return 'child'
+}
+
+function handleSessionExpired(): void {
+  if (typeof window === 'undefined') return
+  try {
+    const currentPath = `${window.location.pathname}${window.location.search || ''}`
+    if (currentPath && currentPath !== '/') {
+      sessionStorage.setItem('ks_after_login', currentPath)
+    }
+    const role = getCurrentRoleForRelogin()
+    window.location.assign(`/pin?role=${encodeURIComponent(role)}`)
+  } catch {
+    window.location.assign('/pin?role=child')
+  }
+}
+
 function getCsrfToken(): string | null {
   if (typeof document === 'undefined') return null
   const part = document.cookie
@@ -74,6 +102,7 @@ async function req(path: string, options?: RequestInit): Promise<any> {
       }
       return retry.json()
     }
+    handleSessionExpired()
     throw new Error('Session expired. Please log in again.')
   }
 

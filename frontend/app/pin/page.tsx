@@ -141,6 +141,22 @@ function PinContent() {
         // #region agent log
         fetch(`${API_BASE}/diag`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/pin/page.tsx:submit:redirect',message:'Redirect after PIN',data:{role},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
         // #endregion
+        const resume = (() => {
+          try {
+            const raw = sessionStorage.getItem('ks_after_login') || ''
+            if (raw && raw.startsWith('/')) {
+              sessionStorage.removeItem('ks_after_login')
+              return raw
+            }
+          } catch {
+            // ignore
+          }
+          return ''
+        })()
+        if (resume) {
+          router.replace(resume)
+          return
+        }
         if (role === 'teacher') router.replace('/teacher')
         else if (role === 'admin' || role === 'principal') router.replace('/admin')
         else if (role === 'parent') router.replace('/parent')
