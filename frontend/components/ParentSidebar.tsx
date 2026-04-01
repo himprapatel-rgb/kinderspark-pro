@@ -1,6 +1,6 @@
 'use client'
 import { useRouter } from 'next/navigation'
-import { BarChart3, Home, Heart, MessageSquare, UserRound } from 'lucide-react'
+import { StoryIcon } from '@/components/icons'
 
 interface ParentSidebarProps {
   userName?: string
@@ -10,10 +10,12 @@ interface ParentSidebarProps {
   unreadCount?: number
 }
 
-const ITEMS = [
-  { icon: Home, label: 'Home' },
-  { icon: BarChart3, label: 'Progress' },
-  { icon: MessageSquare, label: 'Messages' },
+type ParentItem = { icon: 'home' | 'progress' | 'messages'; label: string }
+
+const ITEMS: ParentItem[] = [
+  { icon: 'home', label: 'Home' },
+  { icon: 'progress', label: 'Progress' },
+  { icon: 'messages', label: 'Messages' },
 ]
 
 export default function ParentSidebar({ userName, childName, activeIndex, onItemClick, unreadCount = 0 }: ParentSidebarProps) {
@@ -27,7 +29,7 @@ export default function ParentSidebar({ userName, childName, activeIndex, onItem
           className="w-10 h-10 rounded-xl flex items-center justify-center text-xl font-black text-white"
           style={{ background: 'linear-gradient(135deg, #4CAF6A, #5FBF7F)' }}
         >
-          <Heart size={18} />
+          <StoryIcon name="parent" size={18} roleTone="parent" density="compact" state="success" interactive={false} />
         </div>
         <div>
           <div className="text-sm font-black" style={{ color: 'rgb(var(--foreground-rgb))' }}>
@@ -72,11 +74,19 @@ export default function ParentSidebar({ userName, childName, activeIndex, onItem
                 boxShadow: active ? 'var(--app-shadow-sm)' : 'none',
               }}
             >
-              <item.icon size={16} />
+              <StoryIcon
+                name={item.icon}
+                size={16}
+                density="compact"
+                roleTone="parent"
+                state={active ? 'success' : 'idle'}
+                interactive={!active}
+                tone={active ? { ink: '#ffffff', white: '#ffffff' } : undefined}
+              />
               <span className="flex-1">{item.label}</span>
               {item.label === 'Messages' && unreadCount > 0 && (
                 <span
-                  className="text-[10px] font-black px-1.5 py-0.5 rounded-full"
+                  className="text-[10px] font-black px-1.5 py-0.5 rounded-full app-badge-pulse"
                   style={{
                     background: active ? 'rgba(255,255,255,0.25)' : 'var(--app-danger)',
                     color: '#fff',
@@ -98,7 +108,7 @@ export default function ParentSidebar({ userName, childName, activeIndex, onItem
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all app-pressable min-h-11"
           style={{ color: 'var(--app-text-muted)', fontSize: '13px', fontWeight: 700 }}
         >
-          <UserRound size={17} aria-hidden />
+          <StoryIcon name="parent" size={18} density="compact" roleTone="parent" state="hover" aria-hidden />
           <span>Profile & Settings</span>
         </button>
       </div>
