@@ -100,8 +100,9 @@ kinderspark-pro/
 │       │   ├── cache.service.ts   ← makeCacheKey, getCachedResponse, setCachedResponse
 │       │   ├── badge.service.ts   ← achievement system
 │       │   ├── report.service.ts  ← AI weekly report generation
-│       │   ├── agentScheduler.service.ts ← autonomous agent orchestrator
-│       │   ├── contentFilter.service.ts  ← child-safe content filtering
+│       │   ├── agentScheduler.service.ts ← autonomous agent orchestrator + spark task scheduler
+│       │   ├── agentMemory.service.ts    ← importance-ranked agent memory (agentId+importance index)
+│       │   ├── contentFilter.service.ts  ← child-safe content filtering + per-student AI rate limit
 │       │   ├── email.service.ts   ← SendGrid email
 │       │   ├── messageNotifications.service.ts
 │       │   ├── notification.service.ts ← push notifications (VAPID)
@@ -121,7 +122,8 @@ kinderspark-pro/
 │           ├── sanitize.ts
 │           ├── accessControl.ts   ← centralised RBAC helpers
 │           ├── pinFingerprint.ts  ← PIN brute-force detection
-│           └── progressMastery.ts
+│           ├── progressMastery.ts
+│           └── webPushTarget.ts   ← resolve student push targets (respects RBAC)
 │       ├── services/
 │       │   └── seed.service.ts    ← compiled auto-seed (no ts-node); seeds SUN001 on first boot
 └── frontend/
@@ -563,13 +565,15 @@ Operational notes:
 
 | Severity | Issue | Evidence |
 |----------|--------|----------|
-| **High** | Push not end-to-end | `push.routes.ts` exposes only `GET /vapid-public-key` — no `POST` to persist subscriptions; homework/grading routes do not call `sendHomeworkReminder` / `sendGradeNotification` |
-| **Medium** | Geofence persistence | `GeofenceUserConsent` + `GeofenceUserEvent` models added; verify `attendance.ts` writes to DB not in-memory array |
+| **Medium** | No service worker | No `public/sw.js` / SW registration in root layout for offline/push client (push subscriptions work; SW for background push not yet wired) |
 | **Medium** | Email silent when misconfigured | `email.service.ts` returns early if no `SENDGRID_API_KEY` — no user-facing error |
 | **Medium** | TTS degrades without keys | All provider keys optional → browser Web Speech fallback for lesson audio |
-| **Medium** | CSRF + Bearer | Bearer tokens no longer supported — cookie-only auth enforced ✅ |
 | **Medium** | Legacy route surface | `app.ts` mounts backward-compat: `/api/classes`, `/api/ai-sessions`, `/api/feedback` — audit auth on changes |
-| **Medium** | No service worker | No `public/sw.js` / SW registration in root layout for offline/push client |
+
+Previously listed gaps now resolved ✅:
+- **Push end-to-end**: `POST /api/push/subscribe` persists `WebPushSubscription`; `notification.service.ts` fans out to student + all linked parent devices
+- **Geofence persistence**: `GeofenceUserEvent` + `GeofenceUserConsent` written to DB via `attendance.ts` (not in-memory)
+- **CSRF + Bearer**: Bearer tokens fully removed; cookie-only auth enforced
 
 ### Frontend route coverage
 
