@@ -570,7 +570,7 @@ export async function savePushToken(studentId: string, token: string) {
 
 /** Persists Web Push subscription for a student device or parent profile (multi-device). */
 export async function postPushSubscribe(body: {
-  scope: 'student' | 'parent'
+  scope: 'student' | 'parent' | 'teacher'
   studentId?: string
   subscription: string
 }) {
