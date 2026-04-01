@@ -2,6 +2,7 @@
 import { useCallback } from 'react'
 import { useAppStore } from '@/store/appStore'
 import { t as translate, type SupportedLang, LANGUAGES, getLanguageOptions } from '@/lib/i18n'
+export type { SupportedLang }
 
 /**
  * Hook that provides translation utilities using the app's current language setting.

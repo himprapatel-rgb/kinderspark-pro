@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
 import { logoutApi } from '@/lib/api'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
-import { useTranslation } from '@/hooks/useTranslation'
+import { useTranslation, type SupportedLang } from '@/hooks/useTranslation'
 import DiagnosticsPanel from '@/components/DiagnosticsPanel'
 import PrivacyGeofenceCard from '@/components/Settings/Privacy'
 import { Bell, LogOut, Volume2 } from 'lucide-react'
@@ -25,7 +25,7 @@ const SESSION_LIMITS = [10, 15, 20, 30, 45, 60]
 
 export default function ChildSettingsPage() {
   const router     = useRouter()
-  const { t }      = useTranslation()
+  const { t, setLang } = useTranslation()
   const settings   = useAppStore(s => s.settings)
   const updateSettings = useAppStore(s => s.updateSettings)
   const user       = useAppStore(s => s.user)
@@ -272,7 +272,7 @@ export default function ChildSettingsPage() {
           <div className="grid grid-cols-3 gap-2">
             {LANGS.map(lang => (
               <button key={lang.code}
-                onClick={() => updateSettings({ lang: lang.code })}
+                onClick={() => setLang(lang.code as SupportedLang)}
                 className="py-3 rounded-xl font-black text-xs flex flex-col items-center gap-1 app-pressable"
                 style={{
                   background: settings.lang === lang.code ? 'var(--role-child)' : 'var(--app-surface-soft)',
