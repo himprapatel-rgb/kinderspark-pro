@@ -547,6 +547,15 @@ Completed:
 - **PIN global brute-force protection**: `auth.controller.ts` — added global per-`schoolCode:role` throttle (25 attempts / 60 min) alongside per-IP throttle; rotating IPs can no longer bypass protection.
 - **Teacher student scoping**: `GET /api/students` — teachers must provide `classId`; omitting it returns 400 instead of the entire DB.
 - **Parent student access fixed**: `PUT /api/students/:id` — parents now use `canParentAccessStudent` check (was unreachable due to logic bug); parents restricted to `name`, `age`, `avatar`, `selectedTheme`, `ownedItems` — no gamification fields.
+- **SSE token-in-URL removed**: `GET /api/messages/stream` — deprecated `?token=` query param removed; `requireAuth` cookie-only auth enforced; connection cap per class (`MAX_SSE_PER_CLASS=50`).
+- **Message route ordering fixed**: `PUT /api/messages/read-all` moved before `PUT /:id/read` — Express was routing `/read-all` to the wrong handler.
+- **Message `from` field hardened**: `POST /api/messages` — display name always derived from `req.user.name` server-side; client-supplied `from` ignored.
+- **Teacher message scoping**: `GET /api/messages` — teachers must provide `classId`; admin/principal can query unscoped.
+- **Direct thread deduplication**: `POST /api/messages/threads` — returns existing direct thread if one already exists for the participant pair.
+- **Thread message body length cap**: `POST /threads/:threadId/messages` — 10000 char limit added.
+- **N+1 mark-thread-read fixed**: `POST /threads/:threadId/read` — replaced per-message upsert loop with `createMany(skipDuplicates)` + `updateMany` in a single transaction.
+- **Legacy student auto-create hardened**: `ensureLegacyStudent` in `progress.routes.ts` — hashes placeholder PIN with bcrypt; scopes class lookup to student's own school.
+- **Progress score client override removed**: `PUT /api/progress/:studentId/:moduleId` — `body.score` no longer accepted; score always derived from lesson completion ratio.
 
 ---
 
