@@ -283,174 +283,211 @@ export default function ChildPage() {
       <PageTransition>
       {/* ── HERO HEADER ── */}
       <div
-        className="relative overflow-hidden doodle-surface"
-        style={{
-          background: `linear-gradient(145deg, var(--theme-color, #5B7FE8) 0%, var(--theme-secondary, #8B6CC1) 100%)`,
-          paddingBottom: 28,
-        }}
+        className="relative overflow-hidden"
+        style={{ background: `linear-gradient(145deg, var(--theme-color, #5B7FE8) 0%, var(--theme-secondary, #8B6CC1) 100%)`, paddingBottom: 28 }}
       >
         {/* Dot pattern */}
-        <div className="absolute inset-0 opacity-[0.07]"
+        <div className="absolute inset-0 opacity-[0.07] pointer-events-none"
           style={{ backgroundImage: 'radial-gradient(circle, #fff 1.5px, transparent 1.5px)', backgroundSize: '22px 22px' }} />
-        {/* Decorative circles */}
-        <div className="absolute -right-12 -top-12 w-48 h-48 rounded-full bg-white/10" />
-        <div className="absolute -right-4 top-24 w-20 h-20 rounded-full bg-white/5" />
+        {/* Floating depth blobs */}
+        <div className="absolute -right-14 -top-14 w-56 h-56 rounded-full bg-white/10 animate-float pointer-events-none" />
+        <div className="absolute -right-2 top-32 w-24 h-24 rounded-full bg-white/5 animate-float2 pointer-events-none" />
+        <div className="absolute left-16 -top-6 w-14 h-14 rounded-full bg-white/6 pointer-events-none" />
+        {/* Sparkle particles */}
+        <div className="absolute top-10 right-28 text-yellow-200/60 text-xs animate-bounce-subtle select-none pointer-events-none">✦</div>
+        <div className="absolute top-24 right-16 text-white/30 text-[10px] animate-float select-none pointer-events-none">✧</div>
+        <div className="absolute top-6 left-[45%] text-white/25 text-xs animate-float2 select-none pointer-events-none">✦</div>
+        <div className="absolute bottom-16 left-8 text-yellow-200/30 text-[10px] animate-bounce-subtle delay-200 select-none pointer-events-none">⭐</div>
 
         <div className="relative p-5 pt-12">
-          {/* Top row: avatar + actions */}
-          <div className="flex justify-between items-start mb-5">
-            <div className="flex items-center gap-3">
-              <div
-                className="w-16 h-16 rounded-3xl flex items-center justify-center text-4xl flex-shrink-0 sticker-bubble animate-float2"
-                style={{
-                  background: 'rgba(255,255,255,0.24)',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.3)',
-                  filter: 'drop-shadow(0 0 12px rgba(255,215,0,0.3))',
-                  transform: 'rotate(-3deg)',
-                }}
-              >
-                <KidAvatar
-                  studentId={student?.id}
-                  ownedItems={(student as any)?.ownedItems}
-                  fallback={student?.avatar || '🧒'}
-                  size={62}
-                />
-              </div>
-              <div>
-                <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.7)' }}>Welcome back</p>
-                <h1 className="text-2xl font-black leading-tight text-white">{student?.name}!</h1>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => router.push('/child/shop')}
-                className="flex items-center justify-center rounded-xl h-10 px-3 gap-1.5 text-sm font-bold active:scale-95 transition-all app-pressable app-btn-glass"
-              >
-                <ShoppingBag size={15} /> <span className="text-xs">Shop</span>
-              </button>
-              <button
-                onClick={() => {
-                  hapticTap()
-                  // #region agent log
-                  fetch(`${API_BASE}/diag`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/child/page.tsx:share:tap',message:'Share Progress tap',data:{studentId:student?.id,totalStars:Object.values(progressMap).reduce((a,b)=>a+b,0),badgeCount:badges.length},timestamp:Date.now(),hypothesisId:'H4'})}).catch(()=>{});
-                  // #endregion
-                  const totalStars = Object.values(progressMap).reduce((a, b) => a + b, 0)
-                  nativeShare({
-                    title: `${student?.name}'s KinderSpark Progress`,
-                    text: `🌟 ${student?.name} earned ${totalStars} stars and ${badges.length} badges on KinderSpark Pro!`,
-                    url: 'https://kinderspark.com',
-                  })
-                }}
-                className="flex items-center justify-center rounded-xl w-10 h-10 text-sm font-bold active:scale-95 transition-all app-pressable app-btn-glass"
-                title="Share Progress"
-              >
-                <Share2 size={16} />
-              </button>
-              <button
-                type="button"
-                onClick={() => router.push('/child/profile')}
-                className="flex items-center justify-center rounded-xl w-10 h-10 text-sm font-bold active:scale-95 transition-all app-pressable app-btn-glass"
-                title="Profile"
-                aria-label="Profile"
-              >
-                <UserRound size={16} aria-hidden />
-              </button>
-              <button
-                type="button"
-                onClick={() => router.push('/child/settings')}
-                className="flex items-center justify-center rounded-xl w-10 h-10 text-sm font-bold active:scale-95 transition-all app-pressable app-btn-glass"
-                title="Settings"
-                aria-label="Settings"
-              >
-                <AppIcon name="settings" size="sm" roleTone="child" decorative />
-              </button>
-            </div>
-          </div>
 
-          {/* ── Top summary row ── */}
-          <div className="grid grid-cols-3 gap-2.5 mb-4">
-            {/* Stars */}
-            <div
-              className="flex-1 rounded-2xl py-2.5 px-3 flex items-center gap-2"
-              style={{ background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.25)' }}
-            >
-              <span className="w-8 h-8 flex items-center justify-center sticker-bubble" style={{ background: 'rgba(245,183,49,0.22)', transform: 'rotate(-6deg)' }}><AppIcon name="rewards" size="sm" roleTone="child" decorative /></span>
-              <div>
-                <p className="text-yellow-200 font-black text-base leading-none">{(student?.stars ?? 0).toLocaleString()}</p>
-                <p className="text-[10px] font-bold app-muted">Stars</p>
-              </div>
-            </div>
-
-            {/* Streak */}
-            <div
-              className="flex-1 rounded-2xl py-2.5 px-3 flex items-center gap-2"
-              style={{
-                background: streak > 0 ? 'rgba(255,107,53,0.3)' : 'rgba(255,255,255,0.12)',
-                border: streak > 0 ? '1px solid rgba(255,107,53,0.4)' : '1px solid rgba(255,255,255,0.15)',
-              }}
-            >
-              <span className="w-8 h-8 flex items-center justify-center sticker-bubble" style={{ background: streak > 0 ? 'rgba(224,82,82,0.22)' : 'rgba(120,120,140,0.18)', transform: 'rotate(5deg)' }}>
-                <Flame size={16} style={{ color: streak > 0 ? '#E05252' : '#7C8296' }} />
-              </span>
-              <div>
-                <p className="font-black text-base leading-none">{streak}</p>
-                <p className="text-[10px] font-bold app-muted">{streak === 1 ? 'day' : 'days'}</p>
-              </div>
-            </div>
-
-            {/* Level */}
-            <div
-              className="flex-1 rounded-2xl py-2.5 px-3 flex items-center gap-2"
-              style={{ background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.25)' }}
-            >
-              <span className="w-8 h-8 flex items-center justify-center sticker-bubble" style={{ background: 'rgba(139,108,193,0.22)', transform: 'rotate(-4deg)' }}><AppIcon name="rewards" size="sm" roleTone="child" decorative /></span>
-              <div>
-                <p className="font-black text-base leading-none">Lv {student?.aiBestLevel ?? 1}</p>
-                <p className="text-[10px] font-bold app-muted">Level</p>
-              </div>
-            </div>
-          </div>
-
-          {/* ── Overall progress + main CTA ── */}
-          <div className="rounded-2xl p-3.5" style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)' }}>
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-white/80 text-xs font-black uppercase tracking-wide">Overall Progress</span>
-              <span className="font-black text-xs">{overallPct}%</span>
-            </div>
-            <div className="h-4 rounded-full overflow-hidden" style={{ background: 'rgba(120,120,140,0.15)' }}>
-              <div
-                className="h-full rounded-full relative overflow-hidden transition-all duration-1000"
-                style={{
-                  width: `${Math.max(overallPct, 4)}%`,
-                  background: 'linear-gradient(90deg, #F5B731, #F5A623)',
-                }}
-              >
-                <div className="absolute inset-0 shimmer" />
-              </div>
-            </div>
-            <p className="text-[10px] app-muted font-bold mt-1">{doneCards} cards done — keep going!</p>
+          {/* ── Row 1: Big avatar + greeting + actions ── */}
+          <div className="flex items-start gap-4 mb-5">
+            {/* Avatar with SVG level ring */}
             <button
-              onClick={() => {
-                trackKpiEvent({ category: 'engagement', name: 'child_continue_learning_click' })
-                router.push(startTodayHref)
-              }}
-              className="mt-3 w-full rounded-xl py-3 px-3 font-black text-sm flex items-center justify-center gap-2 app-pressable animate-sparkle-on-hover"
-              style={{ background: 'linear-gradient(135deg, var(--app-gold), var(--app-warning))', color: '#2B1F10' }}
+              type="button"
+              onClick={() => router.push('/child/profile')}
+              aria-label="View profile"
+              className="relative flex-shrink-0 app-pressable"
+              style={{ width: 84, height: 84 }}
             >
-              <PlayCircle size={16} className="animate-bob" />
-              Continue Learning
-            </button>
-            <div className="mt-2 rounded-xl px-3 py-2 flex items-center justify-between" style={{ background: 'rgba(255,255,255,0.14)' }}>
-              <div className="min-w-0">
-                <p className="text-[10px] text-white/80 font-black uppercase tracking-wide">Next task</p>
-                <p className="text-xs font-black truncate">{startTodayTitle}</p>
-                <p className="text-[10px] app-muted font-bold">{nextTaskMeta}</p>
+              {/* Level progress ring */}
+              <svg width="84" height="84" viewBox="0 0 84 84" className="absolute inset-0" style={{ transform: 'rotate(-90deg)' }}>
+                <circle cx="42" cy="42" r="36" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="5" />
+                <circle cx="42" cy="42" r="36" fill="none" stroke="var(--app-gold)" strokeWidth="5"
+                  strokeDasharray={`${Math.min((student?.aiBestLevel ?? 1) / 10, 1) * 2 * Math.PI * 36} ${2 * Math.PI * 36}`}
+                  strokeLinecap="round"
+                  style={{ filter: 'drop-shadow(0 0 5px rgba(245,183,49,0.8))', transition: 'stroke-dasharray 1s ease' }} />
+              </svg>
+              <div
+                className="absolute inset-[6px] rounded-3xl flex items-center justify-center sticker-bubble animate-float2"
+                style={{ background: 'rgba(255,255,255,0.22)', boxShadow: '0 4px 20px rgba(0,0,0,0.25), 0 0 28px rgba(255,215,0,0.25), inset 0 1px 0 rgba(255,255,255,0.3)' }}
+              >
+                <KidAvatar studentId={student?.id} ownedItems={(student as any)?.ownedItems} fallback={student?.avatar || '🧒'} size={62} />
               </div>
-              <ArrowRight size={14} className="text-white/85 shrink-0" />
+              {/* Level badge */}
+              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full px-2 py-0.5 font-black"
+                style={{ background: 'var(--app-gold)', color: '#2B1F10', fontSize: 10, whiteSpace: 'nowrap', boxShadow: '0 2px 8px rgba(0,0,0,0.3)', zIndex: 1 }}>
+                Lv {student?.aiBestLevel ?? 1}
+              </div>
+            </button>
+
+            {/* Name + greeting + streak badge */}
+            <div className="flex-1 min-w-0 pt-1">
+              <p className="font-black uppercase tracking-widest" style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>Welcome back</p>
+              <h1 className="font-black text-white leading-tight truncate" style={{ fontSize: 24 }}>{student?.name}! 👋</h1>
+              <p className="font-bold mt-0.5" style={{ fontSize: 12, color: 'rgba(255,255,255,0.68)' }}>Ready for your next adventure?</p>
+              {streak > 0 ? (
+                <div className="inline-flex items-center gap-1.5 mt-2 rounded-full px-2.5 py-1"
+                  style={{ background: 'rgba(255,107,53,0.32)', border: '1px solid rgba(255,107,53,0.48)' }}>
+                  <Flame size={11} style={{ color: '#FF8C5A' }} />
+                  <span style={{ fontSize: 11, fontWeight: 900, color: '#FFBB99' }}>{streak} day streak 🔥</span>
+                </div>
+              ) : (
+                <div className="inline-flex items-center gap-1.5 mt-2 rounded-full px-2.5 py-1"
+                  style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)' }}>
+                  <span style={{ fontSize: 11, fontWeight: 900, color: 'rgba(255,255,255,0.55)' }}>Start a streak today! 💪</span>
+                </div>
+              )}
+            </div>
+
+            {/* Top-right action buttons */}
+            <div className="flex flex-col gap-1.5 flex-shrink-0 pt-1">
+              <button onClick={() => router.push('/child/shop')}
+                className="flex items-center justify-center rounded-xl h-9 px-2.5 gap-1.5 app-pressable app-btn-glass"
+                style={{ fontSize: 11, fontWeight: 900 }}>
+                <ShoppingBag size={13} /> Shop
+              </button>
+              <div className="flex gap-1.5">
+                <button
+                  onClick={() => {
+                    hapticTap()
+                    fetch(`${API_BASE}/diag`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/child/page.tsx:share:tap',message:'Share Progress tap',data:{studentId:student?.id,totalStars:Object.values(progressMap).reduce((a,b)=>a+b,0),badgeCount:badges.length},timestamp:Date.now(),hypothesisId:'H4'})}).catch(()=>{})
+                    const totalStars = Object.values(progressMap).reduce((a, b) => a + b, 0)
+                    nativeShare({ title: `${student?.name}'s KinderSpark Progress`, text: `🌟 ${student?.name} earned ${totalStars} stars and ${badges.length} badges on KinderSpark Pro!`, url: 'https://kinderspark.com' })
+                  }}
+                  className="w-9 h-9 flex items-center justify-center rounded-xl app-pressable app-btn-glass" title="Share Progress">
+                  <Share2 size={14} />
+                </button>
+                <button type="button" onClick={() => router.push('/child/settings')}
+                  className="w-9 h-9 flex items-center justify-center rounded-xl app-pressable app-btn-glass" title="Settings" aria-label="Settings">
+                  <AppIcon name="settings" size="sm" roleTone="child" decorative />
+                </button>
+              </div>
             </div>
           </div>
-        </div>
 
+          {/* ── Row 2: Collectible reward stat tiles ── */}
+          <div className="grid grid-cols-3 gap-2.5 mb-4">
+            {/* ⭐ Stars — golden achievement */}
+            <div className="rounded-2xl p-3 flex flex-col items-center gap-1.5 relative overflow-hidden"
+              style={{ background: 'linear-gradient(135deg, rgba(245,183,49,0.38), rgba(245,162,35,0.22))', border: '1px solid rgba(245,183,49,0.52)' }}>
+              <div className="absolute -right-2 -top-2 opacity-20 select-none pointer-events-none" style={{ fontSize: 28, transform: 'rotate(15deg)' }}>⭐</div>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(245,183,49,0.28)', fontSize: 20 }}>⭐</div>
+              <p className="font-black text-white leading-none" style={{ fontSize: 20 }}>{(student?.stars ?? 0).toLocaleString()}</p>
+              <p style={{ fontSize: 10, fontWeight: 800, color: 'rgba(255,230,150,0.85)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Stars</p>
+            </div>
+
+            {/* 🔥 Streak — fire energy */}
+            <div className="rounded-2xl p-3 flex flex-col items-center gap-1.5 relative overflow-hidden"
+              style={{ background: streak > 0 ? 'linear-gradient(135deg, rgba(255,107,53,0.38), rgba(224,82,82,0.22))' : 'rgba(255,255,255,0.12)', border: streak > 0 ? '1px solid rgba(255,107,53,0.52)' : '1px solid rgba(255,255,255,0.18)' }}>
+              <div className="absolute -right-2 -top-2 opacity-20 select-none pointer-events-none" style={{ fontSize: 28, transform: 'rotate(15deg)' }}>{streak > 0 ? '🔥' : '💧'}</div>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: streak > 0 ? 'rgba(255,107,53,0.28)' : 'rgba(120,120,140,0.18)' }}>
+                <Flame size={20} style={{ color: streak > 0 ? '#FF8C5A' : '#8090A8' }} />
+              </div>
+              <p className="font-black text-white leading-none" style={{ fontSize: 20 }}>{streak}</p>
+              <p style={{ fontSize: 10, fontWeight: 800, color: streak > 0 ? 'rgba(255,200,160,0.85)' : 'rgba(200,210,230,0.6)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Day{streak !== 1 ? 's' : ''}</p>
+            </div>
+
+            {/* 🏅 Level — badge achievement */}
+            <div className="rounded-2xl p-3 flex flex-col items-center gap-1.5 relative overflow-hidden"
+              style={{ background: 'linear-gradient(135deg, rgba(139,108,193,0.38), rgba(94,92,230,0.22))', border: '1px solid rgba(139,108,193,0.52)' }}>
+              <div className="absolute -right-2 -top-2 opacity-20 select-none pointer-events-none" style={{ fontSize: 28, transform: 'rotate(15deg)' }}>🏅</div>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(139,108,193,0.28)', fontSize: 20 }}>🏅</div>
+              <p className="font-black text-white leading-none" style={{ fontSize: 20 }}>Lv {student?.aiBestLevel ?? 1}</p>
+              <p style={{ fontSize: 10, fontWeight: 800, color: 'rgba(200,180,255,0.85)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Level</p>
+            </div>
+          </div>
+
+          {/* ── Row 3: Adventure Progress card with milestones ── */}
+          <div className="rounded-2xl p-4 mb-3" style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)' }}>
+            <div className="flex justify-between items-center mb-3">
+              <span className="font-black" style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'rgba(255,255,255,0.88)' }}>🗺️ Adventure Progress</span>
+              <span className="font-black text-white" style={{ fontSize: 13 }}>{overallPct}%</span>
+            </div>
+            {/* Progress bar with milestone dots */}
+            <div className="relative h-3.5 rounded-full" style={{ background: 'rgba(120,120,140,0.22)' }}>
+              <div className="absolute inset-0 rounded-full overflow-hidden">
+                <div className="h-full rounded-full overflow-hidden relative transition-all duration-1000"
+                  style={{ width: `${Math.max(overallPct, 3)}%`, background: 'linear-gradient(90deg, #F5B731, #F5A623)' }}>
+                  <div className="absolute inset-0 shimmer" />
+                </div>
+              </div>
+              {[25, 50, 75].map(m => (
+                <div key={m} className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2"
+                  style={{ left: `calc(${m}% - 6px)`, background: overallPct >= m ? 'var(--app-gold)' : 'rgba(255,255,255,0.25)', borderColor: overallPct >= m ? 'rgba(245,183,49,0.6)' : 'rgba(255,255,255,0.2)', boxShadow: overallPct >= m ? '0 0 8px rgba(245,183,49,0.7)' : 'none', zIndex: 1 }} />
+              ))}
+            </div>
+            <div className="flex justify-between items-center mt-2">
+              <p style={{ fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.55)' }}>{doneCards} cards done</p>
+              <p style={{ fontSize: 10, fontWeight: 900, color: 'rgba(245,215,100,0.88)' }}>
+                {overallPct < 25 ? '⭐ Next reward at 25%' : overallPct < 50 ? '⭐ Next reward at 50%' : overallPct < 75 ? '⭐ Next reward at 75%' : '🏆 Almost complete!'}
+              </p>
+            </div>
+          </div>
+
+          {/* ── Row 4: Continue Learning — main mission card ── */}
+          <button
+            onClick={() => { trackKpiEvent({ category: 'engagement', name: 'child_continue_learning_click' }); router.push(startTodayHref) }}
+            className="w-full mb-3 rounded-2xl p-4 flex items-center gap-3.5 text-left app-pressable animate-sparkle-on-hover relative overflow-hidden"
+            style={{ background: 'linear-gradient(135deg, var(--app-gold) 0%, var(--app-warning) 100%)', boxShadow: '0 8px 24px rgba(245,183,49,0.45)', color: '#2B1F10' }}
+          >
+            <div className="absolute inset-0 shimmer opacity-25 pointer-events-none" />
+            <div className="w-13 h-13 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
+              style={{ width: 52, height: 52, background: 'rgba(255,255,255,0.32)', boxShadow: '0 2px 10px rgba(0,0,0,0.12)', flexShrink: 0 }}>
+              {dailyMod.icon || '🚀'}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.65 }}>▶ Continue Learning</p>
+              <p className="font-black leading-tight truncate" style={{ fontSize: 16 }}>{missionCardTitle}</p>
+              <div className="flex items-center gap-2 mt-1 flex-wrap">
+                <span style={{ fontSize: 10, fontWeight: 800, opacity: 0.65 }}>⏱ {remoteMission?.etaMin ?? 5} min</span>
+                <span style={{ fontSize: 10, opacity: 0.5 }}>•</span>
+                <span style={{ fontSize: 10, fontWeight: 900, opacity: 0.8 }}>⭐ Earn stars</span>
+                <span style={{ fontSize: 10, opacity: 0.5 }}>•</span>
+                <span style={{ fontSize: 10, fontWeight: 800, opacity: 0.65 }}>{doneCards} done</span>
+              </div>
+            </div>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: 'rgba(255,255,255,0.32)' }}>
+              <PlayCircle size={20} className="animate-bob" />
+            </div>
+          </button>
+
+          {/* ── Row 5: Next Quest mini card ── */}
+          <button
+            onClick={() => { trackKpiEvent({ category: 'engagement', name: 'child_next_task_click' }); router.push(startTodayHref) }}
+            className="w-full rounded-2xl px-4 py-3.5 flex items-center gap-3 text-left app-pressable"
+            style={{ background: 'rgba(255,255,255,0.14)', border: '1px solid rgba(255,255,255,0.22)' }}
+          >
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+              style={{ background: 'rgba(255,255,255,0.16)' }}>
+              {startTodayHomework ? '📚' : remoteMission ? '⚡' : '🎯'}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'rgba(255,255,255,0.55)' }}>
+                {startTodayHomework ? '📚 Homework' : remoteMission ? '⚡ Mission' : '🎯 Next Quest'}
+              </p>
+              <p className="font-black text-white truncate leading-tight" style={{ fontSize: 14 }}>{startTodayTitle.replace('Start with: ', '')}</p>
+              <p style={{ fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.5)' }}>{nextTaskMeta}</p>
+            </div>
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              <span style={{ fontSize: 12, fontWeight: 900, color: 'rgba(245,215,100,0.9)' }}>+⭐</span>
+              <ArrowRight size={15} style={{ color: 'rgba(255,255,255,0.65)' }} />
+            </div>
+          </button>
+
+        </div>
       </div>
 
       {/* ── CONTENT ── */}
