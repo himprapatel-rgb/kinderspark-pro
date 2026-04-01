@@ -6,6 +6,7 @@ import { logoutApi } from '@/lib/api'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { AppIcon } from '@/components/icons'
 import { Bell, LogOut, Monitor, User } from 'lucide-react'
+import { useTranslation, type SupportedLang } from '@/hooks/useTranslation'
 
 const LANGS = [
   { code: 'en', label: 'English',  flag: '🇬🇧' },
@@ -32,6 +33,7 @@ export default function TeacherSettingsPage() {
   const router = useRouter()
   const settings   = useAppStore(s => s.settings)
   const updateSettings = useAppStore(s => s.updateSettings)
+  const { setLang } = useTranslation()
   const user       = useAppStore(s => s.user)
   const logout     = useAppStore(s => s.logout)
   const [showLogout, setShowLogout] = useState(false)
@@ -106,7 +108,7 @@ export default function TeacherSettingsPage() {
             <div className="grid grid-cols-3 gap-2">
               {LANGS.map(lang => (
                 <button key={lang.code}
-                  onClick={() => updateSettings({ lang: lang.code })}
+                  onClick={() => setLang(lang.code as SupportedLang)}
                   className="py-2.5 rounded-xl font-black text-xs flex flex-col items-center gap-1 app-pressable"
                   style={{
                     background: settings.lang === lang.code ? 'var(--role-teacher)' : 'var(--app-surface-soft)',
