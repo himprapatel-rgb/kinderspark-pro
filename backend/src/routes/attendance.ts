@@ -61,8 +61,17 @@ router.post('/', requireRole('teacher', 'admin'), async (req: Request, res: Resp
       if (!ok) return res.status(403).json({ error: 'Insufficient permissions' })
     }
 
+    // Validate every studentId actually belongs to this class — prevent cross-class writes
+    const submittedIds = records.map((r: { studentId: string }) => r.studentId)
+    const validStudents = await prisma.student.findMany({
+      where: { id: { in: submittedIds }, classId: String(classId) },
+      select: { id: true },
+    })
+    const validIdSet = new Set(validStudents.map(s => s.id))
+    const filtered = records.filter((r: { studentId: string }) => validIdSet.has(r.studentId))
+
     await Promise.all(
-      records.map((r: { studentId: string; present: boolean; note?: string }) =>
+      filtered.map((r: { studentId: string; present: boolean; note?: string }) =>
         prisma.attendance.upsert({
           where: { classId_studentId_date: { classId, studentId: r.studentId, date } },
           create: { classId, studentId: r.studentId, date, present: r.present, note: r.note || null },
@@ -71,7 +80,7 @@ router.post('/', requireRole('teacher', 'admin'), async (req: Request, res: Resp
       )
     )
 
-    return res.json({ success: true, saved: records.length })
+    return res.json({ success: true, saved: filtered.length })
   } catch (err) {
     console.error('saveAttendance error:', err)
     return res.status(500).json({ error: 'Failed to save attendance' })
@@ -83,7 +92,12 @@ router.get('/summary', async (req: Request, res: Response) => {
   try {
     const { classId, days = '30' } = req.query
     if (!classId) return res.status(400).json({ error: 'classId required' })
-    if (req.user?.role === 'child') {
+
+    // Role-based access checks for all roles
+    if (req.user?.role === 'teacher') {
+      const ok = await canTeacherAccessClass(req.user.id, String(classId))
+      if (!ok) return res.status(403).json({ error: 'Insufficient permissions' })
+    } else if (req.user?.role === 'child') {
       const self = await prisma.student.findUnique({
         where: { id: req.user.id },
         select: { classId: true },
@@ -91,8 +105,7 @@ router.get('/summary', async (req: Request, res: Response) => {
       if (!self || self.classId !== String(classId)) {
         return res.status(403).json({ error: 'Insufficient permissions' })
       }
-    }
-    if (req.user?.role === 'parent') {
+    } else if (req.user?.role === 'parent') {
       const students = await prisma.student.findMany({ where: { classId: String(classId) }, select: { id: true } })
       let allowed = false
       for (const s of students) {
@@ -101,9 +114,12 @@ router.get('/summary', async (req: Request, res: Response) => {
       if (!allowed) return res.status(403).json({ error: 'Insufficient permissions' })
     }
 
+    // Clamp days to prevent unbounded DB scans
+    const safeDays = Math.min(Math.max(Number(days) || 30, 1), 365)
     const cutoff = new Date()
-    cutoff.setDate(cutoff.getDate() - Number(days))
+    cutoff.setDate(cutoff.getDate() - safeDays)
     const cutoffStr = cutoff.toISOString().slice(0, 10)
+
 
     const records = await prisma.attendance.findMany({
       where: { classId: String(classId), date: { gte: cutoffStr } },

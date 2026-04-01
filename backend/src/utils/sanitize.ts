@@ -1,8 +1,10 @@
 /**
  * Sanitize a user-supplied string before interpolating into AI prompts.
- * - Strips common prompt injection patterns
  * - Removes control characters and excessive whitespace
  * - Truncates to a safe max length
+ * Note: this does NOT detect semantic prompt-injection phrases ("ignore previous
+ * instructions", role delimiters, etc.) — rely on system-prompt isolation and
+ * Claude's built-in safety for those cases.
  */
 export function sanitizePromptInput(input: unknown, maxLength = 200): string {
   if (typeof input !== 'string') return ''
