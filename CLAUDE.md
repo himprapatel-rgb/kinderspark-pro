@@ -151,6 +151,7 @@ kinderspark-pro/
     │                                ProfileManager, ProgressCharts, PwaUpdateBanner, Settings/,
     │                                SoundSettings, SyllabusBuilder, TeacherOnboarding, ThemeCustomizer,
     │                                Toast, TopBarActions, UIStates, WeatherChip + child/, lesson/, teacher/, ui/)
+    │   └── icons/                 ← StoryIcons.tsx — handcrafted SVG icon system with micro-animations
     ├── hooks/                     ← useLocation, useNativeFeatures, usePullToRefresh
     ├── lib/
     │   ├── api.ts                 ← all API fetch calls (106 exported functions; CSRF header auto-injected)
@@ -350,6 +351,7 @@ AccessibilityProvider in root layout applies all visual settings automatically �
 - **Mobile-first** — child screens max-width 430px via `.app-container`; admin/teacher full-width
 - **Child UI** — emoji-heavy, touch targets min 44px, high contrast, joyful tone
 - **Animations** — `animate-slide-up`, `animate-pop`, `animate-bounce-subtle`, `animate-fade-in`, `shimmer` (all in globals.css)
+- **StoryIcons** — use `<StoryIcon name="home" size={24} roleTone="teacher" />` from `@/components/icons`. Names: `home`, `class`, `students`, `teacher`, `parent`, `homework`, `attendance`, `reports`, `messages`, `aiTutor`, `rewards`, `progress`, `drawing`, `tracing`, `school`. roleTone: `default|parent|teacher|admin|child`. Has micro-animations, hover/active states, compact density.
 - **Original UI only** — never copy other apps
 - **RTL support** — Arabic + Urdu: apply `dir="rtl"` on html element
 - **Glass morphism on gradient heroes** — use `rgba(255,255,255,0.12–0.18)` + `border: 1px solid rgba(255,255,255,0.18–0.25)` for cards inside gradient sections
@@ -612,6 +614,7 @@ Full audit performed. All role dashboards (admin, teacher, parent, principal) st
 - Bearer token removed ✅  
 - All toast notifications use `useToast()` ✅
 - No TODO/FIXME in main source (only in old worktree copies) ✅
+- TTS client sends CSRF token and uses normalized API base URL ✅ (fixed in speech.ts)
 
 ---
 
