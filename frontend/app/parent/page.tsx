@@ -586,25 +586,21 @@ export default function ParentPage() {
         unreadCount={unreadMsgs}
       />
     <div className="flex-1 min-h-screen flex flex-col app-container">
-      {/* Fixed tab bar */}
-      <div className="lg:hidden fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[960px] z-50 backdrop-blur border-b rounded-b-xl" style={{ background: 'rgba(255,255,255,0.92)', borderColor: 'var(--app-border)' }}>
-        <div className="flex">
-          {TABS.map((tabItem) => (
-            <button key={tabItem.idx} type="button" onClick={() => setTab(tabItem.idx)}
-              className={`flex-1 py-3 text-xs font-black transition-colors relative min-h-11 ${tab === tabItem.idx ? 'border-b-2' : ''}`}
-              style={{ color: tab === tabItem.idx ? 'var(--app-accent)' : 'rgba(70, 75, 96, 0.8)', borderColor: tab === tabItem.idx ? 'var(--app-accent)' : 'transparent' }}>
-              <span className="inline-flex items-center gap-1.5">{tabItem.icon}<span>{tabItem.label}</span></span>
-              {tabItem.idx === 2 && unreadMsgs > 0 && (
-                <span className="absolute top-1 right-2 bg-red-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center app-pressable">
-                  {unreadMsgs > 9 ? '9+' : unreadMsgs}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
+      {/* Tab bar */}
+      <div className="app-tab-bar lg:hidden">
+        {TABS.map((tabItem) => (
+          <button key={tabItem.idx} type="button" onClick={() => setTab(tabItem.idx)} className="app-tab-btn app-pressable relative" data-active={tab === tabItem.idx ? 'true' : 'false'}>
+            {tabItem.icon}<span>{tabItem.label}</span>
+            {tabItem.idx === 2 && unreadMsgs > 0 && (
+              <span className="absolute top-1.5 right-1.5 bg-red-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center">
+                {unreadMsgs > 9 ? '9+' : unreadMsgs}
+              </span>
+            )}
+          </button>
+        ))}
       </div>
 
-      <div className="pt-12 lg:pt-4 pb-20">
+      <div className="pt-0 lg:pt-4 pb-20">
         {/* ── HOME TAB ──────────────────────────────────────────── */}
         {tab === 0 && (
           <div>

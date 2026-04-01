@@ -87,9 +87,8 @@ export default function AdminPage() {
       <DashboardSidebar role="admin" items={SIDEBAR_ITEMS} userName={user?.name} profileHref="/admin/profile" onItemClick={(idx) => setTab(idx)} activeIndex={tab} />
       <div className="flex-1 min-h-screen pb-20 app-container">
       {/* Header */}
-      <div className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, var(--app-accent), #4A6ED0)' }}>
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '25px 25px' }} />
-        <div className="relative p-5 pt-10">
+      <div className="page-hero" style={{ background: 'linear-gradient(135deg, var(--app-accent), #4A6ED0)' }}>
+        <div className="pt-5">
           <div className="flex justify-between items-start">
             <div>
               <div className="text-xs font-bold app-muted mb-1">ADMIN PANEL</div>
@@ -122,16 +121,12 @@ export default function AdminPage() {
       </div>
 
       {/* Tab bar */}
-      <div className="sticky top-0 z-40 backdrop-blur border-b" style={{ background: 'rgba(255,255,255,0.92)', borderColor: 'var(--app-border)' }}>
-        <div className="flex">
-          {TABS.map((t, i) => (
-            <button key={i} onClick={() => setTab(i)}
-              className={`flex-1 py-3 text-xs font-black transition-colors app-pressable ${tab === i ? 'border-b-2' : ''}`}
-              style={{ color: tab === i ? 'var(--app-accent)' : 'rgba(70, 75, 96, 0.6)', borderColor: tab === i ? 'var(--app-accent)' : 'transparent' }}>
-              <span className="inline-flex items-center gap-1.5">{t.icon}<span>{t.label}</span></span>
-            </button>
-          ))}
-        </div>
+      <div className="app-tab-bar">
+        {TABS.map((t, i) => (
+          <button key={i} onClick={() => setTab(i)} className="app-tab-btn app-pressable" data-active={tab === i ? 'true' : 'false'}>
+            {t.icon}<span>{t.label}</span>
+          </button>
+        ))}
       </div>
 
       <div className="app-content">
