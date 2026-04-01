@@ -6,7 +6,7 @@
 
 export type SupportedLang = 'en' | 'fr' | 'es' | 'ar' | 'ur' | 'hi' | 'zh' | 'pt' | 'de' | 'tr'
 
-export const RTL_LANGS: ReadonlySet<SupportedLang> = new Set(['ar', 'ur'])
+export const RTL_LANGS: ReadonlySet<SupportedLang> = new Set<SupportedLang>(['ar', 'ur'])
 
 export const LANGUAGES: Record<SupportedLang, { name: string; flag: string; nativeName: string }> = {
   en: { name: 'English',    flag: '🇬🇧', nativeName: 'English'    },
