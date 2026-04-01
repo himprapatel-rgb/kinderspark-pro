@@ -17,8 +17,6 @@ import { hapticTap, hapticSuccess, hapticImpact, nativeShare } from '@/lib/capac
 import { useTranslation } from '@/hooks/useTranslation'
 import { getTodayMood, gentleMode } from '@/lib/emotion'
 import KidAvatar from '@/components/KidAvatar'
-import { StoryIcon } from '@/components/icons'
-
 // ── Daily Challenge helper ─────────────────────────────────────────────────────
 function getDailyChallenge() {
   const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000)
@@ -919,7 +917,7 @@ export default function ChildPage() {
         {/* ── Rewards zone ── */}
         {badges.length > 0 && (
           <div>
-            <h2 className="font-black text-base mb-3 inline-flex items-center gap-2"><StoryIcon name="rewards" size={18} state="idle" /> Achievements</h2>
+            <h2 className="font-black text-base mb-3 inline-flex items-center gap-2"><AppIcon name="rewards" size={18} roleTone="child" decorative /> Achievements</h2>
             <div className="rounded-2xl p-3.5" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
               <p className="text-xs font-bold app-muted mb-2">You have earned {badges.length} badge{badges.length > 1 ? 's' : ''}. Keep going!</p>
               <div className="flex gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>

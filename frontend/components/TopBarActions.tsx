@@ -1,7 +1,7 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
-import { StoryIcon } from '@/components/icons'
+import { AppIcon } from '@/components/icons'
 
 /**
  * Top-right actions: Profile, optional role switcher, optional Settings.
@@ -53,7 +53,7 @@ export default function TopBarActions({
         title="Profile"
         aria-label="Profile"
       >
-        <StoryIcon name="parent" size={18} density="compact" roleTone={roleTone} state="hover" aria-hidden />
+        <AppIcon name="parent" size={18} roleTone={roleTone} decorative />
       </button>
 
       {showRoleSwitcher && availableRoles.length > 1 && (
@@ -83,7 +83,7 @@ export default function TopBarActions({
           title="Settings"
           aria-label="Settings"
         >
-          <StoryIcon name="school" size={18} density="compact" roleTone={roleTone} state="idle" aria-hidden />
+          <AppIcon name="settings" size={18} roleTone={roleTone} decorative />
         </button>
       )}
     </div>
