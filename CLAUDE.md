@@ -651,6 +651,20 @@ Full audit performed. All role dashboards (admin, teacher, parent, principal) st
 - `parent/page.tsx` — some rgba() with opacity values where CSS vars don't cover partial transparency → acceptable
 - `parent/page.tsx` — `colors` array for chart labels (hardcoded) → not a bug
 
+### UI/UX Audit Fixes (2026-04-01)
+- **WCAG zoom**: `layout.tsx` — removed `userScalable:false` + `maximumScale:1`; pinch-to-zoom now works
+- **Dark mode**: `globals.css` — full `.dark {}` CSS variable block implemented (was no-op class)
+- **Dyslexia font**: `AccessibilityProvider.tsx` — Atkinson Hyperlegible replaces Comic Sans; font loaded in `layout.tsx`
+- **localStorage crash prevention**: `Onboarding.tsx` — all `localStorage` calls wrapped in try/catch (MDM-managed school iPads throw SecurityError)
+- **Onboarding @keyframes**: Moved from inline `<style>` to `globals.css` — stops re-injecting on every render
+- **Toast confirm**: Escape key + backdrop click dismiss added; "Yes, do it" → "Confirm"; close button tap target 36×36px
+- **Toast window.confirm removed**: fallback is now a dev `console.error` — `window.confirm` is broken in PWA context
+- **SectionLoading added**: `UIStates.tsx` — new compact variant for in-panel loads; `Loading` kept for full-page
+- **EmptyState/ErrorState**: subtitle/message text-xs → text-sm (12px → 14px)
+- **ProgressCharts SVG font sizes**: axis/label 8/9px → 11px; stat labels `text-[9px]` → `text-xs`; GrowthBadge uses `--app-success`/`--app-danger` tokens
+- **DashboardSidebar**: role label `text-[10px]` → `text-xs`; active nav gets `aria-current="page"`
+- **themeColor**: `layout.tsx` — `#5E5CE6` (purple) → `#4DAADF` (matches `--app-accent`)
+
 ### No issues found
 - All 9 AI functions cache correctly ✅
 - Bearer token removed ✅ — `auth.middleware.ts` cookie-only; comment at line 24 confirms intentional removal
