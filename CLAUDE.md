@@ -550,16 +550,21 @@ Operational notes:
 
 | Area | Notes |
 |------|--------|
-| Auth | `auth.middleware.ts` — JWT from `httpOnly` `kinderspark_token` cookie only. Bearer support removed. |
+| Auth | `auth.middleware.ts` — JWT from `httpOnly` `kinderspark_token` cookie only. Bearer support removed. Multi-school scoped: `throttleKey(schoolCode, role, ip)` |
 | CSRF | `csrf.middleware.ts` — enforces `x-csrf-token` vs `kinderspark_csrf` when session cookies present (see rule 12) |
+| PIN fingerprint | `pinFingerprint.ts` — SHA256 deterministic fingerprint for pre-filtering before bcrypt.compare; `PinLoginThrottle` throttles per school+role+IP |
+| Session expiry | `api.ts` `handleSessionExpired()` — saves current path to `sessionStorage.ks_after_login`, redirects to `/pin?role=<role>`; `pin/page.tsx` resumes saved route after re-auth |
 | Email | `email.service.ts` — SendGrid; skips gracefully if `SENDGRID_API_KEY` missing (warns in logs) |
-| AI safety | `contentFilter.service.ts` — regex blocks on AI output |
+| AI safety | `contentFilter.service.ts` — regex blocks on AI output + per-student AI session rate limiting |
 | TTS | `tts.service.ts` — **4-tier cascade**: Google Neural2 → OpenAI (nova/echo/shimmer) → Azure Neural → Web Speech API fallback. All results cached in `AIResponseCache` (30-day TTL). 10 language support with gender-specific voices. |
-| Attendance | `attendance.ts` — CRUD, summaries, geofence **routes** exist |
-| AI HTTP API | `ai.routes.ts` + `services/ai/index.ts` — lesson, reports, tutor, homework, syllabus, spark flows |
-| Privacy erasure | `privacy.service.ts` — cascading delete incl. Cloudinary |
-| Push library | `notification.service.ts` — `web-push` + VAPID helpers exist |
+| Attendance | `attendance.ts` — CRUD, summaries, geofence routes. `GeofenceUserEvent` + `GeofenceUserConsent` written to DB (not in-memory). |
+| AI HTTP API | `ai.routes.ts` + `services/ai/index.ts` — lesson, reports, tutor, homework, syllabus, spark flows; all 9 functions cache-first |
+| Privacy erasure | `privacy.service.ts` — cascading delete incl. Cloudinary asset cleanup; `ParentalConsent` table for COPPA/GDPR |
+| Push (full) | `push.routes.ts` `POST /subscribe` persists `WebPushSubscription`; `webPushTarget.ts` resolves RBAC-checked targets; `notification.service.ts` fans out to student + all linked parent devices |
+| Parental consent | `ParentalConsent` model; `ParentChildLink` links parents to children; parent can view consent page at `/parent/consent` |
+| Agent memory | `agentMemory.service.ts` — importance-ranked memory with `agentId+importance` index; used by agent orchestrator |
 | Health | `app.ts` — `GET /health` pings DB, returns memory/uptime |
+| Icons | `StoryIcons.tsx` — 16 SVG icons with role tones, compact density, idle/hover/active/success/disabled micro-animations |
 
 ### Gaps / incomplete (verified in code)
 
