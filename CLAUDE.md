@@ -111,7 +111,8 @@ kinderspark-pro/
 │       │   └── studentAgentContext.service.ts ← learner context for AI
 │       ├── routes/                ← 26 route files
 │       ├── middleware/
-│       │   ├── auth.middleware.ts    ← JWT decode (cookie-only)
+│       │   ├── auth.middleware.ts    ← JWT decode (cookie-only, Bearer removed)
+│       │   ├── csrf.middleware.ts    ← CSRF enforcement (x-csrf-token header vs kinderspark_csrf cookie)
 │       │   ├── role.middleware.ts    ← role enforcement
 │       │   ├── rateLimit.middleware.ts
 │       │   ├── aiRateLimit.middleware.ts ← AI-specific rate limit
@@ -130,13 +131,15 @@ kinderspark-pro/
     │   ├── pin/                   ← PIN pad entry
     │   ├── register/              ← new user registration
     │   ├── child/                 ← child dashboard + 15 sub-routes
-    │   │   (learn, lesson, tutor, story, poem, draw, trace, match,
-    │   │    count, shop, leaderboard, settings, messages, profile, avatar-builder)
+    │   │   (learn, learn/[modId], lesson/[id], tutor, story, poem, draw, trace,
+    │   │    match, count, shop, leaderboard, settings, messages, profile, avatar-builder)
     │   ├── teacher/               ← teacher dashboard + 7 sub-routes
-    │   │   (class, homework, messages, builder, syllabus, reports, profile)
-    │   ├── parent/                ← parent dashboard + consent, profile
+    │   │   (class, homework, messages, builder, syllabus/builder, reports, profile)
+    │   ├── parent/                ← parent dashboard + 4 sub-routes
+    │   │   (consent, homework, messages, profile)
     │   ├── admin/                 ← admin dashboard + profile
-    │   ├── principal/             ← principal dashboard
+    │   ├── principal/             ← principal dashboard (full: health score, classes, teachers tabs)
+    │   ├── dev/                   ← developer diagnostics page (requires NEXT_PUBLIC_DEVELOPER_KEY)
     │   ├── privacy/               ← privacy policy page
     │   ├── terms/                 ← terms of service
     │   └── dashboard/agents/      ← agent control room
@@ -151,7 +154,7 @@ kinderspark-pro/
     │   ├── sounds.ts              ← sound effects
     │   ├── learnPath.ts           ← learning path logic
     │   └── missionEngine.ts       ← mission/quest system
-    ├── store/appStore.ts          ← Zustand: user, role, token, settings
+    ├── store/appStore.ts          ← Zustand: user, role, token, settings, currentStudent, dailyMission
     └── ios/                       ← Capacitor iOS Xcode project
 ```
 
@@ -318,6 +321,23 @@ The app uses a **warm cream light palette** — NOT dark. Background is `#FFFCF5
 6. Stat boxes MUST use `.stat-box` — consistent across all role dashboards
 7. Notifications MUST use `useToast()` — never build local `useState` toast
 8. Buttons SHOULD use `.btn-sm` / `.btn-md` / `.btn-lg` for predictable touch targets
+
+### Zustand Store Shape (`frontend/store/appStore.ts`)
+```typescript
+const { user, role, settings, currentStudent, dailyMission } = useAppStore()
+
+interface Settings {
+  dark: boolean         // dark mode toggle (applied via AccessibilityProvider)
+  large: boolean        // large text → 118% font-size on <html>
+  hc: boolean           // high contrast → html.high-contrast CSS class
+  dys: boolean          // dyslexia font → Comic Sans on <html>
+  lang: string          // UI language code (en/fr/es/ar/ur/hi/zh/pt/de/tr)
+  stLimit: number       // student AI session limit
+  voiceOn: boolean      // TTS voice on/off
+  voiceProfile: 'auto' | 'girl' | 'boy'  // TTS voice profile
+}
+```
+AccessibilityProvider in root layout applies all visual settings automatically — do NOT re-implement per-page.
 
 ### Other Rules
 - **Mobile-first** — child screens max-width 430px via `.app-container`; admin/teacher full-width
