@@ -33,6 +33,7 @@ export async function aiStudentDailyLimit(req: Request, res: Response, next: Nex
     next()
   } catch (e) {
     console.error('[aiStudentDailyLimit]', e)
-    next()
+    // Fail closed — if DB is unavailable the rate limit must not silently pass through
+    return res.status(503).json({ error: 'Service temporarily unavailable. Please try again.' })
   }
 }

@@ -1,7 +1,12 @@
 import crypto from 'crypto'
 
 function getPinPepper(): string {
-  return process.env.PIN_FINGERPRINT_PEPPER || process.env.JWT_SECRET || 'kinderspark-secret'
+  const pepper = process.env.PIN_FINGERPRINT_PEPPER || process.env.JWT_SECRET
+  if (!pepper) {
+    // Fail hard — a known public pepper makes 4-digit PINs trivially brute-forceable offline
+    throw new Error('PIN_FINGERPRINT_PEPPER (or JWT_SECRET) env var must be set. Refusing to use a hardcoded fallback.')
+  }
+  return pepper
 }
 
 /**
