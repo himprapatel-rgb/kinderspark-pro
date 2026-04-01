@@ -26,6 +26,8 @@ export type StoryIconName =
   | 'tracing'
   | 'school'
   | 'settings'
+  | 'streak'
+  | 'badge'
 
 export type Tone = {
   ink: string
@@ -316,6 +318,36 @@ function IconSettings({ tone, roleTone = 'default', density = 'default', ...prop
   )
 }
 
+function IconStreak({ tone, roleTone = 'default', density = 'default', ...props }: Omit<StoryIconProps, 'name'>) {
+  const c = withTone(roleTone, tone)
+  return (
+    <SvgRoot density={density} {...props}>
+      {/* Outer flame body */}
+      <path d="M12 3C10 5.5 7.5 9 7.5 13C7.5 16.5 9.5 19 12 20C14.5 19 16.5 16.5 16.5 13C16.5 9 14 5.5 12 3Z" fill={c.warm} />
+      {/* Inner flame core */}
+      <path d="M12 9.5C11 11 10 12.5 10 14C10 15.4 10.9 16.5 12 16.5C13.1 16.5 14 15.4 14 14C14 12.5 13 11 12 9.5Z" fill={c.rose} />
+      {/* White highlight */}
+      <path d="M10.2 13.5C10.2 11.8 10.8 10.5 11.2 9.5" stroke={c.white} strokeWidth="1.2" strokeLinecap="round" strokeOpacity=".55" />
+    </SvgRoot>
+  )
+}
+
+function IconBadge({ tone, roleTone = 'default', density = 'default', ...props }: Omit<StoryIconProps, 'name'>) {
+  const c = withTone(roleTone, tone)
+  return (
+    <SvgRoot density={density} {...props}>
+      {/* Ribbon tab at top */}
+      <path d="M9.5 3.5H14.5L13.2 7H10.8L9.5 3.5Z" fill={c.rose} />
+      {/* Medal circle */}
+      <circle cx="12" cy="14" r="7" fill={c.sky} />
+      {/* Inner highlight ring */}
+      <circle cx="12" cy="14" r="5.5" fill={c.white} fillOpacity=".22" />
+      {/* 5-point star */}
+      <path d="M12 9.8L13.2 12.4L16 12.8L14 14.7L14.5 17.5L12 16.1L9.5 17.5L10 14.7L8 12.8L10.8 12.4L12 9.8Z" fill={c.sun} />
+    </SvgRoot>
+  )
+}
+
 // ── Registry ─────────────────────────────────────────────────────────────────
 
 const ICONS: Record<StoryIconName, (props: Omit<StoryIconProps, 'name'>) => ReactNode> = {
@@ -335,6 +367,8 @@ const ICONS: Record<StoryIconName, (props: Omit<StoryIconProps, 'name'>) => Reac
   tracing: IconTracing,
   school: IconSchool,
   settings: IconSettings,
+  streak: IconStreak,
+  badge: IconBadge,
 }
 
 export default function StoryIcon({ name, ...props }: StoryIconProps) {

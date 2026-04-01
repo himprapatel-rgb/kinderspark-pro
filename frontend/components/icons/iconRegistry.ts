@@ -34,6 +34,9 @@ export const ICON_REGISTRY: readonly IconName[] = [
   'tracing',
   // Utility
   'settings',
+  // Gamification
+  'streak',
+  'badge',
 ] as const
 
 export function isValidIconName(name: string): name is IconName {
