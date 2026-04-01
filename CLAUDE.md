@@ -143,10 +143,17 @@ kinderspark-pro/
     │   ├── privacy/               ← privacy policy page
     │   ├── terms/                 ← terms of service
     │   └── dashboard/agents/      ← agent control room
-    ├── components/                ← 30+ UI components
+    ├── components/                ← 36 UI components (AccessibilityProvider, ActivityFeed, AiTutor,
+    │                                AppErrorBoundary, ClientRoot, Confetti, DashboardSidebar,
+    │                                DiagnosticsPanel, DrawingCanvas, EmotionalBuddyCard, KidAvatar,
+    │                                LanguageSelector, LocationCard, MissionCelebration, NativeBridge,
+    │                                Onboarding, PageTransition, ParentSidebar, PhotoCapture,
+    │                                ProfileManager, ProgressCharts, PwaUpdateBanner, Settings/,
+    │                                SoundSettings, SyllabusBuilder, TeacherOnboarding, ThemeCustomizer,
+    │                                Toast, TopBarActions, UIStates, WeatherChip + child/, lesson/, teacher/, ui/)
     ├── hooks/                     ← useLocation, useNativeFeatures, usePullToRefresh
     ├── lib/
-    │   ├── api.ts                 ← all API fetch calls (50+ functions)
+    │   ├── api.ts                 ← all API fetch calls (106 exported functions; CSRF header auto-injected)
     │   ├── modules.ts             ← 18 built-in learning modules + shop items
     │   ├── i18n.ts                ← 10-language translations (auto-generated)
     │   ├── speech.ts              ← text-to-speech (Web Speech API)
@@ -543,7 +550,7 @@ Operational notes:
 | CSRF | `csrf.middleware.ts` — enforces `x-csrf-token` vs `kinderspark_csrf` when session cookies present (see rule 12) |
 | Email | `email.service.ts` — SendGrid; skips gracefully if `SENDGRID_API_KEY` missing (warns in logs) |
 | AI safety | `contentFilter.service.ts` — regex blocks on AI output |
-| TTS | `tts.service.ts` — Google → OpenAI → Azure cascade + cache; falls back to Web Speech if no provider keys |
+| TTS | `tts.service.ts` — **4-tier cascade**: Google Neural2 → OpenAI (nova/echo/shimmer) → Azure Neural → Web Speech API fallback. All results cached in `AIResponseCache` (30-day TTL). 10 language support with gender-specific voices. |
 | Attendance | `attendance.ts` — CRUD, summaries, geofence **routes** exist |
 | AI HTTP API | `ai.routes.ts` + `services/ai/index.ts` — lesson, reports, tutor, homework, syllabus, spark flows |
 | Privacy erasure | `privacy.service.ts` — cascading delete incl. Cloudinary |
@@ -584,6 +591,27 @@ Full audit performed. All role dashboards (admin, teacher, parent, principal) st
 - **Button size modifiers** — Added `.btn-sm` (32px), `.btn-md` (40px), `.btn-lg` (52px) + default `min-height: 40px` for bare buttons
 - **design-system SKILL.md** — Fully rewritten with accurate light-first palette, all 35+ canonical classes, patterns, and templates
 - **Accessibility** — Confirmed fully wired: `AccessibilityProvider` applies `html.high-contrast`, font-size, dyslexia font based on Zustand settings
+
+---
+
+## Code Quality Status (2026-04-01)
+
+### Completed fixes
+- `frontend/components/ProgressCharts.tsx` — 9× `rounded-2xl p-4` / `rounded-xl p-3 text-center` with inline surface/border styles → `.app-card` / `.stat-box`
+- `frontend/components/ActivityFeed.tsx` — skeleton and empty-state divs → `.app-card animate-pulse` / `.app-card empty-state`
+- `frontend/app/parent/page.tsx` — 5× `rounded-2xl p-4` with surface/border → `.app-card`; `#5B7FE8` → `var(--role-teacher)`; `#4CAF6A` → `var(--app-success)` / `var(--app-success-soft)`
+- `frontend/app/child/shop/page.tsx` — custom useState toast → `useToast()` from `@/components/Toast`
+
+### Still uses inline styles intentionally
+- `AiTutor.tsx` — glass cards inside gradient sections; dynamic `t.color` theme variables → intentional
+- `parent/page.tsx` — some rgba() with opacity values where CSS vars don't cover partial transparency → acceptable
+- `parent/page.tsx` — `colors` array for chart labels (hardcoded) → not a bug
+
+### No issues found
+- All 9 AI functions cache correctly ✅
+- Bearer token removed ✅  
+- All toast notifications use `useToast()` ✅
+- No TODO/FIXME in main source (only in old worktree copies) ✅
 
 ---
 

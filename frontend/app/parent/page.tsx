@@ -781,10 +781,10 @@ export default function ParentPage() {
             </div>
 
             {/* Weekly digest card (imported pattern from family learning apps) */}
-            <div className="mx-3 mb-4 rounded-2xl p-4" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+            <div className="app-card mx-3 mb-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="font-black text-sm">Weekly Digest</div>
-                <span className="text-[10px] font-black px-2 py-1 rounded-full" style={{ background: 'rgba(91,127,232,0.16)', color: '#5B7FE8' }}>Last 7 days</span>
+                <span className="text-[10px] font-black px-2 py-1 rounded-full" style={{ background: 'rgba(91,127,232,0.16)', color: 'var(--role-teacher)' }}>Last 7 days</span>
               </div>
               <div className="grid grid-cols-3 gap-2 mb-2">
                 <div className="rounded-xl p-2.5" style={{ background: 'var(--app-surface-soft)' }}>
@@ -812,7 +812,7 @@ export default function ParentPage() {
                     )
                   }
                   className="mt-3 min-h-10 px-3 py-2 rounded-xl text-xs font-black app-pressable"
-                  style={{ background: 'rgba(91,127,232,0.16)', color: '#5B7FE8', border: '1px solid rgba(91,127,232,0.3)' }}
+                  style={{ background: 'rgba(91,127,232,0.16)', color: 'var(--role-teacher)', border: '1px solid rgba(91,127,232,0.3)' }}
                 >
                   {t('parent_mission_share_label')}
                 </button>
@@ -865,11 +865,11 @@ export default function ParentPage() {
 
             {/* Quick stats */}
             <div className="mx-3 mb-4 grid grid-cols-2 gap-3">
-              <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+              <div className="app-card">
                 <div className="text-yellow-400 font-black text-2xl">{totalAIStars}</div>
                 <div className="text-xs font-bold app-muted mt-1">Stars from AI Tutor</div>
               </div>
-              <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+              <div className="app-card">
                 <div className="text-orange-400 font-black text-2xl">{pendingHW.length}</div>
                 <div className="text-xs font-bold app-muted mt-1">Pending Homework</div>
                 {pendingHW.length > 0 && <div className="text-orange-400/60 text-xs font-bold">Needs attention!</div>}
@@ -893,7 +893,7 @@ export default function ParentPage() {
                   type="button"
                   onClick={() => subscribeNotif()}
                   className="px-3 py-2 rounded-xl text-xs font-black shrink-0 active:scale-95 transition-all app-pressable"
-                  style={{ background: '#4CAF6A', color: '#fff' }}
+                  style={{ background: 'var(--app-success)', color: '#fff' }}
                 >
                   Enable
                 </button>
@@ -922,7 +922,7 @@ export default function ParentPage() {
                           onClick={() => handleMarkDone(hw.id)}
                           disabled={markingDone === hw.id}
                           className="text-[10px] font-black px-2 py-1 rounded-lg active:scale-95 transition-all app-pressable"
-                          style={{ background: '#4CAF6A20', color: '#4CAF6A', opacity: markingDone === hw.id ? 0.5 : 1 }}
+                          style={{ background: 'var(--app-success-soft)', color: 'var(--app-success)', opacity: markingDone === hw.id ? 0.5 : 1 }}
                         >
                           {markingDone === hw.id ? '…' : 'Mark Done ✅'}
                         </button>
@@ -978,7 +978,7 @@ export default function ParentPage() {
             </div>
 
             {/* Summary bar */}
-            <div className="rounded-2xl p-4 mb-4" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+            <div className="app-card mb-4">
               <div className="flex justify-between items-center mb-2">
                 <div className="font-black text-sm">Overall Homework</div>
                 <div className="font-black">{hwPct}%</div>
@@ -1098,7 +1098,7 @@ export default function ParentPage() {
         {tab === 2 && (
           <div className="px-3 pt-2">
             <h2 className="font-black text-lg mb-4 inline-flex items-center gap-2"><MessageSquare size={16} /> Messages</h2>
-            <div className="rounded-2xl p-4 mb-3" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+            <div className="app-card mb-3">
               <div className="font-black text-sm mb-2">Send by Profile ID</div>
               <div className="space-y-2">
                 <select

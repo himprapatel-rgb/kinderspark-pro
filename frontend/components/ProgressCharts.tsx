@@ -236,7 +236,7 @@ function GrowthBadge({ current, previous, label }: { current: number; previous: 
   const isUp = diff > 0
   const isDown = diff < 0
   return (
-    <div className="rounded-xl p-3 text-center" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+    <div className="stat-box text-center">
       <div className={`font-black text-xl ${isUp ? 'text-green-500' : isDown ? 'text-red-400' : 'app-muted'}`}>
         {isUp ? '📈' : isDown ? '📉' : '➡️'} {current}%
       </div>
@@ -276,22 +276,22 @@ export default function ProgressCharts({
     <div className="space-y-4">
       {/* ── Headline Stats ─────────────── */}
       <div className="grid grid-cols-4 gap-2">
-        <div className="rounded-xl p-3 text-center" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+        <div className="stat-box text-center">
           <div className="text-yellow-400 font-black text-lg">⭐</div>
           <div className="font-black text-base">{totalStars}</div>
           <div className="text-[9px] font-bold app-muted">Stars</div>
         </div>
-        <div className="rounded-xl p-3 text-center" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+        <div className="stat-box text-center">
           <div className="text-purple-400 font-black text-lg">🧠</div>
           <div className="font-black text-base">{totalSessions}</div>
           <div className="text-[9px] font-bold app-muted">Sessions</div>
         </div>
-        <div className="rounded-xl p-3 text-center" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+        <div className="stat-box text-center">
           <div className="text-blue-400 font-black text-lg">🎯</div>
           <div className="font-black text-base">{avgAccuracy}%</div>
           <div className="text-[9px] font-bold app-muted">Accuracy</div>
         </div>
-        <div className="rounded-xl p-3 text-center" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+        <div className="stat-box text-center">
           <div className="text-green-400 font-black text-lg">🏆</div>
           <div className="font-black text-base">Lv {bestLevel}</div>
           <div className="text-[9px] font-bold app-muted">Best Level</div>
@@ -300,7 +300,7 @@ export default function ProgressCharts({
 
       {/* ── Skill Radar ────────────────── */}
       {skills.length >= 3 && (
-        <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+        <div className="app-card">
           <div className="font-black text-sm mb-3">🎯 Skill Radar</div>
           <div className="flex justify-center">
             <RadarChart skills={skills} />
@@ -310,7 +310,7 @@ export default function ProgressCharts({
 
       {/* ── Skill Breakdown Bars ────────── */}
       {skills.length > 0 && (
-        <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+        <div className="app-card">
           <div className="font-black text-sm mb-3">📊 Skill Breakdown</div>
           <div className="space-y-2.5">
             {skills.map((s) => <SkillBar key={s.label} {...s} />)}
@@ -319,7 +319,7 @@ export default function ProgressCharts({
       )}
 
       {/* ── Weekly Trend ───────────────── */}
-      <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+      <div className="app-card">
         <div className="flex items-center justify-between mb-3">
           <div className="font-black text-sm">📈 Weekly Accuracy Trend</div>
           <span className="text-[10px] font-black px-2 py-1 rounded-full" style={{ background: 'rgba(94,92,230,0.15)', color: '#5E5CE6' }}>
@@ -333,7 +333,7 @@ export default function ProgressCharts({
       {growth && (
         <div className="grid grid-cols-2 gap-3">
           <GrowthBadge current={growth.current} previous={growth.previous} label="Accuracy Growth" />
-          <div className="rounded-xl p-3 text-center" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+          <div className="stat-box text-center">
             <div className="font-black text-xl">
               {weekly.length > 0 && weekly[weekly.length - 1].sessions > 0 ? '🔥' : '💤'}
             </div>
@@ -347,7 +347,7 @@ export default function ProgressCharts({
 
       {/* ── Badges ────────────────────── */}
       {badges.length > 0 && (
-        <div className="rounded-2xl p-4" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+        <div className="app-card">
           <div className="font-black text-sm mb-3">🏅 Earned Badges</div>
           <div className="flex flex-wrap gap-2">
             {badges.map((b, i) => (

@@ -16,18 +16,31 @@ description: KinderSpark Pro backend API conventions. Use when creating or editi
   ```
 - All IDs are CUID strings (never integers)
 
+## Auth — Cookie-Only (NO Bearer tokens)
+**JWT is in `httpOnly` cookie only** — `kinderspark_token`. Bearer token support was permanently removed.
+
+```typescript
+// ✅ CORRECT — cookie-only auth, set by login endpoint
+res.cookie('kinderspark_token', jwt, { httpOnly: true, secure: true, sameSite: 'lax' })
+
+// ❌ WRONG — DO NOT use Bearer tokens
+// res.json({ token }) → DO NOT DO THIS
+// Authorization: Bearer <jwt> → NOT SUPPORTED
+```
+
+Every mutating request (POST/PUT/PATCH/DELETE) also requires CSRF:
+- Server sets `kinderspark_csrf` cookie (`httpOnly: false`)
+- Client reads it and sends as `x-csrf-token` header
+- `enforceCsrf` middleware validates both match
+
 ## Required Middleware Stack (every protected route)
 ```typescript
 router.get('/endpoint', requireAuth, requireRole('teacher'), handler)
 ```
-1. `requireAuth` — decodes JWT, attaches `req.user`
-2. `requireRole('teacher' | 'parent' | 'child' | 'admin')` — enforces role
+1. `requireAuth` — decodes JWT from `kinderspark_token` cookie, attaches `req.user`
+2. `requireRole('teacher' | 'parent' | 'child' | 'admin' | 'principal')` — enforces role
 3. `rateLimiter` — never disable this
-
-## Auth Rules
-- **Always use `req.user.id`** from the decoded JWT — never trust `req.body.userId` or query params for identity
-- JWT payload shape: `{ id, role, name }`
-- Token comes from `Authorization: Bearer <jwt>` header
+4. `enforceCsrf` — for POST/PUT/PATCH/DELETE (applied globally in app.ts)
 
 ## Controller Pattern (thin controllers)
 ```typescript
@@ -51,10 +64,19 @@ export const getItem = async (req: Request, res: Response) => {
 - Use `prisma` singleton from `backend/src/prisma/client.ts`
 - Cascade deletes are defined in schema — don't manually delete related records
 
-## AI Routes (backend/src/routes/ai.routes.ts)
+## RBAC — Use accessControl.ts
+```typescript
+import { canAccessStudent } from '../utils/accessControl'
+// never hand-roll permission checks
+if (!canAccessStudent(req.user, studentId)) return res.status(403).json({ error: 'Forbidden' })
+```
+
+## AI Routes (backend/src/services/ai/index.ts)
 All AI endpoints go through `backend/src/services/ai/` — NOT claude.service.ts directly.
-The AI service has a 3-provider fallback: Claude → OpenAI → Perplexity.
+**4-provider fallback chain:** Claude → OpenAI → Perplexity → Gemini (`ai/router.ts`)
+**DB-first strategy:** check `CurriculumModule` → check `LessonCache` → call AI
 Always sanitize user input with `sanitizePromptInput()` before passing to AI.
+Every AI function MUST use the cache pattern — see `.claude/rules/ai-cache.md`.
 
 ## Input Sanitization
 ```typescript
@@ -65,6 +87,8 @@ Required for any user-provided text going into AI prompts.
 
 ## Adding a New Route
 1. Create `backend/src/routes/myfeature.routes.ts`
-2. Create `backend/src/controllers/myfeature.controller.ts`
+2. Create `backend/src/controllers/myfeature.controller.ts` (if needed)
 3. Mount in `backend/src/app.ts`: `app.use('/api/myfeature', myfeatureRouter)`
-4. Update CLAUDE.md API Conventions section
+4. Update CLAUDE.md API Routes section
+5. Use `requireAuth` + `requireRole` on every protected endpoint
+6. Apply `rateLimiter`; use `aiRateLimit` for AI endpoints
