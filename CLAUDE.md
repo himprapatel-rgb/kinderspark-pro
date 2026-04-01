@@ -93,10 +93,12 @@ kinderspark-pro/
 │       ├── services/              ← business logic + external calls
 │       │   ├── ai/                ← multi-provider AI (Claude → OpenAI → Perplexity → Gemini)
 │       │   │   ├── index.ts       ← all 9 AI functions — ALL cached via cache.service.ts
-│       │   │   ├── router.ts      ← provider fallback chain
+│       │   │   ├── router.ts      ← provider fallback chain (30s timeout per provider)
 │       │   │   ├── promptTemplates.ts ← all prompt builder functions
 │       │   │   ├── spark.ts       ← spark sanitization
-│       │   │   └── providers/     ← claude.ts, gemini.ts
+│       │   │   ├── types.ts       ← shared AI types
+│       │   │   └── providers/     ← claude.ts, openai.ts, perplexity.ts, gemini.ts
+│       │   ├── claude.service.ts  ← backwards-compat re-export of ./ai (new code: import from './ai')
 │       │   ├── cache.service.ts   ← makeCacheKey, getCachedResponse, setCachedResponse
 │       │   ├── badge.service.ts   ← achievement system
 │       │   ├── report.service.ts  ← AI weekly report generation
@@ -109,8 +111,10 @@ kinderspark-pro/
 │       │   ├── privacy.service.ts
 │       │   ├── sparkTaskRunner.ts ← AI spark task execution
 │       │   ├── storage.service.ts ← Cloudinary uploads
-│       │   └── studentAgentContext.service.ts ← learner context for AI
-│       ├── routes/                ← 26 route files
+│       │   ├── studentAgentContext.service.ts ← learner context for AI
+│       │   ├── tts.service.ts     ← TTS: Google Neural2 → OpenAI → Azure → null (4-tier)
+│       │   └── seed.service.ts    ← compiled auto-seed (no ts-node); seeds SUN001 on first boot
+│       ├── routes/                ← 26 route files (see API Routes section)
 │       ├── middleware/
 │       │   ├── auth.middleware.ts    ← JWT decode (cookie-only, Bearer removed)
 │       │   ├── csrf.middleware.ts    ← CSRF enforcement (x-csrf-token header vs kinderspark_csrf cookie)
@@ -124,8 +128,6 @@ kinderspark-pro/
 │           ├── pinFingerprint.ts  ← PIN brute-force detection
 │           ├── progressMastery.ts
 │           └── webPushTarget.ts   ← resolve student push targets (respects RBAC)
-│       ├── services/
-│       │   └── seed.service.ts    ← compiled auto-seed (no ts-node); seeds SUN001 on first boot
 └── frontend/
     ├── app/
     │   ├── (auth)/login/          ← role selection
@@ -145,17 +147,26 @@ kinderspark-pro/
     │   ├── privacy/               ← privacy policy page
     │   ├── terms/                 ← terms of service
     │   └── dashboard/agents/      ← agent control room
-    ├── components/                ← 38 UI components (AccessibilityProvider, ActivityFeed, AiTutor,
-    │                                AppErrorBoundary, ClientRoot, Confetti, DashboardSidebar,
-    │                                DiagnosticsPanel, DrawingCanvas, EmotionalBuddyCard, KidAvatar,
-    │                                LanguageSelector, LocationCard, MissionCelebration, NativeBridge,
-    │                                Onboarding, PageTransition, ParentSidebar, PhotoCapture,
-    │                                ProfileManager, ProgressCharts, PwaUpdateBanner, Settings/Privacy,
-    │                                SoundSettings, SyllabusBuilder, TeacherOnboarding, ThemeCustomizer,
-    │                                Toast, TopBarActions, UIStates, WeatherChip + lesson/LessonCard,
-    │                                ui/Button, ui/Modal, ui/TabBar, ui/Toast)
-    │   └── icons/                 ← AppIcon.tsx (primary API), StoryIcons.tsx (18 SVGs), index.ts, types.ts, iconRegistry.ts, spec.md
-    ├── hooks/                     ← useLocation, useNativeFeatures, usePullToRefresh, usePushNotifications (scope: student|parent|teacher), useTranslation, useHomework, useStudent, useSyllabus
+    ├── components/                ← UI components:
+    │   ├── (root-level 31)        AccessibilityProvider, ActivityFeed, AiTutor, AppErrorBoundary,
+    │   │                          ClientRoot, Confetti, DashboardSidebar, DiagnosticsPanel,
+    │   │                          DrawingCanvas, EmotionalBuddyCard, KidAvatar, LanguageSelector,
+    │   │                          LocationCard, MissionCelebration, NativeBridge, Onboarding,
+    │   │                          PageTransition, ParentSidebar, PhotoCapture, ProfileManager,
+    │   │                          ProgressCharts, PwaUpdateBanner, SoundSettings, SyllabusBuilder,
+    │   │                          TeacherOnboarding, ThemeCustomizer, Toast, TopBarActions,
+    │   │                          UIStates, WeatherChip
+    │   ├── Settings/Privacy.tsx   ← GDPR/geofence privacy card (used in child + parent settings)
+    │   ├── lesson/LessonCard.tsx  ← reusable lesson card
+    │   ├── ui/                    ← Button, Modal, TabBar, Toast (primitive components)
+    │   └── icons/                 ← AppIcon.tsx (primary API), StoryIcons.tsx (18 SVGs),
+    │                                index.ts, types.ts, iconRegistry.ts, spec.md
+    │                                18 icons: home|class|students|teacher|parent|homework|attendance|
+    │                                reports|messages|aiTutor|rewards|progress|drawing|tracing|school|
+    │                                settings|streak|badge
+    ├── hooks/                     ← useHomework, useLocation, useNativeFeatures, usePullToRefresh,
+    │                                usePushNotifications (scope: student|parent|teacher),
+    │                                useStudent, useSyllabus, useTranslation (re-exports SupportedLang)
     ├── lib/
     │   ├── api.ts                 ← all API fetch calls (109 exported functions; CSRF header auto-injected)
     │   ├── modules.ts             ← 18 built-in learning modules + shop items
@@ -321,7 +332,7 @@ The app uses a **warm cream light palette** — NOT dark. Background is `#FFFCF5
 - `TabBar` pattern — use `.app-tab-bar` + `.app-tab-btn[data-active]` (not custom inline code)
 - `UIStates` — `<Loading>`, `<InlineEmpty>` shared states
 - `Toast` / `useToast()` — **always use this for notifications** (`import { useToast } from '@/components/Toast'`). Methods: `toast.success()`, `toast.error()`, `toast.warning()`, `toast.info()`. Never build a local `useState('')` toast.
-- `AccessibilityProvider` — wired in root layout; applies `html.high-contrast` (CSS filter), 118% font for large mode, Comic Sans for dyslexia mode. All settings from Zustand `settings.hc / .large / .dys`.
+- `AccessibilityProvider` — wired in root layout; applies `html.high-contrast` (CSS filter), 118% font for large mode, Atkinson Hyperlegible for dyslexia mode, `dir="rtl"` + `html.lang` on language change. All settings from Zustand `settings.hc / .large / .dys / .lang`.
 
 ### Page Structure Rules
 1. Every role dashboard MUST have a `.page-hero` gradient header with role color
@@ -610,7 +621,7 @@ Operational notes:
 | Parental consent | `ParentalConsent` model; `ParentChildLink` links parents to children; parent can view consent page at `/parent/consent` |
 | Agent memory | `agentMemory.service.ts` — importance-ranked memory with `agentId+importance` index; used by agent orchestrator |
 | Health | `app.ts` — `GET /health` pings DB, returns memory/uptime |
-| Icons | `AppIcon` (primary API) wraps `StoryIcons.tsx` — 16 SVG icons, unified prop contract (`name/size/title/decorative/interactive/roleTone/state/animated`), auto-density, accessible, prefers-reduced-motion respected. Registry in `iconRegistry.ts`, types in `types.ts`, spec in `spec.md`. |
+| Icons | `AppIcon` (primary API) wraps `StoryIcons.tsx` — **18 SVG icons** (streak + badge added 2026-04-02), unified prop contract (`name/size/title/decorative/interactive/roleTone/state/animated`), auto-density, accessible, prefers-reduced-motion respected. Registry in `iconRegistry.ts`, types in `types.ts`, spec in `spec.md`. |
 
 ### Gaps / incomplete (verified in code)
 
@@ -673,7 +684,8 @@ Complete 5-phase rollout of the unified `AppIcon` icon system:
 - **Phase 4** — Components: `TeacherOnboarding.tsx` (removed dead Lucide imports), `EmotionalBuddyCard.tsx` (Sparkles→aiTutor), `DashboardSidebar.tsx` (removed invalid `tone` prop that caused Railway build failure)
 - **Phase 5** — Added `streak` (flame: warm body, rose core, white highlight) and `badge` (medal: rose ribbon, sky circle, gold star) SVG icons (16→18 total). Child hero stat tiles now use `AppIcon name="streak/badge/rewards"` — Lucide `Flame` fully removed.
 
-**25 files** now import AppIcon. Remaining Lucide icons are intentional (no AppIcon equivalent): `Volume2/VolumeX, ChevronLeft/Right, RotateCcw, RefreshCw, Bell, Camera, Printer, Download, Eye, Globe, Monitor, Timer, User, LogOut, Mic, X, Map, Goal, TrendingUp, AlertTriangle, CheckCircle2, Crown, ArrowRight, Feather, Hash, Palette, PencilLine, PlayCircle, Share2, Shapes, ShoppingBag, UserRound, Heart, Activity, MapPin, Shield, Music, Send`
+**25 files** import AppIcon. **Remaining Lucide icons are intentional** (no AppIcon equivalent — do NOT replace):
+`Volume2/VolumeX, ChevronLeft/Right/Down/Up, RotateCcw, RefreshCw, Bell, Camera, Printer, Download, Eye, Globe, Monitor, Timer, User, LogOut, Mic, X, Map, Goal, TrendingUp, AlertTriangle, CheckCircle2, Crown, ArrowRight, Feather, Hash, Palette, PencilLine, PlayCircle, Share2, Shapes, ShoppingBag, UserRound, Heart, Activity, MapPin, Shield, Music, Send`
 
 **Deploy note**: Phase 1 introduced a `tone` prop on `AppIcon` that caused a Railway type error. Fixed in Phase 2/3/4 commit. Branch was rebased on `origin/main` to resolve PR merge conflicts before auto-merge completed.
 
@@ -745,7 +757,7 @@ Each role has a dedicated settings page with role-relevant sections. All pages f
 
 ---
 
-## Known Gaps (as of 2026-04-02)
+## Known Gaps (as of 2026-04-03)
 
 - iOS app exists (Capacitor Xcode project) but not yet in App Store
 - `SENDGRID_API_KEY`, `CLOUDINARY_CLOUD_NAME`+`CLOUDINARY_API_KEY`+`CLOUDINARY_API_SECRET`, `OPENAI_API_KEY` need to be set on Railway for those features to work
