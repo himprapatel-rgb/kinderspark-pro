@@ -130,17 +130,7 @@ body {
 .app-muted {
   color: var(--app-text-muted);
 }
-.app-input {
-  width: 100%;
-  border-radius: 12px;
-  border: 1px solid var(--app-border);
-  background: rgba(70, 75, 96, 0.06);
-  color: rgb(var(--foreground-rgb));
-  padding: 10px 12px;
-  font-weight: 700;
-  outline: none;
-}
-.app-input::placeholder { color: rgba(70, 75, 96, 0.55); }
+/* .app-input — consolidated into .app-field block below */
 .app-btn-primary {
   background: linear-gradient(135deg, var(--app-accent), var(--app-accent-hover));
   color: #fff;
@@ -575,24 +565,7 @@ body {
   box-shadow: 0 -8px 32px rgba(15, 20, 40, 0.12);
 }
 
-/* ── Input fields ─────────────────────────────────────────────────────────────  */
-.input-field {
-  background: rgba(70, 75, 96, 0.06);
-  border: 1.5px solid var(--app-border);
-  border-radius: 14px;
-  color: rgb(var(--foreground-rgb));
-  padding: 12px 16px;
-  font-size: 14px;
-  font-weight: 600;
-  transition: all 0.2s;
-  outline: none;
-}
-.input-field:focus {
-  border-color: rgba(94,92,230,0.7);
-  background: rgba(70, 75, 96, 0.03);
-  box-shadow: 0 0 0 3px rgba(94,92,230,0.12);
-}
-.input-field::placeholder { color: rgba(70, 75, 96, 0.4); }
+/* .input-field — consolidated into .app-field block below */
 
 /* ── Orb backgrounds ──────────────────────────────────────────────────────────── */
 .orb {
@@ -644,7 +617,11 @@ html.high-contrast * { border-color: #fff !important; outline-color: #fff !impor
 }
 
 /* ── Standardized form field ─────────────────────────────────────────────── */
-.app-field {
+/* Canonical input class — always use .app-field on new code.
+   .app-input and .input-field are legacy aliases kept for backwards compat. */
+.app-field,
+.app-input,
+.input-field {
   width: 100%;
   border-radius: 12px;
   border: 1.5px solid var(--app-border);
@@ -656,15 +633,21 @@ html.high-contrast * { border-color: #fff !important; outline-color: #fff !impor
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
-.app-field:focus {
+.app-field:focus,
+.app-input:focus,
+.input-field:focus {
   border-color: var(--app-accent);
-  box-shadow: 0 0 0 3px rgba(94, 92, 230, 0.1);
+  box-shadow: 0 0 0 3px var(--app-accent-glow);
 }
-.app-field::placeholder {
+.app-field::placeholder,
+.app-input::placeholder,
+.input-field::placeholder {
   color: rgba(70, 75, 96, 0.45);
   font-weight: 600;
 }
-.app-field:disabled {
+.app-field:disabled,
+.app-input:disabled,
+.input-field:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -864,3 +847,14 @@ html.high-contrast * { border-color: #fff !important; outline-color: #fff !impor
 .empty-state-emoji { font-size: 2.5rem; line-height: 1; }
 .empty-state-title { font-size: 0.9rem; font-weight: 800; color: rgb(var(--foreground-rgb)); }
 .empty-state-sub   { font-size: 0.75rem; font-weight: 600; color: var(--app-text-muted); }
+
+/* ── Button size modifiers ───────────────────────────────────────────────────
+   Combine with a style class: <button class="app-btn-primary btn-md">
+   ─────────────────────────────────────────────────────────────────────────── */
+.btn-sm  { height: 32px;  padding: 0 0.75rem; font-size: 0.75rem; border-radius: 10px; }
+.btn-md  { height: 40px;  padding: 0 1rem;    font-size: 0.875rem; border-radius: 12px; }
+.btn-lg  { height: 52px;  padding: 0 1.5rem;  font-size: 1rem;    border-radius: 14px; }
+/* Default touch-safe height for buttons without a size modifier */
+button:not(.btn-sm):not(.btn-md):not(.btn-lg):not(.app-tab-btn):not([role='switch']) {
+  min-height: 40px;
+}
