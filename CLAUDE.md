@@ -155,7 +155,7 @@ kinderspark-pro/
     │                                Toast, TopBarActions, UIStates, WeatherChip + lesson/LessonCard,
     │                                ui/Button, ui/Modal, ui/TabBar, ui/Toast)
     │   └── icons/                 ← AppIcon.tsx (primary API), StoryIcons.tsx (18 SVGs), index.ts, types.ts, iconRegistry.ts, spec.md
-    ├── hooks/                     ← useLocation, useNativeFeatures, usePullToRefresh
+    ├── hooks/                     ← useLocation, useNativeFeatures, usePullToRefresh, usePushNotifications (scope: student|parent|teacher), useTranslation, useHomework, useStudent, useSyllabus
     ├── lib/
     │   ├── api.ts                 ← all API fetch calls (109 exported functions; CSRF header auto-injected)
     │   ├── modules.ts             ← 18 built-in learning modules + shop items
@@ -696,6 +696,7 @@ Complete 5-phase rollout of the unified `AppIcon` icon system:
 - Session expiry handled gracefully ✅ — api.ts saves current route to `sessionStorage.ks_after_login`, redirects to `/pin?role=<role>`; pin/page.tsx resumes saved route after successful re-auth
 - PIN login loop fixed ✅ — `verifyPin()` uses raw fetch (not `req()`); wrong PIN 401 no longer triggers `handleSessionExpired()`; `/pin` and `/login` paths never saved as resume destinations
 - Service worker ✅ — `frontend/public/sw.js` (67 lines): install/activate/fetch cache, push handler, notificationclick; registered in `PwaUpdateBanner.tsx` + `usePushNotifications`
+- `usePushNotifications` scope ✅ — accepts `'student' | 'parent' | 'teacher'`; teacher settings page uses it for push alerts
 
 ### Backend Test Coverage (12 files)
 Located in `backend/src/__tests__/`:
