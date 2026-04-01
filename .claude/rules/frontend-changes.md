@@ -16,4 +16,5 @@ When modifying frontend files:
 5. **Store shape change** → Update CLAUDE.md state description
 6. **Design system change** → Update CLAUDE.md "Frontend Design System"
 
-Follow the design system: dark-first, glass morphism, mobile-first, emoji-heavy for children.
+Follow the design system: **light-first "Sunny Classroom"** (bg `#FFFCF5`), mobile-first, emoji-heavy for children.
+Use canonical CSS classes from globals.css — never hardcode inline styles that duplicate a shared class.

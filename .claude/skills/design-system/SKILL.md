@@ -84,13 +84,27 @@ description: KinderSpark Pro frontend design system. Use when creating or editin
 .app-btn-glass     — glass on gradient backgrounds (white 12%, border white 18%)
 .app-btn-soft      — opaque soft (surface bg, border)
 .app-pressable     — micro-interaction (translateY on hover, scale on active)
+
+/* Size modifiers — combine with any style class above */
+.btn-sm  — 32px height, 0.75rem font, 10px radius
+.btn-md  — 40px height, 0.875rem font, 12px radius
+.btn-lg  — 52px height, 1rem font, 14px radius
 ```
 
 ### Forms
 ```
-.app-field    — standard input/select (12px radius, 14px, 700 weight, focus ring)
-.app-input    — legacy input variant
-.input-field  — alternative with 14px radius
+.app-field    — CANONICAL input/select (12px radius, 14px, 700 weight, focus ring)
+              — USE THIS for all new inputs
+.app-input    — legacy alias for .app-field (identical styles, kept for compat)
+.input-field  — legacy alias for .app-field (identical styles, kept for compat)
+```
+
+### Notifications
+```
+useToast()    — ALWAYS use this for toasts/notifications
+              — import { useToast } from '@/components/Toast'
+              — toast.success(msg) | toast.error(msg) | toast.warning(msg) | toast.info(msg)
+              — NEVER build a local useState('') toast — it's inconsistent
 ```
 
 ### Misc
@@ -99,6 +113,7 @@ description: KinderSpark Pro frontend design system. Use when creating or editin
 .glass           — light glass morphism (white 75% + blur 20px)
 .glass-dark      — dark glass (black 6% + blur 20px)
 .empty-state     — empty state layout (column, centered, gap 0.75rem)
+.empty-state-emoji / .empty-state-title / .empty-state-sub — sub-elements
 .shimmer         — loading shimmer animation
 .doodle-surface  — decorative blob shapes via ::before/::after
 .sticker-bubble  — sticker-like white bubble card
@@ -145,7 +160,7 @@ description: KinderSpark Pro frontend design system. Use when creating or editin
 </div>
 ```
 
-## Tab Bar Pattern (admin / teacher / parent)
+## Tab Bar Pattern (admin / teacher / parent / principal)
 ```tsx
 <div className="app-tab-bar">
   {TABS.map((t, i) => (
@@ -175,9 +190,27 @@ description: KinderSpark Pro frontend design system. Use when creating or editin
 </div>
 ```
 
+## Toast Pattern (always use — never local useState)
+```tsx
+import { useToast } from '@/components/Toast'
+
+const toast = useToast()
+toast.success('Saved!')
+toast.error('Something went wrong.')
+toast.warning('Need 50 ⭐ to buy this!')
+toast.info('Loading...')
+```
+
 ## Glass Cards (inside gradient hero sections only)
 Use `rgba(255,255,255,0.12–0.18)` background + `rgba(255,255,255,0.18–0.25)` border.
 Do NOT use `.app-card` inside gradient sections — use glass pattern.
+
+## Accessibility (automatic — do not re-implement)
+`AccessibilityProvider` in root layout handles everything:
+- `settings.large` → `font-size: 118%` on `<html>`
+- `settings.hc` → `html.high-contrast` class (CSS contrast filter)
+- `settings.dys` → Comic Sans font family on `<html>`
+All from Zustand `useAppStore(s => s.settings)`.
 
 ## Theme System
 Themes stored in `student.selectedTheme`. Applied via `ThemeCustomizer` component.
