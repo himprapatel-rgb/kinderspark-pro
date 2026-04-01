@@ -19,17 +19,12 @@ declare global {
 }
 
 /**
- * Populates req.user from `kinderspark_token` cookie or `Authorization: Bearer` (alternate clients only).
- * Invalid cookie → clear `kinderspark_token` and continue (no Bearer) so a stale cookie does not block login.
+ * Populates req.user from `kinderspark_token` cookie only.
+ * Invalid cookie → clear `kinderspark_token` and continue so a stale cookie does not block login.
+ * Bearer token support has been intentionally removed — do not re-add without a CSRF strategy review.
  */
 export function authenticate(req: Request, res: Response, next: NextFunction) {
-  let token = req.cookies?.kinderspark_token
-  if (!token) {
-    const auth = req.headers.authorization
-    if (typeof auth === 'string' && auth.startsWith('Bearer ')) {
-      token = auth.slice(7).trim()
-    }
-  }
+  const token = req.cookies?.kinderspark_token
 
   if (!token) return next()
 

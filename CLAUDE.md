@@ -126,6 +126,7 @@ kinderspark-pro/
 └── frontend/
     ├── app/
     │   ├── (auth)/login/          ← role selection
+    │   ├── (auth)/setup/          ← initial school setup page
     │   ├── pin/                   ← PIN pad entry
     │   ├── register/              ← new user registration
     │   ├── child/                 ← child dashboard + 15 sub-routes
@@ -156,7 +157,7 @@ kinderspark-pro/
 
 ---
 
-## Database Models (Prisma — 46 models)
+## Database Models (Prisma — 51 models)
 
 ### Core
 `School`, `SchoolProfile`, `GradeLevel`, `Class`, `ClassGroup`
@@ -185,6 +186,11 @@ kinderspark-pro/
 - `LessonCache` — AI-generated lessons for custom topics (unique by moduleId+language+difficulty)
 - `QuizQuestion` — pre-seeded quiz questions per module (no AI needed for standard quizzes)
 - `AIResponseCache` — SHA-256 keyed cache for all AI responses (TTL by type)
+
+### Push & Geofence (added by another agent)
+- `WebPushSubscription` — browser push subscription storage (endpoint, keys, userId)
+- `GeofenceUserConsent` — per-user geofence opt-in tracking
+- `GeofenceUserEvent` — persistent geofence event log (replaces in-memory array)
 
 ### Other
 `Attendance`
@@ -219,6 +225,7 @@ kinderspark-pro/
 /api/privacy        ← GDPR/COPPA privacy controls
 /api/drawings       ← drawing storage (Cloudinary)
 /api/modules        ← CurriculumModules + QuizQuestions (DB-served, no AI)
+/api/tts            ← text-to-speech (Google → OpenAI → Azure → Web Speech fallback)
 ```
 
 Key endpoints:
@@ -472,7 +479,7 @@ Operational notes:
 | Severity | Issue | Evidence |
 |----------|--------|----------|
 | **High** | Push not end-to-end | `push.routes.ts` exposes only `GET /vapid-public-key` — no `POST` to persist subscriptions; homework/grading routes do not call `sendHomeworkReminder` / `sendGradeNotification` |
-| **High** | Geofence data ephemeral | `attendance.ts` — `GEOFENCE_EVENTS` + consent are **in-memory**; capped at 200 events globally; lost on restart |
+| **Medium** | Geofence persistence | `GeofenceUserConsent` + `GeofenceUserEvent` models added; verify `attendance.ts` writes to DB not in-memory array |
 | **Medium** | Email silent when misconfigured | `email.service.ts` returns early if no `SENDGRID_API_KEY` — no user-facing error |
 | **Medium** | TTS degrades without keys | All provider keys optional → browser Web Speech fallback for lesson audio |
 | **Medium** | CSRF + Bearer | Mutating requests with **only** Bearer token (no cookies) bypass CSRF (see rule 12) |
