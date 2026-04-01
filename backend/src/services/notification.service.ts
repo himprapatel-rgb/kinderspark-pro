@@ -74,12 +74,14 @@ export async function sendPushPayloadFanout(
   payload: PushPayload
 ): Promise<void> {
   const seen = new Set<string>()
+  const unique: string[] = []
   for (const json of subscriptionJsonStrings) {
     const ep = pushEndpointFromJson(json)
     if (!ep || seen.has(ep)) continue
     seen.add(ep)
-    await sendPushNotification(json, payload)
+    unique.push(json)
   }
+  await Promise.all(unique.map((json) => sendPushNotification(json, payload)))
 }
 
 /**

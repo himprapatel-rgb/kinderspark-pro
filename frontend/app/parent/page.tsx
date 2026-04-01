@@ -268,20 +268,18 @@ export default function ParentPage() {
       setProgressData(prog || [])
       const unread = msgs.filter((m: any) => !m.read && m.fromId !== u.id).length
       setUnreadMsgs(unread)
-      if (u.classId) {
-        getAttendanceSummary(u.classId, 30).then(summary => {
-          const mine = summary?.find((s: any) => s.studentId === u.id)
-          setAttendance(mine || null)
-        }).catch(() => {})
+      // Fire remaining independent calls in parallel
+      const [summary, bdgs, mission] = await Promise.all([
+        u.classId ? getAttendanceSummary(u.classId, 30).catch(() => null) : Promise.resolve(null),
+        getStudentBadges(u.id).catch(() => []),
+        (u.classId && u.id) ? getDailyMission({ studentId: u.id, classId: u.classId }).catch(() => null) : Promise.resolve(null),
+      ])
+      if (summary) {
+        const mine = summary?.find((s: any) => s.studentId === u.id)
+        setAttendance(mine || null)
       }
-      getStudentBadges(u.id).then(b => setBadgesData(b || [])).catch(() => {})
-      if (u.classId && u.id) {
-        getDailyMission({ studentId: u.id, classId: u.classId })
-          .then((m) => setDailyMission(m))
-          .catch(() => setDailyMission(null))
-      } else {
-        setDailyMission(null)
-      }
+      setBadgesData(bdgs || [])
+      setDailyMission(mission ?? null)
     } catch (e) {
       console.error(e)
     } finally {

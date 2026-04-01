@@ -1,12 +1,33 @@
 import './globals.css';
 import type { ReactNode } from 'react';
 import type { Metadata, Viewport } from 'next';
+import { Nunito, Inter, Atkinson_Hyperlegible } from 'next/font/google';
 import AccessibilityProvider from '@/components/AccessibilityProvider';
 import PwaUpdateBanner from '@/components/PwaUpdateBanner';
 import NativeBridge from '@/components/NativeBridge';
 import ThemeCustomizer from '@/components/ThemeCustomizer';
 import { ToastProvider } from '@/components/Toast';
 import ClientRoot from '@/components/ClientRoot';
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+})
+
+const nunito = Nunito({
+  subsets: ['latin'],
+  variable: '--font-nunito',
+  display: 'swap',
+  weight: ['400', '600', '700', '800', '900'],
+})
+
+const atkinson = Atkinson_Hyperlegible({
+  subsets: ['latin'],
+  variable: '--font-atkinson',
+  display: 'swap',
+  weight: ['400', '700'],
+})
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -42,12 +63,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${inter.variable} ${nunito.variable} ${atkinson.variable}`}>
       <head>
         <link rel="manifest" href="/manifest.json" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Nunito:wght@400;600;700;800;900&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet" />
         {/* iOS PWA — splash screen */}
         <link rel="apple-touch-startup-image" href="/icon-512.png" />
       </head>

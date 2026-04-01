@@ -187,7 +187,7 @@ export const useAppStore = create<AppStore>()(
         teachingClasses: state.teachingClasses,
         settings: state.settings,
         dailyMission: state.dailyMission,
-        kpiEvents: state.kpiEvents,
+        // kpiEvents intentionally excluded — high-frequency array; never persist to localStorage
       }),
     }
   )

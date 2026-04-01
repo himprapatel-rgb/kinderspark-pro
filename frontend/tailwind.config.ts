@@ -28,9 +28,9 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ['Inter', 'Nunito', 'sans-serif'],
-        nunito: ['Nunito', 'sans-serif'],
-        kid: ['Nunito', 'sans-serif'],
+        sans: ['var(--font-inter)', 'var(--font-nunito)', 'sans-serif'],
+        nunito: ['var(--font-nunito)', 'sans-serif'],
+        kid: ['var(--font-nunito)', 'sans-serif'],
       },
       borderRadius: {
         'kinder': '16px',

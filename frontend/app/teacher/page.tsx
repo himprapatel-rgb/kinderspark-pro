@@ -6,13 +6,15 @@ import { Loading, InlineEmpty } from '@/components/UIStates'
 import DashboardSidebar from '@/components/DashboardSidebar'
 import TopBarActions from '@/components/TopBarActions'
 import WeatherChip from '@/components/WeatherChip'
+import dynamic from 'next/dynamic'
 import { Bell, Camera } from 'lucide-react'
 import { AppIcon } from '@/components/icons'
 import PhotoCapture from '@/components/PhotoCapture'
 import { useToast } from '@/components/Toast'
 import PageTransition from '@/components/PageTransition'
-import TeacherOnboarding from '@/components/TeacherOnboarding'
 import KidAvatar from '@/components/KidAvatar'
+
+const TeacherOnboarding = dynamic(() => import('@/components/TeacherOnboarding'), { ssr: false })
 import {
   getClasses, getStudents, getHomework, getSyllabuses, getMessages,
   createClass, createStudent, deleteStudent, createHomework, deleteHomework,
@@ -278,14 +280,14 @@ export default function TeacherDashboard() {
 
   const loadClassData = async (classId: string) => {
     try {
-      const [stu, hw, syl, stats, unread] = await Promise.all([
+      const [stu, hw, syl, stats, unread, msg] = await Promise.all([
         getStudents(classId),
         getHomework(classId),
         getSyllabuses(classId),
         getClassStats(classId).catch(() => null),
         getUnreadCount({ classId }).catch(() => ({ count: 0 })),
+        loadMessagesWithFallback(classId).catch(() => []),
       ])
-      const msg = await loadMessagesWithFallback(classId)
       setStudents(stu)
       setHomework(hw)
       setSyllabuses(syl)

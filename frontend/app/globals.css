@@ -79,7 +79,7 @@ html {
 * { -webkit-tap-highlight-color: transparent; }
 body {
   color: rgb(var(--foreground-rgb));
-  font-family: 'Inter', 'Nunito', sans-serif;
+  font-family: var(--font-inter), var(--font-nunito), sans-serif;
   background: var(--app-bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -395,23 +395,23 @@ body {
 }
 
 /* ── Animation utility classes ───────────────────────────────────────────────── */
-.animate-float        { animation: float 5s ease-in-out infinite; }
-.animate-float2       { animation: float2 7s ease-in-out infinite; }
-.animate-slide-up     { animation: slide-up 0.5s cubic-bezier(.16,1,.3,1) forwards; }
-.animate-slide-down   { animation: slide-down 0.4s cubic-bezier(.16,1,.3,1) forwards; }
-.animate-fade-in      { animation: fade-in 0.4s ease forwards; }
-.animate-pop          { animation: pop 0.4s cubic-bezier(.16,1,.3,1) forwards; }
-.animate-shake        { animation: shake 0.4s ease; }
-.animate-spin-slow    { animation: spin-slow 8s linear infinite; }
-.animate-bounce-subtle{ animation: bounce-subtle 2s ease-in-out infinite; }
+.animate-float        { animation: float 5s ease-in-out infinite; will-change: transform; }
+.animate-float2       { animation: float2 7s ease-in-out infinite; will-change: transform; }
+.animate-slide-up     { animation: slide-up 0.5s cubic-bezier(.16,1,.3,1) forwards; will-change: transform, opacity; }
+.animate-slide-down   { animation: slide-down 0.4s cubic-bezier(.16,1,.3,1) forwards; will-change: transform, opacity; }
+.animate-fade-in      { animation: fade-in 0.4s ease forwards; will-change: opacity; }
+.animate-pop          { animation: pop 0.4s cubic-bezier(.16,1,.3,1) forwards; will-change: transform, opacity; }
+.animate-shake        { animation: shake 0.4s ease; will-change: transform; }
+.animate-spin-slow    { animation: spin-slow 8s linear infinite; will-change: transform; }
+.animate-bounce-subtle{ animation: bounce-subtle 2s ease-in-out infinite; will-change: transform; }
 .animate-gradient-x   { animation: gradient-x 3s ease infinite; background-size: 200% 200%; }
-.animate-wiggle-slow  { animation: wiggle-soft 3.2s ease-in-out infinite; transform-origin: center; }
-.animate-bob          { animation: bob-soft 2.4s ease-in-out infinite; }
+.animate-wiggle-slow  { animation: wiggle-soft 3.2s ease-in-out infinite; transform-origin: center; will-change: transform; }
+.animate-bob          { animation: bob-soft 2.4s ease-in-out infinite; will-change: transform; }
 .animate-sparkle-on-hover:hover { animation: sparkle-pop 0.45s cubic-bezier(.16,1,.3,1); }
-.animate-page-enter   { animation: page-enter 0.4s cubic-bezier(.16,1,.3,1) forwards; }
-.animate-page-fade    { animation: page-fade 0.35s ease forwards; }
-.animate-page-scale   { animation: page-scale 0.35s cubic-bezier(.16,1,.3,1) forwards; }
-.animate-bounce-in    { animation: bounce-in 0.5s cubic-bezier(.16,1,.3,1) forwards; }
+.animate-page-enter   { animation: page-enter 0.4s cubic-bezier(.16,1,.3,1) forwards; will-change: transform, opacity; }
+.animate-page-fade    { animation: page-fade 0.35s ease forwards; will-change: opacity; }
+.animate-page-scale   { animation: page-scale 0.35s cubic-bezier(.16,1,.3,1) forwards; will-change: transform, opacity; }
+.animate-bounce-in    { animation: bounce-in 0.5s cubic-bezier(.16,1,.3,1) forwards; will-change: transform, opacity; }
 .confetti-piece       { position: absolute; width: 10px; height: 10px; top: -10px; animation: confetti-fall 3s ease-in forwards; }
 
 /* Stagger delays */

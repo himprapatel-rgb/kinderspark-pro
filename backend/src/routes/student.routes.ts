@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express'
 import bcrypt from 'bcryptjs'
 import prisma from '../prisma/client'
-import { invalidateCache } from '../middleware/cache.middleware'
+import { cache, invalidateCache } from '../middleware/cache.middleware'
 import { requireAuth, requireRole } from '../middleware/auth.middleware'
 import { canParentAccessStudent, canTeacherAccessClass } from '../utils/accessControl'
 import { computePinFingerprint } from '../utils/pinFingerprint'
@@ -15,7 +15,7 @@ function canAccessOwnStudent(req: Request, studentId: string) {
 }
 
 // GET /api/students?classId=
-router.get('/', requireRole('teacher', 'admin'), async (req: Request, res: Response) => {
+router.get('/', requireRole('teacher', 'admin'), cache(30), async (req: Request, res: Response) => {
   try {
     const { classId } = req.query
     // Teachers must always provide a classId — they cannot fetch across all schools
@@ -27,7 +27,11 @@ router.get('/', requireRole('teacher', 'admin'), async (req: Request, res: Respo
     const where = classId ? { classId: String(classId) } : {}
     const students = await prisma.student.findMany({
       where,
-      include: { progress: true, feedback: true, class: true },
+      include: {
+        progress: { select: { moduleId: true, cards: true, updatedAt: true }, take: 10, orderBy: { updatedAt: 'desc' } },
+        feedback: { select: { grade: true, note: true, updatedAt: true } },
+        class: { select: { id: true, name: true, grade: true } },
+      },
       orderBy: { name: 'asc' },
     })
     // Strip sensitive fields — never send PIN hashes or PII over the wire
