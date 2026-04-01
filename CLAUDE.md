@@ -526,6 +526,7 @@ Completed:
 - **Progress self-access**: `progress.routes.ts` allows `role=child` to access their own studentId (previously child role was fully blocked).
 - **Unauthenticated diagnostics fixed**: `diag.routes.ts` GET `/recent` now requires `requireRole('admin', 'principal')`.
 - **Hardcoded dev key removed**: `frontend/app/dev/page.tsx` reads `NEXT_PUBLIC_DEVELOPER_KEY` env var (no fallback).
+- **PIN login loop fixed**: `verifyPin()` uses raw `fetch` instead of `req()` — wrong-PIN 401 no longer triggers `handleSessionExpired()` which was saving `/pin` to `ks_after_login` and looping forever after successful auth.
 - **AI provider timeout**: `ai/router.ts` wraps each provider call in 30-second timeout via `Promise.race`.
 - **CSP connect-src fixed**: `frontend/next.config.js` — security headers previously only whitelisted the frontend Railway URL in `connect-src`, blocking all `fetch()` calls to the backend. Now allows `https://kinderspark-backend-production.up.railway.app` and `https://*.up.railway.app`. **This was the root cause of "Cannot reach server" in production.**
 - Security response headers added to `frontend/next.config.js`: `X-Frame-Options`, `X-Content-Type-Options`, `Strict-Transport-Security`, `Referrer-Policy`, `Permissions-Policy`, `Content-Security-Policy`.
@@ -559,7 +560,7 @@ Operational notes:
 | Auth | `auth.middleware.ts` — JWT from `httpOnly` `kinderspark_token` cookie only. Bearer support removed. Multi-school scoped: `throttleKey(schoolCode, role, ip)` |
 | CSRF | `csrf.middleware.ts` — enforces `x-csrf-token` vs `kinderspark_csrf` when session cookies present (see rule 12) |
 | PIN fingerprint | `pinFingerprint.ts` — SHA256 deterministic fingerprint for pre-filtering before bcrypt.compare; `PinLoginThrottle` throttles per school+role+IP |
-| Session expiry | `api.ts` `handleSessionExpired()` — saves current path to `sessionStorage.ks_after_login`, redirects to `/pin?role=<role>`; `pin/page.tsx` resumes saved route after re-auth |
+| Session expiry | `api.ts` `handleSessionExpired()` — saves current path to `sessionStorage.ks_after_login` (never saves `/pin` or `/login`), redirects to `/pin?role=<role>`; `pin/page.tsx` resumes saved route after re-auth |
 | Email | `email.service.ts` — SendGrid; skips gracefully if `SENDGRID_API_KEY` missing (warns in logs) |
 | AI safety | `contentFilter.service.ts` — regex blocks on AI output + per-student AI session rate limiting |
 | TTS | `tts.service.ts` — **4-tier cascade**: Google Neural2 → OpenAI (nova/echo/shimmer) → Azure Neural → Web Speech API fallback. All results cached in `AIResponseCache` (30-day TTL). 10 language support with gender-specific voices. |
@@ -631,6 +632,7 @@ Full audit performed. All role dashboards (admin, teacher, parent, principal) st
 - No TODO/FIXME in main source (only in old worktree copies) ✅
 - TTS client sends CSRF token and uses normalized API base URL ✅ (fixed in speech.ts)
 - Session expiry handled gracefully ✅ — api.ts saves current route to `sessionStorage.ks_after_login`, redirects to `/pin?role=<role>`; pin/page.tsx resumes saved route after successful re-auth
+- PIN login loop fixed ✅ — `verifyPin()` uses raw fetch (not `req()`); wrong PIN 401 no longer triggers `handleSessionExpired()`; `/pin` and `/login` paths never saved as resume destinations
 
 ---
 
