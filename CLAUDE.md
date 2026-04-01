@@ -543,6 +543,10 @@ Completed:
 - **AI rate limit fail-closed**: `aiRateLimit.middleware.ts` catch block returns HTTP 503 instead of calling `next()` — prevents rate limit bypass when DB is unavailable.
 - **Attendance teacher RBAC**: `GET /api/attendance/summary` — teachers now verified via `canTeacherAccessClass`; `days` param clamped to 1–365 to prevent unbounded DB scans.
 - **Attendance cross-class write fixed**: `POST /api/attendance` — submitted `studentId`s are validated to belong to the target `classId` before upsert; invalid IDs silently dropped.
+- **JWT hardcoded fallback removed**: `jwtSecret.ts` no longer has `'kinderspark-secret'` fallback — throws in all environments if `JWT_SECRET` env var is missing.
+- **PIN global brute-force protection**: `auth.controller.ts` — added global per-`schoolCode:role` throttle (25 attempts / 60 min) alongside per-IP throttle; rotating IPs can no longer bypass protection.
+- **Teacher student scoping**: `GET /api/students` — teachers must provide `classId`; omitting it returns 400 instead of the entire DB.
+- **Parent student access fixed**: `PUT /api/students/:id` — parents now use `canParentAccessStudent` check (was unreachable due to logic bug); parents restricted to `name`, `age`, `avatar`, `selectedTheme`, `ownedItems` — no gamification fields.
 
 ---
 
