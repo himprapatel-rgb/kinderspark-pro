@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express'
+import bcrypt from 'bcryptjs'
 import prisma from '../prisma/client'
 import { requireAuth } from '../middleware/auth.middleware'
 import { canParentAccessStudent, canTeacherAccessClass } from '../utils/accessControl'
@@ -13,16 +14,27 @@ async function ensureLegacyStudent(studentId: string): Promise<void> {
 
   const user = await prisma.user.findUnique({
     where: { id: studentId },
-    select: { displayName: true, avatar: true },
+    select: { displayName: true, avatar: true, schoolId: true },
   })
   if (!user) return
 
-  let classRecord = await prisma.class.findFirst({ orderBy: { createdAt: 'desc' } })
-  if (!classRecord) {
-    classRecord = await prisma.class.create({
-      data: { name: 'General', grade: 'KG 1' },
-    })
+  // Only attach to a class within the student's own school — never cross-school
+  const schoolId = user.schoolId
+  if (!schoolId) {
+    console.warn('[ensureLegacyStudent] User has no schoolId; skipping legacy student creation for', studentId)
+    return
   }
+  const classRecord = await prisma.class.findFirst({
+    where: { schoolId },
+    orderBy: { createdAt: 'asc' },
+  })
+  if (!classRecord) {
+    console.warn('[ensureLegacyStudent] No class found for school', schoolId, '— skipping legacy student creation')
+    return
+  }
+
+  // Hash the placeholder PIN — never store plaintext PINs
+  const pinHash = await bcrypt.hash('0000', 10)
 
   await prisma.student
     .create({
@@ -30,7 +42,7 @@ async function ensureLegacyStudent(studentId: string): Promise<void> {
         id: studentId,
         name: user.displayName || 'Student',
         avatar: user.avatar || '👧',
-        pin: '0000',
+        pin: pinHash,
         classId: classRecord.id,
       },
     })
@@ -175,10 +187,10 @@ router.put('/:studentId/:moduleId', async (req: Request, res: Response) => {
 
     const cardsVal = num(cards, 0)
 
+    // Score is always derived from lesson progress — never accepted directly from client
+    // (quiz scores are computed from QuizResponse records in POST /quiz-response)
     let score = ex?.score ?? 0
-    if (body.score !== undefined && body.score !== null) {
-      score = clampScore(num(body.score, score))
-    } else if (typeof body.lessonTotal === 'number' && body.lessonTotal > 0) {
+    if (typeof body.lessonTotal === 'number' && body.lessonTotal > 0) {
       score = clampScore(Math.round((cardsVal / body.lessonTotal) * 100))
     }
 
