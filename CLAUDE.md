@@ -539,6 +539,10 @@ Completed:
 - **AI class ownership checks**: `aiWeeklyReport`, `aiSendParentReports`, `aiAutoSyllabus` — teachers now verified via `canTeacherAccessClass` before generating reports.
 - **Legacy refresh token fixed**: `refreshAccessToken` now falls back to `Teacher`/`Admin` tables when User lookup returns null — prevents `name`/`schoolId` being stripped from refreshed tokens.
 - **Atomic child registration**: `registerUser` for child role now uses `prisma.$transaction` — User + RoleAssignment + Student created atomically, no orphaned records.
+- **PIN pepper fail-hard**: `pinFingerprint.ts` `getPinPepper()` now throws if `PIN_FINGERPRINT_PEPPER` and `JWT_SECRET` are both missing — refuses hardcoded fallback that made 4-digit PINs trivially brute-forceable offline.
+- **AI rate limit fail-closed**: `aiRateLimit.middleware.ts` catch block returns HTTP 503 instead of calling `next()` — prevents rate limit bypass when DB is unavailable.
+- **Attendance teacher RBAC**: `GET /api/attendance/summary` — teachers now verified via `canTeacherAccessClass`; `days` param clamped to 1–365 to prevent unbounded DB scans.
+- **Attendance cross-class write fixed**: `POST /api/attendance` — submitted `studentId`s are validated to belong to the target `classId` before upsert; invalid IDs silently dropped.
 
 ---
 
