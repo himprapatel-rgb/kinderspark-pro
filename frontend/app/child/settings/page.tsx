@@ -9,7 +9,7 @@ import DiagnosticsPanel from '@/components/DiagnosticsPanel'
 import PrivacyGeofenceCard from '@/components/Settings/Privacy'
 import { Bell, LogOut, Volume2 } from 'lucide-react'
 import { AppIcon } from '@/components/icons'
-import { getVoiceProfile, setVoiceEnabled, setVoiceProfile, speak } from '@/lib/speech'
+import { getApiTTSStatus, getVoiceProfile, resetApiTTSCheck, setVoiceEnabled, setVoiceProfile, speak } from '@/lib/speech'
 import KidAvatar from '@/components/KidAvatar'
 
 const LANGS = [
@@ -41,11 +41,19 @@ export default function ChildSettingsPage() {
   )
   const voiceOn     = settings.voiceOn !== false
   const voiceProfile = settings.voiceProfile || 'auto'
+  const [ttsStatus, setTtsStatus] = useState<'human' | 'device' | 'unknown'>('unknown')
 
   useEffect(() => {
     setVoiceEnabled(voiceOn)
     setVoiceProfile((voiceProfile || getVoiceProfile()) as 'auto' | 'girl' | 'boy')
   }, [voiceOn, voiceProfile])
+
+  // Probe TTS status on mount (fires a tiny test to see if human voice is available)
+  useEffect(() => {
+    setTtsStatus(getApiTTSStatus())
+    const id = setInterval(() => setTtsStatus(getApiTTSStatus()), 30_000)
+    return () => clearInterval(id)
+  }, [])
 
   const previewVoice = () => {
     setPreviewingVoice(true)
@@ -223,6 +231,33 @@ export default function ChildSettingsPage() {
               </button>
             ))}
           </div>
+
+          {/* TTS provider status */}
+          {ttsStatus === 'human' && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl"
+              style={{ background: 'rgba(76,175,106,0.12)', border: '1px solid rgba(76,175,106,0.25)' }}>
+              <span className="text-base">🎙️</span>
+              <div>
+                <div className="text-xs font-black" style={{ color: 'var(--app-success)' }}>Human AI Voice</div>
+                <div className="text-[10px] font-bold app-muted">Natural, warm voice — sounds like a real person!</div>
+              </div>
+            </div>
+          )}
+          {ttsStatus === 'device' && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl"
+              style={{ background: 'rgba(245,166,35,0.1)', border: '1px solid rgba(245,166,35,0.3)' }}>
+              <span className="text-base">📢</span>
+              <div className="flex-1">
+                <div className="text-xs font-black" style={{ color: '#D4881A' }}>Device Voice</div>
+                <div className="text-[10px] font-bold app-muted">Using your device's built-in voice</div>
+              </div>
+              <button onClick={() => { resetApiTTSCheck(); setTtsStatus('unknown') }}
+                className="px-2 py-1 rounded-lg text-[10px] font-black app-pressable flex-shrink-0"
+                style={{ background: 'rgba(245,166,35,0.2)', color: '#D4881A' }}>
+                Retry
+              </button>
+            </div>
+          )}
 
           <button onClick={previewVoice} disabled={!voiceOn || previewingVoice}
             className="w-full min-h-11 py-2.5 rounded-xl font-black text-sm app-pressable disabled:opacity-50"
