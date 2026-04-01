@@ -84,7 +84,7 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen flex" style={{ background: 'var(--app-bg)' }}>
-      <DashboardSidebar role="admin" items={SIDEBAR_ITEMS} userName={user?.name} profileHref="/admin/profile" onItemClick={(idx) => setTab(idx)} activeIndex={tab} />
+      <DashboardSidebar role="admin" items={SIDEBAR_ITEMS} userName={user?.name} profileHref="/admin/settings" onItemClick={(idx) => setTab(idx)} activeIndex={tab} />
       <div className="flex-1 min-h-screen pb-20 app-container">
       {/* Header */}
       <div className="page-hero" style={{ background: 'linear-gradient(135deg, var(--app-accent), #4A6ED0)' }}>
@@ -97,7 +97,7 @@ export default function AdminPage() {
             </div>
             <div className="flex flex-col items-end gap-2">
               <WeatherChip variant="light" />
-              <TopBarActions variant="light" profileHref="/admin/profile" />
+              <TopBarActions variant="light" profileHref="/admin/settings" />
             </div>
           </div>
 
