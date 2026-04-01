@@ -126,16 +126,21 @@ useToast()    — ALWAYS use this for toasts/notifications
 ## Animations (all in globals.css — use `.animate-*` classes)
 ```
 .animate-slide-up      — entrance slide from below
+.animate-slide-down    — slide from above
 .animate-fade-in       — fade in
 .animate-pop           — scale pop (modal/badge entrance)
 .animate-shake         — error shake
 .animate-bounce-subtle — gentle float (achievements)
+.animate-bounce-in     — spring bounce entrance
 .animate-float         — slow float loop
 .animate-float2        — offset float loop
 .animate-bob           — tiny vertical bob
 .animate-wiggle-slow   — gentle rotation wiggle
 .animate-spin-slow     — slow full rotation
 .animate-page-enter    — page entrance
+.animate-page-fade     — page fade transition
+.animate-page-scale    — page scale transition
+.animate-gradient-x    — animated gradient shift
 .animate-sparkle-on-hover — sparkle on hover
 .delay-100 to .delay-600 — stagger delays
 ```
@@ -219,12 +224,16 @@ Always use `var(--theme-color)` and `var(--theme-secondary)` for child-specific 
 
 ## Zustand Store
 ```typescript
-const { user, role, settings } = useAppStore()
-// settings: { large, hc, lang, dys, stLimit, voiceOn, voiceProfile }
+const { user, role, settings, currentStudent, dailyMission } = useAppStore()
+// settings shape:
+// { dark, large, hc, dys, lang, stLimit, voiceOn, voiceProfile }
 ```
-- `settings.large` — increase font sizes (check before hardcoding sizes)
-- `settings.hc` — high contrast (respect via AccessibilityProvider)
-- `settings.dys` — dyslexia font
+- `settings.dark` — dark mode (applied by AccessibilityProvider as `html.dark`)
+- `settings.large` — large text (font-size 118% on `<html>`)
+- `settings.hc` — high contrast (`html.high-contrast` CSS class)
+- `settings.dys` — dyslexia font (Comic Sans on `<html>`)
+- `settings.lang` — language code (en/fr/es/ar/ur/hi/zh/pt/de/tr)
+- `settings.voiceOn` / `settings.voiceProfile` — TTS voice control
 
 ## Page Structure (all roles)
 ```tsx
