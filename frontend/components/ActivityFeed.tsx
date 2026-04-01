@@ -68,7 +68,7 @@ export default function ActivityFeed({ classId }: { classId: string }) {
     return (
       <div className="space-y-3">
         {[1, 2].map((i) => (
-          <div key={i} className="rounded-2xl p-4 animate-pulse" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+          <div key={i} className="app-card animate-pulse">
             <div className="h-4 rounded bg-gray-300/20 w-1/3 mb-3" />
             <div className="h-40 rounded-xl bg-gray-300/10 mb-3" />
             <div className="h-3 rounded bg-gray-300/15 w-2/3" />
@@ -80,7 +80,7 @@ export default function ActivityFeed({ classId }: { classId: string }) {
 
   if (posts.length === 0) {
     return (
-      <div className="rounded-2xl p-8 text-center" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+      <div className="app-card empty-state">
         <div className="text-4xl mb-3">📸</div>
         <div className="font-black text-sm">No activity photos yet</div>
         <div className="text-xs font-bold app-muted mt-1">
