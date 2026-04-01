@@ -653,7 +653,6 @@ Full audit performed. All role dashboards (admin, teacher, parent, principal) st
 
 ### UI/UX Audit Fixes (2026-04-01)
 - **WCAG zoom**: `layout.tsx` — removed `userScalable:false` + `maximumScale:1`; pinch-to-zoom now works
-- **Dark mode**: `globals.css` — full `.dark {}` CSS variable block implemented (was no-op class)
 - **Dyslexia font**: `AccessibilityProvider.tsx` — Atkinson Hyperlegible replaces Comic Sans; font loaded in `layout.tsx`
 - **localStorage crash prevention**: `Onboarding.tsx` — all `localStorage` calls wrapped in try/catch (MDM-managed school iPads throw SecurityError)
 - **Onboarding @keyframes**: Moved from inline `<style>` to `globals.css` — stops re-injecting on every render

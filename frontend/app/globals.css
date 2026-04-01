@@ -69,55 +69,6 @@ html {
   --app-shadow-lg: 0 8px 28px rgba(40, 30, 15, 0.12);
 }
 
-/* ── Dark mode — full token overrides ───────────────────────────────────────── */
-.dark {
-  --foreground-rgb: 240, 238, 232;
-  --background-start-rgb: 18, 18, 30;
-
-  --app-bg: #12121E;
-  --app-surface: #1E1E32;
-  --app-surface-soft: #252540;
-  --app-surface-elevated: #2A2A48;
-
-  --app-border: rgba(255, 255, 255, 0.08);
-  --app-border-strong: rgba(255, 255, 255, 0.15);
-
-  --app-text-muted: rgba(240, 238, 232, 0.55);
-  --app-text-subtle: rgba(240, 238, 232, 0.32);
-
-  --app-accent: #5BC2F0;
-  --app-accent-hover: #7BD0F5;
-  --app-accent-soft: rgba(91, 194, 240, 0.15);
-  --app-accent-glow: rgba(91, 194, 240, 0.25);
-
-  --app-success: #5DD68C;
-  --app-success-soft: rgba(93, 214, 140, 0.15);
-  --app-warning: #F9BC45;
-  --app-warning-soft: rgba(249, 188, 69, 0.15);
-  --app-danger: #F07070;
-  --app-danger-soft: rgba(240, 112, 112, 0.15);
-  --app-info: #5BC2F0;
-  --app-info-soft: rgba(91, 194, 240, 0.15);
-
-  --app-gold: #F9C74F;
-  --app-gold-soft: rgba(249, 199, 79, 0.15);
-
-  --role-child: #F9BC45;
-  --role-child-soft: rgba(249, 188, 69, 0.15);
-  --role-teacher: #7B9DF5;
-  --role-teacher-soft: rgba(123, 157, 245, 0.15);
-  --role-parent: #5DD68C;
-  --role-parent-soft: rgba(93, 214, 140, 0.15);
-  --role-admin: #B898E8;
-  --role-admin-soft: rgba(184, 152, 232, 0.15);
-
-  --app-overlay: rgba(0, 0, 0, 0.65);
-
-  --app-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --app-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
-  --app-shadow-lg: 0 8px 28px rgba(0, 0, 0, 0.5);
-}
-
 /* ── Custom scrollbar ────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
