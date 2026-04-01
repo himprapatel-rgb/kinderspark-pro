@@ -5,7 +5,7 @@ import { useAppStore as useStore } from '@/store/appStore'
 import { getHomework, getSyllabuses, getProgress, getRecommendations, getStudentBadges, completeHomework, getDailyMission, completeDailyMission } from '@/lib/api'
 import { MODS } from '@/lib/modules'
 import { selectAdaptiveMission } from '@/lib/missionEngine'
-import { ArrowRight, Feather, Flame, Hash, Palette, PencilLine, PlayCircle, Share2, Shapes, ShoppingBag, UserRound } from 'lucide-react'
+import { ArrowRight, Feather, Hash, Palette, PencilLine, PlayCircle, Share2, Shapes, ShoppingBag, UserRound } from 'lucide-react'
 import { AppIcon } from '@/components/icons'
 import PageTransition from '@/components/PageTransition'
 import MissionCelebration from '@/components/MissionCelebration'
@@ -340,7 +340,7 @@ export default function ChildPage() {
               {streak > 0 ? (
                 <div className="inline-flex items-center gap-1.5 mt-2 rounded-full px-2.5 py-1"
                   style={{ background: 'rgba(255,107,53,0.32)', border: '1px solid rgba(255,107,53,0.48)' }}>
-                  <Flame size={11} style={{ color: '#FF8C5A' }} />
+                  <AppIcon name="streak" size={11} roleTone="child" decorative />
                   <span style={{ fontSize: 11, fontWeight: 900, color: '#FFBB99' }}>{streak} day streak 🔥</span>
                 </div>
               ) : (
@@ -383,7 +383,9 @@ export default function ChildPage() {
             <div className="rounded-2xl p-3 flex flex-col items-center gap-1.5 relative overflow-hidden"
               style={{ background: 'linear-gradient(135deg, rgba(245,183,49,0.38), rgba(245,162,35,0.22))', border: '1px solid rgba(245,183,49,0.52)' }}>
               <div className="absolute -right-2 -top-2 opacity-20 select-none pointer-events-none" style={{ fontSize: 28, transform: 'rotate(15deg)' }}>⭐</div>
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(245,183,49,0.28)', fontSize: 20 }}>⭐</div>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(245,183,49,0.28)' }}>
+                <AppIcon name="rewards" size={20} roleTone="child" decorative />
+              </div>
               <p className="font-black text-white leading-none" style={{ fontSize: 20 }}>{(student?.stars ?? 0).toLocaleString()}</p>
               <p style={{ fontSize: 10, fontWeight: 800, color: 'rgba(255,230,150,0.85)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Stars</p>
             </div>
@@ -393,7 +395,7 @@ export default function ChildPage() {
               style={{ background: streak > 0 ? 'linear-gradient(135deg, rgba(255,107,53,0.38), rgba(224,82,82,0.22))' : 'rgba(255,255,255,0.12)', border: streak > 0 ? '1px solid rgba(255,107,53,0.52)' : '1px solid rgba(255,255,255,0.18)' }}>
               <div className="absolute -right-2 -top-2 opacity-20 select-none pointer-events-none" style={{ fontSize: 28, transform: 'rotate(15deg)' }}>{streak > 0 ? '🔥' : '💧'}</div>
               <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: streak > 0 ? 'rgba(255,107,53,0.28)' : 'rgba(120,120,140,0.18)' }}>
-                <Flame size={20} style={{ color: streak > 0 ? '#FF8C5A' : '#8090A8' }} />
+                <AppIcon name="streak" size={20} roleTone="child" decorative />
               </div>
               <p className="font-black text-white leading-none" style={{ fontSize: 20 }}>{streak}</p>
               <p style={{ fontSize: 10, fontWeight: 800, color: streak > 0 ? 'rgba(255,200,160,0.85)' : 'rgba(200,210,230,0.6)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Day{streak !== 1 ? 's' : ''}</p>
@@ -403,7 +405,9 @@ export default function ChildPage() {
             <div className="rounded-2xl p-3 flex flex-col items-center gap-1.5 relative overflow-hidden"
               style={{ background: 'linear-gradient(135deg, rgba(139,108,193,0.38), rgba(94,92,230,0.22))', border: '1px solid rgba(139,108,193,0.52)' }}>
               <div className="absolute -right-2 -top-2 opacity-20 select-none pointer-events-none" style={{ fontSize: 28, transform: 'rotate(15deg)' }}>🏅</div>
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(139,108,193,0.28)', fontSize: 20 }}>🏅</div>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(139,108,193,0.28)' }}>
+                <AppIcon name="badge" size={20} roleTone="child" decorative />
+              </div>
               <p className="font-black text-white leading-none" style={{ fontSize: 20 }}>Lv {student?.aiBestLevel ?? 1}</p>
               <p style={{ fontSize: 10, fontWeight: 800, color: 'rgba(200,180,255,0.85)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Level</p>
             </div>

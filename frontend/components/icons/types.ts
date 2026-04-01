@@ -22,6 +22,8 @@ export type IconName =
   | 'tracing'
   | 'school'
   | 'settings'
+  | 'streak'
+  | 'badge'
 
 /** Named size keys — prefer these over raw numbers */
 export const ICON_SIZES = { xs: 16, sm: 20, md: 24, lg: 32 } as const
