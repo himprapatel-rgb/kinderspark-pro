@@ -1,7 +1,5 @@
 import { Router, Request, Response } from 'express'
-import jwt from 'jsonwebtoken'
 import prisma from '../prisma/client'
-import type { AuthUser } from '../middleware/auth.middleware'
 import { requireAuth } from '../middleware/auth.middleware'
 import {
   canParentAccessStudent,
@@ -17,7 +15,6 @@ import {
   notifyLegacyInboxMessageCreated,
   notifyThreadParticipants,
 } from '../services/messageNotifications.service'
-import { getJwtSecret } from '../config/jwtSecret'
 
 const router = Router()
 
@@ -69,6 +66,7 @@ async function canCreateThreadForScope(req: Request, body: any): Promise<boolean
     return canUserAccessStudentProfile(user.id, user.role, String(body.studentProfileId))
   }
   if (scopeType === 'direct') {
+    // Participant validation runs in the caller — no early bypass here
     return true
   }
   return false
@@ -88,12 +86,16 @@ async function enforceTeacherLegacyClassAccess(req: Request, res: Response, clas
 // ── SSE client store ──────────────────────────────────────────────────────────
 // Map<classId, Set<Response>>
 const sseClients = new Map<string, Set<Response>>()
+const MAX_SSE_PER_CLASS = 50
 
-function addClient(classId: string, res: Response): void {
+function addClient(classId: string, res: Response): boolean {
   if (!sseClients.has(classId)) {
     sseClients.set(classId, new Set())
   }
-  sseClients.get(classId)!.add(res)
+  const set = sseClients.get(classId)!
+  if (set.size >= MAX_SSE_PER_CLASS) return false
+  set.add(res)
+  return true
 }
 
 function removeClient(classId: string, res: Response): void {
@@ -117,31 +119,17 @@ export function broadcastToClass(classId: string, message: object): void {
 }
 
 // ── GET /api/messages/stream — SSE endpoint ───────────────────────────────────
-// Auth: cookie (preferred) via global authenticate middleware; token query kept for backward compatibility.
-router.get('/stream', async (req: Request, res: Response) => {
-  const { classId, token } = req.query
+// Auth: cookie-only via requireAuth. The ?token= query param is no longer
+// supported — tokens in URLs are logged by proxies and browser history (OWASP A02).
+router.get('/stream', requireAuth, async (req: Request, res: Response) => {
+  const { classId } = req.query
 
   if (!classId || typeof classId !== 'string') {
     res.status(400).json({ error: 'classId query param is required' })
     return
   }
 
-  // Preferred: user already populated from auth cookie.
-  // Fallback: explicit token query for older clients.
-  if (!req.user && token && typeof token === 'string') {
-    try {
-      const decoded = jwt.verify(token, getJwtSecret()) as AuthUser
-      req.user = decoded
-    } catch {
-      res.status(401).json({ error: 'Invalid or expired token' })
-      return
-    }
-  }
-  if (!req.user) {
-    res.status(401).json({ error: 'Authentication required' })
-    return
-  }
-  if (req.user.role === 'child') {
+  if (req.user!.role === 'child') {
     const ownClassId = await getRequesterClassId(req.user.id)
     if (!ownClassId || ownClassId !== classId) {
       res.status(403).json({ error: 'Insufficient permissions' })
@@ -169,8 +157,11 @@ router.get('/stream', async (req: Request, res: Response) => {
     console.error('SSE initial load error:', err)
   }
 
-  // Register this client
-  addClient(classId, res)
+  // Register this client — reject if class already at SSE cap
+  if (!addClient(classId, res)) {
+    res.status(429).json({ error: 'Too many live connections for this class' })
+    return
+  }
 
   // 30s heartbeat to keep the connection alive through proxies / load balancers
   const heartbeat = setInterval(() => {
@@ -192,22 +183,26 @@ router.get('/stream', async (req: Request, res: Response) => {
 router.get('/', requireAuth, async (req: Request, res: Response) => {
   try {
     let { classId, studentId } = req.query
-    if (req.user?.role === 'teacher' && classId) {
+    const role = req.user?.role
+
+    if (role === 'teacher') {
+      // Teachers must provide classId — they cannot scan the entire messages table
+      if (!classId) return res.status(400).json({ error: 'classId is required' })
       const ok = await enforceTeacherLegacyClassAccess(req, res, String(classId))
       if (!ok) return
-    }
-    if (req.user?.role === 'child') {
-      studentId = req.user.id
-      classId = await getRequesterClassId(req.user.id)
-    }
-    if (req.user?.role === 'parent') {
+    } else if (role === 'child') {
+      studentId = req.user!.id
+      classId = await getRequesterClassId(req.user!.id)
+    } else if (role === 'parent') {
       const requestedStudentId = String(studentId || '')
-      if (!requestedStudentId || !(await canParentAccessStudent(req.user.id, requestedStudentId))) {
+      if (!requestedStudentId || !(await canParentAccessStudent(req.user!.id, requestedStudentId))) {
         return res.status(403).json({ error: 'Insufficient permissions' })
       }
       studentId = requestedStudentId
       classId = await resolveStudentClassId(requestedStudentId)
     }
+    // admin/principal — no forced scope; classId/studentId filters are optional
+
     const where: Record<string, unknown> = {}
     if (classId) where.classId = String(classId)
     if (studentId) {
@@ -220,6 +215,7 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
     const messages = await prisma.message.findMany({
       where,
       orderBy: { createdAt: 'desc' },
+      take: 500,
     })
     return res.json(messages)
   } catch (err) {
@@ -270,9 +266,11 @@ router.get('/unread-count', requireAuth, async (req: Request, res: Response) => 
 // ── POST /api/messages ────────────────────────────────────────────────────────
 router.post('/', requireAuth, async (req: Request, res: Response) => {
   try {
-    let { from, to, subject, body, classId } = req.body
-    if (!from || !to || !subject || !body) {
-      return res.status(400).json({ error: 'from, to, subject, and body are required' })
+    let { to, subject, body, classId } = req.body
+    // Always derive display name from the authenticated JWT — never trust client-supplied 'from'
+    const from = req.user!.name || 'User'
+    if (!to || !subject || !body) {
+      return res.status(400).json({ error: 'to, subject, and body are required' })
     }
     if (req.user?.role === 'teacher') {
       const ok = await enforceTeacherLegacyClassAccess(req, res, classId ? String(classId) : null)
@@ -318,6 +316,39 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
   }
 })
 
+// ── PUT /api/messages/read-all — mark all in a class as read ─────────────────
+// IMPORTANT: this MUST be registered before /:id/read to avoid Express treating
+// "read-all" as the :id param and routing to the wrong handler.
+router.put('/read-all', requireAuth, async (req: Request, res: Response) => {
+  try {
+    let { classId, studentId } = req.body
+    if (req.user?.role === 'teacher' && classId) {
+      const ok = await enforceTeacherLegacyClassAccess(req, res, String(classId))
+      if (!ok) return
+    }
+    if (req.user?.role === 'child') {
+      classId = await getRequesterClassId(req.user.id)
+      studentId = req.user.id
+    }
+    if (req.user?.role === 'parent') {
+      const requestedStudentId = String(studentId || '')
+      if (!requestedStudentId || !(await canParentAccessStudent(req.user.id, requestedStudentId))) {
+        return res.status(403).json({ error: 'Insufficient permissions' })
+      }
+      studentId = requestedStudentId
+      classId = await resolveStudentClassId(requestedStudentId)
+    }
+    const where: Record<string, unknown> = { read: false }
+    if (classId) where.classId = String(classId)
+    if (studentId) where.fromId = { not: String(studentId) }
+    await prisma.message.updateMany({ where, data: { read: true } })
+    return res.json({ success: true })
+  } catch (err) {
+    console.error('readAll error:', err)
+    return res.status(500).json({ error: 'Failed to mark messages as read' })
+  }
+})
+
 // ── PUT /api/messages/:id/read ────────────────────────────────────────────────
 router.put('/:id/read', requireAuth, async (req: Request, res: Response) => {
   try {
@@ -346,37 +377,6 @@ router.put('/:id/read', requireAuth, async (req: Request, res: Response) => {
   } catch (err) {
     console.error('markRead error:', err)
     return res.status(500).json({ error: 'Failed to mark message as read' })
-  }
-})
-
-// ── PUT /api/messages/read-all — mark all in a class as read ─────────────────
-router.put('/read-all', requireAuth, async (req: Request, res: Response) => {
-  try {
-    let { classId, studentId } = req.body
-    if (req.user?.role === 'teacher' && classId) {
-      const ok = await enforceTeacherLegacyClassAccess(req, res, String(classId))
-      if (!ok) return
-    }
-    if (req.user?.role === 'child') {
-      classId = await getRequesterClassId(req.user.id)
-      studentId = req.user.id
-    }
-    if (req.user?.role === 'parent') {
-      const requestedStudentId = String(studentId || '')
-      if (!requestedStudentId || !(await canParentAccessStudent(req.user.id, requestedStudentId))) {
-        return res.status(403).json({ error: 'Insufficient permissions' })
-      }
-      studentId = requestedStudentId
-      classId = await resolveStudentClassId(requestedStudentId)
-    }
-    const where: Record<string, unknown> = { read: false }
-    if (classId) where.classId = String(classId)
-    if (studentId) where.fromId = { not: String(studentId) }
-    await prisma.message.updateMany({ where, data: { read: true } })
-    return res.json({ success: true })
-  } catch (err) {
-    console.error('readAll error:', err)
-    return res.status(500).json({ error: 'Failed to mark messages as read' })
   }
 })
 
@@ -708,6 +708,27 @@ router.post('/threads', requireAuth, async (req: Request, res: Response) => {
         const ok = await canUserDirectMessageTarget(req.user!.id, req.user!.role, targetUserId)
         if (!ok) return res.status(403).json({ error: 'Insufficient permissions for direct recipient' })
       }
+
+      // Deduplicate: return existing direct thread if one already exists for this pair
+      const existingThread = await prisma.messageThread.findFirst({
+        where: {
+          scopeType: 'direct',
+          AND: participants.map((userId) => ({
+            participants: { some: { userId } },
+          })),
+        },
+        include: {
+          participants: {
+            include: { user: { select: { id: true, displayName: true, avatar: true } } },
+          },
+        },
+      })
+      if (existingThread) {
+        // Verify participant count matches exactly (not a superset)
+        if (existingThread.participants.length === participants.length) {
+          return res.status(200).json(existingThread)
+        }
+      }
     }
 
     const existingUsers = participants.length
@@ -795,6 +816,9 @@ router.post('/threads/:threadId/messages', requireAuth, async (req: Request, res
     if (!body || typeof body !== 'string') {
       return res.status(400).json({ error: 'Message body is required' })
     }
+    if (body.length > 10000) {
+      return res.status(400).json({ error: 'Message body must not exceed 10000 characters' })
+    }
     if (!kind || !['school_announcement', 'class_update', 'direct_message'].includes(String(kind))) {
       return res.status(400).json({ error: 'Invalid message kind' })
     }
@@ -859,16 +883,20 @@ router.post('/threads/:threadId/read', requireAuth, async (req: Request, res: Re
       select: { id: true },
       take: 500,
     })
+    const messageIds = messages.map((m) => m.id)
     const now = new Date()
-    await Promise.all(
-      messages.map((m) =>
-        prisma.messageReceipt.upsert({
-          where: { messageId_userId: { messageId: m.id, userId: canonicalUserId } },
-          update: { seenAt: now },
-          create: { messageId: m.id, userId: canonicalUserId, seenAt: now },
-        })
-      )
-    )
+
+    // Single createMany for new receipts + single updateMany for existing — avoids N+1
+    await prisma.$transaction([
+      prisma.messageReceipt.createMany({
+        data: messageIds.map((messageId) => ({ messageId, userId: canonicalUserId, seenAt: now })),
+        skipDuplicates: true,
+      }),
+      prisma.messageReceipt.updateMany({
+        where: { messageId: { in: messageIds }, userId: canonicalUserId },
+        data: { seenAt: now },
+      }),
+    ])
     return res.json({ success: true, count: messages.length })
   } catch (err) {
     console.error('mark thread read error:', err)
