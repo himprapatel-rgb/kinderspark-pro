@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
 import { MODS } from '@/lib/modules'
 import { updateProgress, saveAISession } from '@/lib/api'
-import { BookOpen, RefreshCw, Target } from 'lucide-react'
+import { RefreshCw, Target } from 'lucide-react'
+import { AppIcon } from '@/components/icons'
 import { playCorrect, playWrong, playComplete } from '@/lib/sounds'
 
 const ConfettiCanvas = dynamic(() => import('@/components/Confetti'), { ssr: false })
@@ -173,7 +174,7 @@ export default function WordMatchPage() {
             {[
             { label: `${QUESTIONS_PER_ROUND} rounds`, icon: <Target size={18} color="var(--app-accent)" /> },
             { label: `${STARS_PER_CORRECT}⭐ per hit`, icon: <span style={{ fontSize: 18 }}>⭐</span> },
-            { label: 'All topics', icon: <BookOpen size={18} color="var(--app-accent)" /> },
+            { label: 'All topics', icon: <AppIcon name="class" size={18} roleTone="child" decorative /> },
           ].map((s, i) => (
             <div
               key={i}

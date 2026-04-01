@@ -5,7 +5,8 @@ import { useAppStore as useStore } from '@/store/appStore'
 import { updateStudent } from '@/lib/api'
 import { SHOP_AVS, SHOP_THS } from '@/lib/modules'
 import { useToast } from '@/components/Toast'
-import { Palette, ShoppingBag, Smile } from 'lucide-react'
+import { Palette, Smile } from 'lucide-react'
+import { AppIcon } from '@/components/icons'
 
 export default function ShopPage() {
   const router = useRouter()
@@ -63,7 +64,7 @@ export default function ShopPage() {
       {/* Header */}
       <div className="m-3 rounded-3xl p-5 doodle-surface" style={{ background: 'linear-gradient(135deg, #F5A623, #E05252)' }}>
         <button onClick={() => router.push('/child')} className="text-white/85 font-bold text-sm mb-3 app-pressable">← Back</button>
-        <div className="text-2xl font-black inline-flex items-center gap-2"><ShoppingBag size={22} /> Star Shop</div>
+        <div className="text-2xl font-black inline-flex items-center gap-2"><AppIcon name="rewards" size="md" roleTone="child" decorative /> Star Shop</div>
         <div className="text-white/80 font-bold">You have <span className="font-black text-yellow-300">⭐ {stars}</span> stars</div>
       </div>
 

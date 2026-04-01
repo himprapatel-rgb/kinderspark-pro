@@ -3,7 +3,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
 import { getStudents } from '@/lib/api'
-import { Bot, Flame, Star, Trophy } from 'lucide-react'
+import { Flame } from 'lucide-react'
+import { AppIcon } from '@/components/icons'
 import KidAvatar from '@/components/KidAvatar'
 
 type SortBy = 'stars' | 'streak' | 'aiSessions'
@@ -208,9 +209,9 @@ export default function LeaderboardPage() {
                       {isMe ? `${s.name} (You)` : s.name}
                     </p>
                     <p className="text-[10px] app-muted font-bold inline-flex items-center gap-2">
-                      <span className="inline-flex items-center gap-1"><Star size={11} /> {s.stars}</span>
+                      <span className="inline-flex items-center gap-1"><AppIcon name="rewards" size={11} roleTone="child" decorative /> {s.stars}</span>
                       <span className="inline-flex items-center gap-1"><Flame size={11} /> {s.streak}d</span>
-                      <span className="inline-flex items-center gap-1"><Bot size={11} /> {s.aiSessions}</span>
+                      <span className="inline-flex items-center gap-1"><AppIcon name="aiTutor" size={11} roleTone="child" decorative /> {s.aiSessions}</span>
                     </p>
                   </div>
                   <span className="font-black text-sm" style={{ color: isMe ? 'var(--theme-color, #5B7FE8)' : 'var(--app-text-muted)' }}>
@@ -224,7 +225,7 @@ export default function LeaderboardPage() {
 
         {students.length === 0 && (
           <div className="text-center py-16">
-            <div className="text-5xl mb-3 inline-flex items-center justify-center sticker-bubble w-16 h-16"><Trophy size={30} color="var(--app-accent)" /></div>
+            <div className="text-5xl mb-3 inline-flex items-center justify-center sticker-bubble w-16 h-16"><AppIcon name="rewards" size="lg" roleTone="child" decorative /></div>
             <p className="app-muted font-bold">No students yet</p>
           </div>
         )}

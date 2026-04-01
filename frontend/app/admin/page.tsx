@@ -7,7 +7,7 @@ import DashboardSidebar from '@/components/DashboardSidebar'
 import TopBarActions from '@/components/TopBarActions'
 import WeatherChip from '@/components/WeatherChip'
 import { getAdminStats, getAdminLeaderboard, getClasses, getClassAnalytics, getPilotMetrics, getSchoolGraph } from '@/lib/api'
-import { BarChart3, BookOpen, GraduationCap, Settings, Sparkles, Trophy, UserRound, Users } from 'lucide-react'
+import { AppIcon } from '@/components/icons'
 import KidAvatar from '@/components/KidAvatar'
 
 export default function AdminPage() {
@@ -56,11 +56,11 @@ export default function AdminPage() {
   if (loading) return <Loading emoji="✨" text="Loading admin panel…" />
 
   const TABS = [
-    { label: 'Overview', icon: <BarChart3 size={14} /> },
-    { label: 'Leaderboard', icon: <Trophy size={14} /> },
-    { label: 'Classes', icon: <GraduationCap size={14} /> },
-    { label: 'AI Stats', icon: <Sparkles size={14} /> },
-    { label: 'School Graph', icon: <Users size={14} /> },
+    { label: 'Overview',     icon: <AppIcon name="reports"  size="xs" decorative /> },
+    { label: 'Leaderboard',  icon: <AppIcon name="rewards"  size="xs" decorative /> },
+    { label: 'Classes',      icon: <AppIcon name="school"   size="xs" decorative /> },
+    { label: 'AI Stats',     icon: <AppIcon name="aiTutor"  size="xs" decorative /> },
+    { label: 'School Graph', icon: <AppIcon name="students" size="xs" decorative /> },
   ]
   const medals = ['🥇', '🥈', '🥉']
   const needsAttention = classAnalytics
@@ -92,7 +92,7 @@ export default function AdminPage() {
           <div className="flex justify-between items-start">
             <div>
               <div className="text-xs font-bold app-muted mb-1">ADMIN PANEL</div>
-              <div className="text-2xl font-black flex items-center gap-2 text-white"><Settings size={20} /> {user?.name}</div>
+              <div className="text-2xl font-black flex items-center gap-2 text-white"><AppIcon name="settings" size="sm" decorative /> {user?.name}</div>
               <div className="text-sm font-bold app-muted">KinderSpark Pro Dashboard</div>
             </div>
             <div className="flex flex-col items-end gap-2">
@@ -104,10 +104,10 @@ export default function AdminPage() {
           {stats && (
             <div className="grid grid-cols-2 tablet:grid-cols-4 gap-3 mt-5">
               {[
-                { label: 'Classes', value: stats.totalClasses, icon: <GraduationCap size={16} />, color: '#5B7FE8' },
-                { label: 'Students', value: stats.totalStudents, icon: <Users size={16} />, color: '#4CAF6A' },
-                { label: 'Stars', value: (stats.totalStars || 0).toLocaleString(), icon: <Sparkles size={16} />, color: '#F5A623' },
-                { label: 'Lessons', value: stats.totalSyllabuses, icon: <BookOpen size={16} />, color: '#8B6CC1' },
+                { label: 'Classes',  value: stats.totalClasses, icon: <AppIcon name="school"   size="xs" roleTone="admin" decorative />, color: '#5B7FE8' },
+                { label: 'Students', value: stats.totalStudents, icon: <AppIcon name="students" size="xs" roleTone="admin" decorative />, color: '#4CAF6A' },
+                { label: 'Stars',    value: (stats.totalStars || 0).toLocaleString(), icon: <AppIcon name="rewards" size="xs" roleTone="admin" decorative />, color: '#F5A623' },
+                { label: 'Lessons',  value: stats.totalSyllabuses, icon: <AppIcon name="class"  size="xs" roleTone="admin" decorative />, color: '#8B6CC1' },
               ].map(s => (
                 <div key={s.label} className="rounded-2xl p-3 text-center" style={{ background: s.color + '22', border: `1px solid ${s.color}33` }}>
                   <div className="text-xl inline-flex justify-center">{s.icon}</div>

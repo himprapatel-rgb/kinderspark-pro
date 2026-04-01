@@ -11,7 +11,8 @@ import {
   setVoiceEnabled, isVoiceEnabled, stopSpeaking,
 } from '@/lib/speech'
 import { getTodayMood, gentleMode } from '@/lib/emotion'
-import { Bot, Home, RotateCcw, Volume2, VolumeX, X, Mic } from 'lucide-react'
+import { RotateCcw, Volume2, VolumeX, X, Mic } from 'lucide-react'
+import { AppIcon } from '@/components/icons'
 import { playCorrect, playWrong, playComplete, playBadge } from '@/lib/sounds'
 
 const ConfettiCanvas = dynamic(() => import('@/components/Confetti'), { ssr: false })
@@ -291,7 +292,7 @@ export default function TutorPage() {
         <div className="px-5 pb-10">
           <div className="text-center mb-6">
             <div className="text-6xl mb-3 inline-flex items-center justify-center w-20 h-20 sticker-bubble">
-              <Bot size={38} color="var(--app-accent)" />
+              <AppIcon name="aiTutor" size={38} roleTone="child" decorative />
             </div>
             <div className="text-2xl font-black">AI Tutor Sparkle</div>
             <div className="app-muted font-bold">Choose a topic to practice!</div>
@@ -403,7 +404,7 @@ export default function TutorPage() {
           </button>
           <button onClick={() => { stopSpeaking(); router.push('/child') }}
             className="flex-1 py-3 rounded-2xl font-black bg-white/20 inline-flex items-center justify-center gap-2 app-pressable">
-            <Home size={16} /> Home
+            <AppIcon name="home" size="sm" roleTone="child" decorative /> Home
           </button>
         </div>
       </div>
@@ -461,7 +462,7 @@ export default function TutorPage() {
       {/* Sparkle speech bubble with repeat button */}
       <div className="px-4 mb-4 flex gap-3 items-start">
         <div className="text-4xl sticker-bubble w-12 h-12 flex items-center justify-center">
-          <Bot size={24} color="var(--app-accent)" />
+          <AppIcon name="aiTutor" size="md" roleTone="child" decorative />
         </div>
         <div className="flex-1 rounded-2xl rounded-tl-none p-3 relative" style={{ background: 'var(--app-surface)', border: '1px solid rgba(120,120,140,0.2)' }}>
           <div className="font-bold text-sm" style={{ color: 'rgba(32,36,52,0.9)' }}>

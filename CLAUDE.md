@@ -132,7 +132,7 @@ kinderspark-pro/
     │   ├── (auth)/setup/          ← initial school setup page
     │   ├── pin/                   ← PIN pad entry
     │   ├── register/              ← new user registration
-    │   ├── child/                 ← child dashboard + 16 sub-routes
+    │   ├── child/                 ← child dashboard + 17 sub-routes
     │   │   (learn, learn/[modId], lesson/[id], tutor, story, poem, draw, trace,
     │   │    match, count, shop, leaderboard, settings, messages, profile, avatar-builder)
     │   ├── teacher/               ← teacher dashboard + 7 sub-routes
@@ -145,7 +145,7 @@ kinderspark-pro/
     │   ├── privacy/               ← privacy policy page
     │   ├── terms/                 ← terms of service
     │   └── dashboard/agents/      ← agent control room
-    ├── components/                ← 37 UI components (AccessibilityProvider, ActivityFeed, AiTutor,
+    ├── components/                ← 38 UI components (AccessibilityProvider, ActivityFeed, AiTutor,
     │                                AppErrorBoundary, ClientRoot, Confetti, DashboardSidebar,
     │                                DiagnosticsPanel, DrawingCanvas, EmotionalBuddyCard, KidAvatar,
     │                                LanguageSelector, LocationCard, MissionCelebration, NativeBridge,
@@ -154,10 +154,10 @@ kinderspark-pro/
     │                                SoundSettings, SyllabusBuilder, TeacherOnboarding, ThemeCustomizer,
     │                                Toast, TopBarActions, UIStates, WeatherChip + lesson/LessonCard,
     │                                ui/Button, ui/Modal, ui/TabBar, ui/Toast)
-    │   └── icons/                 ← AppIcon.tsx (primary API), StoryIcons.tsx (SVG library), types.ts, iconRegistry.ts, spec.md
+    │   └── icons/                 ← AppIcon.tsx (primary API), StoryIcons.tsx (SVG library), index.ts, types.ts, iconRegistry.ts, spec.md
     ├── hooks/                     ← useLocation, useNativeFeatures, usePullToRefresh
     ├── lib/
-    │   ├── api.ts                 ← all API fetch calls (106 exported functions; CSRF header auto-injected)
+    │   ├── api.ts                 ← all API fetch calls (109 exported functions; CSRF header auto-injected)
     │   ├── modules.ts             ← 18 built-in learning modules + shop items
     │   ├── i18n.ts                ← 10-language translations (auto-generated)
     │   ├── speech.ts              ← text-to-speech (Web Speech API)
@@ -647,6 +647,17 @@ Full audit performed. All role dashboards (admin, teacher, parent, principal) st
 - `frontend/app/parent/page.tsx` — 5× `rounded-2xl p-4` with surface/border → `.app-card`; `#5B7FE8` → `var(--role-teacher)`; `#4CAF6A` → `var(--app-success)` / `var(--app-success-soft)`
 - `frontend/app/child/shop/page.tsx` — custom useState toast → `useToast()` from `@/components/Toast`
 
+### AppIcon Migration Status (2026-04-01)
+
+Complete 4-phase rollout of the unified `AppIcon` icon system:
+
+- **Phase 1** — Core system built: `AppIcon.tsx` (wrapper), `StoryIcons.tsx` (16 SVGs), `types.ts`, `iconRegistry.ts`, `index.ts`, `spec.md`. Added 16th icon: `settings`. All 5 roleTones + warning/error states supported.
+- **Phase 2** — Role dashboards migrated: `teacher/page.tsx`, `admin/page.tsx`, `principal/page.tsx`, `teacher/reports/page.tsx`, `parent/page.tsx`, `DashboardSidebar.tsx`, `ParentSidebar.tsx`
+- **Phase 3** — Child pages migrated: `child/page.tsx`, `child/messages`, `child/count`, `child/match`, `child/story`, `child/tutor`, `child/lesson/[id]`, `child/settings`, `child/shop`, `child/learn`, `child/leaderboard`
+- **Phase 4** — Components: `TeacherOnboarding.tsx` (removed dead Lucide imports), `EmotionalBuddyCard.tsx` (Sparkles→aiTutor)
+
+**22 files** now import AppIcon. Remaining Lucide icons are intentional (no AppIcon equivalent): `Volume2/VolumeX, ChevronLeft/Right, RotateCcw, RefreshCw, Flame, Bell, Camera, Printer, Download, Eye, Globe, Monitor, Timer, User, LogOut, Mic, X, Map, Goal, TrendingUp, AlertTriangle, CheckCircle2, Crown, ArrowRight, Feather, Hash, Palette, PencilLine, PlayCircle, Share2, Shapes, ShoppingBag, UserRound, Heart, Activity, MapPin, Shield, Music, Send`
+
 ### Still uses inline styles intentionally
 - `AiTutor.tsx` — glass cards inside gradient sections; dynamic `t.color` theme variables → intentional
 - `parent/page.tsx` — some rgba() with opacity values where CSS vars don't cover partial transparency → acceptable
@@ -688,7 +699,7 @@ Located in `backend/src/__tests__/`:
 
 ---
 
-## Known Gaps (as of 2026-04-01)
+## Known Gaps (as of 2026-04-02)
 
 - iOS app exists (Capacitor Xcode project) but not yet in App Store
 - `SENDGRID_API_KEY`, `CLOUDINARY_CLOUD_NAME`+`CLOUDINARY_API_KEY`+`CLOUDINARY_API_SECRET`, `OPENAI_API_KEY` need to be set on Railway for those features to work

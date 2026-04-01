@@ -13,7 +13,8 @@ import {
   estimateLessonMinutes,
 } from '@/lib/learnPath'
 import { speak } from '@/lib/speech'
-import { Home, RotateCcw, Volume2, Map, Sparkles } from 'lucide-react'
+import { RotateCcw, Volume2, Map } from 'lucide-react'
+import { AppIcon } from '@/components/icons'
 import { playComplete, playSwipe, playStar } from '@/lib/sounds'
 
 const ConfettiCanvas = dynamic(() => import('@/components/Confetti'), { ssr: false })
@@ -171,7 +172,7 @@ export default function LessonPage() {
                 boxShadow: '0 6px 20px rgba(245,183,49,0.35)',
               }}
             >
-              <Sparkles size={18} />
+              <AppIcon name="aiTutor" size={18} roleTone="child" decorative />
               {t('learn_next_lesson')}: {nextModule.icon} {nextModule.title}
             </button>
           )}
@@ -189,7 +190,7 @@ export default function LessonPage() {
               onClick={() => router.push('/child')}
               className="flex-1 min-h-11 py-3 rounded-2xl font-black text-sm inline-flex items-center justify-center gap-2 app-pressable bg-white/12"
             >
-              <Home size={16} /> Home
+              <AppIcon name="home" size="sm" roleTone="child" decorative /> Home
             </button>
           </div>
           <button

@@ -5,7 +5,8 @@ import { useAppStore } from '@/store/appStore'
 import { Loading } from '@/components/UIStates'
 import DashboardSidebar from '@/components/DashboardSidebar'
 import { getAdminStats, getClasses, getClassAnalytics } from '@/lib/api'
-import { BarChart3, BookOpen, GraduationCap, Settings, Users, TrendingUp, AlertTriangle, CheckCircle2, Crown } from 'lucide-react'
+import { TrendingUp, AlertTriangle, CheckCircle2, Crown } from 'lucide-react'
+import { AppIcon } from '@/components/icons'
 
 export default function PrincipalPage() {
   const router = useRouter()
@@ -66,9 +67,9 @@ export default function PrincipalPage() {
     .filter((ca: any) => ca.flags.length > 0)
 
   const TABS = [
-    { label: 'Overview',  icon: <BarChart3 size={13} /> },
-    { label: 'Classes',   icon: <GraduationCap size={13} /> },
-    { label: 'Teachers',  icon: <Users size={13} /> },
+    { label: 'Overview',  icon: <AppIcon name="reports"  size="xs" roleTone="principal" decorative /> },
+    { label: 'Classes',   icon: <AppIcon name="school"   size="xs" roleTone="principal" decorative /> },
+    { label: 'Teachers',  icon: <AppIcon name="teacher"  size="xs" roleTone="principal" decorative /> },
   ]
 
   const SIDEBAR_ITEMS = [
@@ -114,7 +115,7 @@ export default function PrincipalPage() {
               className="w-10 h-10 rounded-2xl flex items-center justify-center app-pressable app-btn-glass"
               aria-label="Profile"
             >
-              <Settings size={16} className="text-white" />
+              <AppIcon name="settings" size="xs" decorative />
             </button>
           </div>
 
@@ -194,8 +195,8 @@ export default function PrincipalPage() {
                 <div className="grid grid-cols-2 gap-3">
                   {[
                     { label: 'Avg HW Completion', value: `${Math.round(avgCompletion)}%`, color: 'var(--app-success)', icon: <CheckCircle2 size={16} /> },
-                    { label: 'Total AI Sessions',  value: (stats?.totalAISessions ?? 0).toLocaleString(), color: 'var(--role-admin)', icon: <BookOpen size={16} /> },
-                    { label: 'Active Students',    value: (stats?.activeStudents ?? totalStudents).toLocaleString(), color: 'var(--app-accent)',  icon: <Users size={16} /> },
+                    { label: 'Total AI Sessions',  value: (stats?.totalAISessions ?? 0).toLocaleString(), color: 'var(--role-admin)', icon: <AppIcon name="aiTutor"  size="xs" roleTone="principal" decorative /> },
+                    { label: 'Active Students',    value: (stats?.activeStudents ?? totalStudents).toLocaleString(), color: 'var(--app-accent)', icon: <AppIcon name="students" size="xs" roleTone="principal" decorative /> },
                     { label: 'Avg Accuracy',       value: `${stats?.avgAccuracy ?? 0}%`, color: 'var(--role-teacher)', icon: <TrendingUp size={16} /> },
                   ].map(m => (
                     <div key={m.label} className="app-card">

@@ -19,14 +19,14 @@ import {
 } from '@/lib/api'
 import { MODS } from '@/lib/modules'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
-import { BarChart3, Users, MessageSquare, Download } from 'lucide-react'
+import { Download } from 'lucide-react'
+import { AppIcon } from '@/components/icons'
 import { useToast } from '@/components/Toast'
 import PageTransition from '@/components/PageTransition'
 import { usePullToRefresh, PullIndicator } from '@/hooks/usePullToRefresh'
 import { hapticTap, hapticSuccess, nativeShare } from '@/lib/capacitor'
 import { useTranslation } from '@/hooks/useTranslation'
 import KidAvatar from '@/components/KidAvatar'
-import { StoryIcon } from '@/components/icons'
 
 const ProgressCharts = dynamic(() => import('@/components/ProgressCharts'), {
   ssr: false,
@@ -572,9 +572,9 @@ export default function ParentPage() {
   if (loading) return <Loading emoji="✨" text="Loading your child's data…" />
 
   const TABS = [
-    { label: 'Home', idx: 0, icon: <StoryIcon name="home" size={15} interactive={false} /> },
-    { label: 'Progress', idx: 1, icon: <StoryIcon name="progress" size={15} interactive={false} /> },
-    { label: 'Messages', idx: 2, icon: <StoryIcon name="messages" size={15} interactive={false} /> },
+    { label: 'Home',     idx: 0, icon: <AppIcon name="home"     size="xs" roleTone="parent" decorative /> },
+    { label: 'Progress', idx: 1, icon: <AppIcon name="progress" size="xs" roleTone="parent" decorative /> },
+    { label: 'Messages', idx: 2, icon: <AppIcon name="messages" size="xs" roleTone="parent" decorative /> },
   ]
 
   return (
@@ -611,7 +611,7 @@ export default function ParentPage() {
               <div className="absolute right-8 bottom-0 w-24 h-24 rounded-full bg-white/3 translate-y-8" />
               <div className="flex justify-between items-start relative">
                 <div>
-                  <div className="text-xs font-bold app-muted mb-1 inline-flex items-center gap-1"><Users size={12} /> Parent View</div>
+                  <div className="text-xs font-bold app-muted mb-1 inline-flex items-center gap-1"><AppIcon name="parent" size={12} roleTone="parent" decorative /> Parent View</div>
                   <div className="text-2xl font-black inline-flex items-center gap-2">
                     <KidAvatar
                       studentId={student?.id}
@@ -885,7 +885,7 @@ export default function ParentPage() {
             {/* Push notification opt-in banner */}
             {notifPermission !== 'granted' && notifPermission !== 'denied' && (
               <div className="mx-3 mb-4 rounded-2xl p-4 flex items-center gap-3" style={{ background: 'linear-gradient(135deg, rgba(48,209,88,0.06), rgba(67,198,172,0.04))', border: '1px solid #4CAF6A40' }}>
-                <div className="text-2xl shrink-0"><StoryIcon name="messages" size={22} state="hover" /></div>
+                <div className="text-2xl shrink-0"><AppIcon name="messages" size={22} roleTone="parent" decorative /></div>
                 <div className="flex-1 min-w-0">
                   <div className="font-black text-sm">Enable Homework Alerts</div>
                   <div className="text-xs font-bold app-muted">Get notified when homework is due</div>
@@ -968,7 +968,7 @@ export default function ParentPage() {
         {tab === 1 && (
           <div className="px-3 pt-2">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-black text-lg inline-flex items-center gap-2"><BarChart3 size={18} /> Learning Progress</h2>
+              <h2 className="font-black text-lg inline-flex items-center gap-2"><AppIcon name="progress" size="sm" roleTone="parent" decorative /> Learning Progress</h2>
               <button
                 onClick={() => window.print()}
                 className="px-3 py-1.5 rounded-xl text-xs font-black app-pressable inline-flex items-center gap-1.5"
@@ -1098,7 +1098,7 @@ export default function ParentPage() {
         {/* ── MESSAGES TAB ──────────────────────────────────────── */}
         {tab === 2 && (
           <div className="px-3 pt-2">
-            <h2 className="font-black text-lg mb-4 inline-flex items-center gap-2"><MessageSquare size={16} /> Messages</h2>
+            <h2 className="font-black text-lg mb-4 inline-flex items-center gap-2"><AppIcon name="messages" size="sm" roleTone="parent" decorative /> Messages</h2>
             <div className="app-card mb-3">
               <div className="font-black text-sm mb-2">Send by Profile ID</div>
               <div className="space-y-2">

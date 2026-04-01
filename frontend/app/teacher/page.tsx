@@ -6,7 +6,8 @@ import { Loading, InlineEmpty } from '@/components/UIStates'
 import DashboardSidebar from '@/components/DashboardSidebar'
 import TopBarActions from '@/components/TopBarActions'
 import WeatherChip from '@/components/WeatherChip'
-import { StoryIcon } from '@/components/icons'
+import { Bell, Camera } from 'lucide-react'
+import { AppIcon } from '@/components/icons'
 import PhotoCapture from '@/components/PhotoCapture'
 import { useToast } from '@/components/Toast'
 import PageTransition from '@/components/PageTransition'
@@ -634,12 +635,12 @@ export default function TeacherDashboard() {
   }
 
   const TABS: { id: Tab; icon: React.ReactNode; label: string }[] = [
-    { id: 'home',       icon: <StoryIcon name="home" size={14} roleTone="teacher" density="compact" />,       label: 'Home' },
-    { id: 'students',   icon: <StoryIcon name="students" size={14} roleTone="teacher" density="compact" />,   label: 'Students' },
-    { id: 'homework',   icon: <StoryIcon name="homework" size={14} roleTone="teacher" density="compact" />,   label: 'Homework' },
-    { id: 'attendance', icon: <StoryIcon name="attendance" size={14} roleTone="teacher" density="compact" />, label: 'Attend' },
-    { id: 'syllabus',   icon: <StoryIcon name="class" size={14} roleTone="teacher" density="compact" />,      label: 'Syllabus' },
-    { id: 'messages',   icon: <StoryIcon name="messages" size={14} roleTone="teacher" density="compact" />,   label: 'Messages' },
+    { id: 'home',       icon: <AppIcon name="home"       size="xs" roleTone="teacher" decorative />, label: 'Home' },
+    { id: 'students',   icon: <AppIcon name="students"   size="xs" roleTone="teacher" decorative />, label: 'Students' },
+    { id: 'homework',   icon: <AppIcon name="homework"   size="xs" roleTone="teacher" decorative />, label: 'Homework' },
+    { id: 'attendance', icon: <AppIcon name="attendance" size="xs" roleTone="teacher" decorative />, label: 'Attend' },
+    { id: 'syllabus',   icon: <AppIcon name="class"      size="xs" roleTone="teacher" decorative />, label: 'Syllabus' },
+    { id: 'messages',   icon: <AppIcon name="messages"   size="xs" roleTone="teacher" decorative />, label: 'Messages' },
   ]
 
   const loadAttendance = async () => {
@@ -742,7 +743,7 @@ export default function TeacherDashboard() {
                   onClick={() => router.push('/teacher/reports')}
                   className="flex items-center justify-center rounded-xl h-10 px-3 gap-1.5 text-sm font-bold active:scale-95 transition-all app-pressable app-btn-glass"
                 >
-                  <StoryIcon name="reports" size={15} roleTone="teacher" density="compact" /> <span className="hidden sm:inline text-xs">Report</span>
+                  <AppIcon name="reports" size="xs" roleTone="teacher" decorative /> <span className="hidden sm:inline text-xs">Report</span>
                 </button>
               }
             />
@@ -832,7 +833,7 @@ export default function TeacherDashboard() {
                       className="rounded-xl px-3 py-3 text-left app-pressable"
                       style={{ background: 'rgba(255,69,58,0.15)', border: '1px solid rgba(255,69,58,0.3)' }}
                     >
-                      <div className="text-lg mb-1"><StoryIcon name="drawing" size={18} roleTone="teacher" density="compact" /></div>
+                      <div className="text-lg mb-1"><Camera size={18} /></div>
                       <div className="text-xs font-black">Share Activity 📸</div>
                     </button>
                   </div>
@@ -841,10 +842,10 @@ export default function TeacherDashboard() {
                 {/* Rich Stats Row */}
                 <div className="grid grid-cols-2 gap-3 tablet:grid-cols-4">
                   {[
-                    { label: 'Students', value: classStats?.totalStudents ?? students.length, icon: <StoryIcon name="students" size={14} roleTone="teacher" density="compact" />, color: '#5B7FE8' },
-                    { label: 'HW Done', value: `${classStats?.avgHwCompletion ?? 0}%`, icon: <StoryIcon name="homework" size={14} roleTone="teacher" density="compact" />, color: '#F5A623' },
-                    { label: 'Total Stars', value: classStats?.totalStars ?? students.reduce((a: number, s: any) => a + s.stars, 0), icon: <StoryIcon name="reports" size={14} roleTone="teacher" density="compact" />, color: '#F5B731' },
-                    { label: 'AI Sessions', value: classStats?.totalAISessions ?? 0, icon: <StoryIcon name="aiTutor" size={14} roleTone="teacher" density="compact" />, color: '#8B6CC1' },
+                    { label: 'Students',   value: classStats?.totalStudents ?? students.length, icon: <AppIcon name="students" size="xs" roleTone="teacher" decorative />, color: '#5B7FE8' },
+                    { label: 'HW Done',    value: `${classStats?.avgHwCompletion ?? 0}%`, icon: <AppIcon name="homework" size="xs" roleTone="teacher" decorative />, color: '#F5A623' },
+                    { label: 'Total Stars', value: classStats?.totalStars ?? students.reduce((a: number, s: any) => a + s.stars, 0), icon: <AppIcon name="rewards" size="xs" roleTone="teacher" decorative />, color: '#F5B731' },
+                    { label: 'AI Sessions', value: classStats?.totalAISessions ?? 0, icon: <AppIcon name="aiTutor" size="xs" roleTone="teacher" decorative />, color: '#8B6CC1' },
                   ].map(s => (
                     <div key={s.label} className="rounded-2xl p-4" style={{ background: s.color + '18', border: `1px solid ${s.color}33` }}>
                       <div className="text-2xl mb-1">{s.icon}</div>
@@ -997,7 +998,7 @@ export default function TeacherDashboard() {
                                   className="text-[11px] font-black px-2.5 py-1.5 rounded-xl app-pressable"
                                   style={{ background: 'rgba(91,127,232,0.16)', color: '#5B7FE8', border: '1px solid rgba(91,127,232,0.32)' }}
                                 >
-                                  <span className="inline-flex items-center gap-1"><StoryIcon name="messages" size={12} roleTone="teacher" density="compact" /> Remind Class</span>
+                                  <span className="inline-flex items-center gap-1"><Bell size={12} /> Remind Class</span>
                                 </button>
                               </div>
                             </div>

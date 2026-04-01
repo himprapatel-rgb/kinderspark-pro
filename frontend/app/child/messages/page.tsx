@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { MessageSquare } from 'lucide-react'
+import { AppIcon } from '@/components/icons'
 import { useAppStore } from '@/store/appStore'
 import { InlineEmpty } from '@/components/UIStates'
 import {
@@ -85,7 +85,7 @@ export default function ChildMessagesPage() {
     <div className="min-h-screen app-container pb-24" style={{ background: 'var(--app-bg)' }}>
       <div className="px-4 pt-10 pb-3 flex items-center gap-2">
         <button type="button" onClick={() => router.back()} className="w-9 h-9 rounded-xl app-pressable" style={{ background: 'var(--app-surface-soft)' }}>←</button>
-        <h1 className="font-black text-lg inline-flex items-center gap-2"><MessageSquare size={16} /> Messages</h1>
+        <h1 className="font-black text-lg inline-flex items-center gap-2"><AppIcon name="messages" size="sm" roleTone="child" decorative /> Messages</h1>
       </div>
 
       <div className="px-3 space-y-3">

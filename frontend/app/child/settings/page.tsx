@@ -7,7 +7,8 @@ import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { useTranslation } from '@/hooks/useTranslation'
 import DiagnosticsPanel from '@/components/DiagnosticsPanel'
 import PrivacyGeofenceCard from '@/components/Settings/Privacy'
-import { Bell, Eye, Globe, Monitor, Settings, Timer, User, LogOut, Volume2 } from 'lucide-react'
+import { Bell, Eye, Globe, Monitor, Timer, User, LogOut, Volume2 } from 'lucide-react'
+import { AppIcon } from '@/components/icons'
 import { getVoiceProfile, setVoiceEnabled, setVoiceProfile, speak } from '@/lib/speech'
 import KidAvatar from '@/components/KidAvatar'
 
@@ -69,7 +70,7 @@ export default function SettingsPage() {
         <button onClick={() => router.push('/child')} className="text-white/80 font-bold mb-3 flex items-center gap-1 app-pressable">
           ← Back
         </button>
-        <div className="text-2xl font-black text-white flex items-center gap-2"><Settings size={22} /> Settings</div>
+        <div className="text-2xl font-black text-white flex items-center gap-2"><AppIcon name="settings" size="md" roleTone="child" decorative /> Settings</div>
         <div className="text-white/80 font-bold text-sm mt-1">Accessibility & Preferences</div>
       </div>
 

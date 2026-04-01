@@ -1,10 +1,12 @@
 'use client'
-import { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore as useStore } from '@/store/appStore'
 import { getHomework, getSyllabuses, getProgress, getRecommendations, getStudentBadges, completeHomework, getDailyMission, completeDailyMission } from '@/lib/api'
 import { MODS } from '@/lib/modules'
 import { selectAdaptiveMission } from '@/lib/missionEngine'
+import { ArrowRight, Feather, Flame, Hash, Palette, PencilLine, PlayCircle, Share2, Shapes, ShoppingBag, UserRound } from 'lucide-react'
+import { AppIcon } from '@/components/icons'
 import PageTransition from '@/components/PageTransition'
 import MissionCelebration from '@/components/MissionCelebration'
 import EmotionalBuddyCard from '@/components/EmotionalBuddyCard'
@@ -256,18 +258,18 @@ export default function ChildPage() {
   const themeColor = 'var(--theme-color, #5B7FE8)'
   const themeSecondary = 'var(--theme-secondary, #8B6CC1)'
   const streak = student?.streak ?? 0
-  const ACTIVITY_ITEMS = [
-    { label: 'Draw', iconName: 'drawing' as const, path: '/child/draw', bg: 'rgba(245,166,35,0.18)', border: 'rgba(245,166,35,0.35)' },
-    { label: 'Trace', iconName: 'tracing' as const, path: '/child/trace', bg: 'rgba(76,175,106,0.18)', border: 'rgba(76,175,106,0.35)' },
-    { label: 'Match', iconName: 'class' as const, path: '/child/match', bg: 'rgba(91,127,232,0.16)', border: 'rgba(91,127,232,0.35)' },
-    { label: 'Count', iconName: 'progress' as const, path: '/child/count', bg: 'rgba(76,175,106,0.16)', border: 'rgba(76,175,106,0.35)' },
-    { label: 'Story', iconName: 'homework' as const, path: '/child/story', bg: 'rgba(139,108,193,0.16)', border: 'rgba(139,108,193,0.35)' },
-    { label: 'Poem', iconName: 'reports' as const, path: '/child/poem', bg: 'rgba(245,183,49,0.16)', border: 'rgba(245,183,49,0.35)' },
-    { label: 'Tutor', iconName: 'aiTutor' as const, path: '/child/tutor', bg: 'rgba(139,108,193,0.16)', border: 'rgba(139,108,193,0.35)' },
-    { label: 'Chat', iconName: 'messages' as const, path: '/child/messages', bg: 'rgba(76,170,223,0.18)', border: 'rgba(76,170,223,0.35)' },
-    { label: 'Rank', iconName: 'rewards' as const, path: '/child/leaderboard', bg: 'rgba(245,183,49,0.18)', border: 'rgba(245,183,49,0.35)' },
-    { label: 'Shop', iconName: 'school' as const, path: '/child/shop', bg: 'rgba(77,170,223,0.16)', border: 'rgba(77,170,223,0.35)' },
-  ] as const
+  const ACTIVITY_ITEMS: { label: string; icon?: React.ElementType | null; iconName?: import('@/components/icons').IconName; path: string; bg: string; border: string; iconColor: string }[] = [
+    { label: 'Draw', icon: Palette, path: '/child/draw', bg: 'rgba(245,166,35,0.18)', border: 'rgba(245,166,35,0.35)', iconColor: '#D4881A' },
+    { label: 'Trace', icon: PencilLine, path: '/child/trace', bg: 'rgba(76,175,106,0.18)', border: 'rgba(76,175,106,0.35)', iconColor: '#2F9E52' },
+    { label: 'Match', icon: Shapes, path: '/child/match', bg: 'rgba(91,127,232,0.16)', border: 'rgba(91,127,232,0.35)', iconColor: '#4A6ED0' },
+    { label: 'Count', icon: Hash, path: '/child/count', bg: 'rgba(76,175,106,0.16)', border: 'rgba(76,175,106,0.35)', iconColor: '#2F9E52' },
+    { label: 'Story', iconName: 'class', path: '/child/story', bg: 'rgba(139,108,193,0.16)', border: 'rgba(139,108,193,0.35)', iconColor: '#7C5AB6' },
+    { label: 'Poem', icon: Feather, path: '/child/poem', bg: 'rgba(245,183,49,0.16)', border: 'rgba(245,183,49,0.35)', iconColor: '#C79012' },
+    { label: 'Tutor', iconName: 'aiTutor', path: '/child/tutor', bg: 'rgba(139,108,193,0.16)', border: 'rgba(139,108,193,0.35)', iconColor: '#7C5AB6' },
+    { label: 'Chat', iconName: 'messages', path: '/child/messages', bg: 'rgba(76,170,223,0.18)', border: 'rgba(76,170,223,0.35)', iconColor: '#2E8FC2' },
+    { label: 'Rank', iconName: 'rewards', path: '/child/leaderboard', bg: 'rgba(245,183,49,0.18)', border: 'rgba(245,183,49,0.35)', iconColor: '#C79012' },
+    { label: 'Shop', icon: ShoppingBag, path: '/child/shop', bg: 'rgba(77,170,223,0.16)', border: 'rgba(77,170,223,0.35)', iconColor: '#2E8FC2' },
+  ]
 
   return (
     <div
@@ -324,7 +326,7 @@ export default function ChildPage() {
                 onClick={() => router.push('/child/shop')}
                 className="flex items-center justify-center rounded-xl h-10 px-3 gap-1.5 text-sm font-bold active:scale-95 transition-all app-pressable app-btn-glass"
               >
-                <StoryIcon name="school" size={15} roleTone="child" density="compact" /> <span className="text-xs">Shop</span>
+                <ShoppingBag size={15} /> <span className="text-xs">Shop</span>
               </button>
               <button
                 onClick={() => {
@@ -342,7 +344,7 @@ export default function ChildPage() {
                 className="flex items-center justify-center rounded-xl w-10 h-10 text-sm font-bold active:scale-95 transition-all app-pressable app-btn-glass"
                 title="Share Progress"
               >
-                <StoryIcon name="progress" size={16} roleTone="child" density="compact" />
+                <Share2 size={16} />
               </button>
               <button
                 type="button"
@@ -351,7 +353,7 @@ export default function ChildPage() {
                 title="Profile"
                 aria-label="Profile"
               >
-                <StoryIcon name="students" size={16} roleTone="child" density="compact" aria-hidden />
+                <UserRound size={16} aria-hidden />
               </button>
               <button
                 type="button"
@@ -360,7 +362,7 @@ export default function ChildPage() {
                 title="Settings"
                 aria-label="Settings"
               >
-                <StoryIcon name="class" size={16} roleTone="child" density="compact" aria-hidden />
+                <AppIcon name="settings" size="sm" roleTone="child" decorative />
               </button>
             </div>
           </div>
@@ -372,7 +374,7 @@ export default function ChildPage() {
               className="flex-1 rounded-2xl py-2.5 px-3 flex items-center gap-2"
               style={{ background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.25)' }}
             >
-              <span className="w-8 h-8 flex items-center justify-center sticker-bubble" style={{ background: 'rgba(245,183,49,0.22)', transform: 'rotate(-6deg)' }}><StoryIcon name="rewards" size={16} roleTone="child" density="compact" /></span>
+              <span className="w-8 h-8 flex items-center justify-center sticker-bubble" style={{ background: 'rgba(245,183,49,0.22)', transform: 'rotate(-6deg)' }}><AppIcon name="rewards" size="sm" roleTone="child" decorative /></span>
               <div>
                 <p className="text-yellow-200 font-black text-base leading-none">{(student?.stars ?? 0).toLocaleString()}</p>
                 <p className="text-[10px] font-bold app-muted">Stars</p>
@@ -388,7 +390,7 @@ export default function ChildPage() {
               }}
             >
               <span className="w-8 h-8 flex items-center justify-center sticker-bubble" style={{ background: streak > 0 ? 'rgba(224,82,82,0.22)' : 'rgba(120,120,140,0.18)', transform: 'rotate(5deg)' }}>
-                <StoryIcon name="progress" size={16} roleTone="child" density="compact" style={{ opacity: streak > 0 ? 1 : 0.55 }} />
+                <Flame size={16} style={{ color: streak > 0 ? '#E05252' : '#7C8296' }} />
               </span>
               <div>
                 <p className="font-black text-base leading-none">{streak}</p>
@@ -401,7 +403,7 @@ export default function ChildPage() {
               className="flex-1 rounded-2xl py-2.5 px-3 flex items-center gap-2"
               style={{ background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.25)' }}
             >
-              <span className="w-8 h-8 flex items-center justify-center sticker-bubble" style={{ background: 'rgba(139,108,193,0.22)', transform: 'rotate(-4deg)' }}><StoryIcon name="rewards" size={16} roleTone="child" density="compact" /></span>
+              <span className="w-8 h-8 flex items-center justify-center sticker-bubble" style={{ background: 'rgba(139,108,193,0.22)', transform: 'rotate(-4deg)' }}><AppIcon name="rewards" size="sm" roleTone="child" decorative /></span>
               <div>
                 <p className="font-black text-base leading-none">Lv {student?.aiBestLevel ?? 1}</p>
                 <p className="text-[10px] font-bold app-muted">Level</p>
@@ -435,7 +437,7 @@ export default function ChildPage() {
               className="mt-3 w-full rounded-xl py-3 px-3 font-black text-sm flex items-center justify-center gap-2 app-pressable animate-sparkle-on-hover"
               style={{ background: 'linear-gradient(135deg, var(--app-gold), var(--app-warning))', color: '#2B1F10' }}
             >
-              <StoryIcon name="aiTutor" size={16} roleTone="child" density="compact" className="animate-bob" />
+              <PlayCircle size={16} className="animate-bob" />
               Continue Learning
             </button>
             <div className="mt-2 rounded-xl px-3 py-2 flex items-center justify-between" style={{ background: 'rgba(255,255,255,0.14)' }}>
@@ -444,7 +446,7 @@ export default function ChildPage() {
                 <p className="text-xs font-black truncate">{startTodayTitle}</p>
                 <p className="text-[10px] app-muted font-bold">{nextTaskMeta}</p>
               </div>
-              <span className="text-white/85 shrink-0 text-sm">›</span>
+              <ArrowRight size={14} className="text-white/85 shrink-0" />
             </div>
           </div>
         </div>
@@ -519,7 +521,7 @@ export default function ChildPage() {
         {/* Imported "learning path" pattern: clear 3-step journey */}
         <div className="rounded-2xl p-3.5" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
           <div className="flex items-center justify-between mb-2">
-            <h2 className="font-black text-sm inline-flex items-center gap-2"><StoryIcon name="progress" size={14} roleTone="child" density="compact" /> SparkPath Today</h2>
+            <h2 className="font-black text-sm inline-flex items-center gap-2"><AppIcon name="aiTutor" size={14} roleTone="child" decorative /> SparkPath Today</h2>
             <span className="text-[10px] font-black app-muted">10-10-5 loop</span>
           </div>
           <div className="grid grid-cols-3 gap-2">
@@ -540,7 +542,7 @@ export default function ChildPage() {
 
         {/* ── Today zone ── */}
         <div className="space-y-4">
-          <h2 className="font-black text-base mb-3 inline-flex items-center gap-2"><StoryIcon name="progress" size={16} roleTone="child" density="compact" /> Today&apos;s Next Task</h2>
+          <h2 className="font-black text-base mb-3 inline-flex items-center gap-2"><AppIcon name="aiTutor" size="sm" roleTone="child" decorative /> Today&apos;s Next Task</h2>
 
         {/* ── Homework Alert ── */}
         {pendingHW.length > 0 && (
@@ -677,7 +679,7 @@ export default function ChildPage() {
               🤖
             </div>
             <div className="flex-1">
-              <p className="font-black text-lg leading-tight inline-flex items-center gap-2"><StoryIcon name="aiTutor" size={18} roleTone="child" density="compact" /> AI Tutor Sparkle</p>
+              <p className="font-black text-lg leading-tight inline-flex items-center gap-2"><AppIcon name="aiTutor" size={18} roleTone="child" decorative /> AI Tutor Sparkle</p>
               <p className="text-sm app-muted font-bold">Practice topics &amp; earn stars!</p>
               {(student?.aiSessions ?? 0) > 0 && (
                 <p className="text-purple-400 text-xs font-bold mt-0.5">
@@ -746,7 +748,7 @@ export default function ChildPage() {
 
         {/* ── Activities ── */}
         <div>
-          <h2 className="font-black text-base mb-3 inline-flex items-center gap-2"><StoryIcon name="class" size={16} roleTone="child" density="compact" /> Quick Activities</h2>
+          <h2 className="font-black text-base mb-3 inline-flex items-center gap-2"><PlayCircle size={16} /> Quick Activities</h2>
           <div className="grid grid-cols-3 tablet:grid-cols-6 gap-3">
             {ACTIVITY_ITEMS.map(a => (
               <button
@@ -756,7 +758,7 @@ export default function ChildPage() {
                 style={{ background: a.bg, border: `1.5px solid ${a.border}` }}
               >
                 <span className="w-12 h-12 flex items-center justify-center sticker-bubble animate-wiggle-slow" style={{ background: 'rgba(255,255,255,0.74)', transform: a.label.length % 2 ? 'rotate(-5deg)' : 'rotate(4deg)' }}>
-                  <StoryIcon name={a.iconName} size={22} roleTone="child" density="compact" />
+                  {a.iconName ? <AppIcon name={a.iconName} size={22} roleTone="child" decorative /> : a.icon ? <a.icon size={22} style={{ color: a.iconColor }} /> : null}
                 </span>
                 <span className="font-black text-xs">{a.label}</span>
               </button>
@@ -767,7 +769,7 @@ export default function ChildPage() {
         {/* ── My Lessons (syllabus) ── */}
         {syllabuses.length > 0 && (
           <div>
-            <h2 className="font-black text-base mb-3 inline-flex items-center gap-2"><StoryIcon name="homework" size={16} roleTone="child" density="compact" /> My Lessons</h2>
+            <h2 className="font-black text-base mb-3 inline-flex items-center gap-2"><AppIcon name="class" size="sm" roleTone="child" decorative /> My Lessons</h2>
             <div className="grid grid-cols-1 tablet:grid-cols-2 lg:grid-cols-3 gap-3">
               {syllabuses.map(syl => {
                 const done = progressMap[`syl_${syl.id}`] || 0
@@ -814,7 +816,7 @@ export default function ChildPage() {
         {/* ── All Lessons grid ── */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-black text-base inline-flex items-center gap-2"><StoryIcon name="school" size={16} roleTone="child" density="compact" /> Lessons Library</h2>
+            <h2 className="font-black text-base inline-flex items-center gap-2"><AppIcon name="class" size="sm" roleTone="child" decorative /> Lessons Library</h2>
             <button
               onClick={() => setShowAllMods(v => !v)}
               className="text-xs font-bold app-pressable px-3 py-1 rounded-full"
