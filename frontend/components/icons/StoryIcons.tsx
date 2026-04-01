@@ -43,19 +43,30 @@ export interface StoryIconProps extends Omit<SVGProps<SVGSVGElement>, 'name'> {
   name: StoryIconName
   size?: number
   tone?: Partial<Tone>
+  roleTone?: 'default' | 'parent' | 'teacher' | 'admin' | 'child'
+  density?: 'default' | 'compact'
   title?: string
   state?: 'idle' | 'hover' | 'active' | 'success' | 'disabled'
   interactive?: boolean
 }
 
-function withTone(tone?: Partial<Tone>): Tone {
-  return { ...DEFAULT_TONE, ...(tone || {}) }
+const ROLE_TONES: Record<NonNullable<StoryIconProps['roleTone']>, Partial<Tone>> = {
+  default: {},
+  parent: { mint: '#59C89C', warm: '#FFB27A', ink: '#4A3A66' },
+  teacher: { sky: '#8F8DFF', mint: '#7BC9FF', ink: '#45366E' },
+  admin: { sky: '#73B4FF', sun: '#FFC96C', ink: '#324A70' },
+  child: { sun: '#FFD86A', rose: '#FF8FA3', ink: '#4B3F72' },
+}
+
+function withTone(roleTone: NonNullable<StoryIconProps['roleTone']> = 'default', tone?: Partial<Tone>): Tone {
+  return { ...DEFAULT_TONE, ...ROLE_TONES[roleTone], ...(tone || {}) }
 }
 
 function SvgRoot({
   size = 24,
   state = 'idle',
   interactive = true,
+  density = 'default',
   className,
   children,
   title,
@@ -71,7 +82,7 @@ function SvgRoot({
       aria-label={title}
       aria-hidden={title ? undefined : true}
       data-icon-state={state}
-      className={`story-icon ${interactive ? 'story-icon--interactive' : ''} story-icon--${state}${className ? ` ${className}` : ''}`}
+      className={`story-icon ${interactive ? 'story-icon--interactive' : ''} story-icon--${state} story-icon--${density}${className ? ` ${className}` : ''}`}
       {...props}
     >
       {children}
@@ -79,21 +90,21 @@ function SvgRoot({
   )
 }
 
-function IconHome({ tone, ...props }: Omit<StoryIconProps, 'name'>) {
-  const c = withTone(tone)
+function IconHome({ tone, roleTone = 'default', density = 'default', ...props }: Omit<StoryIconProps, 'name'>) {
+  const c = withTone(roleTone, tone)
   return (
-    <SvgRoot {...props}>
+    <SvgRoot density={density} {...props}>
       <path d="M3.5 11.5L12 4.5L20.5 11.5" stroke={c.ink} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M6.5 10.8V19A1.5 1.5 0 0 0 8 20.5H16A1.5 1.5 0 0 0 17.5 19V10.8" fill={c.sky} />
       <rect x="10.1" y="14.2" width="3.8" height="6.3" rx="1" fill={c.warm} />
       <path d="M7.7 12.2C10.8 10.6 14 10.4 17.3 12.1" stroke={c.white} strokeOpacity=".38" strokeWidth="1.2" strokeLinecap="round" />
-      <circle className="story-home-glow" cx="16.7" cy="7.4" r="1.1" fill={c.sun} />
+      {density !== 'compact' && <circle className="story-home-glow" cx="16.7" cy="7.4" r="1.1" fill={c.sun} />}
     </SvgRoot>
   )
 }
 
-function IconClass({ tone, ...props }: Omit<StoryIconProps, 'name'>) {
-  const c = withTone(tone)
+function IconClass({ tone, roleTone = 'default', ...props }: Omit<StoryIconProps, 'name'>) {
+  const c = withTone(roleTone, tone)
   return (
     <SvgRoot {...props}>
       <rect x="3.5" y="5" width="17" height="13.5" rx="3" fill={c.mint} />
@@ -105,8 +116,8 @@ function IconClass({ tone, ...props }: Omit<StoryIconProps, 'name'>) {
   )
 }
 
-function IconStudents({ tone, ...props }: Omit<StoryIconProps, 'name'>) {
-  const c = withTone(tone)
+function IconStudents({ tone, roleTone = 'default', ...props }: Omit<StoryIconProps, 'name'>) {
+  const c = withTone(roleTone, tone)
   return (
     <SvgRoot {...props}>
       <circle cx="8" cy="9" r="2.3" fill={c.sun} />
@@ -118,8 +129,8 @@ function IconStudents({ tone, ...props }: Omit<StoryIconProps, 'name'>) {
   )
 }
 
-function IconTeacher({ tone, ...props }: Omit<StoryIconProps, 'name'>) {
-  const c = withTone(tone)
+function IconTeacher({ tone, roleTone = 'default', ...props }: Omit<StoryIconProps, 'name'>) {
+  const c = withTone(roleTone, tone)
   return (
     <SvgRoot {...props}>
       <circle cx="8" cy="8.2" r="2.2" fill={c.warm} />
@@ -131,8 +142,8 @@ function IconTeacher({ tone, ...props }: Omit<StoryIconProps, 'name'>) {
   )
 }
 
-function IconParent({ tone, ...props }: Omit<StoryIconProps, 'name'>) {
-  const c = withTone(tone)
+function IconParent({ tone, roleTone = 'default', ...props }: Omit<StoryIconProps, 'name'>) {
+  const c = withTone(roleTone, tone)
   return (
     <SvgRoot {...props}>
       <circle cx="8" cy="8.5" r="2.1" fill={c.rose} />
@@ -144,8 +155,8 @@ function IconParent({ tone, ...props }: Omit<StoryIconProps, 'name'>) {
   )
 }
 
-function IconHomework({ tone, ...props }: Omit<StoryIconProps, 'name'>) {
-  const c = withTone(tone)
+function IconHomework({ tone, roleTone = 'default', ...props }: Omit<StoryIconProps, 'name'>) {
+  const c = withTone(roleTone, tone)
   return (
     <SvgRoot {...props}>
       <rect x="5" y="3.8" width="14" height="16.5" rx="2.5" fill={c.sun} />
@@ -155,8 +166,8 @@ function IconHomework({ tone, ...props }: Omit<StoryIconProps, 'name'>) {
   )
 }
 
-function IconAttendance({ tone, ...props }: Omit<StoryIconProps, 'name'>) {
-  const c = withTone(tone)
+function IconAttendance({ tone, roleTone = 'default', ...props }: Omit<StoryIconProps, 'name'>) {
+  const c = withTone(roleTone, tone)
   return (
     <SvgRoot {...props}>
       <rect x="4" y="5.2" width="16" height="14.8" rx="3" fill={c.sky} />
@@ -167,8 +178,8 @@ function IconAttendance({ tone, ...props }: Omit<StoryIconProps, 'name'>) {
   )
 }
 
-function IconReports({ tone, ...props }: Omit<StoryIconProps, 'name'>) {
-  const c = withTone(tone)
+function IconReports({ tone, roleTone = 'default', ...props }: Omit<StoryIconProps, 'name'>) {
+  const c = withTone(roleTone, tone)
   return (
     <SvgRoot {...props}>
       <rect x="4.5" y="4" width="15" height="16" rx="2.6" fill={c.warm} />
@@ -178,20 +189,20 @@ function IconReports({ tone, ...props }: Omit<StoryIconProps, 'name'>) {
   )
 }
 
-function IconMessages({ tone, ...props }: Omit<StoryIconProps, 'name'>) {
-  const c = withTone(tone)
+function IconMessages({ tone, roleTone = 'default', density = 'default', ...props }: Omit<StoryIconProps, 'name'>) {
+  const c = withTone(roleTone, tone)
   return (
-    <SvgRoot {...props}>
+    <SvgRoot density={density} {...props}>
       <rect x="3.5" y="5" width="17" height="11.8" rx="3.2" fill={c.mint} />
       <path d="M7 17L6 20.2L9.6 17.9H17.3" fill={c.mint} />
       <path d="M7.4 9.4H16.6M7.4 12.1H13.5" stroke={c.ink} strokeWidth="1.5" strokeLinecap="round" opacity=".65" />
-      <circle className="story-msg-dot" cx="18.4" cy="6.4" r="1.3" fill={c.rose} />
+      {density !== 'compact' && <circle className="story-msg-dot" cx="18.4" cy="6.4" r="1.3" fill={c.rose} />}
     </SvgRoot>
   )
 }
 
-function IconAiTutor({ tone, ...props }: Omit<StoryIconProps, 'name'>) {
-  const c = withTone(tone)
+function IconAiTutor({ tone, roleTone = 'default', ...props }: Omit<StoryIconProps, 'name'>) {
+  const c = withTone(roleTone, tone)
   return (
     <SvgRoot {...props}>
       <rect x="5" y="5.2" width="14" height="12.2" rx="4" fill={c.sky} />
@@ -203,20 +214,24 @@ function IconAiTutor({ tone, ...props }: Omit<StoryIconProps, 'name'>) {
   )
 }
 
-function IconRewards({ tone, ...props }: Omit<StoryIconProps, 'name'>) {
-  const c = withTone(tone)
+function IconRewards({ tone, roleTone = 'default', density = 'default', ...props }: Omit<StoryIconProps, 'name'>) {
+  const c = withTone(roleTone, tone)
   return (
-    <SvgRoot {...props}>
+    <SvgRoot density={density} {...props}>
       <path d="M12 4.2L14.2 8.7L19.2 9.4L15.6 12.9L16.5 17.9L12 15.5L7.5 17.9L8.4 12.9L4.8 9.4L9.8 8.7L12 4.2Z" fill={c.sun} />
       <path d="M12 6.5L13.2 9L16 9.4L14 11.3L14.5 14.1L12 12.8L9.5 14.1L10 11.3L8 9.4L10.8 9L12 6.5Z" fill={c.warm} opacity=".8" />
-      <circle className="story-reward-twinkle story-reward-twinkle--a" cx="18.4" cy="6.7" r="0.9" fill={c.white} />
-      <circle className="story-reward-twinkle story-reward-twinkle--b" cx="6.2" cy="7.8" r="0.7" fill={c.white} />
+      {density !== 'compact' && (
+        <>
+          <circle className="story-reward-twinkle story-reward-twinkle--a" cx="18.4" cy="6.7" r="0.9" fill={c.white} />
+          <circle className="story-reward-twinkle story-reward-twinkle--b" cx="6.2" cy="7.8" r="0.7" fill={c.white} />
+        </>
+      )}
     </SvgRoot>
   )
 }
 
-function IconProgress({ tone, ...props }: Omit<StoryIconProps, 'name'>) {
-  const c = withTone(tone)
+function IconProgress({ tone, roleTone = 'default', ...props }: Omit<StoryIconProps, 'name'>) {
+  const c = withTone(roleTone, tone)
   return (
     <SvgRoot {...props}>
       <path d="M5 16.5A7 7 0 1 1 19 16.5" stroke={c.ink} strokeWidth="1.8" strokeLinecap="round" />
@@ -227,8 +242,8 @@ function IconProgress({ tone, ...props }: Omit<StoryIconProps, 'name'>) {
   )
 }
 
-function IconDrawing({ tone, ...props }: Omit<StoryIconProps, 'name'>) {
-  const c = withTone(tone)
+function IconDrawing({ tone, roleTone = 'default', ...props }: Omit<StoryIconProps, 'name'>) {
+  const c = withTone(roleTone, tone)
   return (
     <SvgRoot {...props}>
       <path d="M4.2 15.8C4.2 11.6 7.3 8.2 11.2 8.2C15.6 8.2 19.8 11.1 19.8 15C19.8 17.4 18.1 19 15.8 19H8.8C6.3 19 4.2 17.8 4.2 15.8Z" fill={c.rose} />
@@ -238,8 +253,8 @@ function IconDrawing({ tone, ...props }: Omit<StoryIconProps, 'name'>) {
   )
 }
 
-function IconTracing({ tone, ...props }: Omit<StoryIconProps, 'name'>) {
-  const c = withTone(tone)
+function IconTracing({ tone, roleTone = 'default', ...props }: Omit<StoryIconProps, 'name'>) {
+  const c = withTone(roleTone, tone)
   return (
     <SvgRoot {...props}>
       <path d="M5.5 15.5C7.1 9.9 10.5 7 15.7 6.6" stroke={c.sky} strokeWidth="1.8" strokeLinecap="round" strokeDasharray="2.2 2.2" />
@@ -249,8 +264,8 @@ function IconTracing({ tone, ...props }: Omit<StoryIconProps, 'name'>) {
   )
 }
 
-function IconSchool({ tone, ...props }: Omit<StoryIconProps, 'name'>) {
-  const c = withTone(tone)
+function IconSchool({ tone, roleTone = 'default', ...props }: Omit<StoryIconProps, 'name'>) {
+  const c = withTone(roleTone, tone)
   return (
     <SvgRoot {...props}>
       <path d="M3.5 10.2L12 5L20.5 10.2" stroke={c.ink} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />

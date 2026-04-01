@@ -28,6 +28,7 @@ export default function DashboardSidebar({ role, items, userName, profileHref, o
 
   const roleColor = role === 'teacher' ? 'var(--role-teacher)' : 'var(--role-admin)'
   const roleLabel = role === 'teacher' ? 'Teacher' : 'Admin'
+  const roleTone = role === 'teacher' ? 'teacher' : 'admin'
 
   const renderIcon = (icon: string): StoryIconName => {
     switch (icon) {
@@ -52,7 +53,7 @@ export default function DashboardSidebar({ role, items, userName, profileHref, o
           className="w-10 h-10 rounded-xl flex items-center justify-center text-xl font-black text-white"
           style={{ background: `linear-gradient(135deg, var(--app-accent), ${roleColor})` }}
         >
-          <StoryIcon name="school" size={18} state="success" interactive={false} />
+          <StoryIcon name="school" size={18} density="compact" roleTone={roleTone} state="success" interactive={false} />
         </div>
         <div>
           <div className="text-sm font-black" style={{ color: 'rgb(var(--foreground-rgb))' }}>
@@ -107,7 +108,9 @@ export default function DashboardSidebar({ role, items, userName, profileHref, o
               <span className="text-base">
                 <StoryIcon
                   name={iconName}
-                  size={17}
+                  size={16}
+                  density="compact"
+                  roleTone={roleTone}
                   state={active ? 'success' : 'idle'}
                   interactive={!active}
                   tone={active ? { ink: '#ffffff', white: '#ffffff' } : undefined}
@@ -116,7 +119,7 @@ export default function DashboardSidebar({ role, items, userName, profileHref, o
               <span className="flex-1">{item.label}</span>
               {item.badge && item.badge > 0 && (
                 <span
-                  className="text-[10px] font-black px-1.5 py-0.5 rounded-full"
+                  className="text-[10px] font-black px-1.5 py-0.5 rounded-full app-badge-pulse"
                   style={{
                     background: active ? 'rgba(255,255,255,0.25)' : 'var(--app-danger)',
                     color: '#fff',
@@ -138,7 +141,7 @@ export default function DashboardSidebar({ role, items, userName, profileHref, o
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all app-pressable min-h-11"
           style={{ color: 'var(--app-text-muted)', fontSize: '13px', fontWeight: 700 }}
         >
-          <StoryIcon name="teacher" size={18} state="hover" aria-hidden />
+          <StoryIcon name="teacher" size={18} density="compact" roleTone={roleTone} state="hover" aria-hidden />
           <span>Profile & Settings</span>
         </button>
       </div>

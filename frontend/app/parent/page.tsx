@@ -596,7 +596,7 @@ export default function ParentPage() {
               style={{ color: tab === tabItem.idx ? 'var(--app-accent)' : 'rgba(70, 75, 96, 0.8)', borderColor: tab === tabItem.idx ? 'var(--app-accent)' : 'transparent' }}>
               <span className="inline-flex items-center gap-1.5">{tabItem.icon}<span>{tabItem.label}</span></span>
               {tabItem.idx === 2 && unreadMsgs > 0 && (
-                <span className="absolute top-1 right-2 bg-red-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center app-pressable">
+                <span className="absolute top-1 right-2 bg-red-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center app-pressable app-badge-pulse">
                   {unreadMsgs > 9 ? '9+' : unreadMsgs}
                 </span>
               )}
