@@ -342,6 +342,14 @@ export async function refreshAccessToken(req: Request, res: Response) {
         name: identity.displayName,
         schoolId: identity.schoolId || null,
       }
+    } else if (record.role === 'teacher') {
+      // Legacy Teacher record (not in User table)
+      const teacher = await prisma.teacher.findUnique({ where: { id: record.userId } }).catch(() => null)
+      if (teacher) payload = { id: teacher.id, role: 'teacher', roles: ['teacher'], name: teacher.name, schoolId: teacher.schoolId || null }
+    } else if (record.role === 'admin') {
+      // Legacy Admin record
+      const admin = await prisma.admin.findUnique({ where: { id: record.userId } }).catch(() => null)
+      if (admin) payload = { id: admin.id, role: 'admin', roles: ['admin'], name: (admin as any).name || 'Admin', schoolId: (admin as any).schoolId || null }
     }
     const token = signAccessToken(payload)
 
@@ -432,36 +440,29 @@ export async function registerUser(req: Request, res: Response) {
       }
     }
 
-    // Create User with the profile ID
-    const user = await prisma.user.create({
-      data: {
-        id: profileId,
-        displayName: displayName.trim(),
-        pin: pinHash,
-        pinFingerprint,
-        email: email || null,
-        schoolId: childSchoolId,
-        avatar: avatar || (role === 'child' ? '🧒' : role === 'teacher' ? '👩‍🏫' : role === 'parent' ? '👨‍👩‍👧' : '⚙️'),
-      },
-    })
-
-    // Create RoleAssignment
-    await prisma.roleAssignment.create({
-      data: {
-        userId: user.id,
-        role: role as any,
-        schoolId: childSchoolId,
-      },
-    })
-
-    // If child role, also create a Student record for backward compat (class must be in the same school)
-    if (role === 'child' && childClassId) {
-      await prisma.student
-        .create({
+    // Create User + RoleAssignment + Student atomically so no orphaned records exist
+    const userAvatar = avatar || (role === 'child' ? '🧒' : role === 'teacher' ? '👩‍🏫' : role === 'parent' ? '👨‍👩‍👧' : '⚙️')
+    const [user] = await prisma.$transaction(async (tx) => {
+      const u = await tx.user.create({
+        data: {
+          id: profileId,
+          displayName: displayName.trim(),
+          pin: pinHash,
+          pinFingerprint,
+          email: email || null,
+          schoolId: childSchoolId,
+          avatar: userAvatar,
+        },
+      })
+      await tx.roleAssignment.create({
+        data: { userId: u.id, role: role as any, schoolId: childSchoolId },
+      })
+      if (role === 'child' && childClassId) {
+        await tx.student.create({
           data: {
             name: displayName.trim(),
             age: 5,
-            avatar: avatar || '🧒',
+            avatar: userAvatar,
             pin: pinHash,
             pinFingerprint,
             classId: childClassId,
@@ -471,8 +472,9 @@ export async function registerUser(req: Request, res: Response) {
             selectedTheme: 'th_def',
           },
         })
-        .catch(() => {}) // Non-fatal if it fails
-    }
+      }
+      return [u]
+    })
 
     // Issue tokens
     const roles = [role]

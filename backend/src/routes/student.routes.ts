@@ -127,18 +127,27 @@ router.put('/:id', async (req: Request, res: Response) => {
       aiStars, aiSessions, aiBestLevel, ownedItems, selectedTheme,
     } = req.body
 
+    const isChild = req.user?.role === 'child'
     const updateData: any = {}
-    if (name !== undefined) updateData.name = name
-    if (age !== undefined) updateData.age = age
-    if (avatar !== undefined) updateData.avatar = avatar
-    if (stars !== undefined) updateData.stars = stars
-    if (streak !== undefined) updateData.streak = streak
-    if (grade !== undefined) updateData.grade = grade
-    if (aiStars !== undefined) updateData.aiStars = aiStars
-    if (aiSessions !== undefined) updateData.aiSessions = aiSessions
-    if (aiBestLevel !== undefined) updateData.aiBestLevel = aiBestLevel
-    if (ownedItems !== undefined) updateData.ownedItems = ownedItems
-    if (selectedTheme !== undefined) updateData.selectedTheme = selectedTheme
+
+    if (isChild) {
+      // Children may only update cosmetic/preference fields — never gamification scores
+      if (avatar !== undefined) updateData.avatar = avatar
+      if (selectedTheme !== undefined) updateData.selectedTheme = selectedTheme
+      if (ownedItems !== undefined) updateData.ownedItems = ownedItems
+    } else {
+      if (name !== undefined) updateData.name = name
+      if (age !== undefined) updateData.age = age
+      if (avatar !== undefined) updateData.avatar = avatar
+      if (stars !== undefined) updateData.stars = stars
+      if (streak !== undefined) updateData.streak = streak
+      if (grade !== undefined) updateData.grade = grade
+      if (aiStars !== undefined) updateData.aiStars = aiStars
+      if (aiSessions !== undefined) updateData.aiSessions = aiSessions
+      if (aiBestLevel !== undefined) updateData.aiBestLevel = aiBestLevel
+      if (ownedItems !== undefined) updateData.ownedItems = ownedItems
+      if (selectedTheme !== undefined) updateData.selectedTheme = selectedTheme
+    }
 
     const student = await prisma.student.update({ where: { id }, data: updateData })
     invalidateCache('/api/students')
@@ -153,6 +162,13 @@ router.put('/:id', async (req: Request, res: Response) => {
 router.delete('/:id', requireRole('teacher', 'admin'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params
+    // Cross-school guard: verify the student belongs to a class accessible by this user
+    const student = await prisma.student.findUnique({ where: { id }, select: { classId: true } })
+    if (!student) return res.status(404).json({ error: 'Student not found' })
+    if (req.user?.role === 'teacher') {
+      const ok = await canTeacherAccessClass(req.user.id, String(student.classId))
+      if (!ok) return res.status(403).json({ error: 'Insufficient permissions' })
+    }
     await prisma.student.delete({ where: { id } })
     invalidateCache('/api/students')
     return res.json({ success: true })

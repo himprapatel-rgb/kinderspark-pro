@@ -21,11 +21,25 @@ const securityHeaders = [
   },
 ]
 
+// Strip trailing /api to get the backend base URL for server-side rewrites
+const BACKEND_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api').replace(/\/api\/?$/, '')
+
 const nextConfig = {
   output: 'standalone',
   compress: true,
   async headers() {
     return [{ source: '/(.*)', headers: securityHeaders }]
+  },
+  async rewrites() {
+    // Proxy all /api/* requests through Next.js so the browser makes same-origin
+    // requests. This ensures auth cookies (SameSite=Lax) are always sent — no
+    // cross-origin cookie blocking between Railway frontend and backend subdomains.
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${BACKEND_BASE}/api/:path*`,
+      },
+    ]
   },
   images: {
     remotePatterns: [

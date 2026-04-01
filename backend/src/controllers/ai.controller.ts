@@ -83,6 +83,10 @@ export async function aiGenerateLesson(req: Request, res: Response) {
 export async function aiWeeklyReport(req: Request, res: Response) {
   const { classId } = req.body
   if (!classId) return res.status(400).json({ error: 'classId required' })
+  if (req.user?.role === 'teacher') {
+    const ok = await canTeacherAccessClass(req.user.id, String(classId))
+    if (!ok) return res.status(403).json({ error: 'Insufficient permissions' })
+  }
   try {
     const report = await buildClassReport(classId)
     return res.json({ report })
@@ -166,6 +170,10 @@ export async function aiTutorFeedback(req: Request, res: Response) {
 export async function aiAutoSyllabus(req: Request, res: Response) {
   const { topic, grade = 'KG 1', count = 10, classId } = req.body
   if (!topic) return res.status(400).json({ error: 'topic required' })
+  if (classId && req.user?.role === 'teacher') {
+    const ok = await canTeacherAccessClass(req.user.id, String(classId))
+    if (!ok) return res.status(403).json({ error: 'Insufficient permissions' })
+  }
   const safeTopic = sanitizePromptInput(topic)
   const safeGrade = sanitizePromptInput(grade, 20)
   if (!safeTopic) return res.status(400).json({ error: 'topic required' })
@@ -204,6 +212,10 @@ export async function aiAutoSyllabus(req: Request, res: Response) {
 export async function aiSendParentReports(req: Request, res: Response) {
   const { classId } = req.body
   if (!classId) return res.status(400).json({ error: 'classId required' })
+  if (req.user?.role === 'teacher') {
+    const ok = await canTeacherAccessClass(req.user.id, String(classId))
+    if (!ok) return res.status(403).json({ error: 'Insufficient permissions' })
+  }
   try {
     const [students, homework] = await Promise.all([
       prisma.student.findMany({ where: { classId } }),

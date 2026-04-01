@@ -31,12 +31,8 @@ function getCsrfToken(): string | null {
 }
 
 function getApiBaseForSpeech(): string {
-  const fromRuntime = (window as any).__NEXT_DATA__?.runtimeConfig?.NEXT_PUBLIC_API_URL as string | undefined
-  const fromEnv = process.env.NEXT_PUBLIC_API_URL
-  const raw = (fromRuntime || fromEnv || '').replace(/\/$/, '')
-  if (!raw) return ''
-  // Support both ".../api" and bare origin values.
-  return raw.endsWith('/api') ? raw : `${raw}/api`
+  // Use the same-origin /api path (proxied by Next.js) so auth cookies work.
+  return '/api'
 }
 
 // ── Persist prefs ─────────────────────────────────────────────────────────
