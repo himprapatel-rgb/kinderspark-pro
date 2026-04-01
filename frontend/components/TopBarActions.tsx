@@ -1,7 +1,7 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
-import { Settings, UserRound } from 'lucide-react'
+import { StoryIcon } from '@/components/icons'
 
 /**
  * Top-right actions: Profile, optional role switcher, optional Settings.
@@ -45,7 +45,7 @@ export default function TopBarActions({
         title="Profile"
         aria-label="Profile"
       >
-        <UserRound size={17} aria-hidden />
+        <StoryIcon name="parent" size={18} state="hover" aria-hidden />
       </button>
 
       {showRoleSwitcher && availableRoles.length > 1 && (
@@ -75,7 +75,7 @@ export default function TopBarActions({
           title="Settings"
           aria-label="Settings"
         >
-          <Settings size={17} aria-hidden />
+          <StoryIcon name="school" size={18} state="idle" aria-hidden />
         </button>
       )}
     </div>

@@ -1,6 +1,6 @@
 'use client'
 import { usePathname, useRouter } from 'next/navigation'
-import { BarChart3, BookOpen, GraduationCap, Home, Sparkles, Trophy, UserRound, Users, MessageSquare, ClipboardList } from 'lucide-react'
+import { StoryIcon, StoryIconName } from '@/components/icons'
 
 interface NavItem {
   icon: string
@@ -29,18 +29,18 @@ export default function DashboardSidebar({ role, items, userName, profileHref, o
   const roleColor = role === 'teacher' ? 'var(--role-teacher)' : 'var(--role-admin)'
   const roleLabel = role === 'teacher' ? 'Teacher' : 'Admin'
 
-  const renderIcon = (icon: string) => {
+  const renderIcon = (icon: string): StoryIconName => {
     switch (icon) {
-      case '🏠': return <Home size={16} />
-      case '👥': return <Users size={16} />
-      case '📚': return <BookOpen size={16} />
-      case '📊': return <BarChart3 size={16} />
-      case '🏆': return <Trophy size={16} />
-      case '🏫': return <GraduationCap size={16} />
-      case '💬': return <MessageSquare size={16} />
-      case '📋': return <ClipboardList size={16} />
-      case '📈': return <BarChart3 size={16} />
-      default: return <Sparkles size={16} />
+      case '🏠': return 'home'
+      case '👥': return 'students'
+      case '📚': return 'class'
+      case '📊': return 'progress'
+      case '🏆': return 'rewards'
+      case '🏫': return 'school'
+      case '💬': return 'messages'
+      case '📋': return 'homework'
+      case '📈': return 'progress'
+      default: return 'aiTutor'
     }
   }
 
@@ -52,7 +52,7 @@ export default function DashboardSidebar({ role, items, userName, profileHref, o
           className="w-10 h-10 rounded-xl flex items-center justify-center text-xl font-black text-white"
           style={{ background: `linear-gradient(135deg, var(--app-accent), ${roleColor})` }}
         >
-          <Sparkles size={18} />
+          <StoryIcon name="school" size={18} state="success" interactive={false} />
         </div>
         <div>
           <div className="text-sm font-black" style={{ color: 'rgb(var(--foreground-rgb))' }}>
@@ -89,6 +89,8 @@ export default function DashboardSidebar({ role, items, userName, profileHref, o
               ? pathname === `/${role}`
               : pathname.startsWith(item.href)
 
+          const iconName = renderIcon(item.icon)
+
           return (
             <button
               key={item.href + idx}
@@ -102,7 +104,15 @@ export default function DashboardSidebar({ role, items, userName, profileHref, o
                 boxShadow: active ? 'var(--app-shadow-sm)' : 'none',
               }}
             >
-              <span className="text-base">{renderIcon(item.icon)}</span>
+              <span className="text-base">
+                <StoryIcon
+                  name={iconName}
+                  size={17}
+                  state={active ? 'success' : 'idle'}
+                  interactive={!active}
+                  tone={active ? { ink: '#ffffff', white: '#ffffff' } : undefined}
+                />
+              </span>
               <span className="flex-1">{item.label}</span>
               {item.badge && item.badge > 0 && (
                 <span
@@ -128,7 +138,7 @@ export default function DashboardSidebar({ role, items, userName, profileHref, o
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all app-pressable min-h-11"
           style={{ color: 'var(--app-text-muted)', fontSize: '13px', fontWeight: 700 }}
         >
-          <UserRound size={17} aria-hidden />
+          <StoryIcon name="teacher" size={18} state="hover" aria-hidden />
           <span>Profile & Settings</span>
         </button>
       </div>

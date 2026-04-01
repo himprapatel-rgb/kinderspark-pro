@@ -21,6 +21,24 @@ let voiceProfile: VoiceProfile = 'auto'
 // Track whether the API TTS is working (skip retries after first confirmed fail)
 let apiTTSAvailable: boolean | null = null  // null = not yet tested
 
+function getCsrfToken(): string | null {
+  if (typeof document === 'undefined') return null
+  const part = document.cookie
+    .split('; ')
+    .find((row) => row.startsWith('kinderspark_csrf='))
+  if (!part) return null
+  return decodeURIComponent(part.split('=')[1] || '')
+}
+
+function getApiBaseForSpeech(): string {
+  const fromRuntime = (window as any).__NEXT_DATA__?.runtimeConfig?.NEXT_PUBLIC_API_URL as string | undefined
+  const fromEnv = process.env.NEXT_PUBLIC_API_URL
+  const raw = (fromRuntime || fromEnv || '').replace(/\/$/, '')
+  if (!raw) return ''
+  // Support both ".../api" and bare origin values.
+  return raw.endsWith('/api') ? raw : `${raw}/api`
+}
+
 // ── Persist prefs ─────────────────────────────────────────────────────────
 
 function loadPersistedPrefs() {
@@ -102,14 +120,16 @@ async function apiSpeak(text: string, onEnd?: () => void): Promise<boolean> {
   if (typeof window === 'undefined') return false
 
   try {
-    const apiBase = (window as any).__NEXT_DATA__?.runtimeConfig?.NEXT_PUBLIC_API_URL
-      || process.env.NEXT_PUBLIC_API_URL
-      || ''
+    const apiBase = getApiBaseForSpeech()
+    if (!apiBase) return false
+    const csrf = getCsrfToken()
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (csrf) headers['x-csrf-token'] = csrf
 
-    const res = await fetch(`${apiBase}/api/tts`, {
+    const res = await fetch(`${apiBase}/tts`, {
       method: 'POST',
       credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({
         text,
         language: getLanguage(),
