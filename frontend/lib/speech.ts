@@ -18,8 +18,34 @@ let speechRate = 0.82
 let speechPitch = 1.06
 let voiceProfile: VoiceProfile = 'auto'
 
-// Track whether the API TTS is working (skip retries after first confirmed fail)
-let apiTTSAvailable: boolean | null = null  // null = not yet tested
+// Track API TTS availability with a cooldown so it retries after 5 minutes
+// rather than being permanently disabled for the whole session.
+let apiTTSAvailable: boolean | null = null  // null = not yet tested, true = confirmed working
+let apiTTSLastFailTime: number | null = null
+const API_TTS_RETRY_MS = 5 * 60 * 1000  // retry after 5 minutes
+
+function shouldTryApiTTS(): boolean {
+  if (apiTTSAvailable === true) return true
+  if (apiTTSAvailable === null) return true
+  // false + cooldown expired → reset and retry
+  if (apiTTSLastFailTime !== null && Date.now() - apiTTSLastFailTime > API_TTS_RETRY_MS) {
+    apiTTSAvailable = null
+    apiTTSLastFailTime = null
+    return true
+  }
+  return false
+}
+
+export function getApiTTSStatus(): 'human' | 'device' | 'unknown' {
+  if (apiTTSAvailable === true) return 'human'
+  if (apiTTSAvailable === false) return 'device'
+  return 'unknown'
+}
+
+export function resetApiTTSCheck(): void {
+  apiTTSAvailable = null
+  apiTTSLastFailTime = null
+}
 
 function getCsrfToken(): string | null {
   if (typeof document === 'undefined') return null
@@ -112,7 +138,7 @@ function webSpeakFallback(text: string, options?: { rate?: number; pitch?: numbe
 // ── API TTS (Google → OpenAI) ─────────────────────────────────────────────
 
 async function apiSpeak(text: string, onEnd?: () => void): Promise<boolean> {
-  if (apiTTSAvailable === false) return false
+  if (!shouldTryApiTTS()) return false
   if (typeof window === 'undefined') return false
 
   try {
@@ -141,10 +167,11 @@ async function apiSpeak(text: string, onEnd?: () => void): Promise<boolean> {
 
     const data = await res.json()
 
-    // Server told us no provider is configured — don't retry
+    // Server told us no provider is configured — set cooldown and retry in 5 min
     if (data.fallback) {
-      console.warn('[TTS] No provider configured on server — using Web Speech API fallback')
+      console.warn('[TTS] No provider configured on server — using Web Speech API fallback (will retry in 5 min)')
       apiTTSAvailable = false
+      apiTTSLastFailTime = Date.now()
       return false
     }
 
