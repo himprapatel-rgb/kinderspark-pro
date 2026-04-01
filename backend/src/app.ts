@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import express, { type ErrorRequestHandler, type NextFunction, type Request, type Response } from 'express'
 import cors from 'cors'
+import compression from 'compression'
 import helmet from 'helmet'
 import cookieParser from 'cookie-parser'
 import rateLimit from 'express-rate-limit'
@@ -43,6 +44,7 @@ const app = express()
 validateStartupEnvOrThrow()
 logStartupEnvHints()
 app.set('trust proxy', 1)
+app.use(compression())
 
 /** Broad IP window limit (100 / 15m); skips unauthenticated health probes. */
 const ipWindowLimiter = rateLimit({

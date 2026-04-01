@@ -21,7 +21,7 @@ export default function AccessibilityProvider({ children }: { children: React.Re
 
     // Dyslexia-friendly font — Atkinson Hyperlegible is research-backed; Comic Sans is not
     root.style.fontFamily = settings.dys
-      ? "'Atkinson Hyperlegible', sans-serif"
+      ? "var(--font-atkinson), 'Atkinson Hyperlegible', sans-serif"
       : ''
 
     // Dark mode class (used by Tailwind dark: variants if needed)

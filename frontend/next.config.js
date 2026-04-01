@@ -27,6 +27,10 @@ const BACKEND_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/
 const nextConfig = {
   output: 'standalone',
   compress: true,
+  swcMinify: true,
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
+  },
   async headers() {
     return [{ source: '/(.*)', headers: securityHeaders }]
   },

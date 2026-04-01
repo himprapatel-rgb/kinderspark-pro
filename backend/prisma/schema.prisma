@@ -44,6 +44,8 @@ model Class {
   attendance    Attendance[]
   activityPosts ActivityPost[]
   createdAt     DateTime        @default(now())
+
+  @@index([schoolId])
 }
 
 model Student {
