@@ -132,7 +132,7 @@ kinderspark-pro/
     │   ├── (auth)/setup/          ← initial school setup page
     │   ├── pin/                   ← PIN pad entry
     │   ├── register/              ← new user registration
-    │   ├── child/                 ← child dashboard + 15 sub-routes
+    │   ├── child/                 ← child dashboard + 17 sub-routes
     │   │   (learn, learn/[modId], lesson/[id], tutor, story, poem, draw, trace,
     │   │    match, count, shop, leaderboard, settings, messages, profile, avatar-builder)
     │   ├── teacher/               ← teacher dashboard + 7 sub-routes
@@ -145,7 +145,7 @@ kinderspark-pro/
     │   ├── privacy/               ← privacy policy page
     │   ├── terms/                 ← terms of service
     │   └── dashboard/agents/      ← agent control room
-    ├── components/                ← 36 UI components (AccessibilityProvider, ActivityFeed, AiTutor,
+    ├── components/                ← 37 UI components (AccessibilityProvider, ActivityFeed, AiTutor,
     │                                AppErrorBoundary, ClientRoot, Confetti, DashboardSidebar,
     │                                DiagnosticsPanel, DrawingCanvas, EmotionalBuddyCard, KidAvatar,
     │                                LanguageSelector, LocationCard, MissionCelebration, NativeBridge,
@@ -603,12 +603,12 @@ Operational notes:
 
 | Severity | Issue | Evidence |
 |----------|--------|----------|
-| **Medium** | No service worker | No `public/sw.js` / SW registration in root layout for offline/push client (push subscriptions work; SW for background push not yet wired) |
 | **Medium** | Email silent when misconfigured | `email.service.ts` returns early if no `SENDGRID_API_KEY` — no user-facing error |
 | **Medium** | TTS degrades without keys | All provider keys optional → browser Web Speech fallback for lesson audio |
 | **Medium** | Legacy route surface | `app.ts` mounts backward-compat: `/api/classes`, `/api/ai-sessions`, `/api/feedback` — audit auth on changes |
 
 Previously listed gaps now resolved ✅:
+- **Service worker**: `frontend/public/sw.js` (67 lines) fully implemented — install/activate/fetch/push/notificationclick handlers. Registered in `PwaUpdateBanner.tsx` and `usePushNotifications` hook.
 - **Push end-to-end**: `POST /api/push/subscribe` persists `WebPushSubscription`; `notification.service.ts` fans out to student + all linked parent devices
 - **Geofence persistence**: `GeofenceUserEvent` + `GeofenceUserConsent` written to DB via `attendance.ts` (not in-memory)
 - **CSRF + Bearer**: Bearer tokens fully removed; cookie-only auth enforced
@@ -653,24 +653,39 @@ Full audit performed. All role dashboards (admin, teacher, parent, principal) st
 
 ### No issues found
 - All 9 AI functions cache correctly ✅
-- Bearer token removed ✅  
+- Bearer token removed ✅ — `auth.middleware.ts` cookie-only; comment at line 24 confirms intentional removal
 - All toast notifications use `useToast()` ✅
 - No TODO/FIXME in main source (only in old worktree copies) ✅
 - TTS client sends CSRF token and uses normalized API base URL ✅ (fixed in speech.ts)
 - Session expiry handled gracefully ✅ — api.ts saves current route to `sessionStorage.ks_after_login`, redirects to `/pin?role=<role>`; pin/page.tsx resumes saved route after successful re-auth
 - PIN login loop fixed ✅ — `verifyPin()` uses raw fetch (not `req()`); wrong PIN 401 no longer triggers `handleSessionExpired()`; `/pin` and `/login` paths never saved as resume destinations
+- Service worker ✅ — `frontend/public/sw.js` (67 lines): install/activate/fetch cache, push handler, notificationclick; registered in `PwaUpdateBanner.tsx` + `usePushNotifications`
+
+### Backend Test Coverage (12 files)
+Located in `backend/src/__tests__/`:
+`accessControl.ecosystem.test.ts`, `admin.test.ts`, `auth.test.ts`, `contentFilter.test.ts`,
+`csrf.middleware.test.ts`, `homework.test.ts`, `messages.permissions.test.ts`, `middleware.test.ts`,
+`progress.routes.test.ts`, `progressMastery.test.ts`, `rateLimit.test.ts`, `students.test.ts`
+
+### Reference Docs (`docs/`)
+- `BACKEND_ROUTE_AUTHZ_MATRIX.md` — authorization matrix for all 26 routes (added by Himanshu)
+- `QA_TEST_ACCOUNTS.md` — seeded UAT account reference
+- `SEED_PRODUCTION.md` — production seeding runbook
 
 ---
 
 ## Known Gaps (as of 2026-04-01)
 
 - iOS app exists (Capacitor Xcode project) but not yet in App Store
-- **Push:** Server-side fully wired (`WebPushSubscription`, fan-out to student+parents). Still missing: client-side service worker (`public/sw.js`) for background push delivery. Set `VAPID_PUBLIC_KEY` + `VAPID_PRIVATE_KEY` on Railway.
-- **Geofence:** Persistence implemented (`GeofenceUserEvent` + `GeofenceUserConsent` written to DB)
 - `SENDGRID_API_KEY`, `CLOUDINARY_CLOUD_NAME`+`CLOUDINARY_API_KEY`+`CLOUDINARY_API_SECRET`, `OPENAI_API_KEY` need to be set on Railway for those features to work
-- `VAPID_PUBLIC_KEY` + `VAPID_PRIVATE_KEY` required on Railway for push notifications (client subscribe flow still missing)
+- `VAPID_PUBLIC_KEY` + `VAPID_PRIVATE_KEY` required on Railway for push notifications to work (keys drive VAPID signing; `sw.js` + subscribe flow are already wired client-side)
 - TTS human voices need env vars set on Railway: `GOOGLE_TTS_API_KEY`, `OPENAI_API_KEY`, or `AZURE_TTS_KEY` — app falls back to Web Speech API until at least one is set
 - **`NEXT_PUBLIC_API_URL` must be set before frontend build on Railway** — it drives the `next.config.js` rewrite proxy destination. Client fetch calls use `'/api'` (same-origin) and are proxied server-side; setting this var post-deploy has no effect until frontend is redeployed
+
+Previously listed as gaps — now resolved ✅:
+- **Service worker**: `frontend/public/sw.js` fully implemented (push, offline, cache). Registered via `PwaUpdateBanner.tsx` + `usePushNotifications` hook.
+- **Push end-to-end**: server + client fully wired.
+- **Geofence**: persisted to DB (`GeofenceUserEvent` + `GeofenceUserConsent`).
 
 ---
 
