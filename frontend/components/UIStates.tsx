@@ -4,11 +4,21 @@
  * Shared UI state components for consistent loading, empty, and error states across all roles.
  */
 
-// ── Loading ─────────────────────────────────────────────────────────────────
+// ── Full-page loading (initial auth / page load) ─────────────────────────────
 export function Loading({ emoji = '⏳', text = 'Loading...' }: { emoji?: string; text?: string }) {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-4" style={{ background: 'var(--app-bg)' }}>
       <div className="text-5xl animate-bounce">{emoji}</div>
+      <p className="font-bold text-sm" style={{ color: 'var(--app-text-muted)' }}>{text}</p>
+    </div>
+  )
+}
+
+// ── Section loading (inside tabs / panels — not full screen) ─────────────────
+export function SectionLoading({ emoji = '⏳', text = 'Loading...' }: { emoji?: string; text?: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-12 gap-3">
+      <div className="text-3xl animate-bounce">{emoji}</div>
       <p className="font-bold text-sm" style={{ color: 'var(--app-text-muted)' }}>{text}</p>
     </div>
   )
@@ -32,7 +42,7 @@ export function EmptyState({
     <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
       <div className="text-5xl mb-4">{emoji}</div>
       <p className="font-black text-base mb-1" style={{ color: 'rgb(var(--foreground-rgb))' }}>{title}</p>
-      {subtitle && <p className="text-xs font-bold mb-4" style={{ color: 'var(--app-text-muted)' }}>{subtitle}</p>}
+      {subtitle && <p className="text-sm font-bold mb-4" style={{ color: 'var(--app-text-muted)' }}>{subtitle}</p>}
       {actionLabel && onAction && (
         <button
           onClick={onAction}
@@ -57,7 +67,7 @@ export function ErrorState({
     <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
       <div className="text-5xl mb-4">⚠️</div>
       <p className="font-black text-base mb-1" style={{ color: 'rgb(var(--foreground-rgb))' }}>Oops!</p>
-      <p className="text-xs font-bold mb-4" style={{ color: 'var(--app-text-muted)' }}>{message}</p>
+      <p className="text-sm font-bold mb-4" style={{ color: 'var(--app-text-muted)' }}>{message}</p>
       {onRetry && (
         <button
           onClick={onRetry}

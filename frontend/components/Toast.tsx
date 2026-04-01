@@ -40,13 +40,15 @@ const ToastContext = createContext<ToastContextValue | null>(null)
 export function useToast(): ToastContextValue {
   const ctx = useContext(ToastContext)
   if (!ctx) {
-    // Fallback for components not wrapped in ToastProvider
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('[useToast] Called outside <ToastProvider>. Wrap your component tree in <ToastProvider>.')
+    }
     return {
       success: (msg) => console.log('[toast]', msg),
       error: (msg) => console.error('[toast]', msg),
       info: (msg) => console.info('[toast]', msg),
       warning: (msg) => console.warn('[toast]', msg),
-      confirm: (msg, onConfirm) => { if (window.confirm(msg)) onConfirm() },
+      confirm: (_msg, _onConfirm) => console.error('[useToast] confirm() called outside <ToastProvider> — no-op'),
     }
   }
   return ctx
@@ -150,7 +152,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               </p>
               <button
                 onClick={() => removeToast(toast.id)}
-                className="shrink-0 p-0.5 rounded-full opacity-50 hover:opacity-100 transition-opacity"
+                aria-label="Dismiss notification"
+                className="shrink-0 p-2 rounded-full opacity-50 hover:opacity-100 transition-opacity"
+                style={{ minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
                 <X size={14} color={style.text} />
               </button>
@@ -161,14 +165,25 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
       {/* Confirm dialogs */}
       {confirms.map(c => (
-        <div key={c.id} className="fixed inset-0 z-[300] flex items-center justify-center"
-          style={{ background: 'var(--app-overlay)', animation: 'fade-in 0.2s ease forwards' }}>
-          <div className="rounded-3xl p-6 mx-4 max-w-sm w-full shadow-xl"
+        <div
+          key={c.id}
+          className="fixed inset-0 z-[300] flex items-center justify-center"
+          style={{ background: 'var(--app-overlay)', animation: 'fade-in 0.2s ease forwards' }}
+          onClick={() => handleConfirmAction(c.id, false)}
+          onKeyDown={(e) => e.key === 'Escape' && handleConfirmAction(c.id, false)}
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
+        >
+          <div
+            className="rounded-3xl p-6 mx-4 max-w-sm w-full shadow-xl"
             style={{
               background: 'var(--app-surface)',
               border: '1px solid var(--app-border)',
               animation: 'toast-in 0.3s cubic-bezier(.16,1,.3,1) forwards',
-            }}>
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="text-4xl text-center mb-3">🤔</div>
             <p className="text-center font-bold text-base mb-5" style={{ color: 'rgb(var(--foreground-rgb))' }}>
               {c.message}
@@ -185,7 +200,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 className="flex-1 py-3 rounded-2xl font-black text-sm app-pressable text-white"
                 style={{ background: 'var(--app-danger)', boxShadow: '0 4px 12px rgba(224,82,82,0.3)' }}
               >
-                Yes, do it
+                Confirm
               </button>
             </div>
           </div>

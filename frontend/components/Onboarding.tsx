@@ -7,6 +7,17 @@ import type { SupportedLang } from '@/lib/i18n'
 
 const ONBOARDING_KEY = 'kinderspark-onboarding-done'
 
+// Safe localStorage wrapper — managed iPads with strict MDM can throw SecurityError
+function lsSet(key: string, value: string): void {
+  try { localStorage.setItem(key, value) } catch {}
+}
+function lsGet(key: string): string | null {
+  try { return localStorage.getItem(key) } catch { return null }
+}
+function lsRemove(key: string): void {
+  try { localStorage.removeItem(key) } catch {}
+}
+
 // ── Slide Data ──────────────────────────────────────────────────────────────
 const slides = [
   {
@@ -109,9 +120,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
     if (isLast) {
       hapticSuccess()
       playComplete()
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(ONBOARDING_KEY, 'true')
-      }
+      lsSet(ONBOARDING_KEY, 'true')
       setAnimatingOut(true)
       setTimeout(() => onComplete(), 500)
       return
@@ -124,9 +133,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   const skip = () => {
     hapticTap()
     playTap()
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(ONBOARDING_KEY, 'true')
-    }
+    lsSet(ONBOARDING_KEY, 'true')
     setAnimatingOut(true)
     setTimeout(() => onComplete(), 300)
   }
@@ -215,29 +222,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
         {isLast ? t('onboarding_start') : t('next')} {isLast ? '🚀' : '→'}
       </button>
 
-      {/* CSS animations */}
-      <style>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-15px); }
-        }
-        @keyframes twinkle {
-          0%, 100% { opacity: 0.3; transform: scale(0.8); }
-          50% { opacity: 1; transform: scale(1.2); }
-        }
-        @keyframes bounce-subtle {
-          0%, 100% { transform: translateY(0) scale(1); }
-          50% { transform: translateY(-10px) scale(1.05); }
-        }
-        @keyframes pop-in {
-          0% { opacity: 0; transform: scale(0) rotate(-20deg); }
-          100% { opacity: 1; transform: scale(1) rotate(0deg); }
-        }
-        @keyframes slide-up {
-          0% { opacity: 0; transform: translateY(30px); }
-          100% { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
+      {/* Keyframe animations are defined in globals.css — removed inline <style> to prevent re-injection on re-render */}
     </div>
   )
 }
@@ -245,12 +230,12 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
 /** Check if onboarding has been completed */
 export function isOnboardingDone(): boolean {
   if (typeof window === 'undefined') return true
-  return localStorage.getItem(ONBOARDING_KEY) === 'true'
+  return lsGet(ONBOARDING_KEY) === 'true'
 }
 
 /** Reset onboarding (for testing) */
 export function resetOnboarding() {
   if (typeof window !== 'undefined') {
-    localStorage.removeItem(ONBOARDING_KEY)
+    lsRemove(ONBOARDING_KEY)
   }
 }

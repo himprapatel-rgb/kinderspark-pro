@@ -59,7 +59,7 @@ export default function DashboardSidebar({ role, items, userName, profileHref, o
           <div className="text-sm font-black" style={{ color: 'rgb(var(--foreground-rgb))' }}>
             Kinder<span style={{ color: 'var(--app-accent)' }}>Spark</span>
           </div>
-          <div className="text-[10px] font-bold" style={{ color: 'var(--app-text-muted)' }}>{roleLabel} Portal</div>
+          <div className="text-xs font-bold" style={{ color: 'var(--app-text-muted)' }}>{roleLabel} Portal</div>
         </div>
       </div>
 
@@ -75,7 +75,7 @@ export default function DashboardSidebar({ role, items, userName, profileHref, o
             </div>
             <div>
               <div className="text-sm font-bold" style={{ color: 'rgb(var(--foreground-rgb))' }}>{userName}</div>
-              <div className="text-[10px] font-bold" style={{ color: 'var(--app-text-muted)' }}>{roleLabel}</div>
+              <div className="text-xs font-bold" style={{ color: 'var(--app-text-muted)' }}>{roleLabel}</div>
             </div>
           </div>
         </div>
@@ -96,6 +96,7 @@ export default function DashboardSidebar({ role, items, userName, profileHref, o
             <button
               key={item.href + idx}
               onClick={() => onItemClick ? onItemClick(idx) : router.push(item.href)}
+              aria-current={active ? 'page' : undefined}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all duration-200 app-pressable ${active ? 'translate-x-0.5' : 'hover:bg-gray-50'}`}
               style={{
                 background: active ? `var(--app-accent)` : 'transparent',

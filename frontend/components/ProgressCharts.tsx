@@ -116,7 +116,7 @@ function RadarChart({ skills, size = 240 }: { skills: SkillPoint[]; size?: numbe
         {skills.map((s) => (
           <div key={s.label} className="flex items-center gap-1">
             <div className="w-2 h-2 rounded-full" style={{ background: s.color }} />
-            <span className="text-[10px] font-bold app-muted">{s.label} {s.value}%</span>
+            <span className="text-xs font-bold app-muted">{s.label} {s.value}%</span>
           </div>
         ))}
       </div>
@@ -160,7 +160,7 @@ function WeeklyChart({ data, size = { w: 320, h: 160 } }: { data: WeeklyPoint[];
         return (
           <g key={v}>
             <line x1={padL} y1={y} x2={w - padR} y2={y} stroke="rgba(120,120,140,0.1)" strokeWidth={1} />
-            <text x={padL - 4} y={y + 3} textAnchor="end" fontSize={9} fontWeight={700} fill="rgba(120,120,140,0.5)">{v}</text>
+            <text x={padL - 4} y={y + 3} textAnchor="end" fontSize={11} fontWeight={700} fill="rgba(120,120,140,0.5)">{v}</text>
           </g>
         )
       })}
@@ -194,14 +194,14 @@ function WeeklyChart({ data, size = { w: 320, h: 160 } }: { data: WeeklyPoint[];
           <circle cx={p.x} cy={p.y} r={4} fill="#5E5CE6" stroke="#fff" strokeWidth={2} />
           {/* Star count on top of bar */}
           {data[i].stars > 0 && (
-            <text x={p.x} y={padT + chartH + 4} textAnchor="middle" fontSize={8} fontWeight={700} fill="rgba(245,183,49,0.7)">⭐{data[i].stars}</text>
+            <text x={p.x} y={padT + chartH + 4} textAnchor="middle" fontSize={11} fontWeight={700} fill="rgba(245,183,49,0.7)">⭐{data[i].stars}</text>
           )}
         </g>
       ))}
 
       {/* X-axis labels */}
       {points.map((p, i) => (
-        <text key={`lbl-${i}`} x={p.x} y={h - 4} textAnchor="middle" fontSize={9} fontWeight={700} fill="rgba(120,120,140,0.6)">
+        <text key={`lbl-${i}`} x={p.x} y={h - 4} textAnchor="middle" fontSize={11} fontWeight={700} fill="rgba(120,120,140,0.6)">
           {data[i].label}
         </text>
       ))}
@@ -237,12 +237,12 @@ function GrowthBadge({ current, previous, label }: { current: number; previous: 
   const isDown = diff < 0
   return (
     <div className="stat-box text-center">
-      <div className={`font-black text-xl ${isUp ? 'text-green-500' : isDown ? 'text-red-400' : 'app-muted'}`}>
+      <div className="font-black text-xl" style={{ color: isUp ? 'var(--app-success)' : isDown ? 'var(--app-danger)' : 'var(--app-text-muted)' }}>
         {isUp ? '📈' : isDown ? '📉' : '➡️'} {current}%
       </div>
-      <div className="text-[10px] font-bold app-muted mt-0.5">{label}</div>
+      <div className="text-xs font-bold app-muted mt-0.5">{label}</div>
       {diff !== 0 && (
-        <div className={`text-[10px] font-black mt-0.5 ${isUp ? 'text-green-400' : 'text-red-400'}`}>
+        <div className="text-xs font-black mt-0.5" style={{ color: isUp ? 'var(--app-success)' : 'var(--app-danger)' }}>
           {isUp ? '+' : ''}{diff}% from last week
         </div>
       )}
@@ -279,22 +279,22 @@ export default function ProgressCharts({
         <div className="stat-box text-center">
           <div className="text-yellow-400 font-black text-lg">⭐</div>
           <div className="font-black text-base">{totalStars}</div>
-          <div className="text-[9px] font-bold app-muted">Stars</div>
+          <div className="text-xs font-bold app-muted">Stars</div>
         </div>
         <div className="stat-box text-center">
           <div className="text-purple-400 font-black text-lg">🧠</div>
           <div className="font-black text-base">{totalSessions}</div>
-          <div className="text-[9px] font-bold app-muted">Sessions</div>
+          <div className="text-xs font-bold app-muted">Sessions</div>
         </div>
         <div className="stat-box text-center">
           <div className="text-blue-400 font-black text-lg">🎯</div>
           <div className="font-black text-base">{avgAccuracy}%</div>
-          <div className="text-[9px] font-bold app-muted">Accuracy</div>
+          <div className="text-xs font-bold app-muted">Accuracy</div>
         </div>
         <div className="stat-box text-center">
           <div className="text-green-400 font-black text-lg">🏆</div>
           <div className="font-black text-base">Lv {bestLevel}</div>
-          <div className="text-[9px] font-bold app-muted">Best Level</div>
+          <div className="text-xs font-bold app-muted">Best Level</div>
         </div>
       </div>
 
@@ -340,7 +340,7 @@ export default function ProgressCharts({
             <div className="font-black text-base">
               {weekly.reduce((a, d) => a + d.sessions, 0)}
             </div>
-            <div className="text-[10px] font-bold app-muted">Sessions This Period</div>
+            <div className="text-xs font-bold app-muted">Sessions This Period</div>
           </div>
         </div>
       )}
@@ -355,7 +355,7 @@ export default function ProgressCharts({
                 <span className="text-lg">{b.emoji}</span>
                 <div>
                   <div className="text-[11px] font-black">{b.name}</div>
-                  <div className="text-[9px] font-bold app-muted">{new Date(b.earnedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+                  <div className="text-xs font-bold app-muted">{new Date(b.earnedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
                 </div>
               </div>
             ))}

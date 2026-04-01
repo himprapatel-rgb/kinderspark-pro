@@ -11,10 +11,9 @@ import ClientRoot from '@/components/ClientRoot';
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  // maximumScale and userScalable intentionally omitted — disabling zoom is a WCAG 1.4.4 failure
   viewportFit: 'cover',          // ← critical for iPhone notch / Dynamic Island
-  themeColor: '#5E5CE6',
+  themeColor: '#4DAADF',         // matches --app-accent (sky blue), not the old purple
 };
 
 export const metadata: Metadata = {
@@ -48,7 +47,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <link rel="manifest" href="/manifest.json" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Nunito:wght@400;600;700;800;900&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet" />
         {/* iOS PWA — splash screen */}
         <link rel="apple-touch-startup-image" href="/icon-512.png" />
       </head>
