@@ -4,7 +4,8 @@ import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
 import { saveAISession, updateStudent } from '@/lib/api'
-import { Home, RotateCcw, Star } from 'lucide-react'
+import { RotateCcw } from 'lucide-react'
+import { AppIcon } from '@/components/icons'
 import { playCorrect, playWrong, playComplete, playTap, playStar } from '@/lib/sounds'
 
 const ConfettiCanvas = dynamic(() => import('@/components/Confetti'), { ssr: false })
@@ -244,7 +245,7 @@ export default function CountingGame() {
           <button onClick={() => router.push('/child')}
             className="flex-1 py-3 rounded-2xl font-black inline-flex items-center justify-center gap-2 app-pressable"
             style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}>
-            <Home size={16} /> Home
+            <AppIcon name="home" size="sm" roleTone="child" decorative /> Home
           </button>
         </div>
       </div>

@@ -10,7 +10,8 @@ import {
   getReviewModuleIds,
   estimateLessonMinutes,
 } from '@/lib/learnPath'
-import { BookOpen, Goal, Sparkles, ChevronRight } from 'lucide-react'
+import { Goal, ChevronRight } from 'lucide-react'
+import { AppIcon } from '@/components/icons'
 import { useTranslation } from '@/hooks/useTranslation'
 
 const CATS = ['All', 'numbers', 'letters', 'words', 'colors', 'items'] as const
@@ -96,7 +97,7 @@ export default function LearnPage() {
                 color: 'white',
               }}
             >
-              <BookOpen size={18} /> Learn
+              <AppIcon name="class" size="sm" roleTone="child" decorative /> Learn
             </h1>
             <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.82)' }}>
               {loading ? t('loading') : `${started} started · ${done} completed · ${MODS.length} total`}
@@ -140,7 +141,7 @@ export default function LearnPage() {
           }}
         >
           <div style={{ padding: '0 16px 8px', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Sparkles size={16} style={{ color: 'var(--app-accent)' }} />
+            <AppIcon name="aiTutor" size="xs" roleTone="child" decorative />
             <div>
               <p style={{ margin: 0, fontSize: 13, fontWeight: 900, color: 'rgb(var(--foreground-rgb))' }}>
                 {t('learn_path_title')}

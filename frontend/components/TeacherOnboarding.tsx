@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { BookOpen, Users, Sparkles, ArrowRight, CheckCircle } from 'lucide-react'
+import { ArrowRight, CheckCircle } from 'lucide-react'
 
 // ── Teacher Onboarding Flow ─────────────────────────────────────────────────
 // Shows a friendly step-by-step guide when a teacher has no classes yet.
@@ -16,21 +16,18 @@ const STEPS = [
   {
     title: 'Create Your First Class',
     description: 'Give your classroom a name — like "Sunshine KG 1" or "Stars Group A"',
-    icon: BookOpen,
     color: '#5B7FE8',
     emoji: '📚',
   },
   {
     title: 'Add Your Students',
     description: 'Add each child with a name and 4-digit PIN. They\'ll use the PIN to log in.',
-    icon: Users,
     color: '#4CAF6A',
     emoji: '👧🏻👦🏽',
   },
   {
     title: 'Start Teaching!',
     description: 'Create homework, build syllabuses with AI, and watch your students learn.',
-    icon: Sparkles,
     color: '#F5A623',
     emoji: '🚀',
   },

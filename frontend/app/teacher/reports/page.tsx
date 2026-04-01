@@ -3,7 +3,8 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
 import { generateReport, getClasses } from '@/lib/api'
-import { BarChart3, ClipboardList, Printer } from 'lucide-react'
+import { Printer } from 'lucide-react'
+import { AppIcon } from '@/components/icons'
 
 function ReportsContent() {
   const router = useRouter()
@@ -36,7 +37,7 @@ function ReportsContent() {
     <div className="min-h-screen pb-8 app-container" style={{ background: 'var(--app-bg)' }}>
       <div className="p-5 pt-10" style={{ background: 'linear-gradient(135deg, var(--app-accent), #4A6ED0)' }}>
         <button onClick={() => router.back()} className="text-sm font-bold mb-4 flex items-center gap-1 app-pressable">← Back</button>
-        <h1 className="font-black text-2xl inline-flex items-center gap-2"><BarChart3 size={22} /> Weekly Report</h1>
+        <h1 className="font-black text-2xl inline-flex items-center gap-2"><AppIcon name="reports" size="sm" roleTone="teacher" decorative /> Weekly Report</h1>
         <p className="text-sm font-bold mt-1">AI-generated class summary</p>
       </div>
 
@@ -81,7 +82,7 @@ function ReportsContent() {
         {report && (
           <div className="rounded-2xl p-5 space-y-4" style={{ background: 'var(--app-surface)', border: '1px solid rgba(120,120,140,0.2)' }}>
             <div className="flex items-center justify-between">
-              <div className="font-black text-base inline-flex items-center gap-1.5" style={{ color: 'rgb(32,36,52)' }}><ClipboardList size={16} /> Weekly Report</div>
+              <div className="font-black text-base inline-flex items-center gap-1.5" style={{ color: 'rgb(32,36,52)' }}><AppIcon name="homework" size="xs" roleTone="teacher" decorative /> Weekly Report</div>
               <button onClick={() => window.print()} className="px-3 py-1 rounded-xl font-bold text-xs app-pressable inline-flex items-center gap-1.5" style={{ background: 'var(--app-surface-soft)', color: 'rgb(var(--foreground-rgb))', border: '1px solid var(--app-border)' }}><Printer size={14} /> Print</button>
             </div>
             <div className="font-bold text-sm leading-relaxed whitespace-pre-wrap" style={{ color: 'rgba(32,36,52,0.9)' }}>{report}</div>

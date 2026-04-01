@@ -4,7 +4,8 @@ import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
 import { updateStudent } from '@/lib/api'
-import { Home, Volume2, VolumeX, ChevronLeft, ChevronRight, BookOpen } from 'lucide-react'
+import { Volume2, VolumeX, ChevronLeft, ChevronRight } from 'lucide-react'
+import { AppIcon } from '@/components/icons'
 import { playComplete, playSwipe, playStar } from '@/lib/sounds'
 
 const ConfettiCanvas = dynamic(() => import('@/components/Confetti'), { ssr: false })
@@ -240,7 +241,7 @@ export default function StoryTimePage() {
           <button onClick={() => { setDone(false); setPageIdx(0); setTimeout(() => readPage(selectedStory.pages[0].text), 300) }}
             className="px-6 py-3 rounded-2xl font-black inline-flex items-center gap-2"
             style={{ background: selectedStory.color, color: '#fff' }}>
-            <BookOpen size={16} /> Read Again
+            <AppIcon name="class" size="sm" roleTone="child" decorative /> Read Again
           </button>
           <button onClick={() => { setSelectedStory(null); setDone(false); stopSpeaking() }}
             className="px-6 py-3 rounded-2xl font-black inline-flex items-center gap-2"
@@ -250,7 +251,7 @@ export default function StoryTimePage() {
           <button onClick={() => { stopSpeaking(); router.push('/child') }}
             className="px-6 py-3 rounded-2xl font-black inline-flex items-center gap-2"
             style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}>
-            <Home size={16} /> Home
+            <AppIcon name="home" size="sm" roleTone="child" decorative /> Home
           </button>
         </div>
       </div>

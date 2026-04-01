@@ -97,7 +97,6 @@ export default function DashboardSidebar({ role, items, userName, profileHref, o
                   size="xs"
                   roleTone={roleTone}
                   state={active ? 'success' : 'default'}
-                  tone={active ? { ink: '#ffffff', white: '#ffffff' } as never : undefined}
                 />
               </span>
               <span className="flex-1">{item.label}</span>

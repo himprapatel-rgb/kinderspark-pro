@@ -1,6 +1,6 @@
 'use client'
 import { useMemo, useState } from 'react'
-import { Sparkles } from 'lucide-react'
+import { AppIcon } from '@/components/icons'
 import { useAppStore } from '@/store/appStore'
 import { useTranslation } from '@/hooks/useTranslation'
 import { speakEncouragement } from '@/lib/speech'
@@ -57,7 +57,7 @@ export default function EmotionalBuddyCard() {
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-black text-base inline-flex items-center gap-1.5">
-            <Sparkles size={14} /> {t('child_feel_title')}
+            <AppIcon name="aiTutor" size={14} roleTone="child" decorative /> {t('child_feel_title')}
           </p>
           <p className="text-[11px] font-bold app-muted mt-1">{t('child_feel_sub')}</p>
           <p className="text-sm font-black mt-2">{line}</p>
