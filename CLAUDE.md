@@ -281,14 +281,19 @@ The app uses a **warm cream light palette** — NOT dark. Background is `#FFFCF5
 .stat-box-value    — metric number (xl, font-black)
 .stat-box-label    — metric label (0.65rem, uppercase)
 .section-label     — section heading above groups (0.7rem, uppercase)
-.page-hero         — gradient hero header (dot-grid overlay, consistent padding)
+.page-hero         — gradient hero header (dot-grid overlay via ::before, consistent padding)
 .app-tab-bar       — sticky role dashboard tab bar
 .app-tab-btn       — individual tab button (data-active='true/false')
 .page-body         — scrollable content below hero (1.25rem pad + gap)
 .page-section      — content group (0.75rem gap)
 .empty-state       — standardized empty state layout
-.app-field         — form input (12px radius, consistent height)
-.app-btn-primary   — primary CTA button
+.app-field         — CANONICAL form input (12px radius) — use this on all new code
+.app-input         — legacy alias for .app-field (identical styles, kept for compat)
+.input-field       — legacy alias for .app-field (identical styles, kept for compat)
+.btn-sm            — button size modifier: 32px height, 10px radius
+.btn-md            — button size modifier: 40px height, 12px radius
+.btn-lg            — button size modifier: 52px height, 14px radius
+.app-btn-primary   — primary CTA button (use with .btn-md or .btn-lg)
 .app-btn-secondary — secondary action button
 .app-btn-danger    — destructive action
 .app-pressable     — hover/press micro-interaction on any element
@@ -301,6 +306,8 @@ The app uses a **warm cream light palette** — NOT dark. Background is `#FFFCF5
 - `TopBarActions` — profile + role-switcher top-right buttons
 - `TabBar` pattern — use `.app-tab-bar` + `.app-tab-btn[data-active]` (not custom inline code)
 - `UIStates` — `<Loading>`, `<InlineEmpty>` shared states
+- `Toast` / `useToast()` — **always use this for notifications** (`import { useToast } from '@/components/Toast'`). Methods: `toast.success()`, `toast.error()`, `toast.warning()`, `toast.info()`. Never build a local `useState('')` toast.
+- `AccessibilityProvider` — wired in root layout; applies `html.high-contrast` (CSS filter), 118% font for large mode, Comic Sans for dyslexia mode. All settings from Zustand `settings.hc / .large / .dys`.
 
 ### Page Structure Rules
 1. Every role dashboard MUST have a `.page-hero` gradient header with role color
@@ -309,6 +316,8 @@ The app uses a **warm cream light palette** — NOT dark. Background is `#FFFCF5
 4. Cards MUST use `.app-card` or `.app-card-soft` — not `rounded-2xl p-4` inline
 5. Section labels MUST use `.section-label` — not hardcoded color/size
 6. Stat boxes MUST use `.stat-box` — consistent across all role dashboards
+7. Notifications MUST use `useToast()` — never build local `useState` toast
+8. Buttons SHOULD use `.btn-sm` / `.btn-md` / `.btn-lg` for predictable touch targets
 
 ### Other Rules
 - **Mobile-first** — child screens max-width 430px via `.app-container`; admin/teacher full-width
@@ -536,6 +545,25 @@ Operational notes:
 ### Frontend route coverage
 
 Role portals exist under `frontend/app/`: `child/`, `parent/`, `teacher/`, `admin/`, `principal/`, `pin/`, `register/`, `dashboard/`, `privacy/`, `terms/`.
+
+---
+
+## UI/UX Consistency Audit Status (2026-04-01)
+
+Full audit performed. All role dashboards (admin, teacher, parent, principal) standardized.
+
+### Completed in this audit
+- **globals.css** — Added 15 canonical design token classes (`.app-card`, `.page-hero`, `.app-tab-bar`, `.stat-box`, `.section-label`, `.page-body`, `.page-section`, `.empty-state`, etc.)
+- **Principal page** — Rebuilt from a 16-line redirect into a full 200-line dashboard with health score, class analytics, and teacher summary. Uses `getAdminStats`, `getClasses`, `getClassAnalytics` APIs.
+- **Admin page** — Hero updated to `.page-hero`; tab bar standardized to `.app-tab-bar` + `.app-tab-btn`
+- **Teacher page** — Tab bar standardized to `.app-tab-bar` + `.app-tab-btn`
+- **Parent page** — Tab bar converted from `position: fixed` to `.app-tab-bar` (sticky); padding adjusted
+- **Bearer token removal** — `auth.middleware.ts` Bearer fallback block actually removed (was still present despite docs claiming removal)
+- **Child shop toast** — Replaced custom `useState('')` white bubble with `useToast()` from `@/components/Toast`
+- **Input class consolidation** — `.app-input` and `.input-field` are now aliases of `.app-field` (single CSS definition, backwards-compat)
+- **Button size modifiers** — Added `.btn-sm` (32px), `.btn-md` (40px), `.btn-lg` (52px) + default `min-height: 40px` for bare buttons
+- **design-system SKILL.md** — Fully rewritten with accurate light-first palette, all 35+ canonical classes, patterns, and templates
+- **Accessibility** — Confirmed fully wired: `AccessibilityProvider` applies `html.high-contrast`, font-size, dyslexia font based on Zustand settings
 
 ---
 
