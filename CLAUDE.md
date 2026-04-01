@@ -121,6 +121,8 @@ kinderspark-pro/
 │           ├── accessControl.ts   ← centralised RBAC helpers
 │           ├── pinFingerprint.ts  ← PIN brute-force detection
 │           └── progressMastery.ts
+│       ├── services/
+│       │   └── seed.service.ts    ← compiled auto-seed (no ts-node); seeds SUN001 on first boot
 └── frontend/
     ├── app/
     │   ├── (auth)/login/          ← role selection
@@ -236,10 +238,10 @@ POST   /api/agents/conversations
 
 ## Security Rules — NEVER VIOLATE
 
-1. **JWT primary transport is cookie-only** — `httpOnly` `kinderspark_token`; `authenticate` also accepts `Authorization: Bearer` for compatibility — prefer cookies for web; do not add new Bearer-first flows without explicit CSRF/strategy
+1. **JWT is cookie-only** — `httpOnly` `kinderspark_token` cookie. Bearer token support has been removed from `auth.middleware.ts`. Do NOT re-add Bearer support without a full CSRF/security review.
 2. **Use `req.user.id` from JWT** — never trust client-supplied user IDs
 3. **bcrypt all PINs** — never store plaintext PINs
-4. **PIN throttle** — `PinLoginThrottle` model tracks failed attempts; lock after **3** failed attempts per **30** minutes (see `auth.controller.ts`)
+4. **PIN throttle** — `PinLoginThrottle` model tracks failed attempts; lock after **5** failed attempts per **15** minutes (see `auth.controller.ts`)
 5. **Sanitize AI inputs** — use `sanitizePromptInput()` from `backend/src/utils/sanitize.ts`
 6. **Content filter** — run child content through `contentFilter.service.ts` before storing
 7. **All routes need `requireAuth`** middleware
@@ -247,7 +249,7 @@ POST   /api/agents/conversations
 9. **Use `accessControl.ts`** for RBAC — never hand-roll permission checks
 10. **Never disable `rateLimiter`** or `aiRateLimit` middleware
 11. **No SQL injection** — always use Prisma ORM, never raw queries with user input
-12. **CSRF required on state change** — when `kinderspark_token` or `kinderspark_refresh` cookies are present, mutating requests require `x-csrf-token` matching `kinderspark_csrf`. Requests authenticated **only** via `Authorization: Bearer` (no session cookies) **skip** CSRF middleware — treat Bearer as a separate client contract; web app should use cookies + CSRF.
+12. **CSRF required on state change** — `enforceCsrf` middleware runs after `authenticate`. If `req.user` is set (valid JWT), mutating requests (POST/PUT/PATCH/DELETE) must include `x-csrf-token` header matching the `kinderspark_csrf` cookie. Frontend `api.ts` does this automatically via `withCsrfHeader()`. The CSRF cookie is `httpOnly: false` so JS can read it.
 
 ---
 
@@ -404,33 +406,47 @@ Notes:
 
 ---
 
-## Security Hardening Status (2026-03-31)
+## Security Hardening Status (2026-04-01)
 
 Completed:
 - `cache.service.ts` cache keys are now deterministic (sorted params before SHA-256).
 - `accessControl.ts` removed permissive `parentUserId === studentId` bypass.
-- PIN lock policy tightened to 3 failed attempts per 30 minutes.
+- PIN lock policy: **5 attempts / 15 minutes** (reverted from 3/30 — 3/30 was too aggressive and locked real users out during normal testing).
 - Frontend store no longer persists auth `token` in localStorage (`partialize` removed token).
 - CSRF middleware added (`backend/src/middleware/csrf.middleware.ts`) and mounted globally in `app.ts`.
-- Auth flow now issues/clears `kinderspark_csrf` cookie alongside auth cookies.
-- Frontend API client (`frontend/lib/api.ts`) sends `x-csrf-token` automatically on state-changing requests.
+  - **Critical**: `enforceCsrf` checks `req.user` (only set when JWT is cryptographically valid), NOT `req.cookies.kinderspark_token` (raw cookie — still present when expired). This distinction matters because `authenticate` clears invalid tokens in the response but the raw cookie object still has them.
+- Auth flow now issues/clears `kinderspark_csrf` cookie (httpOnly: false so JS can read it) alongside auth cookies.
+- Frontend `api.ts`: `getCsrfToken()` reads `kinderspark_csrf` cookie; `withCsrfHeader()` adds `x-csrf-token` on all POST/PUT/PATCH/DELETE. Applied to `req()`, `tryRefresh()`, and retry calls.
 - Structured AI responses (lesson/syllabus/homework/recommendations) are validated before cache write in `services/ai/index.ts`.
 - CSRF middleware tests added in `backend/src/__tests__/csrf.middleware.test.ts`.
+- **Auth is cookie-only** — Bearer token support removed from `auth.middleware.ts`. Web app uses `httpOnly` cookie + CSRF only.
+- **SameSite=Lax** on all auth cookies — `SameSite=Strict` was changed then immediately reverted because Railway frontend and backend are on *different subdomains* (`kinderspark-pro-production` vs `kinderspark-backend-production`). Strict blocks cross-origin cookie sending entirely.
+- **XSS in registration**: `sanitizePromptInput()` applied to `displayName` in `auth.controller.ts`.
+- **PIN hash leak fixed**: `homework.controller.ts` completions use safe `select` (id, name, avatar, stars only — no pin/pinFingerprint). Same pattern in `student.routes.ts` and `teacher.routes.ts`.
+- **Progress self-access**: `progress.routes.ts` allows `role=child` to access their own studentId (previously child role was fully blocked).
+- **Unauthenticated diagnostics fixed**: `diag.routes.ts` GET `/recent` now requires `requireRole('admin', 'principal')`.
+- **Hardcoded dev key removed**: `frontend/app/dev/page.tsx` reads `NEXT_PUBLIC_DEVELOPER_KEY` env var (no fallback).
+- **AI provider timeout**: `ai/router.ts` wraps each provider call in 30-second timeout via `Promise.race`.
+- **CSP connect-src fixed**: `frontend/next.config.js` — security headers previously only whitelisted the frontend Railway URL in `connect-src`, blocking all `fetch()` calls to the backend. Now allows `https://kinderspark-backend-production.up.railway.app` and `https://*.up.railway.app`. **This was the root cause of "Cannot reach server" in production.**
+- Security response headers added to `frontend/next.config.js`: `X-Frame-Options`, `X-Content-Type-Options`, `Strict-Transport-Security`, `Referrer-Policy`, `Permissions-Policy`, `Content-Security-Policy`.
 
 ---
 
-## UAT Seed Status (2026-03-31)
+## UAT Seed Status (2026-04-01)
 
 Completed:
 - Production DB seed executed successfully on Railway backend service (`kinderspark-backend`) via SSH.
 - Seeded school code is `SUN001` (Sunshine Kindergarten) with full UAT roster (admins, teachers, students, parent login via child PIN).
 - Canonical QA login reference added: `docs/QA_TEST_ACCOUNTS.md`.
 - Production seed runbook added: `docs/SEED_PRODUCTION.md`.
-- `backend/package.json` seed commands updated to `npx ts-node prisma/seed.ts` to avoid `ts-node` PATH issues in containers.
+- **Auto-seed on first boot**: `backend/src/services/seed.service.ts` (compiled TypeScript, no ts-node dependency) is imported in `app.ts`. On server startup, if `prisma.school.count() === 0`, `seedDemoData()` runs automatically. Wrapped in try-catch — non-fatal if it fails.
+  - Seeded accounts: School `SUN001`, Admin PIN `9999`, Teacher PIN `1234`, Children PINs `1111`–`5555`, `7777`, `8888`, `0000`
+  - Also clears `PinLoginThrottle` on fresh install to prevent locked-out users
+- **Why compiled seed (not ts-node)**: `ts-node` is in `devDependencies` and is NOT installed in Railway production containers. Using `execSync('npx ts-node ...')` in production silently fails. The `seed.service.ts` compiles to JS with the rest of the backend.
 
 Operational notes:
-- Railway project contains both frontend (`kinderspark-pro`) and backend (`kinderspark-backend`) services; seed must run on backend service.
-- If `RUN_DB_SEED_ON_START=true` is used for one-shot seed deploys, set it back to `false` after successful seed.
+- Railway project contains both frontend (`kinderspark-pro`) and backend (`kinderspark-backend`) services.
+- `NEXT_PUBLIC_API_URL` in the **frontend** Railway service must be set to the backend URL *before* the frontend build (it's a build-time Next.js variable, not runtime). If set after deploy, frontend must be redeployed.
 
 ---
 
@@ -440,7 +456,7 @@ Operational notes:
 
 | Area | Notes |
 |------|--------|
-| Auth | `auth.middleware.ts` — JWT from `httpOnly` `kinderspark_token` cookie; also accepts Bearer for legacy/alternate clients |
+| Auth | `auth.middleware.ts` — JWT from `httpOnly` `kinderspark_token` cookie only. Bearer support removed. |
 | CSRF | `csrf.middleware.ts` — enforces `x-csrf-token` vs `kinderspark_csrf` when session cookies present (see rule 12) |
 | Email | `email.service.ts` — SendGrid; skips gracefully if `SENDGRID_API_KEY` missing (warns in logs) |
 | AI safety | `contentFilter.service.ts` — regex blocks on AI output |
@@ -469,7 +485,7 @@ Role portals exist under `frontend/app/`: `child/`, `parent/`, `teacher/`, `admi
 
 ---
 
-## Known Gaps (as of 2026-03-31)
+## Known Gaps (as of 2026-04-01)
 
 - iOS app exists (Capacitor Xcode project) but not yet in App Store
 - **Push:** VAPID keys + subscription storage + route wiring needed for production push (see Code-Verified table)
@@ -477,6 +493,7 @@ Role portals exist under `frontend/app/`: `child/`, `parent/`, `teacher/`, `admi
 - `SENDGRID_API_KEY`, `CLOUDINARY_URL`, `OPENAI_API_KEY` need to be set on Railway for those features to work
 - `VAPID_PUBLIC_KEY` + `VAPID_PRIVATE_KEY` required on Railway for push notifications (client subscribe flow still missing)
 - TTS human voices need env vars set on Railway: `GOOGLE_TTS_API_KEY`, `OPENAI_API_KEY`, or `AZURE_TTS_KEY` — app falls back to Web Speech API until at least one is set
+- **`NEXT_PUBLIC_API_URL` must be set before frontend build on Railway** — it is a build-time Next.js env var; setting it post-deploy has no effect until frontend is redeployed
 
 ---
 
