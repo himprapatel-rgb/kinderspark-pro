@@ -19,13 +19,14 @@ import {
 } from '@/lib/api'
 import { MODS } from '@/lib/modules'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
-import { BarChart3, Bell, Home, Users, MessageSquare, Download } from 'lucide-react'
+import { BarChart3, Users, MessageSquare, Download } from 'lucide-react'
 import { useToast } from '@/components/Toast'
 import PageTransition from '@/components/PageTransition'
 import { usePullToRefresh, PullIndicator } from '@/hooks/usePullToRefresh'
 import { hapticTap, hapticSuccess, nativeShare } from '@/lib/capacitor'
 import { useTranslation } from '@/hooks/useTranslation'
 import KidAvatar from '@/components/KidAvatar'
+import { StoryIcon } from '@/components/icons'
 
 const ProgressCharts = dynamic(() => import('@/components/ProgressCharts'), {
   ssr: false,
@@ -571,9 +572,9 @@ export default function ParentPage() {
   if (loading) return <Loading emoji="✨" text="Loading your child's data…" />
 
   const TABS = [
-    { label: 'Home', idx: 0, icon: <Home size={14} /> },
-    { label: 'Progress', idx: 1, icon: <BarChart3 size={14} /> },
-    { label: 'Messages', idx: 2, icon: <Users size={14} /> },
+    { label: 'Home', idx: 0, icon: <StoryIcon name="home" size={15} interactive={false} /> },
+    { label: 'Progress', idx: 1, icon: <StoryIcon name="progress" size={15} interactive={false} /> },
+    { label: 'Messages', idx: 2, icon: <StoryIcon name="messages" size={15} interactive={false} /> },
   ]
 
   return (
@@ -592,7 +593,7 @@ export default function ParentPage() {
           <button key={tabItem.idx} type="button" onClick={() => setTab(tabItem.idx)} className="app-tab-btn app-pressable relative" data-active={tab === tabItem.idx ? 'true' : 'false'}>
             {tabItem.icon}<span>{tabItem.label}</span>
             {tabItem.idx === 2 && unreadMsgs > 0 && (
-              <span className="absolute top-1.5 right-1.5 bg-red-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center">
+              <span className="absolute top-1.5 right-1.5 bg-red-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center app-badge-pulse">
                 {unreadMsgs > 9 ? '9+' : unreadMsgs}
               </span>
             )}
@@ -884,7 +885,7 @@ export default function ParentPage() {
             {/* Push notification opt-in banner */}
             {notifPermission !== 'granted' && notifPermission !== 'denied' && (
               <div className="mx-3 mb-4 rounded-2xl p-4 flex items-center gap-3" style={{ background: 'linear-gradient(135deg, rgba(48,209,88,0.06), rgba(67,198,172,0.04))', border: '1px solid #4CAF6A40' }}>
-                <div className="text-2xl shrink-0"><Bell size={20} style={{ color: 'var(--app-success)' }} /></div>
+                <div className="text-2xl shrink-0"><StoryIcon name="messages" size={22} state="hover" /></div>
                 <div className="flex-1 min-w-0">
                   <div className="font-black text-sm">Enable Homework Alerts</div>
                   <div className="text-xs font-bold app-muted">Get notified when homework is due</div>

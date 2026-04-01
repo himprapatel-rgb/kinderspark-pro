@@ -39,7 +39,7 @@ export default function TabBar({ tabs, activeIndex, onChange, accentColor = '#5E
             {/* Badge */}
             {tab.badge !== undefined && tab.badge > 0 && (
               <span
-                className="absolute -top-1 right-0 min-w-[18px] h-[18px] rounded-full text-white text-[10px] font-black flex items-center justify-center px-1"
+                className="absolute -top-1 right-0 min-w-[18px] h-[18px] rounded-full text-white text-[10px] font-black flex items-center justify-center px-1 app-badge-pulse"
                 style={{
                   background: 'linear-gradient(135deg, #FF453A, #FF2D55)',
                   boxShadow: '0 2px 8px rgba(255,69,58,0.5)',
