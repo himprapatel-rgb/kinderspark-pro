@@ -757,6 +757,24 @@ Each role has a dedicated settings page with role-relevant sections. All pages f
 
 ---
 
+## Performance (as of 2026-04-03)
+
+### Optimizations shipped
+- **Gzip compression** — `compression` middleware added to `backend/src/app.ts`; all API responses compressed (5–10× smaller)
+- **next/font** — `frontend/app/layout.tsx` uses `next/font/google` for Inter + Nunito + Atkinson Hyperlegible; render-blocking Google Fonts `<link>` removed; fonts served self-hosted
+- **kpiEvents excluded from persist** — `frontend/store/appStore.ts` `partialize` no longer saves kpiEvents to localStorage (was serializing up to 300 events per state write)
+- **N+1 fix on student list** — `GET /api/students` uses `take:10 + select` on progress/feedback/class includes
+- **Cache middleware active** — 30s in-memory cache applied to `GET /api/students`
+- **Push fanout parallel** — `sendPushPayloadFanout` in `notification.service.ts` uses `Promise.all` (was sequential for-await)
+- **Teacher dashboard** — `TeacherOnboarding` lazy-loaded via `dynamic()`; messages fetch parallelized in `loadClassData`
+- **Parent dashboard** — attendance + badges + dailyMission fetched in parallel via `Promise.all`
+- **will-change on animations** — all animation utility classes in `globals.css` include `will-change: transform/opacity` for GPU compositing
+- **DB index** — `@@index([schoolId])` added to Class model in `schema.prisma` (migrated on Railway deploy)
+- **Production builds** — `swcMinify: true` + `removeConsole` (keeps error/warn) in `frontend/next.config.js`
+- **Tailwind font vars** — `tailwind.config.ts` uses `var(--font-inter)` / `var(--font-nunito)` CSS variables
+
+---
+
 ## Known Gaps (as of 2026-04-03)
 
 - iOS app exists (Capacitor Xcode project) but not yet in App Store
