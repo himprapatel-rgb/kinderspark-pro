@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { API_BASE, postPushSubscribe } from '@/lib/api';
 
-export function usePushNotifications(scope: 'student' | 'parent', studentId?: string) {
+export function usePushNotifications(scope: 'student' | 'parent' | 'teacher', studentId?: string) {
   const [permission, setPermission] = useState<NotificationPermission>('default');
 
   useEffect(() => {
