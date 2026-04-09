@@ -10,6 +10,7 @@ import {
   patchStudentProfile,
   getGuardianProfile,
   patchGuardianProfile,
+  getStudentBadges,
 } from '@/lib/api'
 import { useAppStore } from '@/store/appStore'
 import SoundSettings from '@/components/SoundSettings'
@@ -17,6 +18,8 @@ import LanguageSelector from '@/components/LanguageSelector'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useToast } from '@/components/Toast'
 import { LogOut } from 'lucide-react'
+
+const CHILD_AVATARS = ['👧', '👦', '🦁', '🐼', '🦊', '🐸', '🦋', '🦄', '🐙', '🦉', '🐳', '🐨']
 
 const ROLE_COLORS: Record<string, { color: string; grad: string }> = {
   child:     { color: 'var(--role-child)',   grad: 'linear-gradient(135deg,#F5A623,#D4881A)' },
@@ -69,6 +72,7 @@ export default function ProfileManager({ roleLabel }: { roleLabel: string }) {
   const [savingGuardian, setSavingGuardian] = useState(false)
   const [savingChildLinked, setSavingChildLinked] = useState(false)
   const [savingLearning, setSavingLearning] = useState(false)
+  const [badgeCount, setBadgeCount] = useState(0)
 
   const rc = ROLE_COLORS[role || 'child'] || ROLE_COLORS.child
   const hex = ROLE_HEX[role || 'child'] || ROLE_HEX.child
@@ -101,9 +105,13 @@ export default function ProfileManager({ roleLabel }: { roleLabel: string }) {
     setDetailLoading(true)
     ;(async () => {
       try {
-        const s = await getStudentProfile(user.id)
+        const [s, badges] = await Promise.all([
+          getStudentProfile(user.id),
+          getStudentBadges(user.id).catch(() => []),
+        ])
         if (cancelled) return
         setChildSelfForm({ preferredName: s.preferredName ?? '', avatar: s.avatar ?? '', photoUrl: s.photoUrl ?? '' })
+        setBadgeCount(Array.isArray(badges) ? badges.length : 0)
       } catch {
         if (!cancelled) toast.error(t('profile_load_failed'))
       } finally {
@@ -210,6 +218,11 @@ export default function ProfileManager({ roleLabel }: { roleLabel: string }) {
         avatar: childSelfForm.avatar || null,
         photoUrl: childSelfForm.photoUrl || null,
       })
+      // Keep display name in sync if preferred name was updated
+      if (childSelfForm.preferredName) {
+        setForm(p => ({ ...p, displayName: childSelfForm.preferredName, avatar: childSelfForm.avatar || p.avatar }))
+      }
+      setUser({ ...user, name: childSelfForm.preferredName || form.displayName, avatar: childSelfForm.avatar || form.avatar })
       toast.success(t('profile_details_saved'))
     } catch (e: any) {
       toast.error(e.message || 'Failed to save')
@@ -257,25 +270,86 @@ export default function ProfileManager({ roleLabel }: { roleLabel: string }) {
 
       {/* ── Hero ── */}
       <div className="page-hero" style={{ background: rc.grad }}>
-        <button onClick={() => router.back()} className="text-white/80 text-sm font-bold mb-4 flex items-center gap-1 app-pressable">
+        <button
+          onClick={() => router.back()}
+          className="text-white text-sm font-bold mb-4 flex items-center gap-1 app-pressable min-h-[44px] px-1"
+          style={{ textShadow: '0 1px 3px rgba(0,0,0,0.25)' }}
+        >
           ← {t('back')}
         </button>
-        <div className="flex items-center gap-4">
-          <div className="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl flex-shrink-0"
-            style={{ background: 'rgba(255,255,255,0.2)', border: '2px solid rgba(255,255,255,0.3)' }}>
-            {form.avatar || '👤'}
+
+        {role === 'child' ? (
+          /* ── Child hero: big avatar + stats celebration ── */
+          <div className="flex flex-col items-center text-center gap-3">
+            <div
+              className="w-24 h-24 rounded-3xl flex items-center justify-center text-5xl flex-shrink-0"
+              style={{
+                background: 'rgba(255,255,255,0.22)',
+                border: (currentStudent?.streak ?? 0) > 0
+                  ? '3px solid rgba(245,183,49,0.85)'
+                  : '2px solid rgba(255,255,255,0.35)',
+                boxShadow: (currentStudent?.streak ?? 0) > 0 ? '0 0 18px rgba(245,183,49,0.5)' : 'none',
+              }}
+            >
+              {childSelfForm.avatar || form.avatar || '👤'}
+            </div>
+            <div>
+              <h1 className="text-2xl font-black text-white" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.3)' }}>
+                {childSelfForm.preferredName || form.displayName || 'Learner'}
+              </h1>
+              <span
+                className="inline-flex items-center gap-1 mt-1 px-3 py-1 rounded-full text-xs font-black"
+                style={{ background: 'rgba(255,255,255,0.22)', color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}
+              >
+                ⭐ Level {Math.floor((currentStudent?.stars ?? 0) / 50) + 1}
+              </span>
+            </div>
+            {/* Stats row */}
+            <div className="flex gap-2 mt-1 w-full max-w-xs">
+              {[
+                { emoji: '⭐', value: currentStudent?.stars ?? 0, label: 'Stars' },
+                { emoji: '🔥', value: currentStudent?.streak ?? 0, label: 'Day streak' },
+                { emoji: '🏅', value: badgeCount, label: 'Badges' },
+              ].map(stat => (
+                <div
+                  key={stat.label}
+                  className="flex-1 rounded-2xl py-2 px-1 text-center"
+                  style={{ background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.25)' }}
+                >
+                  <div className="text-lg">{stat.emoji}</div>
+                  <div className="text-white font-black text-base leading-tight" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.25)' }}>
+                    {stat.value}
+                  </div>
+                  <div className="text-[10px] font-bold mt-0.5" style={{ color: 'rgba(255,255,255,0.8)' }}>
+                    {stat.label}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-black text-white">{form.displayName || 'User'}</h1>
-            <p className="text-white/70 text-sm font-bold mt-0.5">{roleLabel}</p>
+        ) : (
+          /* ── Non-child hero: compact avatar + name ── */
+          <div className="flex items-center gap-4">
+            <div className="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl flex-shrink-0"
+              style={{ background: 'rgba(255,255,255,0.2)', border: '2px solid rgba(255,255,255,0.3)' }}>
+              {form.avatar || '👤'}
+            </div>
+            <div>
+              <h1 className="text-xl font-black text-white" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.25)' }}>
+                {form.displayName || 'User'}
+              </h1>
+              <p className="text-sm font-bold mt-0.5" style={{ color: 'rgba(255,255,255,0.85)', textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>
+                {roleLabel}
+              </p>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <div className="page-body">
 
-        {/* ── Profile ID ── */}
-        <div className="app-card">
+        {/* ── Profile ID — hidden for children (meaningless to them) ── */}
+        {role !== 'child' && <div className="app-card">
           <div className="flex items-center justify-between">
             <div>
               <p className="section-label mb-1">{t('profile_id')}</p>
@@ -295,95 +369,111 @@ export default function ProfileManager({ roleLabel }: { roleLabel: string }) {
               {copied ? `✓ ${t('copied')}` : `📋 ${t('copy_id')}`}
             </button>
           </div>
-        </div>
+        </div>}
 
-        {/* ── Edit Profile ── */}
+        {/* ── Edit Profile / My Space ── */}
         <div className="app-card space-y-3">
-          <p className="section-label">Edit Profile</p>
+          <p className="section-label">{role === 'child' ? '🎨 My Space' : 'Edit Profile'}</p>
 
+          {/* Name field — friendly label for children */}
           <div>
             <label className="text-xs font-black uppercase tracking-wider mb-1 block" style={{ color: hex }}>
-              Display Name
+              {role === 'child' ? 'My name' : 'Display Name'}
             </label>
             <input
               className="app-field"
-              value={form.displayName}
-              onChange={(e) => setForm(p => ({ ...p, displayName: e.target.value }))}
-            />
-          </div>
-          <div>
-            <label className="text-xs font-black uppercase tracking-wider mb-1 block app-muted">Email</label>
-            <input
-              className="app-field"
-              value={form.email}
-              onChange={(e) => setForm(p => ({ ...p, email: e.target.value }))}
-              placeholder="your@email.com"
-            />
-          </div>
-          <div>
-            <label className="text-xs font-black uppercase tracking-wider mb-1 block app-muted">Avatar Emoji</label>
-            <input
-              className="app-field"
-              value={form.avatar}
-              onChange={(e) => setForm(p => ({ ...p, avatar: e.target.value }))}
+              value={role === 'child' ? (childSelfForm.preferredName || form.displayName) : form.displayName}
+              onChange={(e) => {
+                if (role === 'child') {
+                  setChildSelfForm(p => ({ ...p, preferredName: e.target.value }))
+                } else {
+                  setForm(p => ({ ...p, displayName: e.target.value }))
+                }
+              }}
             />
           </div>
 
-          {/* Roles */}
-          <div className="app-card-soft rounded-xl p-3">
-            <p className="section-label mb-2">Roles</p>
-            <div className="flex flex-wrap gap-2">
-              {(roles.length ? roles : [(user as any)?.role || 'user']).map((r) => {
-                const c = ROLE_HEX[r] || hex
-                return (
-                  <span key={r} className="text-xs font-black px-3 py-1.5 rounded-full app-chip"
-                    style={{ background: `${c}15`, color: c }}>
-                    {r}
-                  </span>
-                )
-              })}
+          {/* Email — adults only */}
+          {role !== 'child' && (
+            <div>
+              <label className="text-xs font-black uppercase tracking-wider mb-1 block app-muted">Email</label>
+              <input
+                className="app-field"
+                value={form.email}
+                onChange={(e) => setForm(p => ({ ...p, email: e.target.value }))}
+                placeholder="your@email.com"
+              />
             </div>
-          </div>
+          )}
+
+          {/* Avatar — emoji grid for children, text input for adults */}
+          {role === 'child' ? (
+            <div>
+              <label className="text-xs font-black uppercase tracking-wider mb-1 block app-muted">My emoji</label>
+              <div className="grid grid-cols-6 gap-2 mt-1">
+                {CHILD_AVATARS.map((emoji) => {
+                  const active = (childSelfForm.avatar || form.avatar) === emoji
+                  return (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={() => {
+                        setChildSelfForm(p => ({ ...p, avatar: emoji }))
+                        setForm(p => ({ ...p, avatar: emoji }))
+                      }}
+                      className="text-2xl h-11 rounded-xl flex items-center justify-center app-pressable"
+                      style={{
+                        background: active ? `${hex}20` : 'var(--app-surface-soft)',
+                        border: active ? `2px solid ${hex}` : '2px solid transparent',
+                        transform: active ? 'scale(1.12)' : undefined,
+                      }}
+                      aria-label={`Choose ${emoji} avatar`}
+                      aria-pressed={active}
+                    >
+                      {emoji}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ) : (
+            <div>
+              <label className="text-xs font-black uppercase tracking-wider mb-1 block app-muted">Avatar Emoji</label>
+              <input
+                className="app-field"
+                value={form.avatar}
+                onChange={(e) => setForm(p => ({ ...p, avatar: e.target.value }))}
+              />
+            </div>
+          )}
+
+          {/* Roles — adults only (debug artifact, not meaningful to children) */}
+          {role !== 'child' && (
+            <div className="app-card-soft rounded-xl p-3">
+              <p className="section-label mb-2">Roles</p>
+              <div className="flex flex-wrap gap-2">
+                {(roles.length ? roles : [(user as any)?.role || 'user']).map((r) => {
+                  const c = ROLE_HEX[r] || hex
+                  return (
+                    <span key={r} className="text-xs font-black px-3 py-1.5 rounded-full app-chip"
+                      style={{ background: `${c}15`, color: c }}>
+                      {r}
+                    </span>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           <button
-            onClick={save}
-            disabled={busy}
+            onClick={role === 'child' ? saveChildLearningProfile : save}
+            disabled={busy || savingLearning || detailLoading}
             className="w-full btn-lg app-btn-primary disabled:opacity-60"
             style={{ background: rc.grad, boxShadow: `0 4px 20px ${hex}25` }}
           >
-            {busy ? `${t('loading')}` : `✓ ${t('save')}`}
+            {(busy || savingLearning) ? t('loading') : `✓ ${t('save')}`}
           </button>
         </div>
-
-        {/* ── Child: Learning Profile ── */}
-        {role === 'child' && (
-          <div className="app-card space-y-3">
-            <p className="section-label">{t('profile_learning_card_title')}</p>
-            {detailLoading && <p className="text-xs font-semibold app-muted">{t('loading')}</p>}
-
-            <div>
-              <label className="text-xs font-black uppercase tracking-wider mb-1 block" style={{ color: hex }}>{t('profile_field_preferred_name')}</label>
-              <input className="app-field" value={childSelfForm.preferredName} onChange={(e) => setChildSelfForm(p => ({ ...p, preferredName: e.target.value }))} />
-            </div>
-            <div>
-              <label className="text-xs font-black uppercase tracking-wider mb-1 block app-muted">{t('choose_avatar')}</label>
-              <input className="app-field" value={childSelfForm.avatar} onChange={(e) => setChildSelfForm(p => ({ ...p, avatar: e.target.value }))} placeholder="Emoji" />
-            </div>
-            <div>
-              <label className="text-xs font-black uppercase tracking-wider mb-1 block app-muted">{t('profile_field_photo_url')}</label>
-              <input className="app-field" value={childSelfForm.photoUrl} onChange={(e) => setChildSelfForm(p => ({ ...p, photoUrl: e.target.value }))} placeholder="https://…" />
-            </div>
-
-            <button
-              onClick={saveChildLearningProfile}
-              disabled={savingLearning || detailLoading}
-              className="w-full btn-lg app-btn-primary disabled:opacity-60"
-              style={{ background: rc.grad, boxShadow: `0 4px 20px ${hex}25` }}
-            >
-              {savingLearning ? t('loading') : t('profile_save_details')}
-            </button>
-          </div>
-        )}
 
         {/* ── Parent: Guardian + Child details ── */}
         {role === 'parent' && (
@@ -529,29 +619,35 @@ export default function ProfileManager({ roleLabel }: { roleLabel: string }) {
           <LanguageSelector />
         </div>
 
-        {/* ── Sign Out ── */}
+        {/* ── Sign Out ── children get a quiet secondary button; adults get red ── */}
         <button
           onClick={() => setShowLogoutConfirm(true)}
           disabled={loggingOut}
-          className="w-full btn-lg app-btn-danger disabled:opacity-60 flex items-center justify-center gap-2"
+          className={`w-full flex items-center justify-center gap-2 disabled:opacity-60 ${
+            role === 'child'
+              ? 'btn-md app-btn-secondary'
+              : 'btn-lg app-btn-danger'
+          }`}
         >
           {loggingOut
-            ? <><span className="w-4 h-4 border-2 border-red-200 border-t-red-500 rounded-full animate-spin" />Signing out…</>
-            : <><LogOut size={17} aria-hidden />{t('logout')}</>
+            ? <><span className="w-4 h-4 border-2 rounded-full animate-spin" style={{ borderColor: 'currentColor', borderTopColor: 'transparent' }} />Signing out…</>
+            : <><LogOut size={16} aria-hidden />{t('logout')}</>
           }
         </button>
 
-        {/* ── Danger Zone ── */}
-        <div className="rounded-2xl p-4" style={{ background: 'rgba(255,59,48,0.03)', border: '1px solid rgba(255,59,48,0.1)' }}>
-          <p className="section-label mb-2" style={{ color: 'rgba(255,59,48,0.5)' }}>{t('delete_account')}</p>
-          <p className="text-xs font-semibold mb-3 app-muted">{t('delete_account_confirm')}</p>
-          <button
-            onClick={() => setShowDeleteConfirm(true)}
-            className="w-full py-3 rounded-xl text-sm font-black app-btn-danger app-pressable"
-          >
-            🗑️ {t('delete_account')}
-          </button>
-        </div>
+        {/* ── Danger Zone — adults only; children cannot consent to account deletion ── */}
+        {role !== 'child' && (
+          <div className="rounded-2xl p-4" style={{ background: 'rgba(255,59,48,0.03)', border: '1px solid rgba(255,59,48,0.1)' }}>
+            <p className="section-label mb-2" style={{ color: 'rgba(255,59,48,0.5)' }}>{t('delete_account')}</p>
+            <p className="text-xs font-semibold mb-3 app-muted">{t('delete_account_confirm')}</p>
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="w-full py-3 rounded-xl text-sm font-black app-btn-danger app-pressable"
+            >
+              🗑️ {t('delete_account')}
+            </button>
+          </div>
+        )}
 
         {/* Privacy + Footer */}
         <div className="text-center space-y-1">
