@@ -36,7 +36,7 @@ export const MODS: Module[] = [
   {
     id: 'numbers2',
     title: 'Numbers 11–20',
-    icon: '🔣',
+    icon: '🧮',
     color: '#4040D0',
     type: 'numbers',
     items: [
