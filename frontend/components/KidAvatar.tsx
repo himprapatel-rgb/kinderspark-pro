@@ -82,6 +82,19 @@ export default function KidAvatar({
             transform-box: fill-box;
             transform-origin: top center;
           }
+          @keyframes av-wave {
+            0%   { transform: rotate(0deg); }
+            20%  { transform: rotate(-22deg); }
+            40%  { transform: rotate(16deg); }
+            60%  { transform: rotate(-18deg); }
+            80%  { transform: rotate(12deg); }
+            100% { transform: rotate(0deg); }
+          }
+          .av-arm {
+            animation: av-wave 1.1s ease-in-out 1 0.4s both;
+            transform-box: fill-box;
+            transform-origin: 50% 0%;
+          }
         `}</style>
       )}
 
@@ -93,10 +106,11 @@ export default function KidAvatar({
 
       {/* Arms */}
       <rect x="10" y="62" width="13" height="22" rx="6" fill={OUTFIT[cfg.outfit]} />
-      <rect x="77" y="62" width="13" height="22" rx="6" fill={OUTFIT[cfg.outfit]} />
-      {/* Hands */}
       <circle cx="16" cy="85" r="6" fill={skinHex} />
-      <circle cx="84" cy="85" r="6" fill={skinHex} />
+      <g className={animated ? 'av-arm' : undefined}>
+        <rect x="77" y="62" width="13" height="22" rx="6" fill={OUTFIT[cfg.outfit]} />
+        <circle cx="84" cy="85" r="6" fill={skinHex} />
+      </g>
 
       {/* Face */}
       <circle cx="50" cy="44" r="24" fill={skinHex} />

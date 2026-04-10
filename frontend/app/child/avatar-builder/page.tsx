@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
 import KidAvatar from '@/components/KidAvatar'
@@ -54,7 +54,7 @@ const SCENE_BG: Record<AvatarConfig['outfit'], string> = {
 }
 
 const HAIR_STYLE_LABEL: Record<AvatarHair, string> = {
-  short: 'Short', bob: 'Bob Cut', curly: 'Curly', spiky: 'Spiky', puffs: 'Puffs',
+  short: 'Short', bob: 'Bob cut', curly: 'Curly', spiky: 'Spiky', puffs: 'Puffs',
 }
 
 const EYE_LABEL: Record<AvatarEyes, string> = {
@@ -64,7 +64,7 @@ const EYE_LABEL: Record<AvatarEyes, string> = {
 // ── Mini hair-preview SVG ────────────────────────────────────────────────────
 function HairSwatch({ style, skinHex, hairHex }: { style: AvatarHair; skinHex: string; hairHex: string }) {
   return (
-    <svg width={52} height={52} viewBox="0 0 100 88" style={{ display: 'block', overflow: 'visible' }}>
+    <svg width={44} height={44} viewBox="0 0 100 88" style={{ display: 'block', overflow: 'visible' }}>
       <circle cx="50" cy="50" r="24" fill={skinHex} />
       {style === 'short' && (
         <path d="M28 41 Q50 16 72 41 L72 34 Q50 8 28 34 Z" fill={hairHex} />
@@ -96,17 +96,17 @@ function HairSwatch({ style, skinHex, hairHex }: { style: AvatarHair; skinHex: s
 // ── Mini eye-preview SVG ─────────────────────────────────────────────────────
 function EyeSwatch({ style }: { style: AvatarEyes }) {
   return (
-    <svg width={52} height={30} viewBox="30 35 40 22" style={{ display: 'block' }}>
+    <svg width={48} height={26} viewBox="28 34 44 24" style={{ display: 'block' }}>
       {style === 'round' && (
         <>
-          <circle cx="41" cy="44" r="4" fill="#222" />
-          <circle cx="59" cy="44" r="4" fill="#222" />
+          <circle cx="41" cy="44" r="4.5" fill="#222" />
+          <circle cx="59" cy="44" r="4.5" fill="#222" />
         </>
       )}
       {style === 'smile' && (
         <>
-          <path d="M36 43 Q41 49 46 43" stroke="#222" strokeWidth="2.8" fill="none" strokeLinecap="round" />
-          <path d="M54 43 Q59 49 64 43" stroke="#222" strokeWidth="2.8" fill="none" strokeLinecap="round" />
+          <path d="M36 43 Q41 49 46 43" stroke="#222" strokeWidth="3" fill="none" strokeLinecap="round" />
+          <path d="M54 43 Q59 49 64 43" stroke="#222" strokeWidth="3" fill="none" strokeLinecap="round" />
         </>
       )}
       {style === 'sparkle' && (
@@ -119,14 +119,34 @@ function EyeSwatch({ style }: { style: AvatarEyes }) {
   )
 }
 
+// ── Plain face (no accessory) SVG ────────────────────────────────────────────
+function PlainFaceSvg() {
+  return (
+    <svg width={34} height={34} viewBox="10 10 80 80">
+      <circle cx="50" cy="50" r="36" fill="#D8A47F" />
+      <circle cx="38" cy="46" r="4" fill="#333" />
+      <circle cx="62" cy="46" r="4" fill="#333" />
+      <path d="M38 60 Q50 68 62 60" stroke="#8B3A3A" strokeWidth="3" fill="none" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 // ── Swatch strip wrapper ─────────────────────────────────────────────────────
 function Strip({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div style={{ marginBottom: 8 }}>
-      <p style={{ margin: '0 16px 10px', fontSize: 12, fontWeight: 900, color: 'var(--app-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+    <div style={{ marginBottom: 4 }}>
+      <p style={{ margin: '0 16px 8px', fontSize: 14, fontWeight: 800, color: 'var(--app-text, #1a1a1a)', letterSpacing: '-0.01em' }}>
         {label}
       </p>
-      <div style={{ display: 'flex', gap: 10, overflowX: 'auto', padding: '2px 16px 10px', scrollbarWidth: 'none' }}>
+      <div style={{
+        display: 'flex',
+        gap: 10,
+        overflowX: 'auto',
+        padding: '2px 16px 12px',
+        scrollbarWidth: 'none',
+        WebkitMaskImage: 'linear-gradient(to right, black calc(100% - 36px), transparent 100%)',
+        maskImage: 'linear-gradient(to right, black calc(100% - 36px), transparent 100%)',
+      }}>
         {children}
       </div>
     </div>
@@ -137,6 +157,14 @@ function Strip({ label, children }: { label: string; children: React.ReactNode }
 export default function AvatarBuilderPage() {
   const router = useRouter()
   const student = useAppStore((s) => s.currentStudent || s.user)
+  const [isDesktop, setIsDesktop] = useState(false)
+
+  useEffect(() => {
+    const check = () => setIsDesktop(window.innerWidth >= 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   const [cfg, setCfg] = useState<AvatarConfig>(
     () => getAvatarConfigFromOwnedItems((student as any)?.ownedItems) || DEFAULT_AVATAR_CONFIG
@@ -168,324 +196,15 @@ export default function AvatarBuilderPage() {
     setTimeout(() => {
       setShowConfetti(false)
       router.push('/child/profile')
-    }, 2600)
+    }, 3500)
   }
 
   const skinHex = SKIN_HEX[cfg.tone]
   const hairHex = HAIR_COLOR_HEX[cfg.hairColor || 'black']
+  const avatarSize = isDesktop ? 260 : 180
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--app-bg)', paddingBottom: 32, fontFamily: 'var(--font-nunito), Nunito, sans-serif' }}>
-      <Confetti trigger={showConfetti} onComplete={() => setShowConfetti(false)} />
-
-      {/* ── Save celebration overlay ─────────────────────────────────────── */}
-      {saved && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,252,245,0.94)', backdropFilter: 'blur(8px)' }}>
-          <div style={{ animation: 'av-pop 0.45s cubic-bezier(.16,1,.3,1) forwards' }}>
-            <KidAvatar studentId={student?.id} fallback="🧒" size={210} configOverride={cfg} animated />
-          </div>
-          <p style={{ margin: '18px 0 4px', fontSize: 26, fontWeight: 900, color: 'rgb(var(--foreground-rgb))', textAlign: 'center' }}>
-            Looking great, {childName.split(' ')[0]}! ⭐
-          </p>
-          <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--app-text-muted)' }}>Your look is saved!</p>
-        </div>
-      )}
-
-      {/* ── Header ──────────────────────────────────────────────────────── */}
-      <div style={{ background: 'linear-gradient(135deg, #F5A623, #E8832A)', padding: '14px 16px 18px', position: 'sticky', top: 0, zIndex: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button
-            type="button"
-            className="app-pressable"
-            onClick={() => router.back()}
-            aria-label="Go back"
-            style={{ minHeight: 44, minWidth: 44, borderRadius: 12, border: 'none', background: 'rgba(255,255,255,0.2)', color: 'white', fontSize: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
-          >←</button>
-          <div>
-            <h1 style={{ margin: 0, fontSize: 20, fontWeight: 900, color: 'white', textShadow: '0 1px 4px rgba(0,0,0,0.15)', lineHeight: 1.1 }}>
-              Make Your Look! 🎨
-            </h1>
-            <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.88)' }}>
-              Tap anything to change your style
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Avatar scene ─────────────────────────────────────────────────── */}
-      <div
-        style={{ background: SCENE_BG[cfg.outfit], padding: '32px 0 22px', display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', overflow: 'hidden', transition: 'background 0.4s ease' }}
-      >
-        {/* Decorative dots */}
-        {[15, 82, 28, 71, 44, 90, 6, 60, 35, 55, 76, 18].map((left, i) => (
-          <div key={i} style={{ position: 'absolute', width: 7, height: 7, borderRadius: '50%', background: 'rgba(255,255,255,0.28)', left: `${left}%`, top: `${[20, 65, 45, 15, 80, 35, 55, 10, 70, 40, 25, 88][i]}%`, pointerEvents: 'none' }} />
-        ))}
-
-        {/* Float wrapper (continuous) + pop wrapper (restarts on selection) */}
-        <div style={{ animation: 'av-float 3s ease-in-out infinite', willChange: 'transform' }}>
-          <div key={popKey} style={{ animation: popKey > 0 ? 'av-pop 0.38s cubic-bezier(.16,1,.3,1)' : undefined, willChange: 'transform' }}>
-            <KidAvatar
-              studentId={student?.id}
-              fallback="🧒"
-              size={220}
-              configOverride={cfg}
-              animated
-            />
-          </div>
-        </div>
-
-        <p style={{ margin: '14px 0 0', fontSize: 14, fontWeight: 900, color: 'rgba(255,255,255,0.92)', textShadow: '0 1px 4px rgba(0,0,0,0.2)' }}>
-          {childName.split(' ')[0]}&apos;s Character ✨
-        </p>
-      </div>
-
-      {/* ── Customisation strips ─────────────────────────────────────────── */}
-      <div style={{ paddingTop: 20 }}>
-
-        {/* Skin Colour */}
-        <Strip label="🎨 Skin Color">
-          {(Object.entries(SKIN_HEX) as [AvatarConfig['tone'], string][]).map(([k, hex]) => (
-            <button
-              key={k}
-              type="button"
-              className="app-pressable"
-              onClick={() => setPart('tone', k)}
-              aria-pressed={cfg.tone === k}
-              aria-label={`${k} skin tone`}
-              style={{
-                flexShrink: 0,
-                width: 62,
-                height: 62,
-                borderRadius: '50%',
-                border: 'none',
-                cursor: 'pointer',
-                background: hex,
-                boxShadow: cfg.tone === k
-                  ? `0 0 0 3px white, 0 0 0 6px #F5B731`
-                  : '0 3px 10px rgba(0,0,0,0.18)',
-                transition: 'box-shadow 0.2s',
-              }}
-            />
-          ))}
-        </Strip>
-
-        {/* Hair Style */}
-        <Strip label="💇 Hair Style">
-          {(Object.keys(HAIR_STYLE_LABEL) as AvatarHair[]).map((style) => {
-            const sel = cfg.hair === style
-            return (
-              <button
-                key={style}
-                type="button"
-                className="app-pressable"
-                onClick={() => setPart('hair', style)}
-                aria-pressed={sel}
-                aria-label={HAIR_STYLE_LABEL[style]}
-                style={{
-                  flexShrink: 0,
-                  width: 74,
-                  minHeight: 82,
-                  borderRadius: 18,
-                  border: sel ? '2.5px solid #F5B731' : '1.5px solid var(--app-border)',
-                  background: sel ? 'rgba(245,183,49,0.12)' : 'var(--app-surface)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 5,
-                  padding: '8px 4px 7px',
-                  boxShadow: sel ? '0 2px 14px rgba(245,183,49,0.32)' : '0 1px 4px rgba(0,0,0,0.06)',
-                  transition: 'border-color 0.15s, box-shadow 0.15s',
-                }}
-              >
-                <HairSwatch style={style} skinHex={skinHex} hairHex={hairHex} />
-                <span style={{ fontSize: 11, fontWeight: 900, color: sel ? '#C79012' : 'var(--app-text-muted)', textAlign: 'center', lineHeight: 1.1 }}>
-                  {HAIR_STYLE_LABEL[style]}
-                </span>
-              </button>
-            )
-          })}
-        </Strip>
-
-        {/* Hair Colour */}
-        <Strip label="🌈 Hair Color">
-          {(Object.entries(HAIR_COLOR_HEX) as [AvatarHairColor, string][]).map(([k, hex]) => (
-            <button
-              key={k}
-              type="button"
-              className="app-pressable"
-              onClick={() => setPart('hairColor', k)}
-              aria-pressed={cfg.hairColor === k}
-              aria-label={`${k} hair`}
-              style={{
-                flexShrink: 0,
-                width: 54,
-                height: 54,
-                borderRadius: '50%',
-                border: k === 'white' ? '1.5px solid rgba(0,0,0,0.1)' : 'none',
-                cursor: 'pointer',
-                background: hex,
-                boxShadow: cfg.hairColor === k
-                  ? `0 0 0 3px white, 0 0 0 6px #F5B731`
-                  : '0 3px 10px rgba(0,0,0,0.18)',
-                transition: 'box-shadow 0.2s',
-              }}
-            />
-          ))}
-        </Strip>
-
-        {/* Eyes */}
-        <Strip label="👁 Eyes">
-          {(Object.keys(EYE_LABEL) as AvatarEyes[]).map((style) => {
-            const sel = cfg.eyes === style
-            return (
-              <button
-                key={style}
-                type="button"
-                className="app-pressable"
-                onClick={() => setPart('eyes', style)}
-                aria-pressed={sel}
-                aria-label={`${EYE_LABEL[style]} eyes`}
-                style={{
-                  flexShrink: 0,
-                  width: 84,
-                  minHeight: 68,
-                  borderRadius: 18,
-                  border: sel ? '2.5px solid #F5B731' : '1.5px solid var(--app-border)',
-                  background: sel ? 'rgba(245,183,49,0.12)' : 'var(--app-surface)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 6,
-                  padding: '10px 8px',
-                  boxShadow: sel ? '0 2px 14px rgba(245,183,49,0.32)' : '0 1px 4px rgba(0,0,0,0.06)',
-                  transition: 'border-color 0.15s, box-shadow 0.15s',
-                }}
-              >
-                <EyeSwatch style={style} />
-                <span style={{ fontSize: 11, fontWeight: 900, color: sel ? '#C79012' : 'var(--app-text-muted)' }}>
-                  {EYE_LABEL[style]}
-                </span>
-              </button>
-            )
-          })}
-        </Strip>
-
-        {/* Outfit */}
-        <Strip label="👕 Outfit">
-          {(Object.entries(OUTFIT_HEX) as [AvatarConfig['outfit'], string][]).map(([k, hex]) => {
-            const sel = cfg.outfit === k
-            return (
-              <button
-                key={k}
-                type="button"
-                className="app-pressable"
-                onClick={() => setPart('outfit', k)}
-                aria-pressed={sel}
-                aria-label={OUTFIT_LABEL[k]}
-                style={{
-                  flexShrink: 0,
-                  width: 78,
-                  minHeight: 76,
-                  borderRadius: 18,
-                  border: sel ? `2.5px solid ${hex}` : '1.5px solid var(--app-border)',
-                  background: sel ? `${hex}22` : 'var(--app-surface)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 5,
-                  padding: '8px 6px',
-                  boxShadow: sel ? `0 2px 14px ${hex}55` : '0 1px 4px rgba(0,0,0,0.06)',
-                  transition: 'border-color 0.15s, box-shadow 0.15s',
-                }}
-              >
-                <div style={{ width: 38, height: 38, borderRadius: 12, background: hex, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
-                  {OUTFIT_EMOJI[k]}
-                </div>
-                <span style={{ fontSize: 11, fontWeight: 900, color: sel ? hex : 'var(--app-text-muted)', textAlign: 'center', lineHeight: 1.1 }}>
-                  {OUTFIT_LABEL[k]}
-                </span>
-              </button>
-            )
-          })}
-        </Strip>
-
-        {/* Add-On */}
-        <Strip label="✨ Add-On">
-          {([
-            ['none',    '✗', 'Plain'],
-            ['glasses', '👓', 'Glasses'],
-            ['star',    '⭐', 'Star'],
-          ] as const).map(([k, emoji, label]) => {
-            const sel = cfg.accessory === k
-            return (
-              <button
-                key={k}
-                type="button"
-                className="app-pressable"
-                onClick={() => setPart('accessory', k)}
-                aria-pressed={sel}
-                aria-label={label}
-                style={{
-                  flexShrink: 0,
-                  width: 84,
-                  minHeight: 76,
-                  borderRadius: 18,
-                  border: sel ? '2.5px solid #F5B731' : '1.5px solid var(--app-border)',
-                  background: sel ? 'rgba(245,183,49,0.12)' : 'var(--app-surface)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 5,
-                  padding: '8px 6px',
-                  boxShadow: sel ? '0 2px 14px rgba(245,183,49,0.32)' : '0 1px 4px rgba(0,0,0,0.06)',
-                  transition: 'border-color 0.15s, box-shadow 0.15s',
-                }}
-              >
-                <span style={{ fontSize: k === 'none' ? 22 : 30, opacity: k === 'none' ? 0.35 : 1, lineHeight: 1 }}>{emoji}</span>
-                <span style={{ fontSize: 11, fontWeight: 900, color: sel ? '#C79012' : 'var(--app-text-muted)' }}>
-                  {label}
-                </span>
-              </button>
-            )
-          })}
-        </Strip>
-
-      </div>
-
-      {/* ── Save button ──────────────────────────────────────────────────── */}
-      <div style={{ padding: '10px 16px 0' }}>
-        <button
-          type="button"
-          onClick={onSave}
-          disabled={!student?.id || saving || saved}
-          className="app-pressable"
-          style={{
-            width: '100%',
-            minHeight: 58,
-            borderRadius: 20,
-            border: 'none',
-            fontWeight: 900,
-            fontSize: 17,
-            cursor: saving || saved ? 'default' : 'pointer',
-            background: 'linear-gradient(135deg, #F5B731, #E8832A)',
-            color: '#2B1F10',
-            boxShadow: '0 4px 22px rgba(245,167,35,0.45)',
-            opacity: saving ? 0.7 : 1,
-            transition: 'opacity 0.2s',
-          }}
-        >
-          {saving ? 'Saving...' : saved ? 'Saved! ✨' : 'Save My Look! ✨'}
-        </button>
-      </div>
-
+    <>
       <style>{`
         @keyframes av-float {
           0%, 100% { transform: translateY(0px); }
@@ -497,7 +216,369 @@ export default function AvatarBuilderPage() {
           65%  { transform: scale(0.97) rotate(-1deg); }
           100% { transform: scale(1); }
         }
+        .bldr-swatch:hover { transform: scale(1.06); }
+        @media (min-width: 768px) {
+          .bldr-content { flex-direction: row !important; }
+          .bldr-scene   { width: 44% !important; flex-shrink: 0 !important; align-self: stretch; height: auto !important; }
+        }
       `}</style>
-    </div>
+
+      <Confetti trigger={showConfetti} onComplete={() => setShowConfetti(false)} />
+
+      {/* ── Save celebration overlay ─────────────────────────────────────── */}
+      {saved && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,252,245,0.95)', backdropFilter: 'blur(8px)' }}>
+          <div style={{ animation: 'av-pop 0.45s cubic-bezier(.16,1,.3,1) forwards' }}>
+            <KidAvatar studentId={student?.id} fallback="🧒" size={220} configOverride={cfg} animated />
+          </div>
+          <p style={{ margin: '18px 0 4px', fontSize: 26, fontWeight: 900, color: '#1a1a1a', textAlign: 'center' }}>
+            Looking great, {childName.split(' ')[0]}! ⭐
+          </p>
+          <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#888' }}>Your look is saved!</p>
+        </div>
+      )}
+
+      {/* ── Full-screen builder (covers tab bar at z-40) ─────────────────── */}
+      <div style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 41,
+        background: 'var(--app-bg, #FFFCF5)',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        fontFamily: 'var(--font-nunito), Nunito, sans-serif',
+      }}>
+
+        {/* ── Header ────────────────────────────────────────────────────── */}
+        <div style={{ flexShrink: 0, background: 'linear-gradient(135deg, #F5A623, #E8832A)', padding: '14px 16px 18px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button
+              type="button"
+              className="app-pressable"
+              onClick={() => router.back()}
+              aria-label="Go back"
+              style={{ minHeight: 44, minWidth: 44, borderRadius: 12, border: 'none', background: 'rgba(255,255,255,0.2)', color: 'white', fontSize: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+            >←</button>
+            <div>
+              <h1 style={{ margin: 0, fontSize: 20, fontWeight: 900, color: 'white', textShadow: '0 1px 4px rgba(0,0,0,0.15)', lineHeight: 1.1 }}>
+                Make Your Look! 🎨
+              </h1>
+              <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.88)' }}>
+                Tap anything to change your style
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Content area (scene + controls) ─────────────────────────── */}
+        <div
+          className="bldr-content"
+          style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+        >
+
+          {/* ── Avatar scene (always visible) ─────────────────────────── */}
+          <div
+            className="bldr-scene"
+            style={{
+              flexShrink: 0,
+              background: SCENE_BG[cfg.outfit],
+              padding: isDesktop ? '0' : '28px 0 18px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative',
+              overflow: 'hidden',
+              transition: 'background 0.4s ease',
+              minHeight: isDesktop ? 'auto' : 240,
+            }}
+          >
+            {/* Decorative dots */}
+            {[15, 82, 28, 71, 44, 90, 6, 60, 35, 55, 76, 18].map((left, i) => (
+              <div key={i} style={{ position: 'absolute', width: 7, height: 7, borderRadius: '50%', background: 'rgba(255,255,255,0.28)', left: `${left}%`, top: `${[20, 65, 45, 15, 80, 35, 55, 10, 70, 40, 25, 88][i]}%`, pointerEvents: 'none' }} />
+            ))}
+
+            {/* Float + pop wrapper */}
+            <div style={{ animation: 'av-float 3s ease-in-out infinite', willChange: 'transform' }}>
+              <div key={popKey} style={{ animation: popKey > 0 ? 'av-pop 0.38s cubic-bezier(.16,1,.3,1)' : undefined, willChange: 'transform' }}>
+                <KidAvatar
+                  studentId={student?.id}
+                  fallback="🧒"
+                  size={avatarSize}
+                  configOverride={cfg}
+                  animated
+                />
+              </div>
+            </div>
+
+            <p style={{ margin: '12px 0 0', fontSize: 13, fontWeight: 900, color: 'rgba(255,255,255,0.92)', textShadow: '0 1px 4px rgba(0,0,0,0.2)' }}>
+              {childName.split(' ')[0]}&apos;s Character ✨
+            </p>
+          </div>
+
+          {/* ── Right panel: scrollable controls + sticky save ─────────── */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--app-bg, #FFFCF5)' }}>
+
+            {/* Scrollable controls */}
+            <div style={{ flex: 1, overflowY: 'auto', paddingTop: 16 }}>
+
+              {/* Skin colour */}
+              <Strip label="🎨 Skin colour">
+                {(Object.entries(SKIN_HEX) as [AvatarConfig['tone'], string][]).map(([k, hex]) => (
+                  <button
+                    key={k}
+                    type="button"
+                    className="bldr-swatch app-pressable"
+                    onClick={() => setPart('tone', k)}
+                    aria-pressed={cfg.tone === k}
+                    aria-label={`${k} skin tone`}
+                    style={{
+                      flexShrink: 0,
+                      width: 62,
+                      height: 62,
+                      borderRadius: '50%',
+                      border: 'none',
+                      cursor: 'pointer',
+                      background: hex,
+                      boxShadow: cfg.tone === k
+                        ? `0 0 0 3px white, 0 0 0 6px #F5B731`
+                        : '0 3px 10px rgba(0,0,0,0.18)',
+                      transition: 'box-shadow 0.2s, transform 0.15s',
+                    }}
+                  />
+                ))}
+              </Strip>
+
+              {/* Hair style */}
+              <Strip label="💇 Hair style">
+                {(Object.keys(HAIR_STYLE_LABEL) as AvatarHair[]).map((style) => {
+                  const sel = cfg.hair === style
+                  return (
+                    <button
+                      key={style}
+                      type="button"
+                      className="bldr-swatch app-pressable"
+                      onClick={() => setPart('hair', style)}
+                      aria-pressed={sel}
+                      aria-label={HAIR_STYLE_LABEL[style]}
+                      style={{
+                        flexShrink: 0,
+                        width: 80,
+                        height: 80,
+                        borderRadius: 18,
+                        border: sel ? '2.5px solid #F5B731' : '1.5px solid var(--app-border)',
+                        background: sel ? 'rgba(245,183,49,0.12)' : 'var(--app-surface)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 4,
+                        padding: '6px 4px',
+                        boxShadow: sel ? '0 2px 14px rgba(245,183,49,0.32)' : '0 1px 4px rgba(0,0,0,0.06)',
+                        transition: 'border-color 0.15s, box-shadow 0.15s, transform 0.15s',
+                      }}
+                    >
+                      <HairSwatch style={style} skinHex={skinHex} hairHex={hairHex} />
+                      <span style={{ fontSize: 11, fontWeight: 900, color: sel ? '#C79012' : 'var(--app-text-muted)', textAlign: 'center', lineHeight: 1 }}>
+                        {HAIR_STYLE_LABEL[style]}
+                      </span>
+                    </button>
+                  )
+                })}
+              </Strip>
+
+              {/* Hair colour */}
+              <Strip label="🌈 Hair colour">
+                {(Object.entries(HAIR_COLOR_HEX) as [AvatarHairColor, string][]).map(([k, hex]) => {
+                  const sel = cfg.hairColor === k
+                  const isWhite = k === 'white'
+                  return (
+                    <button
+                      key={k}
+                      type="button"
+                      className="bldr-swatch app-pressable"
+                      onClick={() => setPart('hairColor', k)}
+                      aria-pressed={sel}
+                      aria-label={`${k} hair`}
+                      style={{
+                        flexShrink: 0,
+                        width: 56,
+                        height: 56,
+                        borderRadius: '50%',
+                        border: isWhite ? '2px solid rgba(0,0,0,0.25)' : 'none',
+                        cursor: 'pointer',
+                        background: hex,
+                        boxShadow: sel
+                          ? isWhite
+                            ? `0 0 0 3px #888, 0 0 0 6px #333`
+                            : `0 0 0 3px white, 0 0 0 6px #F5B731`
+                          : '0 3px 10px rgba(0,0,0,0.18)',
+                        transition: 'box-shadow 0.2s, transform 0.15s',
+                      }}
+                    />
+                  )
+                })}
+              </Strip>
+
+              {/* Eyes */}
+              <Strip label="👁 Eyes">
+                {(Object.keys(EYE_LABEL) as AvatarEyes[]).map((style) => {
+                  const sel = cfg.eyes === style
+                  return (
+                    <button
+                      key={style}
+                      type="button"
+                      className="bldr-swatch app-pressable"
+                      onClick={() => setPart('eyes', style)}
+                      aria-pressed={sel}
+                      aria-label={`${EYE_LABEL[style]} eyes`}
+                      style={{
+                        flexShrink: 0,
+                        width: 80,
+                        height: 80,
+                        borderRadius: 18,
+                        border: sel ? '2.5px solid #F5B731' : '1.5px solid var(--app-border)',
+                        background: sel ? 'rgba(245,183,49,0.12)' : 'var(--app-surface)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 6,
+                        padding: '10px 8px',
+                        boxShadow: sel ? '0 2px 14px rgba(245,183,49,0.32)' : '0 1px 4px rgba(0,0,0,0.06)',
+                        transition: 'border-color 0.15s, box-shadow 0.15s, transform 0.15s',
+                      }}
+                    >
+                      <EyeSwatch style={style} />
+                      <span style={{ fontSize: 11, fontWeight: 900, color: sel ? '#C79012' : 'var(--app-text-muted)' }}>
+                        {EYE_LABEL[style]}
+                      </span>
+                    </button>
+                  )
+                })}
+              </Strip>
+
+              {/* Outfit */}
+              <Strip label="👕 Outfit">
+                {(Object.entries(OUTFIT_HEX) as [AvatarConfig['outfit'], string][]).map(([k, hex]) => {
+                  const sel = cfg.outfit === k
+                  return (
+                    <button
+                      key={k}
+                      type="button"
+                      className="bldr-swatch app-pressable"
+                      onClick={() => setPart('outfit', k)}
+                      aria-pressed={sel}
+                      aria-label={OUTFIT_LABEL[k]}
+                      style={{
+                        flexShrink: 0,
+                        width: 80,
+                        height: 80,
+                        borderRadius: 18,
+                        border: sel ? `2.5px solid ${hex}` : '1.5px solid var(--app-border)',
+                        background: sel ? `${hex}22` : 'var(--app-surface)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 4,
+                        padding: '6px 6px',
+                        boxShadow: sel ? `0 2px 14px ${hex}55` : '0 1px 4px rgba(0,0,0,0.06)',
+                        transition: 'border-color 0.15s, box-shadow 0.15s, transform 0.15s',
+                      }}
+                    >
+                      <div style={{ width: 40, height: 40, borderRadius: 12, background: hex, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
+                        {OUTFIT_EMOJI[k]}
+                      </div>
+                      <span style={{ fontSize: 11, fontWeight: 900, color: sel ? hex : 'var(--app-text-muted)', textAlign: 'center', lineHeight: 1 }}>
+                        {OUTFIT_LABEL[k]}
+                      </span>
+                    </button>
+                  )
+                })}
+              </Strip>
+
+              {/* Add-On */}
+              <Strip label="✨ Add-on">
+                {([
+                  ['none',    null,  'Plain'],
+                  ['glasses', '👓',  'Glasses'],
+                  ['star',    '⭐',  'Star'],
+                ] as const).map(([k, emoji, label]) => {
+                  const sel = cfg.accessory === k
+                  return (
+                    <button
+                      key={k}
+                      type="button"
+                      className="bldr-swatch app-pressable"
+                      onClick={() => setPart('accessory', k)}
+                      aria-pressed={sel}
+                      aria-label={label}
+                      style={{
+                        flexShrink: 0,
+                        width: 80,
+                        height: 80,
+                        borderRadius: 18,
+                        border: sel ? '2.5px solid #F5B731' : '1.5px solid var(--app-border)',
+                        background: sel ? 'rgba(245,183,49,0.12)' : 'var(--app-surface)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 4,
+                        padding: '8px 6px',
+                        boxShadow: sel ? '0 2px 14px rgba(245,183,49,0.32)' : '0 1px 4px rgba(0,0,0,0.06)',
+                        transition: 'border-color 0.15s, box-shadow 0.15s, transform 0.15s',
+                        opacity: k === 'none' && !sel ? 0.7 : 1,
+                      }}
+                    >
+                      {k === 'none' ? <PlainFaceSvg /> : <span style={{ fontSize: 30, lineHeight: 1 }}>{emoji}</span>}
+                      <span style={{ fontSize: 11, fontWeight: 900, color: sel ? '#C79012' : 'var(--app-text-muted)' }}>
+                        {label}
+                      </span>
+                    </button>
+                  )
+                })}
+              </Strip>
+
+              {/* Bottom breathing room */}
+              <div style={{ height: 8 }} />
+            </div>
+
+            {/* ── Sticky save button ─────────────────────────────────────── */}
+            <div style={{ flexShrink: 0, padding: '10px 16px 16px', background: 'var(--app-bg, #FFFCF5)', borderTop: '1px solid var(--app-border)' }}>
+              <button
+                type="button"
+                onClick={onSave}
+                disabled={!student?.id || saving || saved}
+                className="app-pressable"
+                style={{
+                  width: '100%',
+                  minHeight: 56,
+                  borderRadius: 20,
+                  border: 'none',
+                  fontWeight: 900,
+                  fontSize: 17,
+                  cursor: saving || saved ? 'default' : 'pointer',
+                  background: 'linear-gradient(135deg, #F5B731, #E8832A)',
+                  color: '#2B1F10',
+                  boxShadow: '0 4px 22px rgba(245,167,35,0.45)',
+                  opacity: saving ? 0.7 : 1,
+                  transition: 'opacity 0.2s',
+                }}
+              >
+                {saving ? 'Saving...' : saved ? 'Saved! ✨' : 'Save My Look! ✨'}
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </>
   )
 }
