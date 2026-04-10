@@ -69,19 +69,26 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* iOS PWA — splash screen */}
         <link rel="apple-touch-startup-image" href="/icon-512.png" />
       </head>
-      <body className="font-sans antialiased min-h-screen" style={{ background: 'var(--app-bg)' }}>
-        <a
-          href="#ks-main"
-          className="sr-only-focusable"
-        >
-          Skip to main content
-        </a>
+      <body className="font-sans antialiased" style={{ background: '#000', minHeight: '100dvh' }}>
+        <a href="#ks-main" className="sr-only-focusable">Skip to main content</a>
         <ToastProvider>
           <AccessibilityProvider>
             <ClientRoot>
-            <main id="ks-main" tabIndex={-1} className="min-h-screen outline-none">
-              {children}
-            </main>
+              <main
+                id="ks-main"
+                tabIndex={-1}
+                className="outline-none"
+                style={{
+                  maxWidth: 430,
+                  margin: '0 auto',
+                  minHeight: '100dvh',
+                  background: 'var(--app-bg)',
+                  position: 'relative',
+                  boxShadow: '0 0 60px rgba(0,0,0,0.6)',
+                }}
+              >
+                {children}
+              </main>
             </ClientRoot>
             <ThemeCustomizer />
           </AccessibilityProvider>
