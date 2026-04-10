@@ -8,12 +8,13 @@ const SKIN: Record<AvatarConfig['tone'], string> = {
   dark: '#8D5A3B',
 }
 
-const HAIR: Record<AvatarConfig['hair'], string> = {
-  short: '#3A2A1E',
-  bob: '#2E2A36',
-  curly: '#4A3326',
-  spiky: '#2B2B2B',
-  puffs: '#3C2F2F',
+const HAIR_COLOR: Record<AvatarConfig['hairColor'], string> = {
+  black: '#2B2B2B',
+  brown: '#7B4A2A',
+  blonde: '#D4A017',
+  red: '#B52A2A',
+  white: '#E0E0D8',
+  blue: '#4DAADF',
 }
 
 const OUTFIT: Record<AvatarConfig['outfit'], string> = {
@@ -30,6 +31,7 @@ export default function KidAvatar({
   className,
   configOverride,
   ownedItems,
+  animated = false,
 }: {
   studentId?: string
   fallback?: string
@@ -37,6 +39,7 @@ export default function KidAvatar({
   className?: string
   configOverride?: AvatarConfig
   ownedItems?: string[] | null
+  animated?: boolean
 }) {
   const cfg = useMemo(
     () => {
@@ -54,33 +57,76 @@ export default function KidAvatar({
     return <span className={className} style={{ fontSize: Math.round(size * 0.56) }}>{fallback}</span>
   }
 
+  const hairHex = HAIR_COLOR[cfg.hairColor || 'black']
+  const skinHex = SKIN[cfg.tone]
   const eyeY = cfg.eyes === 'smile' ? 44 : 42
   const mouth = cfg.eyes === 'smile' ? 'M36 54 Q50 64 64 54' : 'M38 57 Q50 62 62 57'
 
   return (
-    <svg className={className} width={size} height={size} viewBox="0 0 100 100" role="img" aria-label="Custom avatar">
-      <circle cx="50" cy="50" r="48" fill="rgba(255,255,255,0.24)" />
-      <rect x="22" y="60" width="56" height="30" rx="14" fill={OUTFIT[cfg.outfit]} />
-      <circle cx="50" cy="44" r="24" fill={SKIN[cfg.tone]} />
+    <svg
+      className={className}
+      width={size}
+      height={size}
+      viewBox="0 0 100 100"
+      role="img"
+      aria-label="Custom avatar"
+    >
+      {animated && (
+        <style>{`
+          @keyframes av-blink {
+            0%, 87%, 100% { transform: scaleY(0); }
+            90%, 94%      { transform: scaleY(1); }
+          }
+          .av-lid {
+            animation: av-blink 4s ease-in-out infinite;
+            transform-box: fill-box;
+            transform-origin: top center;
+          }
+        `}</style>
+      )}
 
-      {cfg.hair === 'short' && <path d="M28 41 Q50 16 72 41 L72 34 Q50 8 28 34 Z" fill={HAIR[cfg.hair]} />}
-      {cfg.hair === 'bob' && <path d="M24 41 Q50 14 76 41 L76 58 Q68 66 58 66 L42 66 Q32 66 24 58 Z" fill={HAIR[cfg.hair]} />}
+      {/* Background halo */}
+      <circle cx="50" cy="50" r="48" fill="rgba(255,255,255,0.24)" />
+
+      {/* Outfit / body */}
+      <rect x="22" y="60" width="56" height="30" rx="14" fill={OUTFIT[cfg.outfit]} />
+
+      {/* Arms */}
+      <rect x="10" y="62" width="13" height="22" rx="6" fill={OUTFIT[cfg.outfit]} />
+      <rect x="77" y="62" width="13" height="22" rx="6" fill={OUTFIT[cfg.outfit]} />
+      {/* Hands */}
+      <circle cx="16" cy="85" r="6" fill={skinHex} />
+      <circle cx="84" cy="85" r="6" fill={skinHex} />
+
+      {/* Face */}
+      <circle cx="50" cy="44" r="24" fill={skinHex} />
+
+      {/* Hair */}
+      {cfg.hair === 'short' && (
+        <path d="M28 41 Q50 16 72 41 L72 34 Q50 8 28 34 Z" fill={hairHex} />
+      )}
+      {cfg.hair === 'bob' && (
+        <path d="M24 41 Q50 14 76 41 L76 58 Q68 66 58 66 L42 66 Q32 66 24 58 Z" fill={hairHex} />
+      )}
       {cfg.hair === 'curly' && (
         <>
-          <circle cx="34" cy="30" r="10" fill={HAIR[cfg.hair]} />
-          <circle cx="50" cy="24" r="12" fill={HAIR[cfg.hair]} />
-          <circle cx="66" cy="30" r="10" fill={HAIR[cfg.hair]} />
+          <circle cx="34" cy="30" r="10" fill={hairHex} />
+          <circle cx="50" cy="24" r="12" fill={hairHex} />
+          <circle cx="66" cy="30" r="10" fill={hairHex} />
         </>
       )}
-      {cfg.hair === 'spiky' && <path d="M28 38 L36 24 L44 36 L50 20 L56 36 L64 24 L72 38 Z" fill={HAIR[cfg.hair]} />}
+      {cfg.hair === 'spiky' && (
+        <path d="M28 38 L36 24 L44 36 L50 20 L56 36 L64 24 L72 38 Z" fill={hairHex} />
+      )}
       {cfg.hair === 'puffs' && (
         <>
-          <circle cx="22" cy="38" r="10" fill={HAIR[cfg.hair]} />
-          <circle cx="78" cy="38" r="10" fill={HAIR[cfg.hair]} />
-          <path d="M28 41 Q50 18 72 41 L72 34 Q50 10 28 34 Z" fill={HAIR[cfg.hair]} />
+          <circle cx="22" cy="38" r="10" fill={hairHex} />
+          <circle cx="78" cy="38" r="10" fill={hairHex} />
+          <path d="M28 41 Q50 18 72 41 L72 34 Q50 10 28 34 Z" fill={hairHex} />
         </>
       )}
 
+      {/* Eyes */}
       {cfg.eyes === 'round' && (
         <>
           <circle cx="41" cy={eyeY} r="3.5" fill="#222" />
@@ -100,8 +146,10 @@ export default function KidAvatar({
         </>
       )}
 
+      {/* Mouth */}
       <path d={mouth} stroke="#8B3A3A" strokeWidth="2.5" fill="none" strokeLinecap="round" />
 
+      {/* Accessories */}
       {cfg.accessory === 'glasses' && (
         <>
           <rect x="33" y="37" width="16" height="11" rx="5.5" stroke="#2B2B2B" fill="none" strokeWidth="2" />
@@ -112,7 +160,14 @@ export default function KidAvatar({
       {cfg.accessory === 'star' && (
         <path d="M72 26 L74.5 31 L80 31.7 L76 35.6 L77.2 41 L72 38.2 L66.8 41 L68 35.6 L64 31.7 L69.5 31 Z" fill="#F5B731" />
       )}
+
+      {/* Blink eyelids — skin-coloured, animate scaleY 0→1 briefly every 4s */}
+      {animated && (
+        <>
+          <ellipse className="av-lid" cx="41" cy={eyeY} rx="6" ry="5.5" fill={skinHex} />
+          <ellipse className="av-lid" cx="59" cy={eyeY} rx="6" ry="5.5" fill={skinHex} />
+        </>
+      )}
     </svg>
   )
 }
-
