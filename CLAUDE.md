@@ -674,6 +674,34 @@ Full audit performed. All role dashboards (admin, teacher, parent, principal) st
 - **`child/page.tsx` hero** — Replaced flat stat rows with "adventure launchpad": SVG level ring around avatar, collectible stat tiles (Stars/Streak/Level) with gradient backgrounds and AppIcon icons, milestone progress bar with 25/50/75% dots, full "Continue Learning" mission card (gold gradient CTA), "Next Quest" card. `Flame` (Lucide) fully replaced by `AppIcon name="streak"`.
 - **`child/settings`** — Redesigned as "My Space": playful tri-colour gradient hero (orange→pink→purple) with child avatar, emoji-labelled sections (🎨 Identity, 👁️ Look & Feel, ⏱ Screen Time, 🎤 My Voice, 🌍 Language, 🔔 Reminders). Child-appropriate copy throughout.
 
+### Child Profile Redesign (2026-04-10)
+`frontend/components/ProfileManager.tsx` — conditional rendering by `role === 'child'`:
+- **Hidden for children**: Profile ID card, Delete Account danger zone, Email field, Roles chips, Photo URL input
+- **Hero**: 96px avatar with golden glow on streak > 0, Level pill (`Math.floor(stars/50)+1`), 3 stat tiles (⭐ Stars / 🔥 Streak / 🏅 Badges); badge count loaded via `getStudentBadges` in parallel with profile fetch
+- **Avatar**: 12-emoji tap-to-select grid (`aria-pressed`) for child role; text input kept for adults
+- **Identity card**: renamed "🎨 My Space" for child; Display Name + Preferred Name merged into single "My name" field
+- **Logout**: `app-btn-secondary` (neutral) for child, `app-btn-danger` (red) for adults
+- **Back button**: `min-h-[44px]` for WCAG touch target compliance
+- **Text-shadow**: added to all hero text to fix WCAG contrast on orange gradient
+
+### Himanshu Violation Fixes (2026-04-10)
+- `frontend/app/child/page.tsx` — removed `import { StoryIcon }`, restored missing `MissionCelebration` + `EmotionalBuddyCard` imports, replaced last StoryIcon usage with `AppIcon`
+- `frontend/components/TopBarActions.tsx` — `StoryIcon` → `AppIcon` for both profile and settings buttons; fixed wrong icon name `school` → `settings`
+- `frontend/app/child/messages/page.tsx` — full design system compliance pass: `.app-card`, `.section-label`, `.app-field`, `.btn-md`, 44px back button
+
+### Learn Page Redesign (2026-04-10)
+`frontend/app/child/learn/page.tsx` — journey-first redesign:
+- **Continue card** (golden gradient, full-width): primary CTA showing in-progress module with progress bar + "Go!" button
+- **Start card** (blue gradient): shown when next path module is untouched; "Start!" CTA
+- **Next Up strip**: 2 upcoming modules as tappable cards (84px tall, 116px wide)
+- **All-done celebration**: trophy hero + "Revisit a favourite" when all 18 modules complete
+- **Path strip**: `minHeight: 44px` pills (was 36px); "YOU ★" marker on current; full `aria-label` per pill
+- **Category filters**: `items` → `🌍 World`; all chips get emoji prefix; `aria-pressed` wired
+- **Header**: child first name + motivating subtitle; star count chip; 44px back button
+- **Section labels**: `⚡ Your Journey` + `🗺️ All Adventures` (was bare i18n key)
+- **Module cards**: 32px icon (was 24px), 14px title (was 12px), `role="progressbar"` + `aria-valuenow`; time estimate (9px) removed
+- **`frontend/lib/modules.ts`**: Numbers 11–20 icon corrected `🔣` → `🧮`
+
 ### AppIcon Migration Status (2026-04-02)
 
 Complete 5-phase rollout of the unified `AppIcon` icon system:
@@ -775,7 +803,7 @@ Each role has a dedicated settings page with role-relevant sections. All pages f
 
 ---
 
-## Known Gaps (as of 2026-04-03)
+## Known Gaps (as of 2026-04-10)
 
 - iOS app exists (Capacitor Xcode project) but not yet in App Store
 - `SENDGRID_API_KEY`, `CLOUDINARY_CLOUD_NAME`+`CLOUDINARY_API_KEY`+`CLOUDINARY_API_SECRET`, `OPENAI_API_KEY` need to be set on Railway for those features to work
