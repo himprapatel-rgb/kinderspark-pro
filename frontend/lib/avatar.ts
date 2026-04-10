@@ -1,5 +1,6 @@
 export type AvatarTone = 'light' | 'medium' | 'dark'
 export type AvatarHair = 'short' | 'bob' | 'curly' | 'spiky' | 'puffs'
+export type AvatarHairColor = 'black' | 'brown' | 'blonde' | 'red' | 'white' | 'blue'
 export type AvatarEyes = 'round' | 'smile' | 'sparkle'
 export type AvatarOutfit = 'tee' | 'hoodie' | 'dress' | 'overalls'
 export type AvatarAccessory = 'none' | 'glasses' | 'star'
@@ -7,6 +8,7 @@ export type AvatarAccessory = 'none' | 'glasses' | 'star'
 export interface AvatarConfig {
   tone: AvatarTone
   hair: AvatarHair
+  hairColor: AvatarHairColor
   eyes: AvatarEyes
   outfit: AvatarOutfit
   accessory: AvatarAccessory
@@ -18,6 +20,7 @@ const AVATAR_ITEM_PREFIX = 'avcfg:'
 export const DEFAULT_AVATAR_CONFIG: AvatarConfig = {
   tone: 'medium',
   hair: 'short',
+  hairColor: 'black',
   eyes: 'round',
   outfit: 'tee',
   accessory: 'none',
@@ -77,4 +80,3 @@ export function saveAvatarConfig(studentId: string, cfg: AvatarConfig) {
   if (typeof window === 'undefined' || !studentId) return
   localStorage.setItem(AVATAR_KEY(studentId), JSON.stringify(cfg))
 }
-
